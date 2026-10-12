@@ -1,0 +1,2 @@
+# cp backend.hcl.sample backend.hcl (gitignored), with the state bucket created by `make bootstrap`
+bucket = "motis-mcp-app-tfstate-XXXXXXXXXXXX"
