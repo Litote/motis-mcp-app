@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "motis": {
+      "command": "/path/to/motis-mcp-app/server/build/install/server/bin/server",
+      "args": ["--stdio"],
+      "env": {
+        "MOTIS_APP_CONTACT": "https://github.com/Litote/motis-mcp-app"
+      }
+    }
+  }
+}
