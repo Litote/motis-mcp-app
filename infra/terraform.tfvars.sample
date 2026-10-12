@@ -1,0 +1,7 @@
+# cp terraform.tfvars.sample terraform.tfvars
+motis_app_contact = "you@example.org"
+
+# aws_region           = "eu-west-3"
+# reserved_concurrency = 10   # default; -1: no reservation
+# tile_url             = "https://tiles.example.org/{z}/{x}/{y}.png"
+# tile_attribution     = "&copy; Example tiles"

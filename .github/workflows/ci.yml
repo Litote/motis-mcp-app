@@ -1,0 +1,182 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  semantic-pr-title:
+    if: github.event_name == 'pull_request'
+    name: Validate PR title (Conventional Commits)
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    steps:
+      - uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  check:
+    name: Check (tests, coverage, SonarCloud)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+
+      # views (ui/) bundled by the Gradle build, web chat tests
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '26'
+          cache: npm
+          cache-dependency-path: |
+            ui/package-lock.json
+            web/package-lock.json
+
+      # cache-cleanup: never prevents eviction of dependency metadata files
+      # (.module files) that the configuration cache fingerprints. When the configuration
+      # cache is reused, dependency resolution is skipped and those files are not "accessed",
+      # so the default on-success cleanup would remove them, invalidating the cache on the
+      # next run with "file has been removed".
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        with:
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+          dependency-graph: disabled
+          build-scan-publish: false
+          cache-cleanup: never
+
+      - name: Detect code changes
+        id: detect-changes
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            CHANGED=$(git diff --name-only "origin/$BASE_REF...HEAD")
+          elif git rev-parse --verify --quiet HEAD~1 > /dev/null; then
+            CHANGED=$(git diff --name-only HEAD~1..HEAD)
+          else
+            # first commit: no parent, every file is new
+            CHANGED=$(git ls-files)
+          fi
+          if echo "$CHANGED" | grep -qE '\.(kt|kts|gradle|yml|yaml|toml|ts|tsx|mjs|cjs|html|css|tf)$'; then
+            echo "has_code_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_code_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build & test
+        run: ./gradlew check
+
+      - name: Views tests
+        working-directory: ui
+        # node_modules installed by the Gradle build (npmInstall)
+        run: npm run coverage
+
+      - name: Web chat tests
+        working-directory: web
+        run: |
+          npm ci --no-audit --no-fund
+          npm run coverage
+
+      - name: Jacoco aggregated report
+        if: steps.detect-changes.outputs.has_code_changes == 'true'
+        run: ./gradlew jacocoAggregatedReport --no-configuration-cache
+
+      - name: SonarCloud analysis
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_BRANCH: ${{ github.head_ref }}
+          PR_BASE: ${{ github.base_ref }}
+          EVENT_NAME: ${{ github.event_name }}
+        if: env.SONAR_TOKEN != '' && steps.detect-changes.outputs.has_code_changes == 'true'
+        run: |
+          if [[ "$EVENT_NAME" == "pull_request" ]]; then
+            ./gradlew sonar --no-configuration-cache \
+              -Dsonar.pullrequest.key="$PR_NUMBER" \
+              -Dsonar.pullrequest.branch="$PR_BRANCH" \
+              -Dsonar.pullrequest.base="$PR_BASE"
+          else
+            ./gradlew sonar --no-configuration-cache
+          fi
+
+      - name: SonarCloud quality gate
+        if: env.SONAR_TOKEN != '' && steps.detect-changes.outputs.has_code_changes == 'true'
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: ./gradlew sonarCheck --no-configuration-cache
+
+  docker:
+    name: Docker image (build only)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: false
+
+  docker-web:
+    name: Web chat Docker image (build only, smoke test)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: web
+          load: true
+          tags: motis-mcp-app-web:ci
+
+      - name: Smoke test
+        run: web/nginx/smoke-test.sh motis-mcp-app-web:ci
+
+      # the files are built once on the runner platform (see web/Dockerfile): the arm64 image only copies them
+      - name: Build (linux/amd64, linux/arm64)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: web
+          platforms: linux/amd64,linux/arm64
+          push: false
