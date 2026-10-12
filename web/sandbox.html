@@ -1,0 +1,19 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="color-scheme" content="light dark" />
+    <!-- Outer frame of the view sandbox, served from another origin than the app. Its CSP is an HTTP header built from
+         the ?csp= query parameter (Vite plugin in dev, CloudFront Function or nginx in production); the inner frame
+         inherits it, its HTML being written with document.write. -->
+    <title>View sandbox</title>
+    <style>
+      html, body { margin: 0; height: 100vh; width: 100vw; background: transparent; }
+      body { display: flex; flex-direction: column; }
+      iframe { border: 0; flex-grow: 1; background: transparent; color-scheme: inherit; }
+    </style>
+  </head>
+  <body>
+    <script type="module" src="/src/sandbox.ts"></script>
+  </body>
+</html>

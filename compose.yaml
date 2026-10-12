@@ -1,0 +1,39 @@
+# MCP server and web chat on localhost (see docs/SELF-HOSTING.md):
+#   docker compose up            published images
+#   docker compose up --build    images built from the sources
+#
+#   web chat:   http://localhost:8080 (view sandbox on http://localhost:8081)
+#   MCP server: http://localhost:3001/mcp (Claude Code, MCP Inspector, basic-host…)
+#
+# Settings in .env (see .env.sample): MOTIS_APP_CONTACT is required with Transitous (default MOTIS server).
+
+services:
+  mcp:
+    image: ghcr.io/litote/motis-mcp-app:${MOTIS_MCP_APP_VERSION:-latest}
+    build: .
+    command: ["--http", "--host", "0.0.0.0"]
+    environment:
+      MOTIS_APP_CONTACT: ${MOTIS_APP_CONTACT:-}
+      MOTIS_BASE_URL: ${MOTIS_BASE_URL:-}
+      MOTIS_LOG_LEVEL: ${MOTIS_LOG_LEVEL:-NONE}
+      MOTIS_TILE_URL: ${MOTIS_TILE_URL:-}
+      MOTIS_TILE_ATTRIBUTION: ${MOTIS_TILE_ATTRIBUTION:-}
+      MCP_ALLOWED_HOSTS: ${MCP_ALLOWED_HOSTS:-}
+    ports:
+      - "127.0.0.1:3001:3001"
+    restart: unless-stopped
+
+  web:
+    image: ghcr.io/litote/motis-mcp-app-web:${MOTIS_MCP_APP_VERSION:-latest}
+    build: web
+    environment:
+      # public URLs, as seen by the browser
+      MCP_URL: ${MCP_URL:-http://localhost:3001/mcp}
+      APP_ORIGIN: ${APP_ORIGIN:-http://localhost:8080}
+      SANDBOX_ORIGIN: ${SANDBOX_ORIGIN:-http://localhost:8081}
+    ports:
+      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:8081:8081"
+    depends_on:
+      - mcp
+    restart: unless-stopped

@@ -1,0 +1,70 @@
+# Web chat (web/), as served by CloudFront in production (infra/web.tf), on two origins:
+#   - app (8080):     the chat (index.html), with a strict CSP (the OpenRouter key of the user lives in this origin)
+#   - sandbox (8081): sandbox.html, the outer frame of the MCP App views, on another origin so that a view cannot reach
+#                     the app; its CSP is built per view by njs (web/sandbox-csp.cjs)
+# Rendered by envsubst when the container starts: ${MCP_URL}, ${APP_ORIGIN}, ${SANDBOX_ORIGIN} (web/Dockerfile).
+
+js_path   /etc/nginx/njs/;
+js_import csp from sandbox-csp.js;
+js_set    $sandbox_csp csp.header;
+
+# headers of a location are added to those of the server
+add_header_inherit merge;
+
+server {
+    listen 8080;
+    root   /usr/share/nginx/html;
+
+    # Scripts of the app only; models and MCP called from the browser; views only in the sandbox frames
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://openrouter.ai ${MCP_URL}; frame-src ${SANDBOX_ORIGIN}; object-src 'none'; base-uri 'none'; frame-ancestors 'none'" always;
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
+
+    location / {
+        index      index.html;
+        try_files  $uri $uri/ =404;
+        add_header Cache-Control no-cache;
+    }
+
+    location /assets/ {
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+
+    # served by the sandbox origin only
+    location = /sandbox.html {
+        return 404;
+    }
+
+    location = /config.json {
+        alias      /etc/nginx/conf.d/web/config.json;
+        add_header Cache-Control no-cache;
+    }
+}
+
+server {
+    listen 8081;
+    root   /usr/share/nginx/html;
+
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy strict-origin-when-cross-origin always;
+
+    location / {
+        return 404;
+    }
+
+    # not cached: its CSP depends on the query parameter
+    location = /sandbox.html {
+        add_header Content-Security-Policy $sandbox_csp always;
+        add_header Cache-Control no-store;
+    }
+
+    # scripts of sandbox.html
+    location /assets/ {
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+
+    location = /config.json {
+        alias      /etc/nginx/conf.d/web/config.json;
+        add_header Cache-Control no-cache;
+    }
+}

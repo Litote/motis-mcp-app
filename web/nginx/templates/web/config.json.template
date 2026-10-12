@@ -1,0 +1,5 @@
+{
+  "mcpUrl": "${MCP_URL}",
+  "sandboxUrl": "${SANDBOX_ORIGIN}/sandbox.html",
+  "hostOrigins": ["${APP_ORIGIN}"]
+}

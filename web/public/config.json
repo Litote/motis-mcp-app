@@ -1,0 +1,5 @@
+{
+  "mcpUrl": "http://localhost:3001/mcp",
+  "sandboxUrl": "http://127.0.0.1:5173/sandbox.html",
+  "hostOrigins": ["http://localhost:5173"]
+}

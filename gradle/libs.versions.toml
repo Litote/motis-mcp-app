@@ -1,0 +1,36 @@
+[versions]
+kotlin = "2.4.21"
+ktor = "3.6.0"
+mcp = "0.15.0"
+motis = "0.1.0"
+serialization = "1.11.0"
+logback = "1.6.5"
+shadow = "9.6.1"
+kotlin-logging = "8.0.4"
+slf4j = "2.0.20"
+lambda-runtime = "0.9.7"
+graalvm-native = "1.1.14"
+sonarqube = "7.5.0.8588"
+jacoco = "0.8.15"
+
+[libraries]
+mcp-server = { module = "io.modelcontextprotocol:kotlin-sdk-server", version.ref = "mcp" }
+mcp-client = { module = "io.modelcontextprotocol:kotlin-sdk-client", version.ref = "mcp" }
+motis-client = { module = "org.litote:motis-ktor-client", version.ref = "motis" }
+ktor-server-core = { module = "io.ktor:ktor-server-core", version.ref = "ktor" }
+ktor-server-cio = { module = "io.ktor:ktor-server-cio", version.ref = "ktor" }
+ktor-server-cors = { module = "io.ktor:ktor-server-cors", version.ref = "ktor" }
+ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
+ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
+serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
+kotlin-logging = { module = "io.github.oshai:kotlin-logging-jvm", version.ref = "kotlin-logging" }
+slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
+lambda-runtime = { module = "com.asyncant.aws.lambda:runtime-jvm", version.ref = "lambda-runtime" }
+logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+graalvm-native = { id = "org.graalvm.buildtools.native", version.ref = "graalvm-native" }
+shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }
+sonarqube = { id = "org.sonarqube", version.ref = "sonarqube" }
