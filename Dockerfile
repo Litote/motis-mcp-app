@@ -4,7 +4,7 @@
 # target images (linux/amd64, linux/arm64) only copy them, no emulation.
 
 # ─── Views (ui/) ──────────────────────────────────────────────────────────────
-FROM --platform=$BUILDPLATFORM node:22-bookworm-slim AS ui
+FROM --platform=$BUILDPLATFORM node:25-bookworm-slim AS ui
 WORKDIR /build/ui
 COPY ui/package.json ui/package-lock.json ./
 RUN npm ci --no-audit --no-fund
