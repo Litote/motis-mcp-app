@@ -307,6 +307,7 @@ class MotisToolsTest {
                         "arriveBy" to true,
                         "modes" to listOf("BUS", "TRAM"),
                         "maxTransfers" to 2,
+                        "maxWalkMinutes" to 10,
                         "count" to 3,
                     ),
                 )
@@ -326,7 +327,23 @@ class MotisToolsTest {
             assertEquals("3", request.url.parameters["numItineraries"])
             assertEquals("2026-10-12T20:00:00Z", request.url.parameters["time"])
             assertEquals("BUS,TRAM", request.url.parameters["transitModes"])
+            assertEquals("600", request.url.parameters["maxPreTransitTime"])
+            assertEquals("600", request.url.parameters["maxPostTransitTime"])
+            assertEquals("true", request.url.parameters["useRoutedTransfers"])
+            assertNull(request.url.parameters["maxMatchingDistance"])
             assertTrue(result.text().startsWith("From 45.7605,4.8597 to LYON-PART-DIEU: 3 itinerary(ies).\n1. "), result.text())
+        }
+    }
+
+    @Test
+    fun `plan_journey walks up to 25 minutes to the first stop and from the last stop by default`() {
+        val motis = transitous()
+        withMcpClient(motis) { client ->
+            client.callTool("plan_journey", mapOf("from" to "45.7605,4.8597", "to" to "45.19,5.71"))
+
+            val request = motis.request("/api/v6/plan")
+            assertEquals("1500", request.url.parameters["maxPreTransitTime"])
+            assertEquals("1500", request.url.parameters["maxPostTransitTime"])
         }
     }
 

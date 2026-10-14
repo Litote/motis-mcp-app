@@ -1,6 +1,7 @@
 // Departures board (departures) and trip timeline (trip_details).
 import { callTool, startView, type Args } from "./shared/app";
 import { day, delayBadge, delayMinutes, duration, esc, lineBadge, time } from "./shared/format";
+import { t } from "./shared/i18n";
 import type { DeparturesResult, PlaceDto, TripResult } from "./shared/types";
 
 type BoardData = DeparturesResult | TripResult;
@@ -33,9 +34,9 @@ function show(data: BoardData, push: boolean): void {
 function timeCell(actual: string | undefined, scheduled: string | undefined, realTime: boolean, tz?: string): string {
   const delay = delayMinutes(actual, scheduled);
   if (!realTime) return `<span>${time(scheduled ?? actual, tz)}</span>`;
-  if (delay === 0) return `<span class="on-time" title="real time">${time(actual, tz)}</span>`;
+  if (delay === 0) return `<span class="on-time" title="${t("departures.realTime")}">${time(actual, tz)}</span>`;
   const sign = delay > 0 ? "+" : "";
-  return `<span class="late" title="scheduled ${time(scheduled, tz)}"><s class="muted">${time(scheduled, tz)}</s> ${time(actual, tz)} (${sign}${delay})</span>`;
+  return `<span class="late" title="${t("departures.scheduled", { time: time(scheduled, tz) })}"><s class="muted">${time(scheduled, tz)}</s> ${time(actual, tz)} (${sign}${delay})</span>`;
 }
 
 function renderBoard(data: DeparturesResult): void {
@@ -43,26 +44,26 @@ function renderBoard(data: DeparturesResult): void {
   title.textContent = data.stop.name;
   const first = data.stopTimes[0]?.time;
   const firstDay = first ? ` · ${day(first, tz)}` : "";
-  subtitle.textContent = `${data.arriveBy ? "Arrivals" : "Departures"}${firstDay}`;
+  subtitle.textContent = `${t(data.arriveBy ? "departures.arrivals" : "departures.departures")}${firstDay}`;
   const rows = data.stopTimes
     .map(
       (st, i) => `
       <tr class="clickable" data-index="${i}">
         <td class="${st.cancelled ? "cancelled" : ""}">${timeCell(st.time, st.scheduledTime, st.realTime, tz)}</td>
         <td>${lineBadge(st.mode, st.line, st.routeColor, st.routeTextColor)}</td>
-        <td>${esc(st.headsign)}${st.cancelled ? ' <strong class="late">cancelled</strong>' : ""}<div class="muted">${esc(st.agency)}</div></td>
-        <td class="muted">${st.track ? `track ${esc(st.track)}` : ""}</td>
+        <td>${esc(st.headsign)}${st.cancelled ? ` <strong class="late">${t("departures.cancelled")}</strong>` : ""}<div class="muted">${esc(st.agency)}</div></td>
+        <td class="muted">${st.track ? t("track", { track: esc(st.track) }) : ""}</td>
       </tr>`,
     )
     .join("");
-  const board = rows ? `<table class="board"><tbody>${rows}</tbody></table>` : '<p class="muted">No departure in this period.</p>';
+  const board = rows ? `<table class="board"><tbody>${rows}</tbody></table>` : `<p class="muted">${t("departures.none")}</p>`;
   content.innerHTML = `
     <div class="toolbar">
-      <button type="button" data-action="previous" ${data.previousPageCursor ? "" : "disabled"}>← Earlier</button>
-      <button type="button" data-action="next" ${data.nextPageCursor ? "" : "disabled"}>Later →</button>
+      <button type="button" data-action="previous" ${data.previousPageCursor ? "" : "disabled"}>${t("earlier")}</button>
+      <button type="button" data-action="next" ${data.nextPageCursor ? "" : "disabled"}>${t("later")}</button>
       <span style="flex:1"></span>
-      <button type="button" data-action="departures" aria-pressed="${!data.arriveBy}">Departures</button>
-      <button type="button" data-action="arrivals" aria-pressed="${data.arriveBy}">Arrivals</button>
+      <button type="button" data-action="departures" aria-pressed="${!data.arriveBy}">${t("departures.departures")}</button>
+      <button type="button" data-action="arrivals" aria-pressed="${data.arriveBy}">${t("departures.arrivals")}</button>
     </div>
     ${board}`;
 
@@ -103,7 +104,7 @@ function stopRow(stop: PlaceDto, color: string, isEnd: boolean): string {
   const actual = departure ?? arrival;
   const scheduled = departure ? stop.scheduledDeparture : stop.scheduledArrival;
   const delay = delayMinutes(actual, scheduled);
-  const track = stop.track ? ` <span class="muted">track ${esc(stop.track)}</span>` : "";
+  const track = stop.track ? ` <span class="muted">${t("track", { track: esc(stop.track) })}</span>` : "";
   return `
     <li class="stop ${stop.cancelled ? "cancelled" : ""}" style="--line:${esc(color)}">
       <span class="dot ${isEnd ? "end" : ""}"></span>
@@ -132,7 +133,7 @@ function renderTrip(data: TripResult): void {
     })
     .join("");
   content.innerHTML = `
-    <div class="toolbar"><button type="button" id="back" ${history.length ? "" : "hidden"}>← Back to the board</button></div>
+    <div class="toolbar"><button type="button" id="back" ${history.length ? "" : "hidden"}>${t("departures.backToBoard")}</button></div>
     ${timeline}`;
   document.getElementById("back")?.addEventListener("click", () => {
     const previous = history.pop();

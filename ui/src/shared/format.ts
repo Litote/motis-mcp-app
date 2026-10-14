@@ -1,4 +1,4 @@
-import { hostLocale } from "./app";
+import { hostLocale, tOptional } from "./i18n";
 
 /** Escapes text inserted in HTML. */
 export function esc(value: string | number | null | undefined): string {
@@ -47,32 +47,8 @@ export function distance(meters?: number | null): string {
   return meters < 1000 ? `${Math.round(meters)} m` : `${(meters / 1000).toFixed(1)} km`;
 }
 
-const MODE_LABELS: Record<string, string> = {
-  WALK: "Walk",
-  BIKE: "Bike",
-  RENTAL: "Rental",
-  CAR: "Car",
-  TRAM: "Tram",
-  SUBWAY: "Metro",
-  METRO: "Metro",
-  FERRY: "Ferry",
-  AIRPLANE: "Plane",
-  BUS: "Bus",
-  COACH: "Coach",
-  RAIL: "Train",
-  HIGHSPEED_RAIL: "High-speed",
-  LONG_DISTANCE: "Intercity",
-  NIGHT_RAIL: "Night train",
-  REGIONAL_FAST_RAIL: "Regional",
-  REGIONAL_RAIL: "Regional",
-  SUBURBAN: "Suburban",
-  FUNICULAR: "Funicular",
-  AERIAL_LIFT: "Cable car",
-  CABLE_CAR: "Cable car",
-};
-
 export function modeLabel(mode: string): string {
-  return MODE_LABELS[mode] ?? mode.charAt(0) + mode.slice(1).toLowerCase().replaceAll("_", " ");
+  return tOptional(`mode.${mode}`) ?? mode.charAt(0) + mode.slice(1).toLowerCase().replaceAll("_", " ");
 }
 
 /** Default colors by mode, used when the route has no color. */

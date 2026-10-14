@@ -138,9 +138,10 @@ describe("McpAppView", () => {
     expect(mode).toEqual({ mode: "fullscreen" });
     expect(document.body.style.overflow).toBe("hidden");
     expect(bridge.sendHostContextChange).toHaveBeenCalledWith({ displayMode: "fullscreen" });
-    // fullscreen: the size of the content applies once back inline
+    // fullscreen: the frame fills the window (CSS), the size of the content applies once back inline
+    expect(frame().style.height).toBe("");
     act(() => void bridge.onsizechange!({ height: 900 }));
-    expect(frame().style.height).toBe("300px");
+    expect(frame().style.height).toBe("");
 
     fireEvent.click(screen.getByText("Close"));
     expect(screen.queryByText("Close")).toBeNull();

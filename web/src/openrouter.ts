@@ -2,6 +2,8 @@
  * OpenRouter, called from the browser (CORS allowed): the user brings their own key, through the OAuth PKCE flow or
  * pasted. The key is kept in sessionStorage (cleared with the tab), never sent elsewhere than openrouter.ai.
  */
+import { t } from "./i18n";
+
 const API = "https://openrouter.ai/api/v1";
 const KEY_STORAGE = "openrouter-key";
 const VERIFIER_STORAGE = "openrouter-pkce-verifier";
@@ -22,7 +24,7 @@ const KEY_FORMAT = /^sk-or-[\w-]+$/;
 /** Stores [key], after checking it is an OpenRouter key. */
 export function setKey(key: string): void {
   const trimmed = key.trim();
-  if (!KEY_FORMAT.test(trimmed)) throw new Error("Not an OpenRouter key (sk-or-…).");
+  if (!KEY_FORMAT.test(trimmed)) throw new Error(t("error.notAKey"));
   sessionStorage.setItem(KEY_STORAGE, trimmed);
 }
 
@@ -62,13 +64,13 @@ export async function completeLogin(): Promise<boolean> {
   const verifier = sessionStorage.getItem(VERIFIER_STORAGE);
   sessionStorage.removeItem(VERIFIER_STORAGE);
   window.history.replaceState(null, "", window.location.pathname);
-  if (!verifier) throw new Error("Login expired: please try again.");
+  if (!verifier) throw new Error(t("error.loginExpired"));
   const response = await fetch(`${API}/auth/keys`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ code, code_verifier: verifier, code_challenge_method: "S256" }),
   });
-  if (!response.ok) throw new Error(`OpenRouter login failed (HTTP ${response.status})`);
+  if (!response.ok) throw new Error(t("error.loginFailed", { status: response.status }));
   const { key } = (await response.json()) as { key: string };
   setKey(key);
   return true;
@@ -200,11 +202,10 @@ export class OpenRouterError extends Error {
 }
 
 function errorMessage(status: number, detail: string): string {
-  if (status === 401) return "OpenRouter key invalid or revoked: log in again.";
-  if (status === 402) return "No OpenRouter credits left for this model: choose a free model.";
-  if (status === 429)
-    return `Rate limited by OpenRouter (free quota reached, or provider busy): retry later or choose another model. ${detail}`;
-  return `OpenRouter error (HTTP ${status}): ${detail}`;
+  if (status === 401) return t("error.invalidKey");
+  if (status === 402) return t("error.noCredits");
+  if (status === 429) return t("error.rateLimited", { detail });
+  return t("error.openRouter", { status, detail });
 }
 
 export interface ChatDelta {

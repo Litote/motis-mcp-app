@@ -11,6 +11,7 @@ import type {
 } from "@assistant-ui/react";
 import type { CallToolResult } from "@modelcontextprotocol/client";
 import { callTool, connectMcp, modelTools, resultText } from "./mcp";
+import { t } from "./i18n";
 import { streamChat, type ChatMessage, type ChatToolCall } from "./openrouter";
 
 /** Model calls per user message: bounds the loop, and the consumption of the free quota (2 to 3 calls usually). */
@@ -126,7 +127,7 @@ export function createAgent(settings: AgentSettings): ChatModelAdapter {
   return {
     async *run({ messages, abortSignal }) {
       const key = settings.key();
-      if (!key) throw new Error("Log in with OpenRouter first.");
+      if (!key) throw new Error(t("error.logInFirst"));
       const mcp = await connectMcp();
       const tools = modelTools(mcp);
       const chat: ChatMessage[] = [{ role: "system", content: systemPrompt(mcp.instructions) }, ...toChatMessages(messages)];

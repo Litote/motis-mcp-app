@@ -2,6 +2,7 @@ import { Suspense, createContext, lazy, useContext, useEffect, useState } from "
 import type { ToolCallMessagePartProps } from "@assistant-ui/react";
 import type { CallToolResult } from "@modelcontextprotocol/client";
 import { connectMcp } from "./mcp";
+import { t } from "./i18n";
 import { toolUiResourceUri } from "./mcp-apps";
 
 // AppBridge loaded with the first view
@@ -45,7 +46,7 @@ export function ToolCall({ toolCallId, toolName, args, argsText, result, isError
         <summary>
           <span className={`tool-status ${toolStatus}`} />
           <code>{toolName}</code>
-          {running && <span className="tool-running">running…</span>}
+          {running && <span className="tool-running">{t("tool.running")}</span>}
         </summary>
         <pre>{argsText || JSON.stringify(args, null, 2)}</pre>
       </details>

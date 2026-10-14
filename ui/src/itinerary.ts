@@ -2,6 +2,7 @@
 import L from "leaflet";
 import { callTool, startView, type Args } from "./shared/app";
 import { day, delayBadge, delayMinutes, distance, duration, esc, lineBadge, modeColor, modeLabel, time } from "./shared/format";
+import { t } from "./shared/i18n";
 import { createMap, decode, fit } from "./shared/map";
 import type { ItineraryDto, JourneyResult, LegDto } from "./shared/types";
 
@@ -10,8 +11,8 @@ const subtitle = document.getElementById("subtitle")!;
 const content = document.getElementById("content")!;
 content.innerHTML = `
   <div class="toolbar">
-    <button type="button" id="earlier">← Earlier</button>
-    <button type="button" id="later">Later →</button>
+    <button type="button" id="earlier" data-i18n="earlier">← Earlier</button>
+    <button type="button" id="later" data-i18n="later">Later →</button>
   </div>
   <div class="journey">
     <ul id="itineraries" class="list"></ul>
@@ -63,12 +64,12 @@ function render(data: JourneyResult): void {
           return `
           <li class="clickable" data-index="${i}">
             <div><strong>${time(it.startTime, tz)} → ${time(it.endTime, data.to.tz)}</strong>
-              <span class="muted">${duration(it.durationSeconds)} · ${it.transfers} transfer(s)${i >= data.itineraries.length ? " · direct" : ""}</span></div>
+              <span class="muted">${duration(it.durationSeconds)} · ${t("transfers", { count: it.transfers })}${i >= data.itineraries.length ? ` · ${t("itinerary.direct")}` : ""}</span></div>
             <div class="badges">${badges}</div>
           </li>`;
         })
         .join("")
-    : '<li class="muted">No itinerary found.</li>';
+    : `<li class="muted">${t("itinerary.none")}</li>`;
   if (itineraries.length) select(0);
   else {
     layer.clearLayers();
@@ -83,11 +84,11 @@ list.addEventListener("click", (e) => {
 
 function transitDescription(leg: LegDto): string {
   const stops = (leg.intermediateStops?.length ?? 0) + 1;
-  const track = leg.from.track ? ` · track ${esc(leg.from.track)}` : "";
+  const track = leg.from.track ? ` · ${t("track", { track: esc(leg.from.track) })}` : "";
   const agency = leg.agency ? ` · ${esc(leg.agency)}` : "";
   return (
     `${lineBadge(leg.mode, leg.line, leg.routeColor, leg.routeTextColor)} → ${esc(leg.headsign ?? leg.to.name)}` +
-    `<div class="muted">${stops} stop(s)${track}${agency}</div>`
+    `<div class="muted">${t("itinerary.stops", { count: stops })}${track}${agency}</div>`
   );
 }
 

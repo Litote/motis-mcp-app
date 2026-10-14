@@ -24,6 +24,13 @@ fun Server.addRoutingTools(gateway: MotisGateway) {
             boolean("arriveBy", "true: 'time' is the latest arrival time.")
             stringArray("modes", "Allowed transit modes (default: all).", TRANSIT_MODES)
             integer("maxTransfers", "Maximum number of transfers.", minimum = 0, maximum = 10)
+            integer(
+                "maxWalkMinutes",
+                "Maximum walk to the first stop and from the last stop, in minutes " +
+                    "(default ${MotisGateway.DEFAULT_MAX_WALK_MINUTES}): lower for a user who walks little.",
+                minimum = 1,
+                maximum = 60,
+            )
             integer("count", "Minimum number of itineraries (default 5).", minimum = 1, maximum = 20)
             string("pageCursor", "Cursor returned by a previous call, for earlier or later itineraries.")
             string("language", LANGUAGE_DESCRIPTION)
@@ -42,6 +49,7 @@ fun Server.addRoutingTools(gateway: MotisGateway) {
                         arriveBy = args.boolean("arriveBy") ?: false,
                         transitModes = args.modes("modes"),
                         maxTransfers = args.int("maxTransfers"),
+                        maxWalkMinutes = args.int("maxWalkMinutes") ?: MotisGateway.DEFAULT_MAX_WALK_MINUTES,
                         numItineraries = args.int("count"),
                         pageCursor = pageCursor,
                         language = args.stringList("language"),

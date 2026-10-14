@@ -17,6 +17,9 @@ See the [README](../README.md) for an overview, the AWS Lambda deployment, the w
 | `plan_journey`   | plan                                 | itineraries list and map               |
 | `rentals`        | map/rentals                          | shared bikes, scooters and cars map    |
 
+`plan_journey` walks up to 25 minutes to the first stop and from the last stop (`maxWalkMinutes`, MOTIS default:
+15 minutes), and routes the transfers on foot on the streets (`useRoutedTransfers`).
+
 Places can be given by name (geocoded, best match), stop id or `lat,lon`. The views call the tools themselves for
 navigation: departures of a stop clicked on the map, line details, trip of a departure, earlier/later pages.
 

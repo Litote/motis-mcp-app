@@ -6,6 +6,7 @@ import {
   applyHostStyleVariables,
   type McpUiHostContext,
 } from "@modelcontextprotocol/ext-apps";
+import { setLocale, t, translateDocument } from "./i18n";
 import "./style.css";
 
 export type Args = Record<string, unknown>;
@@ -23,10 +24,7 @@ export interface ViewHandlers {
   themeChanged?(theme: "light" | "dark"): void;
 }
 
-let locale: string | undefined;
-
-/** Locale of the host, for date formatting. */
-export const hostLocale = (): string | undefined => locale;
+export { hostLocale } from "./i18n";
 
 const statusEl = () => document.getElementById("status");
 
@@ -52,7 +50,10 @@ function applyContext(ctx: McpUiHostContext, handlers: ViewHandlers): void {
   }
   if (ctx.styles?.variables) applyHostStyleVariables(ctx.styles.variables);
   if (ctx.styles?.css?.fonts) applyHostFonts(ctx.styles.css.fonts);
-  if (ctx.locale) locale = ctx.locale;
+  if (ctx.locale) {
+    setLocale(ctx.locale);
+    if (statusEl()?.dataset.kind === "loading") setStatus(t("loading"), "loading");
+  }
   if (ctx.safeAreaInsets) {
     const { top, right, bottom, left } = ctx.safeAreaInsets;
     document.body.style.padding = `${top}px ${right}px ${bottom}px ${left}px`;
@@ -75,16 +76,19 @@ export function currentTheme(): "light" | "dark" {
 export function startView(name: string, handlers: ViewHandlers): App {
   const app = new App({ name, version: "1.0.0" });
   let lastArgs: Args = {};
+  // static texts in the language of the browser until the host gives its locale
+  translateDocument();
+  if (statusEl()?.dataset.kind === "loading") setStatus(t("loading"), "loading");
 
   // handlers are set before connect() so that the initial tool input/result are not missed
   app.ontoolinput = (params) => {
     lastArgs = (params.arguments ?? {}) as Args;
-    setStatus("Loading…", "loading");
+    setStatus(t("loading"), "loading");
   };
   app.ontoolresult = (result) => {
     const r = result as ToolResultLike;
     if (r.isError) {
-      setStatus(textOf(r) || "Error", "error");
+      setStatus(textOf(r) || t("error"), "error");
     } else if (r.structuredContent && typeof r.structuredContent.kind === "string") {
       setStatus("");
       handlers.render(r.structuredContent as { kind: string }, lastArgs);
@@ -92,7 +96,7 @@ export function startView(name: string, handlers: ViewHandlers): App {
       setStatus(textOf(r));
     }
   };
-  app.ontoolcancelled = () => setStatus("Cancelled", "error");
+  app.ontoolcancelled = () => setStatus(t("cancelled"), "error");
   app.onhostcontextchanged = (ctx) => applyContext(ctx, handlers);
 
   const requestDisplayMode = async (mode: "inline" | "fullscreen") => {
@@ -119,7 +123,7 @@ export function startView(name: string, handlers: ViewHandlers): App {
       const ctx = app.getHostContext();
       if (ctx) applyContext(ctx, handlers);
     })
-    .catch((e: unknown) => setStatus(`Connection to the host failed: ${String(e)}`, "error"));
+    .catch((e: unknown) => setStatus(t("connectionFailed", { error: String(e) }), "error"));
   return app;
 }
 
@@ -128,11 +132,11 @@ export function startView(name: string, handlers: ViewHandlers): App {
  * A tool error is thrown as an Error with the message of the tool.
  */
 export async function callTool<T>(app: App, name: string, args: Args): Promise<T> {
-  setStatus("Loading…", "loading");
+  setStatus(t("loading"), "loading");
   try {
     const result = (await app.callServerTool({ name, arguments: args })) as ToolResultLike;
-    if (result.isError) throw new Error(textOf(result) || `${name} failed`);
-    if (!result.structuredContent) throw new Error(`${name}: no data`);
+    if (result.isError) throw new Error(textOf(result) || t("toolFailed", { name }));
+    if (!result.structuredContent) throw new Error(t("noData", { name }));
     setStatus("");
     return result.structuredContent as T;
   } catch (e) {

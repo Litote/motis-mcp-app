@@ -11,6 +11,7 @@ import {
 import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown";
 import remarkGfm from "remark-gfm";
 import { createAgent } from "./agent";
+import { suggestions, t } from "./i18n";
 import {
   DEFAULT_MODEL,
   forgetKey,
@@ -24,13 +25,6 @@ import {
   type Model,
 } from "./openrouter";
 import { AppendMessageContext, ToolCall } from "./ToolCall";
-
-const SUGGESTIONS = [
-  "Next departures at Lyon Part-Dieu",
-  "How to go from Paris Gare de Lyon to Versailles?",
-  "Which lines run around Place Bellecour in Lyon?",
-  "Shared bikes near Châtelet, Paris",
-];
 
 function MarkdownText() {
   return <MarkdownTextPrimitive remarkPlugins={[remarkGfm]} className="markdown" />;
@@ -63,10 +57,10 @@ function Thread() {
       <ThreadPrimitive.Viewport className="thread-viewport">
         <ThreadPrimitive.Empty>
           <div className="welcome">
-            <h2>Explore public transport</h2>
-            <p>Timetables, journeys, maps and shared mobility from Transitous (MOTIS).</p>
+            <h2>{t("welcome.title")}</h2>
+            <p>{t("welcome.text")}</p>
             <div className="suggestions">
-              {SUGGESTIONS.map((suggestion) => (
+              {suggestions().map((suggestion) => (
                 <ThreadPrimitive.Suggestion key={suggestion} prompt={suggestion} send className="suggestion">
                   {suggestion}
                 </ThreadPrimitive.Suggestion>
@@ -79,12 +73,12 @@ function Thread() {
         </ThreadPrimitive.Messages>
       </ThreadPrimitive.Viewport>
       <ComposerPrimitive.Root className="composer">
-        <ComposerPrimitive.Input className="composer-input" placeholder="Ask about stops, journeys, lines…" autoFocus />
+        <ComposerPrimitive.Input className="composer-input" placeholder={t("composer.placeholder")} autoFocus />
         <ThreadPrimitive.If running={false}>
-          <ComposerPrimitive.Send className="composer-button">Send</ComposerPrimitive.Send>
+          <ComposerPrimitive.Send className="composer-button">{t("composer.send")}</ComposerPrimitive.Send>
         </ThreadPrimitive.If>
         <ThreadPrimitive.If running>
-          <ComposerPrimitive.Cancel className="composer-button">Stop</ComposerPrimitive.Cancel>
+          <ComposerPrimitive.Cancel className="composer-button">{t("composer.stop")}</ComposerPrimitive.Cancel>
         </ThreadPrimitive.If>
       </ComposerPrimitive.Root>
     </ThreadPrimitive.Root>
@@ -99,17 +93,17 @@ function ModelPicker({ models, model, onSelect }: Readonly<{ models: Model[]; mo
   const listed = [...free, ...paid].some((m) => m.id === model);
   return (
     <span className="model-picker">
-      <select value={model} onChange={(e) => onSelect(e.target.value)} aria-label="Model">
+      <select value={model} onChange={(e) => onSelect(e.target.value)} aria-label={t("model.label")}>
         {!listed && <option value={model}>{models.find((m) => m.id === model)?.name ?? model}</option>}
-        <optgroup label="Free">
+        <optgroup label={t("model.free")}>
           {free.map((m) => (
             <option key={m.id} value={m.id}>
               {m.name}
-              {m.id === DEFAULT_MODEL ? " (recommended)" : ""}
+              {m.id === DEFAULT_MODEL ? t("model.recommended") : ""}
             </option>
           ))}
         </optgroup>
-        <optgroup label={all ? "Paid (OpenRouter credits)" : "Paid, main models (OpenRouter credits)"}>
+        <optgroup label={t(all ? "model.paidAll" : "model.paid")}>
           {paid.map((m) => (
             <option key={m.id} value={m.id}>
               {m.name}
@@ -117,8 +111,8 @@ function ModelPicker({ models, model, onSelect }: Readonly<{ models: Model[]; mo
           ))}
         </optgroup>
       </select>
-      <label className="model-all" title="Every model of OpenRouter able to call tools">
-        <input type="checkbox" checked={all} onChange={(e) => setAll(e.target.checked)} /> All models
+      <label className="model-all" title={t("model.allTitle")}>
+        <input type="checkbox" checked={all} onChange={(e) => setAll(e.target.checked)} /> {t("model.all")}
       </label>
     </span>
   );
@@ -178,8 +172,8 @@ export default function Chat({ apiKey }: Readonly<{ apiKey: string }>) {
           <h1>MOTIS explorer</h1>
 <ModelPicker models={models} model={model} onSelect={selectModel} />
           {quota && (
-            <span className="quota" title="Requests to free models today">
-              {quota.remaining}/{quota.limit} free requests left
+            <span className="quota" title={t("quota.title")}>
+              {t("quota.left", { remaining: quota.remaining, limit: quota.limit })}
             </span>
           )}
           <button
@@ -189,7 +183,7 @@ export default function Chat({ apiKey }: Readonly<{ apiKey: string }>) {
               window.location.reload();
             }}
           >
-            Log out
+            {t("logout")}
           </button>
         </header>
         <Thread />

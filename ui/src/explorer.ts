@@ -2,6 +2,7 @@
 import L from "leaflet";
 import { callTool, startView } from "./shared/app";
 import { esc, lineBadge, modeColor, modeLabel, time } from "./shared/format";
+import { t } from "./shared/i18n";
 import { bounds, createMap, decode, fit } from "./shared/map";
 import type { AreaResult, DeparturesResult, PlaceDto, ReachabilityResult } from "./shared/types";
 
@@ -10,7 +11,7 @@ type ExplorerData = AreaResult | ReachabilityResult;
 const content = document.getElementById("content")!;
 content.innerHTML = `
   <div class="toolbar">
-    <button id="back" type="button" hidden>← Back</button>
+    <button id="back" type="button" hidden data-i18n="back">← Back</button>
     <div id="chips" class="chips"></div>
   </div>
   <div id="map" class="map"></div>
@@ -53,9 +54,9 @@ back.addEventListener("click", () => {
 function renderArea(data: AreaResult): void {
   title.textContent = data.title;
   subtitle.textContent =
-    `${data.totalStops} stops · ${data.totalRoutes} routes` +
-    (data.stops.length < data.totalStops ? ` (${data.stops.length} stops shown)` : "") +
-    (data.zoomFiltered ? " · minor routes hidden, zoom in" : "");
+    t("explorer.summary", { stops: data.totalStops, routes: data.totalRoutes }) +
+    (data.stops.length < data.totalStops ? ` ${t("explorer.stopsShown", { count: data.stops.length })}` : "") +
+    (data.zoomFiltered ? ` · ${t("explorer.zoomFiltered")}` : "");
 
   drawRoutes(data);
   drawStops(data);
@@ -65,7 +66,7 @@ function renderArea(data: AreaResult): void {
     data.kind === "routeDetails"
       ? ""
       : data.routes
-          .map((r) => `<span data-route="${r.routeIdx}" title="${esc(modeLabel(r.mode))} · ${r.numStops} stops">${lineBadge(r.mode, r.names.join(" / "), r.color, r.textColor)}</span>`)
+          .map((r) => `<span data-route="${r.routeIdx}" title="${esc(t("explorer.routeStops", { mode: modeLabel(r.mode), count: r.numStops }))}">${lineBadge(r.mode, r.names.join(" / "), r.color, r.textColor)}</span>`)
           .join("");
 
   const modes = [...new Set(data.routes.map((r) => r.mode))];
@@ -125,7 +126,7 @@ async function openRoute(routeIdx: number): Promise<void> {
 /** Popup with the next departures of [stop]. */
 async function openStop(marker: L.CircleMarker, stop: PlaceDto): Promise<void> {
   const header = `<strong>${esc(stop.name)}</strong>`;
-  marker.bindPopup(`${header}<div class="muted">Loading departures…</div>`, { maxWidth: 320 }).openPopup();
+  marker.bindPopup(`${header}<div class="muted">${t("explorer.loadingDepartures")}</div>`, { maxWidth: 320 }).openPopup();
   try {
     const result = await callTool<DeparturesResult>(app, "departures", { stopId: stop.stopId, count: 8 });
     const rows = result.stopTimes
@@ -136,7 +137,8 @@ async function openStop(marker: L.CircleMarker, stop: PlaceDto): Promise<void> {
           `<span>${esc(st.headsign)}</span>`,
       )
       .join("");
-    marker.setPopupContent(`${header}<div class="popup-departures">${rows || '<span class="muted">No departure soon</span>'}</div>`);
+    const content = rows || `<span class="muted">${t("explorer.noDeparture")}</span>`;
+    marker.setPopupContent(`${header}<div class="popup-departures">${content}</div>`);
   } catch (e) {
     marker.setPopupContent(`${header}<div class="muted">${esc(e instanceof Error ? e.message : String(e))}</div>`);
   }
@@ -150,12 +152,14 @@ function durationColor(minutes: number, max: number): string {
 
 function renderReachability(data: ReachabilityResult): void {
   const max = data.maxTravelTimeMinutes;
-  title.textContent = `Reachable from ${data.origin.name}`;
-  subtitle.textContent = `${data.totalPlaces} stops within ${max} min` + (data.places.length < data.totalPlaces ? ` (${data.places.length} shown)` : "");
+  title.textContent = t("explorer.reachableFrom", { name: data.origin.name });
+  subtitle.textContent =
+    t("explorer.reachableSummary", { count: data.totalPlaces, max }) +
+    (data.places.length < data.totalPlaces ? ` ${t("explorer.shown", { count: data.places.length })}` : "");
   // farthest first, so that the closest places are drawn on top
   for (const place of [...data.places].reverse()) {
     const minutes = place.durationMinutes ?? max;
-    const transfers = place.transfers == null ? "" : ` · ${place.transfers} transfer(s)`;
+    const transfers = place.transfers == null ? "" : ` · ${t("transfers", { count: place.transfers })}`;
     L.circleMarker([place.lat, place.lon], {
       radius: 5,
       stroke: false,

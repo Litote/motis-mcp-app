@@ -9,13 +9,15 @@ export class FakeApp {
   static last: FakeApp;
   /** The next view fails to connect to the host. */
   static failNextConnection = false;
+  /** Locale of the host of the next view. */
+  static nextLocale = "en-GB";
   ontoolinput?: Handler;
   ontoolresult?: Handler;
   ontoolcancelled?: () => void;
   onhostcontextchanged?: Handler;
   hostContext: Record<string, unknown> | undefined = {
     theme: "dark",
-    locale: "en-GB",
+    locale: FakeApp.nextLocale,
     availableDisplayModes: ["inline", "fullscreen"],
     displayMode: "inline",
     styles: { variables: { "--color-text-primary": "#000" }, css: { fonts: "@font-face {}" } },
@@ -27,6 +29,7 @@ export class FakeApp {
 
   constructor() {
     FakeApp.last = this;
+    FakeApp.nextLocale = "en-GB";
     if (FakeApp.failNextConnection) {
       FakeApp.failNextConnection = false;
       this.connect.mockRejectedValue(new Error("no host"));

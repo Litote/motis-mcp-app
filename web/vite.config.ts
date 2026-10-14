@@ -63,10 +63,11 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    setupFiles: ["src/test-setup.ts"],
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],
-      exclude: ["src/**/*.test.{ts,tsx}"],
+      exclude: ["src/**/*.test.{ts,tsx}", "src/test-setup.ts"],
       // lcov for SonarCloud, with paths from the root of the repository
       reporter: ["text-summary", ["lcov", { projectRoot: ".." }]],
     },

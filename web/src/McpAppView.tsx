@@ -12,6 +12,7 @@ import {
 } from "@modelcontextprotocol/ext-apps/app-bridge";
 import type { CallToolResult } from "@modelcontextprotocol/client";
 import { loadConfig } from "./config";
+import { locale, t } from "./i18n";
 import { IMPLEMENTATION, connectMcp, toolView, type McpServer, type ViewResource } from "./mcp";
 import { setViewContext } from "./agent";
 
@@ -82,6 +83,7 @@ function createBridge(
     {
       hostContext: {
         theme: theme(),
+        locale: locale(),
         platform: "web",
         containerDimensions: { maxHeight: 6000 },
         displayMode: "inline",
@@ -148,7 +150,8 @@ export function McpAppView(props: Readonly<McpAppViewProps>) {
     fullscreenRef.current = value;
     setFullscreen(value);
     const iframe = iframeRef.current;
-    if (!value && iframe?.dataset.inlineHeight) iframe.style.height = iframe.dataset.inlineHeight;
+    // fullscreen, the frame fills the window (CSS): the inline height of the content is set back once inline
+    if (iframe) iframe.style.height = value ? "" : (iframe.dataset.inlineHeight ?? "");
     void bridgeRef.current?.sendHostContextChange({ displayMode: value ? "fullscreen" : "inline" });
   }, []);
 
@@ -199,7 +202,7 @@ export function McpAppView(props: Readonly<McpAppViewProps>) {
     };
   }, [props.toolCallId, props.toolName, setDisplayMode]);
 
-  if (error) return <div className="view-error">View unavailable: {error}</div>;
+  if (error) return <div className="view-error">{t("view.unavailable", { error })}</div>;
   return (
     <div className={fullscreen ? "view view-fullscreen" : "view"}>
       {fullscreen && (
@@ -208,9 +211,9 @@ export function McpAppView(props: Readonly<McpAppViewProps>) {
           type="button"
           className="view-close"
           onClick={() => setDisplayMode(false)}
-          title="Close (Escape)"
+          title={t("view.closeTitle")}
         >
-          Close
+          {t("view.close")}
         </button>
       )}
       <iframe ref={iframeRef} title={props.toolName} className="view-frame" />

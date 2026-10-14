@@ -59,6 +59,8 @@ sonar {
         // their fixtures. The Kotlin modules (server, lambda) are analysed from their Gradle source sets.
         property("sonar.sources", "ui/src,web/src,infra")
         property("sonar.exclusions", "**/*.test.ts,**/*.test.tsx,ui/src/test/**,**/.terraform/**")
+        // Translations: the dictionaries of each language have the same keys
+        property("sonar.cpd.exclusions", "**/i18n.ts")
         // vitest coverage (npm run coverage in ui/ and web/)
         property("sonar.javascript.lcov.reportPaths", "ui/coverage/lcov.info,web/coverage/lcov.info")
         // Access logs of the buckets and CloudFront distributions: a log bucket billed for a public demo, not needed

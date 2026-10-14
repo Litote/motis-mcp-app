@@ -2,6 +2,7 @@
 import L from "leaflet";
 import { startView } from "./shared/app";
 import { esc } from "./shared/format";
+import { t, tOptional } from "./shared/i18n";
 import { createMap, fit } from "./shared/map";
 import type { RentalsResult } from "./shared/types";
 
@@ -18,15 +19,8 @@ const { map, setTheme } = themedMap;
 const layer = L.featureGroup().addTo(map);
 
 const PALETTE = ["#1c7ed6", "#e8590c", "#2f9e44", "#ae3ec9", "#f08c00", "#0c8599", "#c2255c", "#5f3dc4"];
-const FORM_FACTORS: Record<string, string> = {
-  BICYCLE: "bike",
-  CARGO_BICYCLE: "cargo bike",
-  CAR: "car",
-  MOPED: "moped",
-  SCOOTER_STANDING: "scooter",
-  SCOOTER_SEATED: "seated scooter",
-  OTHER: "other",
-};
+const formFactor = (f: string): string => tOptional(`formFactor.${f}`) ?? f.toLowerCase();
+const propulsion = (p: string): string => tOptional(`propulsion.${p}`) ?? p.toLowerCase();
 
 let data: RentalsResult | null = null;
 const hidden = new Set<string>();
@@ -47,15 +41,14 @@ function colors(result: RentalsResult): Map<string, string> {
 function render(refit: boolean): void {
   if (!data) return;
   const providerColors = colors(data);
-  title.textContent = `Shared mobility · ${data.title}`;
+  title.textContent = `${t("rentals.title")} · ${data.title}`;
   subtitle.textContent =
-    `${data.providers.length} provider(s) · ${data.totalStations} station(s) or parking spot(s) · ` +
-    `${data.totalVehicles} free-floating vehicle(s)` +
-    (data.stations.length < data.totalStations || data.vehicles.length < data.totalVehicles ? " (closest shown)" : "");
+    t("rentals.summary", { providers: data.providers.length, stations: data.totalStations, vehicles: data.totalVehicles }) +
+    (data.stations.length < data.totalStations || data.vehicles.length < data.totalVehicles ? ` ${t("rentals.closestShown")}` : "");
 
   providersEl.innerHTML = data.providers.length
     ? data.providers.map((p) => providerLabel(p, providerColors)).join("")
-    : '<span class="muted">No shared mobility provider in this area.</span>';
+    : `<span class="muted">${t("rentals.none")}</span>`;
 
   layer.clearLayers();
   drawStations(data, providerColors);
@@ -64,13 +57,13 @@ function render(refit: boolean): void {
 }
 
 function providerLabel(p: RentalsResult["providers"][number], providerColors: Map<string, string>): string {
-  const formFactors = p.formFactors.map((f) => FORM_FACTORS[f] ?? f.toLowerCase()).join(", ");
-  const areaVehicles = p.areaVehicles ? ` · ${p.areaVehicles} in its whole area` : "";
+  const formFactors = p.formFactors.map(formFactor).join(", ");
+  const areaVehicles = p.areaVehicles ? ` · ${t("rentals.areaVehicles", { count: p.areaVehicles })}` : "";
   return `
       <label title="${esc(p.operator ?? "")}">
         <input type="checkbox" data-provider="${esc(p.id)}" ${hidden.has(p.id) ? "" : "checked"} />
         <i style="background:${esc(providerColors.get(p.id))}"></i>${esc(p.name)}
-        <span class="muted">${formFactors} · ${p.stations} st. · ${p.vehicles} veh.${areaVehicles}</span>
+        <span class="muted">${formFactors} · ${t("rentals.providerCounts", { stations: p.stations, vehicles: p.vehicles })}${areaVehicles}</span>
       </label>`;
 }
 
@@ -85,10 +78,10 @@ function drawStations(data: RentalsResult, providerColors: Map<string, string>):
       fillOpacity: s.vehiclesAvailable > 0 ? 0.6 : 0.1,
     })
       .bindTooltip(
-        `<strong>${esc(s.name)}</strong><br>${s.vehiclesAvailable} vehicle(s)` +
-          (s.docksAvailable != null ? ` · ${s.docksAvailable} free dock(s)` : "") +
+        `<strong>${esc(s.name)}</strong><br>${t("rentals.vehicles", { count: s.vehiclesAvailable })}` +
+          (s.docksAvailable != null ? ` · ${t("rentals.docks", { count: s.docksAvailable })}` : "") +
           (s.distanceKm != null ? ` · ${Math.round(s.distanceKm * 1000)} m` : "") +
-          (s.isRenting ? "" : "<br>not renting"),
+          (s.isRenting ? "" : `<br>${t("rentals.notRenting")}`),
       )
       .addTo(layer);
   }
@@ -103,7 +96,11 @@ function drawVehicles(data: RentalsResult, providerColors: Map<string, string>):
       fillColor: providerColors.get(v.providerId),
       fillOpacity: v.available ? 0.9 : 0.3,
     })
-      .bindTooltip(`${esc(FORM_FACTORS[v.formFactor] ?? v.formFactor)} · ${esc(v.propulsion.toLowerCase())}${v.available ? "" : " · unavailable"}`)
+      .bindTooltip(
+        [formFactor(v.formFactor), propulsion(v.propulsion), ...(v.available ? [] : [t("rentals.unavailable")])]
+          .map(esc)
+          .join(" · "),
+      )
       .addTo(layer);
   }
 }

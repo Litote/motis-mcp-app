@@ -134,3 +134,22 @@ describe("departures view", () => {
     expect($("#status").textContent).toBe("Connection to the host failed: Error: no host");
   });
 });
+
+describe("departures view in French", () => {
+  it("uses the locale of the host for the static texts, the board and the dates", async () => {
+    FakeApp.nextLocale = "fr-FR";
+    const app = await loadView("departures");
+    await Promise.resolve();
+    expect(document.documentElement.lang).toBe("fr");
+    expect($("#title").textContent).toBe("Départs");
+    expect($("#fullscreen").title).toBe("Plein écran");
+    expect($("#status").textContent).toBe("Chargement…");
+
+    await app.toolResult({ stopId: "S1", count: 3 }, board());
+    expect($("#subtitle").textContent).toMatch(/^Départs · lun\. 12 oct\.$/);
+    expect(rows()[0]).toContain("voie 4");
+    expect(rows()[1]).toContain("supprimé");
+    expect($("button[data-action=arrivals]").textContent).toBe("Arrivées");
+    expect($("button[data-action=next]").textContent).toBe("Plus tard →");
+  });
+});

@@ -205,6 +205,14 @@ class MotisGateway(configuration: ClientConfiguration) {
                     arriveBy = query.arriveBy,
                     transitModes = query.transitModes,
                     maxTransfers = query.maxTransfers?.toLong(),
+                    // walk to the first stop and from the last stop (MOTIS default: 15 min)
+                    maxPreTransitTime = query.maxWalkMinutes * 60L,
+                    maxPostTransitTime = query.maxWalkMinutes * 60L,
+                    // transfers on foot routed on the streets (OpenStreetMap), not as the crow flies
+                    useRoutedTransfers = true,
+                    // not sent: the 25 m default of the client leaves stops far from a street (e.g. inside a station)
+                    // without walking legs, the server default does not
+                    maxMatchingDistance = null,
                     numItineraries = query.numItineraries?.toLong(),
                     pageCursor = query.pageCursor,
                     language = query.language,
@@ -265,6 +273,9 @@ class MotisGateway(configuration: ClientConfiguration) {
     companion object {
         const val DEFAULT_STOP_TIMES = 20
 
+        /** Walk to the first stop and from the last stop of a journey, in minutes. */
+        const val DEFAULT_MAX_WALK_MINUTES = 25
+
         private val COORDINATES = Regex("""^\s*(-?\d{1,2}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)\s*$""")
 
         fun parseCoordinates(input: String): Pair<Double, Double>? =
@@ -289,6 +300,7 @@ data class PlanQuery(
     val arriveBy: Boolean = false,
     val transitModes: List<Mode>? = null,
     val maxTransfers: Int? = null,
+    val maxWalkMinutes: Int = MotisGateway.DEFAULT_MAX_WALK_MINUTES,
     val numItineraries: Int? = null,
     val pageCursor: String? = null,
     val language: List<String>? = null,
