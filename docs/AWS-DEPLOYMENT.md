@@ -63,6 +63,7 @@ GitHub configuration:
 | variable                     | `TF_STATE_BUCKET`                               | `state_bucket` output of `make bootstrap`            |
 | variable                     | `MOTIS_APP_CONTACT`                             | contact sent in the User-Agent (Transitous policy)   |
 | variable (optional)          | `MOTIS_TILE_URL`, `MOTIS_TILE_ATTRIBUTION`      | tile provider                                        |
+| variable (optional)          | `MOTIS_VIEW_DOMAINS`                            | dedicated origin of the views per host, JSON: `{"chatgpt":"https://…"}` |
 | variable (optional)          | `RESERVED_CONCURRENCY`                          | default 10; `-1` while the account concurrency quota is below 20 (new accounts: 10) |
 | environment                  | `production`                                    | deployment branch policy: `main` only                |
 

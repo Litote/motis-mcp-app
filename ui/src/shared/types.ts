@@ -14,6 +14,8 @@ export interface PlaceDto {
   scheduledDeparture?: string;
   cancelled?: boolean;
   tz?: string;
+  /** City or region of a place asked by name. */
+  area?: string;
 }
 
 export interface RouteDto {

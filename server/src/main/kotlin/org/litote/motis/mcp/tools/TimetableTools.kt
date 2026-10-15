@@ -62,7 +62,7 @@ fun Server.addTimetableTools(gateway: MotisGateway) {
     ) { args ->
         val stopId =
             args.string("stopId")
-                ?: args.string("stop")?.let { gateway.resolvePlace(it, stopsOnly = true).id }
+                ?: args.string("stop")?.let { gateway.resolvePlace(it, stopsOnly = true, language = args.stringList("language")).id }
                 ?: throw MotisToolException("Invalid argument: 'stopId' or 'stop' is required")
         val arriveBy = args.boolean("arriveBy") ?: false
         val body =

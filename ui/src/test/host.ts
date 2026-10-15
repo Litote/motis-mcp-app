@@ -23,8 +23,10 @@ export class FakeApp {
     styles: { variables: { "--color-text-primary": "#000" }, css: { fonts: "@font-face {}" } },
     safeAreaInsets: { top: 1, right: 2, bottom: 3, left: 4 },
   };
+  hostCapabilities: Record<string, unknown> | undefined = { serverTools: {}, updateModelContext: { text: {} } };
   connect = vi.fn(async () => undefined);
   callServerTool = vi.fn();
+  updateModelContext = vi.fn(async (_params: { content: Array<{ type: string; text: string }> }) => ({}));
   requestDisplayMode = vi.fn(async ({ mode }: { mode: string }) => ({ mode }));
 
   constructor() {
@@ -38,6 +40,10 @@ export class FakeApp {
 
   getHostContext() {
     return this.hostContext;
+  }
+
+  getHostCapabilities() {
+    return this.hostCapabilities;
   }
 
   /** The host sends the arguments, then the result of the tool call. */

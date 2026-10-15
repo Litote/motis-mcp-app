@@ -348,12 +348,199 @@ class MotisToolsTest {
     }
 
     @Test
+    fun `plan_journey sends the journey options to MOTIS`() {
+        val motis = transitous()
+        withMcpClient(motis) { client ->
+            val result =
+                client.callTool(
+                    "plan_journey",
+                    mapOf(
+                        "from" to "45.7605,4.8597",
+                        "to" to "Lyon Part-Dieu",
+                        "walkingSpeed" to "slow",
+                        "wheelchair" to true,
+                        "transferMargin" to "COMFORTABLE",
+                        "bike" to "ON_BOARD",
+                    ),
+                )
+
+            val parameters = motis.request("/api/v6/plan").url.parameters
+            assertEquals("0.8", parameters["pedestrianSpeed"])
+            assertEquals("WHEELCHAIR", parameters["pedestrianProfile"])
+            assertEquals("5", parameters["additionalTransferTime"])
+            assertEquals("true", parameters["requireBikeTransport"])
+            assertEquals("BIKE", parameters["preTransitModes"])
+            assertEquals("BIKE", parameters["postTransitModes"])
+            assertEquals("BIKE", parameters["directModes"])
+            // the bike is ridden from/to coordinates: the destination stop is sent as its coordinates
+            assertTrue(MotisGateway.parseCoordinates(parameters["toPlace"]!!) != null, parameters["toPlace"])
+            assertTrue(
+                result.text().contains("Options: walking speed SLOW, wheelchair, transfer margin COMFORTABLE, bike ON_BOARD."),
+                result.text(),
+            )
+        }
+    }
+
+    @Test
+    fun `plan_journey rides the bike from the origin only to a station`() {
+        val motis = transitous()
+        withMcpClient(motis) { client ->
+            client.callTool("plan_journey", mapOf("from" to "45.7605,4.8597", "to" to "Lyon Part-Dieu", "bike" to "TO_STATION"))
+
+            val parameters = motis.request("/api/v6/plan").url.parameters
+            assertEquals("es-RENFE-Larga-Distancia-y-AVE_87303", parameters["toPlace"])
+            assertEquals("BIKE", parameters["preTransitModes"])
+            assertEquals("WALK", parameters["postTransitModes"])
+            assertEquals("WALK,BIKE", parameters["directModes"])
+            assertEquals("false", parameters["requireBikeTransport"])
+            assertNull(parameters["pedestrianSpeed"])
+            assertNull(parameters["pedestrianProfile"])
+        }
+    }
+
+    @Test
+    fun `plan_journey rejects unknown option values`() {
+        withMcpClient(MockMotis { error("no MOTIS call expected") }) { client ->
+            val result = client.callTool("plan_journey", mapOf("from" to "Lyon", "to" to "Grenoble", "bike" to "TANDEM"))
+
+            assertEquals(true, result.isError)
+            assertEquals("Invalid argument: 'bike' must be one of NONE, TO_STATION, ON_BOARD", result.text())
+        }
+    }
+
+    @Test
     fun `unknown places are tool errors`() {
         withMcpClient(MockMotis { respondJson("[]") }) { client ->
             val result = client.callTool("plan_journey", mapOf("from" to "Nowhere", "to" to "45.7,4.8"))
 
             assertEquals(true, result.isError)
             assertEquals("No place found for \"Nowhere\"", result.text())
+        }
+    }
+
+    @Test
+    fun `plan_journey starts from the position of the user and searches the destination near the origin`() {
+        val motis = transitous()
+        withMcpClient(motis) { client ->
+            val result = client.callTool("plan_journey", mapOf("position" to "45.7605,4.8597", "to" to "Lyon Part-Dieu", "language" to "fr"))
+
+            assertNull(result.isError, result.text())
+            assertEquals("45.7605,4.8597", motis.request("/api/v6/plan").url.parameters["fromPlace"])
+            val geocode = motis.request("/api/v1/geocode").url.parameters
+            assertEquals("45.7605,4.8597", geocode["place"])
+            assertEquals("fr", geocode["language"])
+        }
+    }
+
+    @Test
+    fun `plan_journey searches the origin near the position of the user`() {
+        val motis = transitous()
+        withMcpClient(motis) { client ->
+            client.callTool("plan_journey", mapOf("from" to "Lyon Part-Dieu", "to" to "45.19,5.71", "position" to "45.75,4.85"))
+
+            assertEquals("45.75,4.85", motis.request("/api/v1/geocode").url.parameters["place"])
+            assertEquals("es-RENFE-Larga-Distancia-y-AVE_87303", motis.request("/api/v6/plan").url.parameters["fromPlace"])
+        }
+    }
+
+    @Test
+    fun `plan_journey requires an origin`() {
+        withMcpClient(MockMotis { error("no MOTIS call expected") }) { client ->
+            val missing = client.callTool("plan_journey", mapOf("to" to "Grenoble"))
+            assertEquals("Invalid argument: 'from' or 'position' is required", missing.text())
+
+            val invalid = client.callTool("plan_journey", mapOf("position" to "Lyon", "to" to "Grenoble"))
+            assertEquals("Invalid argument: 'position' must be 'lat,lon'", invalid.text())
+        }
+    }
+
+    @Test
+    fun `stop ids are resolved as stops, as the geocoder does not search them`() {
+        val stopId = "es-RENFE-Larga-Distancia-y-AVE_87303"
+        val motis =
+            MockMotis { request ->
+                when (request.url.encodedPath) {
+                    "/api/v1/geocode" -> respondJson("[]")
+                    else -> respondJson(fixture(FIXTURES.getValue(request.url.encodedPath)))
+                }
+            }
+        withMcpClient(motis) { client ->
+            val result = client.callTool("plan_journey", mapOf("from" to stopId, "to" to "45.19,5.71"))
+
+            assertNull(result.isError, result.text())
+            assertEquals(stopId, motis.request("/api/v6/plan").url.parameters["fromPlace"])
+            assertEquals(stopId, motis.request("/api/v6/stoptimes").url.parameters["stopId"])
+        }
+    }
+
+    @Test
+    fun `unknown stop ids are tool errors`() {
+        val motis =
+            MockMotis { request ->
+                when (request.url.encodedPath) {
+                    "/api/v1/geocode" -> respondJson("[]")
+                    else -> respondJson("""{"error":"unknown feed id \"nope\""}""", HttpStatusCode.NotFound)
+                }
+            }
+        withMcpClient(motis) { client ->
+            val result = client.callTool("reachability", mapOf("place" to "nope_123"))
+
+            assertEquals(true, result.isError)
+            assertEquals("No place found for \"nope_123\"", result.text())
+        }
+    }
+
+    @Test
+    fun `plan_journey tells the area of the places asked by name`() {
+        val match =
+            """
+            [{"id":"bordeaux","name":"Saint Michel","type":"STOP","lat":44.834,"lon":-0.563,"score":-21.85,
+              "areas":[{"name":"Bordeaux","adminLevel":8,"matched":false,"default":true}],"tokens":[]}]
+            """.trimIndent()
+        val motis =
+            MockMotis { request ->
+                when (request.url.encodedPath) {
+                    "/api/v1/geocode" -> respondJson(match)
+                    else -> respondJson(fixture(FIXTURES.getValue(request.url.encodedPath)))
+                }
+            }
+        withMcpClient(motis) { client ->
+            val result = client.callTool("plan_journey", mapOf("from" to "Saint-Michel", "to" to "45.19,5.71"))
+
+            val journey = result.data(JourneyResult.serializer())
+            assertEquals("Bordeaux", journey.from.area)
+            assertNull(journey.to.area)
+            assertTrue(result.text().startsWith("From Saint Michel (Bordeaux) to 45.19,5.71: "), result.text())
+        }
+    }
+
+    @Test
+    fun `ambiguous places are tool errors listing the candidates`() {
+        // homonyms in different cities with the same score, and a platform of the best match (not a rival)
+        val matches =
+            """
+            [
+              {"id":"bordeaux","name":"Saint Michel","type":"STOP","lat":44.834,"lon":-0.563,"score":-21.85,"areas":[{"name":"Bordeaux","adminLevel":8,"matched":false,"default":true}],"tokens":[]},
+              {"id":"bordeaux-2","name":"Saint Michel","type":"STOP","lat":44.835,"lon":-0.564,"score":-21.85,"areas":[],"tokens":[]},
+              {"id":"bourges","name":"Saint Michel","type":"STOP","lat":47.105,"lon":2.424,"score":-21.5,"areas":[{"name":"Bourges","adminLevel":8,"matched":false,"default":true}],"tokens":[]},
+              {"id":"paris","name":"Saint-Michel Notre-Dame","type":"STOP","lat":48.853,"lon":2.344,"score":-20.0,"areas":[],"tokens":[]}
+            ]
+            """.trimIndent()
+        val motis = MockMotis { respondJson(matches) }
+        withMcpClient(motis) { client ->
+            val result = client.callTool("departures", mapOf("stop" to "Saint-Michel"))
+
+            assertEquals(true, result.isError)
+            assertEquals(
+                """
+                "Saint-Michel" is ambiguous, candidates:
+                - Saint Michel — Bordeaux id=bordeaux (44.834,-0.563)
+                - Saint Michel — Bourges id=bourges (47.105,2.424)
+                Retry with one of these stop ids or coordinates, or a more precise name (e.g. with the city).
+                """.trimIndent(),
+                result.text(),
+            )
+            assertEquals("5", motis.request("/api/v1/geocode").url.parameters["numResults"])
         }
     }
 

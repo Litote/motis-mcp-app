@@ -89,6 +89,17 @@ fun main() {
     val departures = callTool("departures", "stop" to PLACE, "count" to 5)
     departures.firstValue("tripId")?.let { callTool("trip_details", "tripId" to it.content) }
     callTool("plan_journey", "from" to PLACE, "to" to "Villeurbanne")
+    // journey options: walking profile, transfer margin, bike (ends sent as coordinates)
+    callTool(
+        "plan_journey",
+        "from" to PLACE,
+        "to" to "Villeurbanne",
+        "maxWalkMinutes" to 10,
+        "walkingSpeed" to "SLOW",
+        "wheelchair" to true,
+        "transferMargin" to "COMFORTABLE",
+        "bike" to "ON_BOARD",
+    )
     callTool("reachability", "place" to PLACE)
     callTool("rentals", "place" to PLACE, "radiusKm" to 1)
     // error path: MOTIS error and invalid arguments

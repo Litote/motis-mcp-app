@@ -50,6 +50,17 @@ variable "tile_attribution" {
   default     = ""
 }
 
+variable "view_domains" {
+  description = "Dedicated origin of the views (_meta.ui.domain, format defined by each host) on the endpoint /mcp/<host> of a host: chatgpt, claude (default: computed from the endpoint URL), mistral, cherry. E.g. to allowlist it at the tile provider."
+  type        = map(string)
+  default     = {}
+
+  validation {
+    condition     = alltrue([for host in keys(var.view_domains) : contains(["chatgpt", "claude", "mistral", "cherry"], host)])
+    error_message = "view_domains keys must be chatgpt, claude, mistral or cherry."
+  }
+}
+
 variable "architecture" {
   description = "Lambda architecture, matching the native executable: arm64 (CI build on an arm64 runner) or x86_64. `make` passes the host's."
   type        = string

@@ -77,4 +77,10 @@ describe("systemPrompt", () => {
     setViewContext("c1", null);
     expect(systemPrompt("x")).not.toContain("Bellecour");
   });
+
+  it("gives the position of the user when shared", () => {
+    const prompt = systemPrompt("x", new Date(), { lat: 45.760512, lon: 4.859734, accuracy: 35.4 });
+    expect(prompt).toContain("Current position of the user: 45.7605,4.8597 (accuracy 35 m).");
+    expect(systemPrompt("x", new Date(), null)).not.toContain("position of the user");
+  });
 });

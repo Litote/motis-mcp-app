@@ -4,10 +4,13 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import org.litote.motis.mcp.McpHost
 import org.litote.motis.mcp.MotisGateway
+import org.litote.motis.mcp.claudeViewDomain
 import org.litote.motis.mcp.MotisMcpConfig
 import org.litote.motis.mcp.apps.UiView
 import org.litote.motis.mcp.createMotisMcpServer
+import org.litote.motis.mcp.viewDomain
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -15,13 +18,17 @@ import kotlin.test.assertTrue
 
 class McpLambdaTest {
     private val lambda =
-        MotisMcpConfig(contact = "https://example.org/tests").let { config ->
+        MotisMcpConfig(
+            contact = "https://example.org/tests",
+            viewDomains = mapOf(McpHost.CHATGPT to "https://motis.example.org"),
+        ).let { config ->
             McpLambda {
                 createMotisMcpServer(
                     MotisGateway(config.clientConfiguration()),
                     config.baseUrl,
                     config.tiles,
                     UiView.entries.associateWith { "<html><head></head><body>${it.name}</body></html>" },
+                    viewDomain(config),
                 )
             }
         }
@@ -44,8 +51,8 @@ class McpLambdaTest {
     private fun call(method: String, body: String? = null, path: String = "/mcp"): FunctionUrlResponse =
         lambdaJson.decodeFromString(lambda.handle(event(method, body, path)))
 
-    private fun rpc(method: String, params: String = "{}"): JsonObject {
-        val response = call("POST", """{"jsonrpc":"2.0","id":1,"method":"$method","params":$params}""")
+    private fun rpc(method: String, params: String = "{}", path: String = "/mcp"): JsonObject {
+        val response = call("POST", """{"jsonrpc":"2.0","id":1,"method":"$method","params":$params}""", path)
         assertEquals(200, response.statusCode, response.body)
         assertTrue(response.headers.entries.any { it.key.equals("content-type", true) && it.value.startsWith("application/json") })
         assertEquals(false, response.base64Encoded)
@@ -75,6 +82,25 @@ class McpLambdaTest {
     fun `view resources are served`() {
         val contents = rpc("resources/read", """{"uri":"${UiView.DEPARTURES.uri}"}""").getValue("contents").jsonArray
         assertTrue(contents.single().jsonObject.getValue("text").jsonPrimitive.content.contains("DEPARTURES"))
+    }
+
+    private fun viewDomain(path: String): String? =
+        rpc("resources/list", path = path).getValue("resources").jsonArray.first().jsonObject
+            .getValue("_meta").jsonObject.getValue("ui").jsonObject["domain"]?.jsonPrimitive?.content
+
+    @Test
+    fun `each host has its endpoint, with its dedicated origin of the views`() {
+        assertNull(viewDomain("/mcp"))
+        assertEquals("https://motis.example.org", viewDomain("/mcp/chatgpt"))
+        assertEquals(claudeViewDomain("https://abc.lambda-url.eu-west-3.on.aws/mcp/claude"), viewDomain("/mcp/claude"))
+        assertNull(viewDomain("/mcp/mistral"))
+        assertNull(viewDomain("/mcp/cherry"))
+    }
+
+    @Test
+    fun `unknown host is not found`() {
+        assertEquals(404, call("POST", "{}", path = "/mcp/other").statusCode)
+        assertEquals(404, call("POST", "{}", path = "/mcp/claude/other").statusCode)
     }
 
     @Test

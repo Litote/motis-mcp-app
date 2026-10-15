@@ -23,7 +23,7 @@ private const val USAGE =
 Usage: motis-mcp-app [--stdio | --http [--port <port>] [--host <host>]]
 
   --stdio          MCP over stdin/stdout (default)
-  --http           MCP over Streamable HTTP, endpoint /mcp
+  --http           MCP over Streamable HTTP, endpoint /mcp (and /mcp/chatgpt, /mcp/claude, /mcp/mistral, /mcp/cherry)
   --port <port>    HTTP port (default 3001)
   --host <host>    HTTP bind address (default 127.0.0.1)
 
@@ -33,6 +33,8 @@ Environment:
   MOTIS_LOG_LEVEL      Ktor client log level: NONE (default), INFO, HEADERS, BODY, ALL
   MOTIS_TILE_URL       raster tiles of the maps (default https://tile.openstreetmap.org/{z}/{x}/{y}.png)
   MOTIS_TILE_ATTRIBUTION  attribution of the tiles (HTML)
+  MOTIS_VIEW_DOMAIN_<HOST>  dedicated origin of the views (_meta.ui.domain) on the endpoint /mcp/<host> of a host:
+                       CHATGPT, CLAUDE (default: computed from the endpoint URL), MISTRAL, CHERRY
   MCP_ALLOWED_HOSTS    comma-separated host names accepted in HTTP mode (default: localhost only)
 """
 
@@ -46,13 +48,13 @@ fun main(args: Array<String>) {
     val config = MotisMcpConfig.fromEnv()
     val gateway = MotisGateway(config.clientConfiguration())
     val views = loadViews()
-    val create = { createMotisMcpServer(gateway, config.baseUrl, config.tiles, views) }
+    val create = { viewDomain: String? -> createMotisMcpServer(gateway, config.baseUrl, config.tiles, views, viewDomain) }
 
     if ("--http" in args) {
         val port = args.option("--port")?.toInt() ?: 3001
         val host = args.option("--host") ?: "127.0.0.1"
         val allowedHosts = System.getenv("MCP_ALLOWED_HOSTS")?.split(',')?.map { it.trim() }?.filter { it.isNotEmpty() }
-        logger.info { "MCP server listening on http://$host:$port/mcp (MOTIS: ${config.baseUrl})" }
+        logger.info { "MCP server listening on http://$host:$port$MCP_PATH (MOTIS: ${config.baseUrl})" }
         embeddedServer(CIO, host = host, port = port) {
             install(CORS) {
                 anyHost()
@@ -66,11 +68,14 @@ fun main(args: Array<String>) {
                 allowHeader("Last-Event-ID")
                 exposeHeader("Mcp-Session-Id")
             }
-            mcpStreamableHttp(path = "/mcp", allowedHosts = allowedHosts?.plus(listOf("localhost", "127.0.0.1"))) { create() }
+            rejectUnknownMcpHosts()
+            mcpStreamableHttp(path = MCP_ROUTE, allowedHosts = allowedHosts?.plus(listOf("localhost", "127.0.0.1"))) {
+                create(viewDomain(config))
+            }
         }.start(wait = true)
     } else {
         runBlocking {
-            val server = create()
+            val server = create(null)
             val transport = StdioServerTransport(input = System.`in`.asSource().buffered(), output = System.out.asSink().buffered())
             val closed = CompletableDeferred<Unit>()
             // the session is closed at the end of stdin (client gone): the process exits

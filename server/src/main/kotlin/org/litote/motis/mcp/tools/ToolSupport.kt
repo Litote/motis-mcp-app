@@ -129,13 +129,21 @@ class Args(private val arguments: JsonObject) {
             runCatching { Instant.parse(it) }.getOrElse { _ -> invalid("'$name' must be an ISO-8601 date-time with offset, e.g. 2026-10-09T08:00:00+02:00") }
         }
 
+    /** Value of an enum argument, case-insensitive. */
+    inline fun <reified E : Enum<E>> enum(name: String): E? =
+        string(name)?.let { value ->
+            enumValues<E>().firstOrNull { it.name.equals(value, ignoreCase = true) }
+                ?: invalid("'$name' must be one of ${enumValues<E>().joinToString { it.name }}")
+        }
+
     fun modes(name: String): List<Mode>? =
         stringList(name)?.map { value ->
             Mode.entries.firstOrNull { it != Mode.UNKNOWN_ && it.serialName().equals(value, ignoreCase = true) }
                 ?: invalid("unknown mode '$value' (expected one of ${TRANSIT_MODES.joinToString()})")
         }
 
-    private fun invalid(message: String): Nothing = throw MotisToolException("Invalid argument: $message")
+    @PublishedApi
+    internal fun invalid(message: String): Nothing = throw MotisToolException("Invalid argument: $message")
 }
 
 /**

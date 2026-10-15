@@ -9,6 +9,7 @@ const mocks = vi.hoisted(() => ({
   forgetKey: vi.fn(),
   connectMcp: vi.fn(),
   agentSettings: [] as { model(): string; fallbackModels(): string[]; onRunEnd?(): void }[],
+  run: undefined as ChatModelAdapter["run"] | undefined,
 }));
 
 vi.mock("./openrouter", async (importOriginal) => ({
@@ -29,33 +30,34 @@ vi.mock("./agent", () => ({
   createAgent: (settings: (typeof mocks.agentSettings)[number]): ChatModelAdapter => {
     mocks.agentSettings.push(settings);
     return {
-      async *run() {
-        yield {
-          content: [
-            { type: "text", text: "**Next** trains:" },
-            {
-              type: "tool-call",
-              toolCallId: "c1",
-              toolName: "departures",
-              args: { stop: "Lyon" },
-              argsText: '{"stop":"Lyon"}',
-              result: { content: [{ type: "text", text: "12:04" }] },
-            },
-            {
-              type: "tool-call",
-              toolCallId: "c2",
-              toolName: "trip_details",
-              args: {},
-              argsText: "",
-              result: { content: [{ type: "text", text: "unknown trip" }], isError: true },
-              isError: true,
-            },
-          ],
-          status: { type: "complete", reason: "stop" },
-        } as ChatModelRunResult;
-        settings.onRunEnd?.();
-      },
+      run: (options) => mocks.run?.(options) ?? defaultRun(),
     };
+    async function* defaultRun(): AsyncGenerator<ChatModelRunResult> {
+      yield {
+        content: [
+          { type: "text", text: "**Next** trains:" },
+          {
+            type: "tool-call",
+            toolCallId: "c1",
+            toolName: "departures",
+            args: { stop: "Lyon" },
+            argsText: '{"stop":"Lyon"}',
+            result: { content: [{ type: "text", text: "12:04" }] },
+          },
+          {
+            type: "tool-call",
+            toolCallId: "c2",
+            toolName: "trip_details",
+            args: {},
+            argsText: "",
+            result: { content: [{ type: "text", text: "unknown trip" }], isError: true },
+            isError: true,
+          },
+        ],
+        status: { type: "complete", reason: "stop" },
+      } as ChatModelRunResult;
+      settings.onRunEnd?.();
+    }
   },
 }));
 
@@ -93,6 +95,7 @@ afterEach(() => {
   vi.clearAllMocks();
   vi.unstubAllGlobals();
   mocks.agentSettings.length = 0;
+  mocks.run = undefined;
 });
 
 describe("Chat", () => {
@@ -145,6 +148,23 @@ describe("Chat", () => {
     expect(await screen.findByText("More departures")).toBeDefined();
     // the quota is refreshed after each run
     await waitFor(() => expect(mocks.getFreeQuota.mock.calls.length).toBeGreaterThanOrEqual(2));
+  });
+
+  it("shows a loader while waiting for the model", async () => {
+    let answer!: () => void;
+    const answered = new Promise<void>((resolve) => (answer = resolve));
+    mocks.run = async function* () {
+      await answered;
+      yield { content: [{ type: "text", text: "Done" }], status: { type: "complete", reason: "stop" } } as ChatModelRunResult;
+    };
+    render(<Chat apiKey="sk-or-v1-key" />);
+
+    fireEvent.click(screen.getByText("Next departures at Lyon Part-Dieu"));
+
+    expect(await screen.findByRole("status", { name: "Thinking…" })).toBeDefined();
+    answer();
+    expect(await screen.findByText("Done")).toBeDefined();
+    expect(screen.queryByRole("status", { name: "Thinking…" })).toBeNull();
   });
 
   it("logs out", async () => {

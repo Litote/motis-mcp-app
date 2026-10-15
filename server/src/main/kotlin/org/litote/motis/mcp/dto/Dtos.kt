@@ -30,6 +30,8 @@ data class PlaceDto(
     val scheduledDeparture: String? = null,
     val cancelled: Boolean? = null,
     val tz: String? = null,
+    /** City or region of a place asked by name (ends of a journey, center of an area). */
+    val area: String? = null,
 )
 
 // --- search_places ---

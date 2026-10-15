@@ -252,6 +252,36 @@ fun RoutingClient.PlanResponseBody.toDto(): JourneyResult =
         previousPageCursor = previousPageCursor.ifBlank { null },
     )
 
+/**
+ * Names the ends of the journey sent as coordinates (MOTIS names them `START` and `END`): [fromName] and [toName] are
+ * the names of the places asked, null to keep the MOTIS names. [fromArea] and [toArea] are the areas of the places
+ * asked, given to the ends of the journey.
+ */
+fun JourneyResult.withEndNames(
+    fromName: String?,
+    toName: String?,
+    fromArea: String? = null,
+    toArea: String? = null,
+): JourneyResult {
+    fun PlaceDto.named(name: String?) = if (name != null && stopId == null) copy(name = name) else this
+    fun ItineraryDto.named() =
+        copy(
+            legs =
+                legs.mapIndexed { i, leg ->
+                    leg.copy(
+                        from = if (i == 0) leg.from.named(fromName) else leg.from,
+                        to = if (i == legs.lastIndex) leg.to.named(toName) else leg.to,
+                    )
+                },
+        )
+    return copy(
+        from = from.named(fromName).copy(area = fromArea),
+        to = to.named(toName).copy(area = toArea),
+        itineraries = itineraries.map { it.named() },
+        direct = direct.map { it.named() },
+    )
+}
+
 fun Reachable.toDto(origin: PlaceDto, maxTravelTimeMinutes: Int): ReachabilityResult {
     val reachable = all.orEmpty().filter { it.place != null }.sortedBy { it.duration ?: Long.MAX_VALUE }
     return ReachabilityResult(

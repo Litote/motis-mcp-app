@@ -12,6 +12,7 @@ import type {
 import type { CallToolResult } from "@modelcontextprotocol/client";
 import { callTool, connectMcp, modelTools, resultText } from "./mcp";
 import { t } from "./i18n";
+import { currentPosition, formatPosition, type UserPosition } from "./location";
 import { streamChat, type ChatMessage, type ChatToolCall } from "./openrouter";
 
 /** Model calls per user message: bounds the loop, and the consumption of the free quota (2 to 3 calls usually). */
@@ -36,7 +37,11 @@ export function setViewContext(toolCallId: string, text: string | null): void {
   else viewContexts.delete(toolCallId);
 }
 
-export function systemPrompt(instructions: string, now: Date = new Date()): string {
+export function systemPrompt(
+  instructions: string,
+  now: Date = new Date(),
+  position: UserPosition | null = currentPosition(),
+): string {
   const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const parts = [
     instructions,
@@ -46,6 +51,13 @@ export function systemPrompt(instructions: string, now: Date = new Date()): stri
       "option, next times, transfers), the user reads the details in the views.",
     "Answer in the language of the latest user message, not in the language of the place names or of the tool results.",
   ];
+  if (position) {
+    parts.push(
+      `Current position of the user: ${formatPosition(position)} (accuracy ${Math.round(position.accuracy)} m). ` +
+        "When the user gives no origin or says 'here', 'near me': pass it as 'position' to plan_journey (without " +
+        "'from'), or as 'lat,lon' place of the other tools.",
+    );
+  }
   if (viewContexts.size) parts.push("Context from the views the user interacted with:\n" + [...viewContexts.values()].join("\n"));
   return parts.join("\n\n");
 }

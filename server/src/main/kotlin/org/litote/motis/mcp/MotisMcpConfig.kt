@@ -14,12 +14,16 @@ const val APP_URL = "https://github.com/Litote/motis-mcp-app"
  *
  * Transitous requires a `User-Agent` containing a way of contact: [contact] is mandatory with Transitous, optional with
  * another MOTIS server (the website of the application is sent instead).
+ *
+ * [viewDomains] are the dedicated origins of the views requested to each host on its endpoint `/mcp/<host>`
+ * (`_meta.ui.domain`, e.g. to allowlist at the tile provider): their format depends on the host (see [McpHost]).
  */
 data class MotisMcpConfig(
     val contact: String?,
     val baseUrl: String = DEFAULT_BASE_URL,
     val logLevel: LogLevel = LogLevel.NONE,
     val tiles: MapTiles = MapTiles(),
+    val viewDomains: Map<McpHost, String> = emptyMap(),
 ) {
     init {
         require(contact != null || !isTransitous(baseUrl)) {
@@ -56,6 +60,10 @@ data class MotisMcpConfig(
                         url = env["MOTIS_TILE_URL"]?.takeIf { it.isNotBlank() } ?: MapTiles.OSM_URL,
                         attribution = env["MOTIS_TILE_ATTRIBUTION"]?.takeIf { it.isNotBlank() } ?: MapTiles.OSM_ATTRIBUTION,
                     ),
+                viewDomains =
+                    McpHost.entries
+                        .mapNotNull { host -> env[host.envName]?.takeIf { it.isNotBlank() }?.let { host to it } }
+                        .toMap(),
             )
     }
 }

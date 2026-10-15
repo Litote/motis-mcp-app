@@ -18,9 +18,30 @@ See the [README](../README.md) for an overview, the AWS Lambda deployment, the w
 | `rentals`        | map/rentals                          | shared bikes, scooters and cars map    |
 
 `plan_journey` walks up to 25 minutes to the first stop and from the last stop (`maxWalkMinutes`, MOTIS default:
-15 minutes), and routes the transfers on foot on the streets (`useRoutedTransfers`).
+15 minutes), and routes the transfers on foot on the streets (`useRoutedTransfers`). Its options, set by the model
+from the request or in the **Options** panel of the itineraries view:
 
-Places can be given by name (geocoded, best match), stop id or `lat,lon`. The views call the tools themselves for
+| Argument          | Values                              | MOTIS                                                           |
+|-------------------|-------------------------------------|-----------------------------------------------------------------|
+| `time`, `arriveBy`| date-time, leave at / arrive by     | `time`, `arriveBy`                                              |
+| `modes`           | transit modes (panel: train, metro, tram, bus, ferry, other) | `transitModes`                         |
+| `maxTransfers`    | 0–10                                | `maxTransfers`                                                  |
+| `maxWalkMinutes`  | 1–60 (default 25)                   | `maxPreTransitTime`, `maxPostTransitTime`                       |
+| `walkingSpeed`    | `SLOW` (0.8 m/s), `NORMAL`, `FAST` (1.6 m/s) | `pedestrianSpeed`                                      |
+| `wheelchair`      | boolean                             | `pedestrianProfile=WHEELCHAIR`                                  |
+| `transferMargin`  | `NORMAL`, `COMFORTABLE` (+5 min per transfer) | `additionalTransferTime`                              |
+| `bike`            | `NONE`, `TO_STATION`, `ON_BOARD`    | `preTransitModes`, `postTransitModes`, `directModes`, `requireBikeTransport` |
+
+With a bike, the ends ridden by bike are sent as coordinates (MOTIS only rides from/to coordinates). `ON_BOARD` only
+uses trips allowing bikes: feeds without this information (e.g. Île-de-France) give no itinerary. When the options are
+changed in the view, the view tells the model what it shows (`ui/update-model-context`).
+
+Places can be given by name (geocoded, best match), stop id (checked with `stoptimes`, as the geocoder does not search
+ids) or `lat,lon`. A name is an error listing the candidates when another place, more than 10 km away, matches almost
+as well (e.g. "Saint-Michel"): the model retries with an id or coordinates. The area (city) of a place asked by name is
+given with the ends of the journey (`area`), and shown when the name does not tell it: "Saint Michel (Bordeaux)".
+`plan_journey` takes the current position of the user (`position`, `lat,lon`): origin when `from` is missing, else
+favors the origins near it; the destination is searched near the origin. The views call the tools themselves for
 navigation: departures of a stop clicked on the map, line details, trip of a departure, earlier/later pages.
 
 Data volume is bounded before being sent to the views: route variants are grouped by line, route shapes are clipped to
@@ -81,10 +102,27 @@ MOTIS_APP_CONTACT=you@example.org server/build/install/server/bin/server --http 
 | `MOTIS_LOG_LEVEL`        | `NONE`                                           | Ktor client logs (`INFO`, `HEADERS`, `ALL`…) |
 | `MOTIS_TILE_URL`         | `https://tile.openstreetmap.org/{z}/{x}/{y}.png` | raster tiles of the maps                     |
 | `MOTIS_TILE_ATTRIBUTION` | OpenStreetMap contributors                       | attribution of the tiles (HTML)              |
+| `MOTIS_VIEW_DOMAIN_<HOST>` | default sandbox origin of the host             | dedicated origin of the views (see below)    |
 | `MCP_ALLOWED_HOSTS`      | localhost only                                   | host names accepted in HTTP mode             |
 
 The default OpenStreetMap tiles are subject to the [tile usage policy](https://operations.osmfoundation.org/policies/tiles/):
 for an intensive use, configure another tile provider. The tile origin is declared in the CSP of the views.
+
+The views run in a sandbox iframe of the host, on an origin of the host (e.g. `web-sandbox.oaiusercontent.com`), shared
+by every app by default: a tile provider cannot tell your requests from the others' (`Referer`). The views can request a
+dedicated origin (`_meta.ui.domain`), to allowlist at the tile provider. Its format is defined by each host, so each
+host has its endpoint (HTTP mode), with its own value:
+
+| Endpoint       | Host                   | `_meta.ui.domain`                                                                  |
+|----------------|------------------------|------------------------------------------------------------------------------------|
+| `/mcp`         | any                    | none: default sandbox origin of the host                                           |
+| `/mcp/chatgpt` | ChatGPT                | `MOTIS_VIEW_DOMAIN_CHATGPT`: an origin unique to the app, e.g. `https://motis.example.org`, served as a subdomain of `oaiusercontent.com` (required to publish an app with views) |
+| `/mcp/claude`  | Claude                 | `MOTIS_VIEW_DOMAIN_CLAUDE`, default `<hash>.claudemcpcontent.com`: first 32 hexadecimal characters of the SHA-256 of the endpoint URL, as registered in Claude (`https://…/mcp/claude`) |
+| `/mcp/mistral` | Mistral (Le Chat)      | `MOTIS_VIEW_DOMAIN_MISTRAL`, none by default                                       |
+| `/mcp/cherry`  | Cherry Studio          | `MOTIS_VIEW_DOMAIN_CHERRY`, none by default                                        |
+
+The tools and views are the same on every endpoint. The Claude default is computed from the URL of the request: set
+`MOTIS_VIEW_DOMAIN_CLAUDE` when the public URL differs (reverse proxy).
 
 Environment variables are passed to the container with `-e`.
 
@@ -106,6 +144,20 @@ claude mcp add motis -- docker run -i --rm -e MOTIS_APP_CONTACT=you@example.org 
   }
 }
 ```
+
+### ChatGPT
+
+ChatGPT connects to a remote HTTPS endpoint only, e.g. the Lambda function URL of the
+[AWS deployment](AWS-DEPLOYMENT.md) (`https://<id>.lambda-url.<region>.on.aws/mcp/chatgpt`); the views are rendered
+(MCP Apps).
+
+1. In ChatGPT (web), **Plugins** → **+** → **Add a custom MCP server** (developer mode: depending on the plan, enable it
+   first in the settings).
+2. URL of the endpoint, authentication **None**.
+3. In a new conversation, enable the plugin (`+` of the composer, or `@<name>`).
+
+After a deployment changing the tools or the views, select **Refresh** on the plugin and start a new conversation. The
+plugin is private to the account: a publication in the ChatGPT directory requires a review by OpenAI.
 
 ### Testing the views
 

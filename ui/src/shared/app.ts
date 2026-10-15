@@ -128,19 +128,37 @@ export function startView(name: string, handlers: ViewHandlers): App {
 }
 
 /**
- * Calls a server tool from the view and returns its structured content.
+ * Calls a server tool from the view and returns its structured content, and its text for the model.
  * A tool error is thrown as an Error with the message of the tool.
  */
-export async function callTool<T>(app: App, name: string, args: Args): Promise<T> {
+export async function callToolResult<T>(app: App, name: string, args: Args): Promise<{ data: T; text: string }> {
   setStatus(t("loading"), "loading");
   try {
     const result = (await app.callServerTool({ name, arguments: args })) as ToolResultLike;
     if (result.isError) throw new Error(textOf(result) || t("toolFailed", { name }));
     if (!result.structuredContent) throw new Error(t("noData", { name }));
     setStatus("");
-    return result.structuredContent as T;
+    return { data: result.structuredContent as T, text: textOf(result) };
   } catch (e) {
     setStatus(e instanceof Error ? e.message : String(e), "error");
     throw e;
+  }
+}
+
+/** Calls a server tool from the view and returns its structured content (see [callToolResult]). */
+export async function callTool<T>(app: App, name: string, args: Args): Promise<T> {
+  return (await callToolResult<T>(app, name, args)).data;
+}
+
+/**
+ * Tells the model what the view shows after a change made in the view, for the next turns (the host keeps the last
+ * update only). Ignored by hosts without model context updates.
+ */
+export async function updateModelContext(app: App, text: string): Promise<void> {
+  if (!app.getHostCapabilities()?.updateModelContext) return;
+  try {
+    await app.updateModelContext({ content: [{ type: "text", text }] });
+  } catch {
+    // update refused by the host: the view still works
   }
 }

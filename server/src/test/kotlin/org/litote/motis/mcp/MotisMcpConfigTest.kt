@@ -34,6 +34,24 @@ class MotisMcpConfigTest {
     }
 
     @Test
+    fun `view domains are optional, per host`() {
+        val contact = "MOTIS_APP_CONTACT" to "you@example.org"
+        assertEquals(emptyMap(), MotisMcpConfig.fromEnv(mapOf(contact)).viewDomains)
+        assertEquals(
+            mapOf(McpHost.CHATGPT to "https://motis.example.org"),
+            MotisMcpConfig.fromEnv(
+                mapOf(contact, "MOTIS_VIEW_DOMAIN_CHATGPT" to "https://motis.example.org", "MOTIS_VIEW_DOMAIN_CLAUDE" to " "),
+            ).viewDomains,
+        )
+    }
+
+    @Test
+    fun `Claude view domain is derived from the endpoint URL`() {
+        // first 32 hexadecimal characters of sha256("https://example.com/mcp"), as computeAppDomainForClaude of ext-apps
+        assertEquals("c3d80a4ed901ee05b21755a88273b4a4.claudemcpcontent.com", claudeViewDomain("https://example.com/mcp"))
+    }
+
+    @Test
     fun `Transitous hosts are detected`() {
         assertTrue(MotisMcpConfig.isTransitous("https://api.transitous.org/"))
         assertTrue(MotisMcpConfig.isTransitous("https://API.Transitous.org:443"))

@@ -6,12 +6,14 @@ import {
   ErrorPrimitive,
   MessagePrimitive,
   ThreadPrimitive,
+  useAuiState,
   useLocalRuntime,
 } from "@assistant-ui/react";
 import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown";
 import remarkGfm from "remark-gfm";
 import { createAgent } from "./agent";
 import { suggestions, t } from "./i18n";
+import { useLocation } from "./location";
 import {
   DEFAULT_MODEL,
   forgetKey,
@@ -38,10 +40,33 @@ function UserMessage() {
   );
 }
 
+/**
+ * Shown while the answer is running and nothing else moves: before the first streamed token, and while the model reads
+ * the tool results (a running tool call has its own status, streamed text is visible).
+ */
+function Thinking() {
+  const waiting = useAuiState((s) => {
+    if (s.message.status?.type !== "running") return false;
+    const last = s.message.content.at(-1);
+    if (!last) return true;
+    if (last.type === "tool-call") return last.result !== undefined;
+    return last.type === "text" && !last.text;
+  });
+  if (!waiting) return null;
+  return (
+    <output className="thinking" aria-label={t("thinking")}>
+      <span />
+      <span />
+      <span />
+    </output>
+  );
+}
+
 function AssistantMessage() {
   return (
     <MessagePrimitive.Root className="message assistant">
       <MessagePrimitive.Parts components={{ Text: MarkdownText, tools: { Fallback: ToolCall } }} />
+      <Thinking />
       <MessagePrimitive.Error>
         <ErrorPrimitive.Root className="message-error">
           <ErrorPrimitive.Message />
@@ -118,6 +143,22 @@ function ModelPicker({ models, model, onSelect }: Readonly<{ models: Model[]; mo
   );
 }
 
+/** Opt-in sharing of the position of the user with the model. */
+function LocationButton() {
+  const { status, toggle } = useLocation();
+  return (
+    <button
+      type="button"
+      className={`location ${status}`}
+      aria-pressed={status === "on" || status === "locating"}
+      title={t(`location.${status}`)}
+      onClick={toggle}
+    >
+      {t("location.button")}
+    </button>
+  );
+}
+
 /** Current model settings, read by the agent at each run. */
 const settingsRef: { model: string; models: Model[] } = { model: DEFAULT_MODEL, models: [] };
 
@@ -170,7 +211,8 @@ export default function Chat({ apiKey }: Readonly<{ apiKey: string }>) {
       <AppendMessageContext.Provider value={append}>
         <header className="header">
           <h1>MOTIS explorer</h1>
-<ModelPicker models={models} model={model} onSelect={selectModel} />
+          <ModelPicker models={models} model={model} onSelect={selectModel} />
+          <LocationButton />
           {quota && (
             <span className="quota" title={t("quota.title")}>
               {t("quota.left", { remaining: quota.remaining, limit: quota.limit })}

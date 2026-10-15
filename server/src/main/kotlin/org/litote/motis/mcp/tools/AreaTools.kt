@@ -55,7 +55,7 @@ private fun AreaResult.summary(): String =
         }
     }.trimEnd()
 
-private fun ResolvedPlace.toDto(): PlaceDto = PlaceDto(name = name, lat = lat, lon = lon, stopId = id.takeIf { isStop })
+private fun ResolvedPlace.toDto(): PlaceDto = PlaceDto(name = name, lat = lat, lon = lon, stopId = id.takeIf { isStop }, area = area)
 
 fun Server.addAreaTools(gateway: MotisGateway) {
     motisTool(

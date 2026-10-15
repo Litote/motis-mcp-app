@@ -31,12 +31,14 @@ private val INSTRUCTIONS =
  * Creates the MCP server: tools calling MOTIS, and the MCP App views as `ui://` resources.
  *
  * @param views HTML of the views, loaded once and shared by every server instance
+ * @param viewDomain dedicated origin of the views (`_meta.ui.domain`), null: the default of the host
  */
 fun createMotisMcpServer(
     gateway: MotisGateway,
     baseUrl: String,
     tiles: MapTiles = MapTiles(),
     views: Map<UiView, String> = loadViews(),
+    viewDomain: String? = null,
 ): Server =
     Server(
         serverInfo = Implementation(name = APP_NAME, version = APP_VERSION, title = "MOTIS explorer"),
@@ -50,7 +52,7 @@ fun createMotisMcpServer(
             ),
         instructions = INSTRUCTIONS,
     ).apply {
-        addAppResources(tiles) { views.getValue(it) }
+        addAppResources(tiles, viewDomain) { views.getValue(it) }
         addPlaceTools(gateway, baseUrl)
         addAreaTools(gateway)
         addTimetableTools(gateway)

@@ -4,6 +4,7 @@ locals {
   optional_env = merge(
     var.tile_url != "" ? { MOTIS_TILE_URL = var.tile_url } : {},
     var.tile_attribution != "" ? { MOTIS_TILE_ATTRIBUTION = var.tile_attribution } : {},
+    { for host, domain in var.view_domains : "MOTIS_VIEW_DOMAIN_${upper(host)}" => domain if domain != "" },
   )
 }
 

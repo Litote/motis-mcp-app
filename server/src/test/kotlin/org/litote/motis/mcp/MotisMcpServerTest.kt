@@ -59,6 +59,8 @@ class MotisMcpServerTest {
             assertEquals(MCP_APP_MIME_TYPE, resource.mimeType)
             val csp = resource.meta?.get("ui")?.jsonObject?.get("csp")?.jsonObject
             assertEquals("https://tile.openstreetmap.org", csp?.get("resourceDomains")?.jsonArray?.single()?.jsonPrimitive?.content)
+            // default sandbox origin of the host
+            assertNull(resource.meta?.get("ui")?.jsonObject?.get("domain"))
 
             val content =
                 client.readResource(ReadResourceRequest(ReadResourceRequestParams(UiView.EXPLORER.uri))).contents.single()

@@ -13,8 +13,12 @@ import org.litote.motis.client.model.Itinerary
 import org.litote.motis.client.model.LocationType
 import org.litote.motis.client.model.Match
 import org.litote.motis.client.model.Mode
+import org.litote.motis.client.model.PedestrianProfile
 import org.litote.motis.client.model.Place
 import org.litote.motis.client.model.Reachable
+import org.litote.motis.mcp.dto.distanceKm
+import org.litote.motis.mcp.dto.toDto
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.log2
 import kotlin.time.Instant
@@ -54,8 +58,19 @@ data class BoundingBox(val minLat: Double, val minLon: Double, val maxLat: Doubl
  * A place resolved from user input.
  *
  * @property id value accepted by MOTIS routing parameters: a stop id or `lat,lon`
+ * @property area city or region of a geocoded place, null when unknown
  */
-data class ResolvedPlace(val id: String, val name: String, val lat: Double, val lon: Double, val isStop: Boolean)
+data class ResolvedPlace(
+    val id: String,
+    val name: String,
+    val lat: Double,
+    val lon: Double,
+    val isStop: Boolean,
+    val area: String? = null,
+) {
+    /** Name with its area when the name does not tell it, e.g. `Saint Michel (Bordeaux)`. */
+    val label: String get() = name + (area?.takeUnless { name.contains(it, ignoreCase = true) }?.let { " ($it)" } ?: "")
+}
 
 /** Wraps the MOTIS clients: unwraps the sealed responses and resolves free text places. */
 class MotisGateway(configuration: ClientConfiguration) {
@@ -96,13 +111,39 @@ class MotisGateway(configuration: ClientConfiguration) {
 
     /**
      * Resolves [input]: `lat,lon` coordinates are used as is, other text is geocoded
-     * (stops only when [stopsOnly] is true) and the best match is returned.
+     * (stops only when [stopsOnly] is true, favoring places near the `lat,lon` [near] position) and the best match
+     * is returned. Fails listing the candidates when another place, far from the best match, matches almost as well.
      */
-    suspend fun resolvePlace(input: String, stopsOnly: Boolean = false): ResolvedPlace {
+    suspend fun resolvePlace(
+        input: String,
+        stopsOnly: Boolean = false,
+        near: String? = null,
+        language: List<String>? = null,
+    ): ResolvedPlace {
         parseCoordinates(input)?.let { (lat, lon) -> return ResolvedPlace("$lat,$lon", input, lat, lon, isStop = false) }
-        val match =
-            geocode(input, types = if (stopsOnly) listOf(LocationType.STOP) else null, numResults = 1).firstOrNull()
-                ?: throw MotisToolException("No place found for \"$input\"")
+        val matches =
+            geocode(
+                input,
+                types = if (stopsOnly) listOf(LocationType.STOP) else null,
+                near = near,
+                numResults = RESOLUTION_CANDIDATES,
+                language = language,
+            )
+        // not a name: a stop id maybe (the geocoder does not search ids)
+        val match = matches.firstOrNull() ?: return resolveStopId(input) ?: throw MotisToolException("No place found for \"$input\"")
+        val rivals = matches.drop(1).filter { it.isRivalOf(match) }
+        if (rivals.isNotEmpty()) {
+            throw MotisToolException(
+                (listOf(match) + rivals).joinToString(
+                    "\n",
+                    "\"$input\" is ambiguous, candidates:\n",
+                    "\nRetry with one of these stop ids or coordinates, or a more precise name (e.g. with the city).",
+                ) { m ->
+                    val stopId = if (m.type == LocationType.STOP) " id=${m.id}" else ""
+                    "- ${m.name}${m.toDto().area?.let { " — $it" } ?: ""}$stopId (${m.lat},${m.lon})"
+                },
+            )
+        }
         val isStop = match.type == LocationType.STOP
         return ResolvedPlace(
             id = if (isStop) match.id else "${match.lat},${match.lon}",
@@ -110,8 +151,17 @@ class MotisGateway(configuration: ClientConfiguration) {
             lat = match.lat,
             lon = match.lon,
             isStop = isStop,
+            area = match.toDto().area,
         )
     }
+
+    /** The stop of id [stopId], null when MOTIS does not know it. */
+    private suspend fun resolveStopId(stopId: String): ResolvedPlace? =
+        when (val r = timetableClient.stoptimes(stopId = stopId, n = 1)) {
+            is TimetableClient.StoptimesResponseSuccess ->
+                r.body.place.let { ResolvedPlace(stopId, it.name, it.lat, it.lon, isStop = true) }
+            else -> null
+        }
 
     suspend fun health(): HealthResponse =
         when (val r = client.health()) {
@@ -205,6 +255,14 @@ class MotisGateway(configuration: ClientConfiguration) {
                     arriveBy = query.arriveBy,
                     transitModes = query.transitModes,
                     maxTransfers = query.maxTransfers?.toLong(),
+                    pedestrianSpeed = query.walkingSpeed.metersPerSecond,
+                    pedestrianProfile = if (query.wheelchair) PedestrianProfile.WHEELCHAIR else null,
+                    additionalTransferTime = query.transferMargin.additionalMinutes,
+                    // pre/post transit modes only apply to coordinates, not to stops (see PlanQuery.bike)
+                    preTransitModes = query.bike.preTransitModes,
+                    postTransitModes = query.bike.postTransitModes,
+                    directModes = query.bike.directModes,
+                    requireBikeTransport = query.bike == BikeOption.ON_BOARD,
                     // walk to the first stop and from the last stop (MOTIS default: 15 min)
                     maxPreTransitTime = query.maxWalkMinutes * 60L,
                     maxPostTransitTime = query.maxWalkMinutes * 60L,
@@ -276,6 +334,21 @@ class MotisGateway(configuration: ClientConfiguration) {
         /** Walk to the first stop and from the last stop of a journey, in minutes. */
         const val DEFAULT_MAX_WALK_MINUTES = 25
 
+        /** Geocoding matches compared to detect an ambiguous place. */
+        private const val RESOLUTION_CANDIDATES = 5
+
+        /**
+         * Score difference under which two matches are equally likely. MOTIS scores are negative, the best (lowest)
+         * first: calibrated on Transitous, where clear matches lead by more than 1 and homonyms by less than 0.3.
+         */
+        private const val AMBIGUOUS_SCORE_GAP = 0.75
+
+        /** Distance beyond which two matches are different places (closer: entrances or platforms of one place). */
+        private const val DISTINCT_PLACES_KM = 10.0
+
+        private fun Match.isRivalOf(best: Match): Boolean =
+            abs(score - best.score) < AMBIGUOUS_SCORE_GAP && distanceKm(lat, lon, best.lat, best.lon) > DISTINCT_PLACES_KM
+
         private val COORDINATES = Regex("""^\s*(-?\d{1,2}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)\s*$""")
 
         fun parseCoordinates(input: String): Pair<Double, Double>? =
@@ -292,7 +365,30 @@ class MotisGateway(configuration: ClientConfiguration) {
     }
 }
 
-/** Journey query of [MotisGateway.plan]: [from] and [to] are stop ids or `lat,lon` coordinates. */
+/** Walking speed of the journeys: [metersPerSecond] null for the MOTIS default (about 1.2 m/s). */
+enum class WalkingSpeed(val metersPerSecond: Double?) {
+    SLOW(0.8),
+    NORMAL(null),
+    FAST(1.6),
+}
+
+/** Time reserved for each transfer, in addition to the minimum transfer time of the timetable. */
+enum class TransferMargin(val additionalMinutes: Long) {
+    NORMAL(0),
+    COMFORTABLE(5),
+}
+
+/** Bike of the traveller: ridden to the first stop ([TO_STATION]), or carried on board and ridden at both ends. */
+enum class BikeOption(val preTransitModes: List<Mode>?, val postTransitModes: List<Mode>?, val directModes: List<Mode>?) {
+    NONE(null, null, null),
+    TO_STATION(listOf(Mode.BIKE), listOf(Mode.WALK), listOf(Mode.WALK, Mode.BIKE)),
+    ON_BOARD(listOf(Mode.BIKE), listOf(Mode.BIKE), listOf(Mode.BIKE)),
+}
+
+/**
+ * Journey query of [MotisGateway.plan]: [from] and [to] are stop ids or `lat,lon` coordinates. With a [bike], the ends
+ * ridden by bike must be coordinates: MOTIS only applies the pre/post transit modes to coordinates.
+ */
 data class PlanQuery(
     val from: String,
     val to: String,
@@ -301,6 +397,10 @@ data class PlanQuery(
     val transitModes: List<Mode>? = null,
     val maxTransfers: Int? = null,
     val maxWalkMinutes: Int = MotisGateway.DEFAULT_MAX_WALK_MINUTES,
+    val walkingSpeed: WalkingSpeed = WalkingSpeed.NORMAL,
+    val wheelchair: Boolean = false,
+    val transferMargin: TransferMargin = TransferMargin.NORMAL,
+    val bike: BikeOption = BikeOption.NONE,
     val numItineraries: Int? = null,
     val pageCursor: String? = null,
     val language: List<String>? = null,

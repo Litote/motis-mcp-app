@@ -45,8 +45,11 @@ enum class UiView(val file: String, val title: String, val description: String) 
         }
 }
 
-/** `_meta` of the view resources: CSP allowing the map tiles (the only external origin), and a host border. */
-internal fun resourceMeta(tiles: MapTiles): JsonObject =
+/**
+ * `_meta` of the view resources: CSP allowing the map tiles (the only external origin), a host border, and the
+ * dedicated origin of the views ([domain], format defined by each host) if any.
+ */
+internal fun resourceMeta(tiles: MapTiles, domain: String? = null): JsonObject =
     buildJsonObject {
         putJsonObject("ui") {
             putJsonObject("csp") {
@@ -54,6 +57,7 @@ internal fun resourceMeta(tiles: MapTiles): JsonObject =
                 putJsonArray("connectDomains") { add(tiles.origin) }
             }
             put("prefersBorder", true)
+            domain?.let { put("domain", it) }
         }
     }
 
@@ -73,8 +77,8 @@ fun loadView(view: UiView): String =
         ?: error("UI view ${view.file} not found in the classpath: run ./gradlew :server:buildUi")
 
 /** Registers every view as a `ui://` resource. */
-fun Server.addAppResources(tiles: MapTiles, load: (UiView) -> String = ::loadView) {
-    val resourceMeta = resourceMeta(tiles)
+fun Server.addAppResources(tiles: MapTiles, domain: String? = null, load: (UiView) -> String = ::loadView) {
+    val resourceMeta = resourceMeta(tiles, domain)
     addResources(
         UiView.entries.map { view ->
             val html = injectTiles(load(view), tiles)
