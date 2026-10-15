@@ -33,7 +33,7 @@ ARG VERSION_NAME=main-SNAPSHOT
 LABEL org.opencontainers.image.title="motis-mcp-app" \
       org.opencontainers.image.description="MCP App to explore the public transport data of a MOTIS server (Transitous)" \
       org.opencontainers.image.source="https://github.com/Litote/motis-mcp-app" \
-      org.opencontainers.image.licenses="Apache-2.0" \
+      org.opencontainers.image.licenses="AGPL-3.0-only" \
       org.opencontainers.image.version="$VERSION_NAME"
 COPY --from=server /build/server/build/install/server /opt/motis-mcp-app
 USER nobody

@@ -6,10 +6,12 @@ import io.modelcontextprotocol.kotlin.sdk.types.TextContent
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.json.Json
 import org.litote.motis.mcp.dto.AreaResult
+import org.litote.motis.mcp.dto.DeparturesResult
 import org.litote.motis.mcp.dto.JourneyResult
 import org.litote.motis.mcp.dto.ReachabilityResult
 import org.litote.motis.mcp.dto.SearchResult
 import org.litote.motis.mcp.dto.ServerInfoResult
+import org.litote.motis.mcp.dto.StopCallDto
 import org.litote.motis.mcp.dto.TripResult
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -256,10 +258,15 @@ class MotisToolsTest {
             assertEquals("true", request.url.parameters["arriveBy"])
             assertEquals("CURSOR", request.url.parameters["pageCursor"])
             assertEquals("HIGHSPEED_RAIL", request.url.parameters["mode"])
+            assertEquals("true", request.url.parameters["fetchStops"])
             assertTrue(motis.requests.none { it.url.encodedPath == "/api/v1/geocode" })
             val text = result.text()
             assertTrue(text.startsWith("Arrivals at Lyon Part Dieu (stopId="), text)
             assertTrue(text.contains("HIGHSPEED_RAIL TGV INOUI 6633"), text)
+            val first = result.data(DeparturesResult.serializer()).stopTimes.first()
+            assertEquals("6633", first.trainNumber)
+            // previous stops of an arrival
+            assertEquals(listOf(StopCallDto("Paris Gare de Lyon Hall 1 - 2", "2026-10-12T19:00:00Z")), first.stops)
         }
     }
 
@@ -329,7 +336,7 @@ class MotisToolsTest {
             assertEquals("BUS,TRAM", request.url.parameters["transitModes"])
             assertEquals("600", request.url.parameters["maxPreTransitTime"])
             assertEquals("600", request.url.parameters["maxPostTransitTime"])
-            assertEquals("true", request.url.parameters["useRoutedTransfers"])
+            assertEquals("false", request.url.parameters["useRoutedTransfers"])
             assertNull(request.url.parameters["maxMatchingDistance"])
             assertTrue(result.text().startsWith("From 45.7605,4.8597 to LYON-PART-DIEU: 3 itinerary(ies).\n1. "), result.text())
         }

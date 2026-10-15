@@ -18,7 +18,9 @@ See the [README](../README.md) for an overview, the AWS Lambda deployment, the w
 | `rentals`        | map/rentals                          | shared bikes, scooters and cars map    |
 
 `plan_journey` walks up to 25 minutes to the first stop and from the last stop (`maxWalkMinutes`, MOTIS default:
-15 minutes), and routes the transfers on foot on the streets (`useRoutedTransfers`). Its options, set by the model
+15 minutes). Transfers on foot come from the timetable, not routed on the streets (`useRoutedTransfers=false`): the
+server caps the routed ones (about 15 minutes), which drops walks between nearby stations such as Paris Gare de Lyon
+and Austerlitz. Its options, set by the model
 from the request or in the **Options** panel of the itineraries view:
 
 | Argument          | Values                              | MOTIS                                                           |

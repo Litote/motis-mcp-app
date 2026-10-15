@@ -20,7 +20,7 @@ ARG VERSION_NAME=main-SNAPSHOT
 LABEL org.opencontainers.image.title="motis-mcp-app-web" \
       org.opencontainers.image.description="Web chat (OpenRouter) of motis-mcp-app, with the MCP App views" \
       org.opencontainers.image.source="https://github.com/Litote/motis-mcp-app" \
-      org.opencontainers.image.licenses="Apache-2.0" \
+      org.opencontainers.image.licenses="AGPL-3.0-only" \
       org.opencontainers.image.version="$VERSION_NAME"
 # Public URLs, as seen by the browser
 ENV MCP_URL=http://localhost:3001/mcp \

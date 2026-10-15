@@ -1,4 +1,5 @@
 import { hostLocale, tOptional } from "./i18n";
+import { sncfBadge } from "./sncf";
 
 /** Escapes text inserted in HTML. */
 export function esc(value: string | number | null | undefined): string {
@@ -89,8 +90,17 @@ export function textOn(background: string, textColor?: string | null): string {
   return 0.299 * r + 0.587 * g + 0.114 * b > 160 ? "#111" : "#fff";
 }
 
-/** Line badge, colored like the route. */
-export function lineBadge(mode: string, line?: string | null, color?: string | null, textColor?: string | null): string {
+/** Line badge, colored like the route, or with the pictogram of the SNCF trains and Île-de-France lines. */
+export function lineBadge(
+  mode: string,
+  line?: string | null,
+  color?: string | null,
+  textColor?: string | null,
+  agency?: string | null,
+  trainNumber?: string | null,
+): string {
+  const sncf = sncfBadge(mode, line, agency, trainNumber);
+  if (sncf) return sncf;
   const bg = modeColor(mode, color);
   return `<span class="badge" style="background:${esc(bg)};color:${esc(textOn(bg, textColor))}" title="${esc(modeLabel(mode))}">${esc(line || modeLabel(mode))}</span>`;
 }

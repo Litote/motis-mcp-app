@@ -133,7 +133,7 @@ async function openStop(marker: L.CircleMarker, stop: PlaceDto): Promise<void> {
       .map(
         (st) =>
           `<span class="${st.cancelled ? "cancelled" : ""}">${time(st.time, result.stop.tz)}</span>` +
-          lineBadge(st.mode, st.line, st.routeColor, st.routeTextColor) +
+          lineBadge(st.mode, st.line, st.routeColor, st.routeTextColor, st.agency, st.trainNumber) +
           `<span>${esc(st.headsign)}</span>`,
       )
       .join("");

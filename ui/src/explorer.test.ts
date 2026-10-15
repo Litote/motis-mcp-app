@@ -98,7 +98,7 @@ describe("explorer view", () => {
       return document.querySelector(".leaflet-popup-content")?.textContent ?? "";
     };
 
-    expect(await popup()).toMatch(/^LYON-PART-DIEU23:16TGV INOUI 6633Lyon Perrache/);
+    expect(await popup()).toMatch(/^LYON-PART-DIEU23:166633Lyon Perrache/);
     expect(app.callServerTool).toHaveBeenLastCalledWith({ name: "departures", arguments: { stopId: "it-trenitalia_870072319", count: 8 } });
     expect(await popup()).toBe("LYON-PART-DIEUNo departure soon");
     expect(await popup()).toBe("LYON-PART-DIEUMOTIS error: timeout");

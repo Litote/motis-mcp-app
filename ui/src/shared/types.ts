@@ -61,6 +61,10 @@ export interface StopTimeDto {
   track?: string;
   agency: string;
   tripId: string;
+  /** Train number or mission code. */
+  trainNumber?: string;
+  /** Next stops of the trip for a departure, previous stops for an arrival. */
+  stops?: { name: string; time?: string }[];
 }
 
 export interface DeparturesResult {

@@ -136,7 +136,7 @@ function render(data: JourneyResult): void {
         .map((it, i) => {
           const transit = it.legs.filter((l) => l.tripId || l.line);
           const badges = (transit.length ? transit : it.legs)
-            .map((l) => lineBadge(l.mode, l.line ?? modeLabel(l.mode), l.routeColor, l.routeTextColor))
+            .map((l) => lineBadge(l.mode, l.line ?? modeLabel(l.mode), l.routeColor, l.routeTextColor, l.agency))
             .join(" ");
           return `
           <li class="clickable" data-index="${i}">
@@ -164,7 +164,7 @@ function transitDescription(leg: LegDto): string {
   const track = leg.from.track ? ` · ${t("track", { track: esc(leg.from.track) })}` : "";
   const agency = leg.agency ? ` · ${esc(leg.agency)}` : "";
   return (
-    `${lineBadge(leg.mode, leg.line, leg.routeColor, leg.routeTextColor)} → ${esc(leg.headsign ?? leg.to.name)}` +
+    `${lineBadge(leg.mode, leg.line, leg.routeColor, leg.routeTextColor, leg.agency)} → ${esc(leg.headsign ?? leg.to.name)}` +
     `<div class="muted">${t("itinerary.stops", { count: stops })}${track}${agency}</div>`
   );
 }

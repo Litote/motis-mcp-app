@@ -1,0 +1,39 @@
+import { describe, expect, it } from "vitest";
+import { linePictogram, sncfBadge, train } from "./sncf";
+
+describe("SNCF pictograms", () => {
+  it("finds the brand and number of the trains", () => {
+    expect(train("HIGHSPEED_RAIL", "TGV INOUI 6633", "SNCF VOYAGEURS", "6633")).toMatchObject({ brand: "TGV INOUI", number: "6633" });
+    expect(train("HIGHSPEED_RAIL", "TGV INOUI 6633")?.logo).toContain("<svg");
+    expect(train("HIGHSPEED_RAIL", "OUIGO 7805")?.logo).toContain("<svg");
+    expect(train("HIGHSPEED_RAIL", "TGV Lyria 9277")?.logo).toContain("<svg");
+    expect(train("HIGHSPEED_RAIL", "EST", "Eurostar", "9014")).toMatchObject({ brand: "EST", number: "9014" });
+    expect(train("HIGHSPEED_RAIL", "EST", "Eurostar")?.logo).toContain("<svg");
+    expect(train("REGIONAL_RAIL", "TER", "SNCF VOYAGEURS", "891001")).toEqual({ brand: "TER", number: "891001", logo: undefined });
+    // the number of the line name is not the train number
+    expect(train("REGIONAL_RAIL", "K 14", "SNCF VOYAGEURS", "123")).toMatchObject({ brand: "K 14", number: "123" });
+    expect(train("BUS", "TGV INOUI 6633")).toBeNull();
+    expect(train("RAIL", null)).toBeNull();
+  });
+
+  it("finds the pictograms of the Île-de-France lines only", () => {
+    expect(linePictogram("REGIONAL_RAIL", "A", "RER")).toContain("<svg");
+    expect(linePictogram("REGIONAL_RAIL", "N", "Transilien")).toContain("<svg");
+    expect(linePictogram("TRAM", "T4", "SNCF")).toContain("<svg");
+    // lines of other networks
+    expect(linePictogram("SUBURBAN", "A", "DSB")).toBeNull();
+    expect(linePictogram("TRAM", "T1", "TCL")).toBeNull();
+    expect(linePictogram("SUBWAY", "A", "RATP")).toBeNull();
+    expect(linePictogram("REGIONAL_RAIL", "T4", "SNCF")).toBeNull();
+    expect(linePictogram("REGIONAL_RAIL", "Z", "RER")).toBeNull();
+    expect(linePictogram("REGIONAL_RAIL", "A", undefined)).toBeNull();
+  });
+
+  it("makes badges with the pictograms", () => {
+    expect(sncfBadge("HIGHSPEED_RAIL", "TGV INOUI 6633")).toMatch(/^<span class="badge sncf-train" title="TGV INOUI 6633"><svg.*<span>6633<\/span><\/span>$/s);
+    expect(sncfBadge("HIGHSPEED_RAIL", "OUIGO")).not.toContain("<span>");
+    expect(sncfBadge("TRAM", "T4", "SNCF")).toMatch(/^<span class="sncf-line tram" title="T4"><svg/);
+    expect(sncfBadge("REGIONAL_RAIL", "B", "RER")).toMatch(/^<span class="sncf-line " title="B"><svg/);
+    expect(sncfBadge("REGIONAL_RAIL", "TER 891001")).toBeNull();
+  });
+});

@@ -229,6 +229,8 @@ class MotisGateway(configuration: ClientConfiguration) {
                     arriveBy = arriveBy,
                     n = n.toLong(),
                     mode = modes,
+                    // next (previous) stops of each trip, shown on the departures (arrivals) board
+                    fetchStops = true,
                     pageCursor = pageCursor,
                     language = language,
                 )
@@ -266,8 +268,9 @@ class MotisGateway(configuration: ClientConfiguration) {
                     // walk to the first stop and from the last stop (MOTIS default: 15 min)
                     maxPreTransitTime = query.maxWalkMinutes * 60L,
                     maxPostTransitTime = query.maxWalkMinutes * 60L,
-                    // transfers on foot routed on the streets (OpenStreetMap), not as the crow flies
-                    useRoutedTransfers = true,
+                    // transfers of the timetable, not routed on the streets: the server caps the routed ones (about
+                    // 15 min), which drops walks between nearby stations (e.g. Paris Gare de Lyon -> Austerlitz)
+                    useRoutedTransfers = false,
                     // not sent: the 25 m default of the client leaves stops far from a street (e.g. inside a station)
                     // without walking legs, the server default does not
                     maxMatchingDistance = null,

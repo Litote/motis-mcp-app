@@ -134,7 +134,15 @@ data class StopTimeDto(
     val track: String? = null,
     val agency: String,
     val tripId: String,
+    /** Train number or mission code (GTFS trip_short_name). */
+    val trainNumber: String? = null,
+    /** Next stops of the trip for a departure, previous stops for an arrival (in the order of the trip). */
+    val stops: List<StopCallDto>? = null,
 )
+
+/** Stop of a trip on a departures board: its name and the time the trip passes there. */
+@Serializable
+data class StopCallDto(val name: String, val time: String? = null)
 
 @Serializable
 data class DeparturesResult(

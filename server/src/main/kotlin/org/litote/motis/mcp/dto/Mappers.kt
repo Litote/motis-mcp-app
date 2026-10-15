@@ -200,6 +200,13 @@ fun StopTime.toDto(arriveBy: Boolean): StopTimeDto =
         track = place.track ?: place.scheduledTrack,
         agency = agencyName,
         tripId = tripId,
+        trainNumber = tripShortName.ifBlank { null },
+        stops =
+            if (arriveBy) {
+                previousStops?.map { StopCallDto(it.name, (it.departure ?: it.scheduledDeparture)?.toString()) }
+            } else {
+                nextStops?.map { StopCallDto(it.name, (it.arrival ?: it.scheduledArrival)?.toString()) }
+            },
     )
 
 fun TimetableClient.StoptimesResponseBody.toDto(arriveBy: Boolean): DeparturesResult =

@@ -159,6 +159,38 @@ button[aria-pressed="true"] {
   white-space: nowrap;
 }
 
+/* SNCF trains: white logo of the brand on the blue of the departures boards, and train number */
+.badge.sncf-train {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #103e7d;
+  color: #fff;
+  vertical-align: middle;
+}
+
+.badge.sncf-train svg {
+  height: 1.1em;
+  width: auto;
+  max-width: 3em;
+}
+
+/* Île-de-France lines: the pictogram is the badge (trams have a black number, on a white background) */
+.sncf-line {
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+.sncf-line svg {
+  width: 1.5em;
+  height: 1.5em;
+}
+
+.sncf-line.tram {
+  background: #fff;
+  border-radius: var(--border-radius-sm);
+}
+
 .late {
   color: var(--color-text-danger);
 }
