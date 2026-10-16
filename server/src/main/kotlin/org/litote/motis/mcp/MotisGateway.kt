@@ -24,7 +24,13 @@ import kotlin.math.log2
 import kotlin.time.Instant
 
 /** Error reported by the MOTIS API, or invalid user input: returned to the caller as a tool error. */
-class MotisToolException(message: String) : RuntimeException(message)
+open class MotisToolException(message: String) : RuntimeException(message)
+
+/** [stopId] has a known feed prefix but MOTIS does not know the stop (an id made up or out of date). */
+class UnknownStopException(val stopId: String) :
+    MotisToolException(
+        "Unknown stop id \"$stopId\": get a valid one from search_places or explore_area, or give the stop name in 'stop'.",
+    )
 
 /** Geographic bounding box. MOTIS expects `min` = south-west corner and `max` = north-east corner. */
 data class BoundingBox(val minLat: Double, val minLon: Double, val maxLat: Double, val maxLon: Double) {
@@ -236,7 +242,9 @@ class MotisGateway(configuration: ClientConfiguration) {
                 )
         ) {
             is TimetableClient.StoptimesResponseSuccess -> r.body
-            is TimetableClient.StoptimesResponseFailure -> fail(r.body.error)
+            // MOTIS falls back to a search around 'center' when the stop is not found, hence this message
+            is TimetableClient.StoptimesResponseFailure ->
+                if (r.body.error.contains("stop_found=false")) throw UnknownStopException(stopId) else fail(r.body.error)
             is TimetableClient.StoptimesResponseUnknownFailure -> failStatus(r.statusCode)
         }
 

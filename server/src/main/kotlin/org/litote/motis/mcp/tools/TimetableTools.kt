@@ -3,6 +3,7 @@ package org.litote.motis.mcp.tools
 import io.modelcontextprotocol.kotlin.sdk.server.Server
 import org.litote.motis.mcp.MotisGateway
 import org.litote.motis.mcp.MotisToolException
+import org.litote.motis.mcp.UnknownStopException
 import org.litote.motis.mcp.apps.UiView
 import org.litote.motis.mcp.dto.DeparturesResult
 import org.litote.motis.mcp.dto.ItineraryDto
@@ -60,21 +61,32 @@ fun Server.addTimetableTools(gateway: MotisGateway) {
             string("language", LANGUAGE_DESCRIPTION)
         },
     ) { args ->
+        val language = args.stringList("language")
+        suspend fun resolveStop(): String? = args.string("stop")?.let { gateway.resolvePlace(it, stopsOnly = true, language = language).id }
         val stopId =
             args.string("stopId")
-                ?: args.string("stop")?.let { gateway.resolvePlace(it, stopsOnly = true, language = args.stringList("language")).id }
+                ?: resolveStop()
                 ?: throw MotisToolException("Invalid argument: 'stopId' or 'stop' is required")
         val arriveBy = args.boolean("arriveBy") ?: false
-        val body =
+        suspend fun stopTimes(id: String) =
             gateway.stopTimes(
-                stopId = stopId,
+                stopId = id,
                 time = args.instant("time"),
                 arriveBy = arriveBy,
                 n = args.int("count") ?: MotisGateway.DEFAULT_STOP_TIMES,
                 modes = args.modes("modes"),
                 pageCursor = args.string("pageCursor"),
-                language = args.stringList("language"),
+                language = language,
             )
+        val body =
+            try {
+                stopTimes(stopId)
+            } catch (e: UnknownStopException) {
+                // unknown stopId given with the stop name: use the name
+                val resolved = if (args.string("stopId") != null) resolveStop() else null
+                if (resolved == null || resolved == stopId) throw e
+                stopTimes(resolved)
+            }
         val result = body.toDto(arriveBy)
         ToolOutput.of(result.summary(), DeparturesResult.serializer(), result)
     }

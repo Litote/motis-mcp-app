@@ -281,6 +281,41 @@ class MotisToolsTest {
     }
 
     @Test
+    fun `departures of an unknown stop id are a tool error`() {
+        val motis = MockMotis { respondJson("""{"error":"no radius: stop_found=false, center_parsed=false"}""", HttpStatusCode.BadRequest) }
+        withMcpClient(motis) { client ->
+            val result = client.callTool("departures", mapOf("stopId" to "fr-horaires-sncf_XXX"))
+
+            assertEquals(true, result.isError)
+            assertEquals(
+                "Unknown stop id \"fr-horaires-sncf_XXX\": get a valid one from search_places or explore_area, or give the stop name in 'stop'.",
+                result.text(),
+            )
+        }
+    }
+
+    @Test
+    fun `departures of an unknown stop id fall back to the stop name`() {
+        val motis =
+            MockMotis { request ->
+                if (request.url.encodedPath == "/api/v6/stoptimes" && request.url.parameters["stopId"] == "fr-horaires-sncf_XXX") {
+                    respondJson("""{"error":"no radius: stop_found=false, center_parsed=false"}""", HttpStatusCode.BadRequest)
+                } else {
+                    respondJson(fixture(FIXTURES.getValue(request.url.encodedPath)))
+                }
+            }
+        withMcpClient(motis) { client ->
+            val result = client.callTool("departures", mapOf("stopId" to "fr-horaires-sncf_XXX", "stop" to "Lyon Part-Dieu"))
+
+            assertNull(result.isError, result.text())
+            assertEquals(
+                listOf("fr-horaires-sncf_XXX", "es-RENFE-Larga-Distancia-y-AVE_87303"),
+                motis.requests.filter { it.url.encodedPath == "/api/v6/stoptimes" }.map { it.url.parameters["stopId"] },
+            )
+        }
+    }
+
+    @Test
     fun `trip_details lists the stops of the trip`() {
         val motis = transitous()
         withMcpClient(motis) { client ->
