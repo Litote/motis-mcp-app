@@ -24,16 +24,16 @@ fun Server.addRentalTools(gateway: MotisGateway) {
             areaArguments()
             stringArray("providers", "Only these provider ids.")
             boolean("withVehicles", "Include free-floating vehicles (default true).")
+            // MOTIS rentals have no language: the names of the providers and stations are those of the feeds
+            string("language", "Preferred language of the place name, as ISO 639-1 code (e.g. fr, de).")
         },
     ) { args ->
         val (title, bbox) = args.area(gateway)
-        val body =
-            gateway.rentals(
-                bbox = bbox,
-                providers = args.stringList("providers"),
-                withVehicles = args.boolean("withVehicles") ?: true,
-            )
-        val result = body.toDto(title, bbox)
+        val providers = args.stringList("providers")
+        val withVehicles = args.boolean("withVehicles") ?: true
+        val body = gateway.rentals(bbox = bbox, providers = providers, withVehicles = withVehicles)
+        // a provider asked by id is kept, and without the vehicles a free-floating provider has nothing in the area
+        val result = body.toDto(title, bbox, dropEmptyProviders = providers == null && withVehicles)
         val summary = rentalsSummary(title, result)
         ToolOutput.of(summary, RentalsResult.serializer(), result)
     }

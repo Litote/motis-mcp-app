@@ -31,7 +31,7 @@ fun Server.addRoutingTools(gateway: MotisGateway) {
                 "position",
                 "Current position of the user, 'lat,lon': origin when 'from' is missing, else favors the places near it.",
             )
-            string("time", "Departure (or arrival with arriveBy) date-time, ISO-8601 with offset. Default: now.")
+            string("time", "Departure (or arrival with arriveBy) date-time, ISO-8601: with offset, or in the local time of the origin. Default: now.")
             boolean("arriveBy", "true: 'time' is the latest arrival time.")
             stringArray("modes", "Allowed transit modes (default: all).", TRANSIT_MODES)
             integer("maxTransfers", "Maximum number of transfers.", minimum = 0, maximum = 10)
@@ -86,7 +86,7 @@ fun Server.addRoutingTools(gateway: MotisGateway) {
                     PlanQuery(
                         from = fromPlace,
                         to = toPlace,
-                        time = args.instant("time"),
+                        time = args.instant("time") { gateway.timeZone(from) ?: gateway.timeZone(to) },
                         arriveBy = args.boolean("arriveBy") ?: false,
                         transitModes = args.modes("modes"),
                         maxTransfers = args.int("maxTransfers"),

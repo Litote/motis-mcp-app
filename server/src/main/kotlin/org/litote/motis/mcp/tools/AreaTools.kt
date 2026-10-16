@@ -29,7 +29,7 @@ internal suspend fun Args.area(gateway: MotisGateway): Pair<String, BoundingBox>
     }
     val place = string("place") ?: throw MotisToolException("Invalid argument: 'place' or the four bounds are required")
     val radius = (double("radiusKm") ?: DEFAULT_RADIUS_KM).coerceIn(0.1, MAX_RADIUS_KM)
-    val resolved = gateway.resolvePlace(place)
+    val resolved = gateway.resolvePlace(place, language = stringList("language"))
     return "${resolved.name} (${(radius * 10).roundToInt() / 10.0} km)" to BoundingBox.around(resolved.lat, resolved.lon, radius)
 }
 
@@ -120,7 +120,7 @@ fun Server.addAreaTools(gateway: MotisGateway) {
         schema = {
             string("place", "Origin: place name, stop name, stop id or 'lat,lon'.", required = true)
             integer("maxTravelTimeMinutes", "Maximum travel time in minutes (default 30).", minimum = 1, maximum = 240)
-            string("time", "Departure (or arrival) date-time, ISO-8601 with offset. Default: now.")
+            string("time", "Departure (or arrival) date-time, ISO-8601: with offset, or in the local time of the place. Default: now.")
             boolean("arriveBy", "true: places from which 'place' can be reached.")
             integer("maxTransfers", "Maximum number of transfers.", minimum = 0, maximum = 10)
             stringArray("modes", "Allowed transit modes (default: all).", TRANSIT_MODES)
@@ -134,7 +134,7 @@ fun Server.addAreaTools(gateway: MotisGateway) {
             gateway.oneToAll(
                 one = origin.id,
                 maxTravelTimeMinutes = maxTravelTime,
-                time = args.instant("time"),
+                time = args.instant("time") { gateway.timeZone(origin) },
                 arriveBy = args.boolean("arriveBy") ?: false,
                 maxTransfers = args.int("maxTransfers"),
                 transitModes = args.modes("modes"),

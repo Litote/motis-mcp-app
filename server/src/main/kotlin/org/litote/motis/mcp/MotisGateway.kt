@@ -69,6 +69,7 @@ data class BoundingBox(val minLat: Double, val minLon: Double, val maxLat: Doubl
  *
  * @property id value accepted by MOTIS routing parameters: a stop id or `lat,lon`
  * @property area city or region of a geocoded place, null when unknown
+ * @property tz time zone of the place, null when unknown (coordinates): see [MotisGateway.timeZone]
  */
 data class ResolvedPlace(
     val id: String,
@@ -77,6 +78,7 @@ data class ResolvedPlace(
     val lon: Double,
     val isStop: Boolean,
     val area: String? = null,
+    val tz: String? = null,
 ) {
     /** Name with its area when the name does not tell it, e.g. `Saint Michel (Bordeaux)`. */
     val label: String get() = name + (area?.takeUnless { name.contains(it, ignoreCase = true) }?.let { " ($it)" } ?: "")
@@ -179,7 +181,7 @@ class MotisGateway(configuration: ClientConfiguration, timeSource: TimeSource = 
                 language = language,
             )
         // not a name: a stop id maybe (the geocoder does not search ids)
-        val match = matches.firstOrNull() ?: return resolveStopId(input) ?: throw MotisToolException("No place found for \"$input\"")
+        val match = matches.firstOrNull() ?: return stop(input) ?: throw MotisToolException("No place found for \"$input\"")
         val rivals = matches.drop(1).filter { it.isRivalOf(match) }
         if (rivals.isNotEmpty()) {
             throw MotisToolException(
@@ -201,16 +203,29 @@ class MotisGateway(configuration: ClientConfiguration, timeSource: TimeSource = 
             lon = match.lon,
             isStop = isStop,
             area = match.toDto().area,
+            tz = match.tz,
         )
     }
 
     /** The stop of id [stopId], null when MOTIS does not know it. */
-    private suspend fun resolveStopId(stopId: String): ResolvedPlace? =
+    suspend fun stop(stopId: String): ResolvedPlace? =
         when (val r = timetableClient.stoptimes(stopId = stopId, n = 1)) {
             is TimetableClient.StoptimesResponseSuccess ->
-                r.body.place.let { ResolvedPlace(stopId, it.name, it.lat, it.lon, isStop = true) }
+                r.body.place.let { ResolvedPlace(stopId, it.name, it.lat, it.lon, isStop = true, tz = it.tz) }
             else -> null
         }
+
+    /**
+     * Time zone of [place]: the one of its geocoding, else of its stop, else of the nearest place (coordinates). Only
+     * asked for a date-time without offset, given in the local time of the place.
+     */
+    suspend fun timeZone(place: ResolvedPlace): String? =
+        place.tz
+            ?: if (place.isStop) {
+                stop(place.id)?.tz
+            } else {
+                reverseGeocode(place.lat, place.lon, numResults = 1).firstOrNull()?.tz
+            }
 
     suspend fun health(): HealthResponse =
         healthCache.getOrPut(Unit) {

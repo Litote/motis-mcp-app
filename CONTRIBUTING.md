@@ -81,6 +81,12 @@ cd web && npm run coverage               # web chat tests
 The pull requests also build the native Lambda and run it in the Lambda runtime emulator (`deploy-lambda.yml`), and
 build the web chat image and run its smoke test (`web/nginx/smoke-test.sh`, `ci.yml`).
 
+### Agent evaluation
+
+`web/eval/` checks what models do with the tools: each scenario (a user message, e.g. "Comment aller de Lyon Part-Dieu
+à Grenoble demain à 8h ?") is sent to the agent of the web chat, and its tool calls and answer are checked. It needs an
+OpenRouter key and a running MCP server, and is not run by CI: see [web/eval/README.md](web/eval/README.md).
+
 ## Quality
 
 The CI (`ci.yml`) analyses the project with [SonarCloud](https://sonarcloud.io/summary/new_code?id=Litote_motis-mcp-app)

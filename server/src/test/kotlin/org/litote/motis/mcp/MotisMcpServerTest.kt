@@ -134,8 +134,14 @@ class MotisMcpServerTest {
             val text = (result.content.single() as TextContent).text
             assertTrue(text.contains("5556 vehicle(s) reported for its whole service area (not located)"), text)
             assertTrue(text.contains("Nearest stations with vehicles:\n- Victoria - Place du Chatelet"), text)
-            // no total of stations: docking stations and parking spots are not added up
+            // no total of stations: docking stations and parking spots are not added up; the provider of Konstanz,
+            // without anything in the area, is dropped
             assertTrue(text.lines().first().endsWith(": 2 provider(s)."), text)
+            assertTrue("de-ZeusKonstanz" !in text, text)
+
+            // without the vehicles, a free-floating provider has nothing in the area: all the providers are kept
+            val withoutVehicles = client.callTool("rentals", mapOf("place" to "48.8586,2.3470", "withVehicles" to false))
+            assertTrue((withoutVehicles.content.single() as TextContent).text.lines().first().endsWith(": 3 provider(s)."))
         }
     }
 

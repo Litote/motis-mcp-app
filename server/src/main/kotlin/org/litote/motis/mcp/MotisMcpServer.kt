@@ -24,7 +24,7 @@ private val INSTRUCTIONS =
     - rentals: shared bikes, scooters and cars.
     - server_info: server version and capabilities.
     Places can be given by name: they are geocoded, the best match is used.
-    Dates are ISO-8601 with offset; default is now.
+    Dates are ISO-8601, with offset or in the local time of the place; default is now.
     """.trimIndent()
 
 /**

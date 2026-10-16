@@ -135,6 +135,60 @@ class MotisToolsTest {
     }
 
     @Test
+    fun `date-times without offset are in the local time of the place`() {
+        val motis = transitous()
+        withMcpClient(motis) { client ->
+            // stop given by id: its time zone is asked to MOTIS
+            client.callTool("departures", mapOf("stopId" to "stop", "time" to "2026-10-12T23:00"))
+            val stopTimes = motis.requests.filter { it.url.encodedPath == "/api/v6/stoptimes" }
+            assertEquals("1", stopTimes.first().url.parameters["n"])
+            assertEquals("2026-10-12T21:00:00Z", stopTimes[1].url.parameters["time"])
+
+            // places given by name: the time zone of their geocoding
+            motis.requests.clear()
+            client.callTool("plan_journey", mapOf("from" to "Lyon Part-Dieu", "to" to "Lyon Perrache", "time" to "2026-10-12 08:30:00"))
+            assertEquals("2026-10-12T06:30:00Z", motis.request("/api/v6/plan").url.parameters["time"])
+
+            // coordinates: the time zone of the nearest place
+            motis.requests.clear()
+            client.callTool("reachability", mapOf("place" to "45.7605,4.8597", "time" to "2026-10-12T08:30"))
+            assertEquals("2026-10-12T06:30:00Z", motis.request("/api/v6/one-to-all").url.parameters["time"])
+            assertEquals("1", motis.request("/api/v1/reverse-geocode").url.parameters["numResults"])
+
+            // with an offset, as given
+            motis.requests.clear()
+            client.callTool("reachability", mapOf("place" to "45.7605,4.8597", "time" to "2026-10-12T08:30:00-04:00"))
+            assertEquals("2026-10-12T12:30:00Z", motis.request("/api/v6/one-to-all").url.parameters["time"])
+            assertTrue(motis.requests.none { it.url.encodedPath == "/api/v1/reverse-geocode" })
+
+            val invalid = client.callTool("reachability", mapOf("place" to "45.7605,4.8597", "time" to "tomorrow 8am"))
+            assertEquals("Invalid argument: 'time' must be an ISO-8601 date-time, e.g. 2026-10-09T08:00:00+02:00", invalid.text())
+        }
+    }
+
+    @Test
+    fun `the time zone of a date-time without offset must be known`() {
+        withMcpClient(MockMotis { respondJson("[]") }) { client ->
+            val result = client.callTool("reachability", mapOf("place" to "45.7605,4.8597", "time" to "2026-10-12T08:30"))
+
+            assertEquals(
+                "Invalid argument: 'time' has no UTC offset and the time zone of the place is unknown: add the offset, e.g. 2026-10-09T08:00:00+02:00",
+                result.text(),
+            )
+        }
+    }
+
+    @Test
+    fun `the place of an area is geocoded in the requested language`() {
+        val motis = transitous()
+        withMcpClient(motis) { client ->
+            client.callTool("explore_area", mapOf("place" to "Lyon Part-Dieu", "language" to "fr"))
+
+            assertEquals("fr", motis.request("/api/v1/geocode").url.parameters["language"])
+        }
+    }
+
+    @Test
     fun `integer arguments out of their bounds are tool errors`() {
         val motis = transitous()
         withMcpClient(motis) { client ->

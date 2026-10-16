@@ -58,6 +58,7 @@ infra/bootstrap/*.tfstate.*
 ### Web chat ###
 web/node_modules/
 web/dist/
+web/eval/results/
 *.tsbuildinfo
 
 ### Test coverage ###

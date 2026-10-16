@@ -142,11 +142,22 @@ class Args(private val arguments: JsonObject, private val bounds: Map<String, Lo
             else -> invalid("'$name' must be an array of strings")
         }?.ifEmpty { null }
 
-    /** ISO-8601 instant (`2026-10-09T08:00:00Z` or with offset). */
-    fun instant(name: String): Instant? =
-        string(name)?.let {
-            runCatching { Instant.parse(it) }.getOrElse { _ -> invalid("'$name' must be an ISO-8601 date-time with offset, e.g. 2026-10-09T08:00:00+02:00") }
-        }
+    /**
+     * ISO-8601 date-time: an instant (`2026-10-09T08:00:00Z` or with offset), or a local date-time (`2026-10-09T08:00`)
+     * in the time zone given by [zone]. The models often omit the offset: [zone] is only called then (it may call MOTIS).
+     */
+    suspend fun instant(name: String, zone: suspend () -> String?): Instant? {
+        val value = string(name) ?: return null
+        runCatching { Instant.parse(value) }.getOrNull()?.let { return it }
+        val local =
+            runCatching { java.time.LocalDateTime.parse(value.replace(' ', 'T')) }.getOrNull()
+                ?: invalid("'$name' must be an ISO-8601 date-time, e.g. 2026-10-09T08:00:00+02:00")
+        val tz =
+            zone()?.let { runCatching { java.time.ZoneId.of(it) }.getOrNull() }
+                ?: invalid("'$name' has no UTC offset and the time zone of the place is unknown: add the offset, e.g. 2026-10-09T08:00:00+02:00")
+        val instant = local.atZone(tz).toInstant()
+        return Instant.fromEpochSeconds(instant.epochSecond, instant.nano)
+    }
 
     /** Value of an enum argument, case-insensitive. */
     inline fun <reified E : Enum<E>> enum(name: String): E? =

@@ -8,6 +8,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "coverage": "vitest run --coverage",
+    "eval": "vitest run --config vitest.eval.config.ts",
     "preview": "vite preview"
   },
   "dependencies": {

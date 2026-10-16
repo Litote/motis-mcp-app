@@ -41,8 +41,11 @@ const val AREA_STATION_MIN_VEHICLES = 200
 fun BoundingBox.toDto(): Bbox = Bbox(minLat, minLon, maxLat, maxLon)
 
 /** GTFS colors are hexadecimal without `#`. */
+private val HEX_COLOR = Regex("^#?[0-9A-Fa-f]{6}$")
+
+/** `#rrggbb` color of the feeds, null when missing or invalid (inserted in the style of the views). */
 fun color(value: String?): String? =
-    value?.takeIf { it.isNotBlank() }?.let { if (it.startsWith("#")) it else "#$it" }
+    value?.trim()?.takeIf { HEX_COLOR.matches(it) }?.let { if (it.startsWith("#")) it else "#$it" }
 
 fun Mode.label(): String = serialName()
 
@@ -361,7 +364,11 @@ fun distanceKm(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
     return kotlin.math.sqrt(x * x + y * y) * 111.32
 }
 
-fun MapClient.RentalsResponseBody.toDto(title: String, bbox: BoundingBox?): RentalsResult {
+/**
+ * With [dropEmptyProviders], the providers without station nor vehicle in the area are dropped: MOTIS returns some
+ * whose declared service area is wrong (e.g. a provider of Konstanz in Paris).
+ */
+fun MapClient.RentalsResponseBody.toDto(title: String, bbox: BoundingBox?, dropEmptyProviders: Boolean = false): RentalsResult {
     val (areaStations, stations) = stations.partition { it.numVehiclesAvailable > AREA_STATION_MIN_VEHICLES }
     val byDistance: (Double, Double) -> Double = { lat, lon -> bbox?.let { distanceKm(it.centerLat, it.centerLon, lat, lon) } ?: 0.0 }
     val vehicles = vehicles.sortedBy { byDistance(it.lat, it.lon) }
@@ -382,7 +389,7 @@ fun MapClient.RentalsResponseBody.toDto(title: String, bbox: BoundingBox?): Rent
                     vehicles = vehicles.count { it.providerId == p.id },
                     areaVehicles = areaStations.filter { it.providerId == p.id }.sumOf { it.numVehiclesAvailable },
                 )
-            },
+            }.filter { !dropEmptyProviders || it.stations > 0 || it.vehicles > 0 || it.areaVehicles > 0 },
         stations =
             stations.sortedBy { byDistance(it.lat, it.lon) }.take(MAX_POINTS).map { s ->
                 RentalStationDto(

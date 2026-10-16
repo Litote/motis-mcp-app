@@ -7,6 +7,7 @@ import kotlinx.coroutines.coroutineScope
 import org.litote.motis.client.model.Mode
 import org.litote.motis.mcp.MotisGateway
 import org.litote.motis.mcp.MotisToolException
+import org.litote.motis.mcp.ResolvedPlace
 import org.litote.motis.mcp.StopTimesQuery
 import org.litote.motis.mcp.UnknownStopException
 import org.litote.motis.mcp.apps.UiView
@@ -22,6 +23,7 @@ import org.litote.motis.mcp.dto.onLines
 import org.litote.motis.mcp.dto.stationLines
 import org.litote.motis.mcp.dto.toDto
 import org.litote.motis.mcp.dto.withNearbyTrains
+import kotlin.time.Instant
 
 /** Modes of the trains: RAIL also includes the metros for MOTIS. */
 private val TRAIN_MODES =
@@ -93,24 +95,32 @@ private class DeparturesRequest(private val gateway: MotisGateway, private val a
     private val pageCursor = args.string("pageCursor")
     private val earlier = pageCursor?.startsWith("EARLIER") == true
 
+    /** Start time, set once the stop is known: a time without offset is in the time zone of the stop. */
+    private var time: Instant? = null
+
     suspend fun departures(): DeparturesResult {
-        val stopId =
-            args.string("stopId")
+        val stopId = args.string("stopId")
+        val stop =
+            // only the id of a stop given by id is known (its time zone is asked to MOTIS if needed)
+            stopId?.let { ResolvedPlace(it, it, 0.0, 0.0, isStop = true) }
                 ?: resolveStop()
                 ?: throw MotisToolException("Invalid argument: 'stopId' or 'stop' is required")
         return try {
-            departures(stopId)
+            departures(stop)
         } catch (e: UnknownStopException) {
             // unknown stopId given with the stop name: use the name
-            val resolved = if (args.string("stopId") != null) resolveStop() else null
-            if (resolved == null || resolved == stopId) throw e
+            val resolved = if (stopId != null) resolveStop() else null
+            if (resolved == null || resolved.id == stop.id) throw e
             departures(resolved)
         }
     }
 
-    private suspend fun resolveStop(): String? = args.string("stop")?.let { gateway.resolvePlace(it, stopsOnly = true, language = language).id }
+    private suspend fun resolveStop(): ResolvedPlace? = args.string("stop")?.let { gateway.resolvePlace(it, stopsOnly = true, language = language) }
 
-    private suspend fun departures(id: String) = if (station) stationStopTimes(id) else withNearbyTrains(id)
+    private suspend fun departures(stop: ResolvedPlace): DeparturesResult {
+        time = args.instant("time") { stop.tz ?: gateway.stop(stop.id)?.tz }
+        return if (station) stationStopTimes(stop.id) else withNearbyTrains(stop.id)
+    }
 
     private suspend fun stopTimes(
         id: String,
@@ -122,7 +132,7 @@ private class DeparturesRequest(private val gateway: MotisGateway, private val a
     ) = gateway.stopTimes(
         StopTimesQuery(
             stopId = id,
-            time = args.instant("time"),
+            time = time,
             arriveBy = arriveBy,
             n = count,
             modes = modes,
@@ -165,7 +175,7 @@ private class DeparturesRequest(private val gateway: MotisGateway, private val a
     private suspend fun stationLines(id: String): List<StationLineDto> =
         when {
             pageCursor != null -> emptyList()
-            args.instant("time") != null -> stationLines(probes(id))
+            time != null -> stationLines(probes(id))
             else -> gateway.stationLines.getOrPut(id to language) { stationLines(probes(id)) }
         }
 
@@ -192,7 +202,7 @@ fun Server.addTimetableTools(gateway: MotisGateway) {
         schema = {
             string("stopId", "Exact stop id.")
             string("stop", "Stop name, resolved by geocoding (used when stopId is missing).")
-            string("time", "Start date-time, ISO-8601 with offset. Default: now.")
+            string("time", "Start date-time, ISO-8601: with offset, or in the local time of the stop. Default: now.")
             boolean("arriveBy", "true: arrivals instead of departures.")
             integer("count", "Number of departures (default 20).", minimum = 1, maximum = 100)
             stringArray("modes", "Only these transit modes.", TRANSIT_MODES)
