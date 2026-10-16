@@ -152,6 +152,18 @@ data class DeparturesResult(
     val stopTimes: List<StopTimeDto>,
     val nextPageCursor: String? = null,
     val previousPageCursor: String? = null,
+    /** Lines of the station of the stop (stops within [STATION_RADIUS]), on the first page of a railway station. */
+    val stationLines: List<StationLineDto>? = null,
+)
+
+/** Line with departures at a station: train brand ("TGV INOUI") for the long-distance trains. */
+@Serializable
+data class StationLineDto(
+    val mode: String,
+    val line: String,
+    val agency: String,
+    val routeColor: String? = null,
+    val routeTextColor: String? = null,
 )
 
 @Serializable

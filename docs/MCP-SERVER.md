@@ -12,7 +12,7 @@ See the [README](../README.md) for an overview, the AWS Lambda deployment, the w
 | `explore_area`   | map/stops, map/routes                | map of the stops and lines of an area  |
 | `route_details`  | map/route-details                    | map of a line and its stops            |
 | `reachability`   | one-to-all                           | isochrone map                          |
-| `departures`     | stoptimes                            | departure/arrival board (real time)    |
+| `departures`     | stoptimes                            | departure/arrival board (real time), by line tab in railway stations |
 | `trip_details`   | trip                                 | trip timeline                          |
 | `plan_journey`   | plan                                 | itineraries list and map               |
 | `rentals`        | map/rentals                          | shared bikes, scooters and cars map    |

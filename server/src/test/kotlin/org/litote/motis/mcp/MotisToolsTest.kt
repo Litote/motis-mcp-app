@@ -11,6 +11,7 @@ import org.litote.motis.mcp.dto.JourneyResult
 import org.litote.motis.mcp.dto.ReachabilityResult
 import org.litote.motis.mcp.dto.SearchResult
 import org.litote.motis.mcp.dto.ServerInfoResult
+import org.litote.motis.mcp.dto.StationLineDto
 import org.litote.motis.mcp.dto.StopCallDto
 import org.litote.motis.mcp.dto.TripResult
 import kotlin.test.Test
@@ -254,11 +255,16 @@ class MotisToolsTest {
                 )
 
             assertNull(result.isError)
-            val request = motis.request("/api/v6/stoptimes")
+            val (request, nearby) = motis.requests.filter { it.url.encodedPath == "/api/v6/stoptimes" }
             assertEquals("true", request.url.parameters["arriveBy"])
             assertEquals("CURSOR", request.url.parameters["pageCursor"])
             assertEquals("HIGHSPEED_RAIL", request.url.parameters["mode"])
             assertEquals("true", request.url.parameters["fetchStops"])
+            assertNull(request.url.parameters["radius"])
+            // the trains of the other stops of the station, with the same filter and cursor
+            assertEquals("200", nearby.url.parameters["radius"])
+            assertEquals("HIGHSPEED_RAIL", nearby.url.parameters["mode"])
+            assertEquals("CURSOR", nearby.url.parameters["pageCursor"])
             assertTrue(motis.requests.none { it.url.encodedPath == "/api/v1/geocode" })
             val text = result.text()
             assertTrue(text.startsWith("Arrivals at Lyon Part Dieu (stopId="), text)
@@ -267,6 +273,92 @@ class MotisToolsTest {
             assertEquals("6633", first.trainNumber)
             // previous stops of an arrival
             assertEquals(listOf(StopCallDto("Paris Gare de Lyon Hall 1 - 2", "2026-10-12T19:00:00Z")), first.stops)
+        }
+    }
+
+    @Test
+    fun `departures of buses only do not look for the trains around the stop`() {
+        val motis = transitous()
+        withMcpClient(motis) { client ->
+            val result = client.callTool("departures", mapOf("stopId" to "es-RENFE-Larga-Distancia-y-AVE_87303", "modes" to listOf("BUS")))
+
+            assertNull(result.isError, result.text())
+            assertEquals(1, motis.requests.count { it.url.encodedPath == "/api/v6/stoptimes" })
+        }
+    }
+
+    @Test
+    fun `first page of departures of a railway station lists the lines of the station`() {
+        val motis = transitous()
+        withMcpClient(motis) { client ->
+            val result = client.callTool("departures", mapOf("stopId" to "es-RENFE-Larga-Distancia-y-AVE_87303"))
+
+            val probes = motis.requests.filter { it.url.parameters["fetchStops"] == "false" }
+            // concurrent requests, in any order
+            assertEquals(
+                setOf(
+                    listOf("HIGHSPEED_RAIL", "LONG_DISTANCE", "NIGHT_RAIL"),
+                    listOf("REGIONAL_FAST_RAIL", "REGIONAL_RAIL", "SUBURBAN"),
+                    listOf("SUBWAY", "METRO"),
+                    listOf("TRAM"),
+                    listOf("BUS", "COACH"),
+                ),
+                probes.map { it.url.parameters["mode"]!!.split(",") }.toSet(),
+            )
+            assertTrue(probes.all { it.url.parameters["radius"] == "200" && it.url.parameters["n"] == "40" && it.url.parameters["pageCursor"] == null })
+            assertEquals(
+                listOf(StationLineDto("HIGHSPEED_RAIL", "TGV INOUI", "SNCF VOYAGEURS")),
+                result.data(DeparturesResult.serializer()).stationLines?.map { it.copy(routeColor = null, routeTextColor = null) },
+            )
+            assertTrue(result.text().endsWith("- HIGHSPEED_RAIL: TGV INOUI (SNCF VOYAGEURS)"), result.text())
+        }
+    }
+
+    @Test
+    fun `departures of lines of a station read the pages of the station until enough stop times`() {
+        val motis = transitous()
+        withMcpClient(motis) { client ->
+            val result =
+                client.callTool(
+                    "departures",
+                    mapOf("stopId" to "es-RENFE-Larga-Distancia-y-AVE_87303", "station" to true, "lines" to listOf("TGV INOUI"), "count" to 5),
+                )
+
+            val requests = motis.requests.filter { it.url.encodedPath == "/api/v6/stoptimes" }
+            // the same 3 trains on each page of the fixture: 4 pages read, without the probes of the station lines
+            assertEquals(4, requests.size)
+            assertTrue(requests.all { it.url.parameters["radius"] == "200" && it.url.parameters["fetchStops"] == "true" })
+            assertEquals(listOf(null, "LATER|1791864300", "LATER|1791864300", "LATER|1791864300"), requests.map { it.url.parameters["pageCursor"] })
+            val data = result.data(DeparturesResult.serializer())
+            assertEquals(listOf("6633", "9852", "6602"), data.stopTimes.map { it.trainNumber })
+            assertNull(data.stationLines)
+        }
+    }
+
+    @Test
+    fun `departures of other lines of a station`() {
+        val motis = transitous()
+        withMcpClient(motis) { client ->
+            val result =
+                client.callTool(
+                    "departures",
+                    mapOf("stopId" to "es-RENFE-Larga-Distancia-y-AVE_87303", "station" to true, "lines" to listOf("A"), "pageCursor" to "EARLIER|1"),
+                )
+
+            assertEquals(emptyList(), result.data(DeparturesResult.serializer()).stopTimes)
+            val cursors = motis.requests.filter { it.url.encodedPath == "/api/v6/stoptimes" }.map { it.url.parameters["pageCursor"] }
+            assertEquals(listOf("EARLIER|1", "EARLIER|1791839700", "EARLIER|1791839700", "EARLIER|1791839700"), cursors)
+        }
+    }
+
+    @Test
+    fun `departures of a station without lines filter`() {
+        val motis = transitous()
+        withMcpClient(motis) { client ->
+            val result = client.callTool("departures", mapOf("stopId" to "es-RENFE-Larga-Distancia-y-AVE_87303", "station" to true))
+
+            assertEquals(3, result.data(DeparturesResult.serializer()).stopTimes.size)
+            assertEquals(1, motis.requests.count { it.url.encodedPath == "/api/v6/stoptimes" })
         }
     }
 
@@ -310,7 +402,9 @@ class MotisToolsTest {
             assertNull(result.isError, result.text())
             assertEquals(
                 listOf("fr-horaires-sncf_XXX", "es-RENFE-Larga-Distancia-y-AVE_87303"),
-                motis.requests.filter { it.url.encodedPath == "/api/v6/stoptimes" }.map { it.url.parameters["stopId"] },
+                motis.requests
+                    .filter { it.url.encodedPath == "/api/v6/stoptimes" && it.url.parameters["radius"] == null }
+                    .map { it.url.parameters["stopId"] },
             )
         }
     }

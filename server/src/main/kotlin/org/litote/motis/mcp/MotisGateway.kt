@@ -218,33 +218,26 @@ class MotisGateway(configuration: ClientConfiguration) {
             is MapClient.RouteDetailsResponseUnknownFailure -> failStatus(r.statusCode)
         }
 
-    suspend fun stopTimes(
-        stopId: String,
-        time: Instant? = null,
-        arriveBy: Boolean = false,
-        n: Int = DEFAULT_STOP_TIMES,
-        modes: List<Mode>? = null,
-        pageCursor: String? = null,
-        language: List<String>? = null,
-    ): TimetableClient.StoptimesResponseBody =
+    suspend fun stopTimes(query: StopTimesQuery): TimetableClient.StoptimesResponseBody =
         when (
             val r =
                 timetableClient.stoptimes(
-                    stopId = stopId,
-                    time = time,
-                    arriveBy = arriveBy,
-                    n = n.toLong(),
-                    mode = modes,
+                    stopId = query.stopId,
+                    time = query.time,
+                    arriveBy = query.arriveBy,
+                    n = query.n.toLong(),
+                    mode = query.modes,
+                    radius = query.radius,
                     // next (previous) stops of each trip, shown on the departures (arrivals) board
-                    fetchStops = true,
-                    pageCursor = pageCursor,
-                    language = language,
+                    fetchStops = query.fetchStops,
+                    pageCursor = query.pageCursor,
+                    language = query.language,
                 )
         ) {
             is TimetableClient.StoptimesResponseSuccess -> r.body
             // MOTIS falls back to a search around 'center' when the stop is not found, hence this message
             is TimetableClient.StoptimesResponseFailure ->
-                if (r.body.error.contains("stop_found=false")) throw UnknownStopException(stopId) else fail(r.body.error)
+                if (r.body.error.contains("stop_found=false")) throw UnknownStopException(query.stopId) else fail(r.body.error)
             is TimetableClient.StoptimesResponseUnknownFailure -> failStatus(r.statusCode)
         }
 
@@ -395,6 +388,19 @@ enum class BikeOption(val preTransitModes: List<Mode>?, val postTransitModes: Li
     TO_STATION(listOf(Mode.BIKE), listOf(Mode.WALK), listOf(Mode.WALK, Mode.BIKE)),
     ON_BOARD(listOf(Mode.BIKE), listOf(Mode.BIKE), listOf(Mode.BIKE)),
 }
+
+/** Stop times query of [MotisGateway.stopTimes]: [radius] in meters around the stop, for all the stops of a station. */
+data class StopTimesQuery(
+    val stopId: String,
+    val time: Instant? = null,
+    val arriveBy: Boolean = false,
+    val n: Int = MotisGateway.DEFAULT_STOP_TIMES,
+    val modes: List<Mode>? = null,
+    val pageCursor: String? = null,
+    val language: List<String>? = null,
+    val radius: Long? = null,
+    val fetchStops: Boolean = true,
+)
 
 /**
  * Journey query of [MotisGateway.plan]: [from] and [to] are stop ids or `lat,lon` coordinates. With a [bike], the ends

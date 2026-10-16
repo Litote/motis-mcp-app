@@ -2,7 +2,8 @@
 import { callTool, startView, type Args } from "./shared/app";
 import { day, delayBadge, delayMinutes, duration, esc, lineBadge, time } from "./shared/format";
 import { t } from "./shared/i18n";
-import { RAIL_MODES, linePictogram, train } from "./shared/sncf";
+import { RAIL_MODES, TRAIN_MODES, linePictogram, train } from "./shared/sncf";
+import { inTab, stationTabs, type StationTab } from "./shared/stationTabs";
 import type { DeparturesResult, PlaceDto, StopTimeDto, TripResult } from "./shared/types";
 
 type BoardData = DeparturesResult | TripResult;
@@ -15,14 +16,47 @@ const history: BoardData[] = [];
 let current: BoardData | null = null;
 /** Arguments of the departures call, reused for paging and the arrivals toggle. */
 let boardArgs: Args = {};
+/** Tabs of the board of a railway station (none for the other stops), and the one shown. */
+let tabs: StationTab[] = [];
+let activeTab: StationTab | null = null;
 
 const app = startView("MOTIS departures", {
   render: (data, args) => {
-    if (data.kind === "departures") boardArgs = { ...args, pageCursor: undefined };
     history.length = 0;
-    show(data as unknown as BoardData, false);
+    if (data.kind !== "departures") {
+      show(data as unknown as BoardData, false);
+      return;
+    }
+    const departures = data as unknown as DeparturesResult;
+    boardArgs = { ...args, pageCursor: undefined };
+    tabs = stationTabs(departures.stationLines ?? []);
+    activeTab = tabs[0] ?? null;
+    if (!activeTab) {
+      show(departures, false);
+      return;
+    }
+    // the departures of the tab in the result first, then all of them
+    show({ ...departures, stopTimes: departures.stopTimes.filter((st) => inTab(activeTab!, st)) }, false);
+    void selectTab(activeTab);
   },
 });
+
+/** Shows the departures of the station on the lines of [tab]. */
+function selectTab(tab: StationTab): Promise<void> {
+  activeTab = tab;
+  return reload({ station: true, modes: tab.modes, lines: tab.lines, pageCursor: undefined });
+}
+
+function tabBar(): string {
+  if (!tabs.length) return "";
+  const buttons = tabs
+    .map((tab, i) => {
+      const content = tab.pictogram ? `<span class="sncf-line">${tab.pictogram}</span>` : esc(tab.label);
+      return `<button type="button" role="tab" data-tab="${i}" aria-selected="${tab === activeTab}" title="${esc(tab.label)}" aria-label="${esc(tab.label)}">${content}</button>`;
+    })
+    .join("");
+  return `<div class="tabs" role="tablist" aria-label="${t("departures.tabs")}">${buttons}</div>`;
+}
 
 function show(data: BoardData, push: boolean): void {
   if (push && current) history.push(current);
@@ -42,8 +76,12 @@ function timeCell(actual: string | undefined, scheduled: string | undefined, rea
 
 /** French railway stations get a board like the ones of the SNCF stations (and of Carto Tchoo): not the bus or metro stops. */
 function isFrenchStation(data: DeparturesResult): boolean {
-  const trains = data.stopTimes.filter((st) => RAIL_MODES.has(st.mode)).length;
-  return data.stop.tz === "Europe/Paris" && trains > 0 && trains * 2 >= data.stopTimes.length;
+  return data.stop.tz === "Europe/Paris" && data.stopTimes.some((st) => RAIL_MODES.has(st.mode));
+}
+
+/** Trains and Île-de-France trams, on the SNCF board: the other lines of the station (buses, metros) are listed below it. */
+function onSncfBoard(st: StopTimeDto): boolean {
+  return RAIL_MODES.has(st.mode) || linePictogram(st.mode, st.line, st.agency) !== null;
 }
 
 /** Logo of the brand (or brand name) of a train, or pictogram / badge of a line. */
@@ -93,15 +131,24 @@ function renderBoard(data: DeparturesResult): void {
   const first = data.stopTimes[0]?.time;
   const firstDay = first ? ` · ${day(first, tz)}` : "";
   subtitle.textContent = `${t(data.arriveBy ? "departures.arrivals" : "departures.departures")}${firstDay}`;
+  const all = data.stopTimes.map((st, index) => ({ st, index }));
   if (isFrenchStation(data)) {
-    const trains = data.stopTimes.map((st, i) => sncfRow(st, i, data.arriveBy, tz)).join("");
-    renderToolbarAnd(data, `<ol class="sncf-board ${data.arriveBy ? "arrivals" : ""}">${trains}</ol>`);
+    const trains = all.filter(({ st }) => onSncfBoard(st));
+    const others = all.filter(({ st }) => !onSncfBoard(st));
+    const rows = trains.map(({ st, index }) => sncfRow(st, index, data.arriveBy, tz)).join("");
+    const otherLines = others.length ? `<h3>${t("departures.otherLines")}</h3>${boardTable(others, tz)}` : "";
+    renderToolbarAnd(data, `<ol class="sncf-board ${data.arriveBy ? "arrivals" : ""}">${rows}</ol>${otherLines}`);
     return;
   }
-  const rows = data.stopTimes
+  renderToolbarAnd(data, all.length ? boardTable(all, tz) : `<p class="muted">${t("departures.none")}</p>`);
+}
+
+/** Generic board of the [departures], with their index in the result. */
+function boardTable(departures: { st: StopTimeDto; index: number }[], tz?: string): string {
+  const rows = departures
     .map(
-      (st, i) => `
-      <tr class="clickable" data-index="${i}">
+      ({ st, index }) => `
+      <tr class="clickable" data-index="${index}">
         <td class="${st.cancelled ? "cancelled" : ""}">${timeCell(st.time, st.scheduledTime, st.realTime, tz)}</td>
         <td>${lineBadge(st.mode, st.line, st.routeColor, st.routeTextColor)}</td>
         <td>${esc(st.headsign)}${st.cancelled ? ` <strong class="late">${t("departures.cancelled")}</strong>` : ""}<div class="muted">${esc(st.agency)}</div></td>
@@ -109,13 +156,13 @@ function renderBoard(data: DeparturesResult): void {
       </tr>`,
     )
     .join("");
-  const board = rows ? `<table class="board"><tbody>${rows}</tbody></table>` : `<p class="muted">${t("departures.none")}</p>`;
-  renderToolbarAnd(data, board);
+  return `<table class="board"><tbody>${rows}</tbody></table>`;
 }
 
 /** Paging and departures / arrivals buttons, then the [board]. */
 function renderToolbarAnd(data: DeparturesResult, board: string): void {
   content.innerHTML = `
+    ${tabBar()}
     <div class="toolbar">
       <button type="button" data-action="previous" ${data.previousPageCursor ? "" : "disabled"}>${t("earlier")}</button>
       <button type="button" data-action="next" ${data.nextPageCursor ? "" : "disabled"}>${t("later")}</button>
@@ -125,6 +172,12 @@ function renderToolbarAnd(data: DeparturesResult, board: string): void {
     </div>
     ${board}`;
 
+  content.querySelectorAll<HTMLButtonElement>("button[data-tab]").forEach((button) =>
+    button.addEventListener("click", () => {
+      content.querySelectorAll("button[data-tab]").forEach((b) => b.setAttribute("aria-selected", String(b === button)));
+      void selectTab(tabs[Number(button.dataset.tab)]);
+    }),
+  );
   content.querySelectorAll<HTMLElement>("[data-index]").forEach((tr) =>
     tr.addEventListener("click", () => openTrip(data.stopTimes[Number(tr.dataset.index)].tripId)),
   );
@@ -132,17 +185,25 @@ function renderToolbarAnd(data: DeparturesResult, board: string): void {
     button.addEventListener("click", () => {
       const action = button.dataset.action;
       if (action === "previous") void reload({ pageCursor: data.previousPageCursor });
+      // later departures of a French station with other lines (buses, metros): its trains only, to fill the board
+      else if (action === "next" && !activeTab && isFrenchStation(data) && data.stopTimes.some((st) => !onSncfBoard(st)))
+        void reload({ pageCursor: data.nextPageCursor, modes: TRAIN_MODES });
       else if (action === "next") void reload({ pageCursor: data.nextPageCursor });
       else void reload({ arriveBy: action === "arrivals", pageCursor: undefined });
     }),
   );
 }
 
+/** Number of the last board request: the answers of the previous ones (another tab clicked meanwhile) are ignored. */
+let lastReload = 0;
+
 async function reload(changes: Args): Promise<void> {
   const { pageCursor, ...rest } = changes;
   boardArgs = { ...boardArgs, ...rest, stopId: boardArgs.stopId ?? (current?.kind === "departures" ? current.stop.stopId : undefined) };
+  const request = ++lastReload;
   try {
-    show(await callTool<DeparturesResult>(app, "departures", { ...boardArgs, pageCursor }), false);
+    const data = await callTool<DeparturesResult>(app, "departures", { ...boardArgs, pageCursor });
+    if (request === lastReload) show(data, false);
   } catch {
     // reported in the status bar
   }
@@ -206,6 +267,10 @@ style.textContent = `
   table.board tr.clickable { cursor: pointer; }
   table.board tr.clickable:hover { background: var(--color-background-secondary); }
   table.board td:first-child { white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; }
+  .tabs button { display: inline-flex; align-items: center; min-height: 2rem; }
+  .tabs button[aria-selected="true"] { border-color: var(--color-ring-primary); box-shadow: inset 0 0 0 1px var(--color-ring-primary); font-weight: 600; }
+  .tabs .sncf-line svg { width: 1.25rem; height: 1.25rem; }
   ol.timeline { list-style: none; margin: 0 0 8px; padding: 0; }
   ol.timeline .stop { display: grid; grid-template-columns: 18px 90px 1fr; align-items: center; min-height: 28px; position: relative; }
   ol.timeline .stop::before { content: ""; position: absolute; left: 7px; top: 0; bottom: 0; width: 4px; background: var(--line); }

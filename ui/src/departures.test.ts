@@ -39,6 +39,85 @@ const rows = () => [...document.querySelectorAll("tr[data-index]")].map(text);
 const trains = () => [...document.querySelectorAll("ol.sncf-board li.train")];
 
 describe("departures view", () => {
+  /** Board of Paris Gare de Lyon: its long-distance trains, RER A and buses. */
+  function station(): DeparturesResult {
+    const data = sncfBoard();
+    data.stopTimes.push({ ...data.stopTimes[2], mode: "REGIONAL_RAIL", line: "A", agency: "RER", tripId: "rer-a", trainNumber: "ZUMO83" });
+    data.stationLines = [
+      { mode: "HIGHSPEED_RAIL", line: "TGV INOUI", agency: "SNCF VOYAGEURS" },
+      { mode: "REGIONAL_RAIL", line: "A", agency: "RER" },
+      { mode: "BUS", line: "24", agency: "RATP" },
+    ];
+    return data;
+  }
+
+  const tabs = () => [...document.querySelectorAll<HTMLButtonElement>("button[role=tab]")];
+
+  it("shows the departures of a station by tab, the trains first", async () => {
+    const app = await loadView("departures");
+    const longDistance = sncfBoard();
+    longDistance.stopTimes = longDistance.stopTimes.slice(0, 2);
+    app.answer(longDistance);
+    await app.toolResult({ stopId: "IDFM:73626" }, station());
+
+    expect(tabs().map((tab) => tab.getAttribute("aria-label"))).toEqual(["Trains", "RER A", "Bus"]);
+    expect(tabs()[0].getAttribute("aria-selected")).toBe("true");
+    expect(tabs()[1].querySelector("svg")).not.toBeNull();
+    // the trains of the tab in the result, before its departures
+    expect(trains()).toHaveLength(3);
+    expect(app.callServerTool).toHaveBeenCalledWith({
+      name: "departures",
+      arguments: {
+        stopId: "IDFM:73626",
+        station: true,
+        modes: ["HIGHSPEED_RAIL", "LONG_DISTANCE", "NIGHT_RAIL", "REGIONAL_FAST_RAIL", "REGIONAL_RAIL", "SUBURBAN"],
+        lines: ["TGV INOUI"],
+      },
+    });
+    await flush();
+    expect(trains()).toHaveLength(2);
+    expect(tabs()).toHaveLength(3);
+
+    const bus = sncfBoard();
+    bus.stopTimes = [{ ...bus.stopTimes[0], mode: "BUS", line: "24", agency: "RATP", trainNumber: undefined }];
+    app.answer(bus);
+    tabs()[2].click();
+    expect(tabs()[2].getAttribute("aria-selected")).toBe("true");
+    expect(app.callServerTool).toHaveBeenLastCalledWith({
+      name: "departures",
+      arguments: { stopId: "IDFM:73626", station: true, modes: ["BUS", "COACH"] },
+    });
+    await flush();
+    expect(rows()).toHaveLength(1);
+    expect(trains()).toHaveLength(0);
+
+    // pages of the tab
+    app.answer(bus);
+    $<HTMLButtonElement>("button[data-action=next]").click();
+    expect(app.callServerTool).toHaveBeenLastCalledWith({
+      name: "departures",
+      arguments: { stopId: "IDFM:73626", station: true, modes: ["BUS", "COACH"], pageCursor: bus.nextPageCursor },
+    });
+    await flush();
+  });
+
+  it("shows the answer of the last tab clicked", async () => {
+    const app = await loadView("departures");
+    let answerFirst: (value: unknown) => void = () => undefined;
+    app.callServerTool.mockReturnValueOnce(new Promise((resolve) => (answerFirst = resolve)));
+    await app.toolResult({ stopId: "IDFM:73626" }, station());
+    const rerA = sncfBoard();
+    rerA.stopTimes = [{ ...rerA.stopTimes[0], mode: "REGIONAL_RAIL", line: "A", agency: "RER" }];
+    app.answer(rerA);
+    tabs()[1].click();
+    await flush();
+
+    answerFirst({ content: [], structuredContent: sncfBoard() });
+    await flush();
+    expect(trains()).toHaveLength(1);
+    expect(tabs()[1].getAttribute("aria-selected")).toBe("true");
+  });
+
   it("shows the board with delays, tracks and cancellations", async () => {
     const app = await loadView("departures");
     await app.toolResult({ stop: "Lyon Part-Dieu", count: 3 }, board());
@@ -103,14 +182,53 @@ describe("departures view", () => {
     expect(trains()[0].querySelector(".numero")!.textContent).toBe("891001");
     expect(trains()[1].querySelector(".origine .sncf-line svg")).not.toBeNull();
     expect(trains()[1].querySelector(".numero")!.textContent).toBe("ZEUS");
-    expect(trains()[2].querySelector(".origine .badge")!.textContent).toBe("C3");
+    expect(trains()).toHaveLength(2);
+    expect(document.querySelector("tr[data-index='2'] .badge")!.textContent).toBe("C3");
   });
 
-  it("keeps the generic board at a French stop with mostly buses or metros", async () => {
+  it("lists the buses and metros of a French station with few trains below its SNCF board", async () => {
     const app = await loadView("departures");
     const data = sncfBoard();
     data.stopTimes[0].mode = "BUS";
     data.stopTimes[1].mode = "SUBWAY";
+    await app.toolResult({ stopId: "S1" }, data);
+
+    expect(trains().map((li) => (li as HTMLElement).dataset.index)).toEqual(["2"]);
+    expect($("h3").textContent).toBe("Other lines");
+    expect([...document.querySelectorAll<HTMLElement>("tr[data-index]")].map((tr) => tr.dataset.index)).toEqual(["0", "1"]);
+
+    app.answer(fixture<TripResult>("trip"));
+    (document.querySelector("tr[data-index='1']") as HTMLElement).click();
+    await flush();
+    expect(app.callServerTool).toHaveBeenLastCalledWith({ name: "trip_details", arguments: { tripId: data.stopTimes[1].tripId } });
+  });
+
+  it("shows only the trains of the later departures of a French station with other lines", async () => {
+    const app = await loadView("departures");
+    const data = sncfBoard();
+    data.stopTimes[0].mode = "BUS";
+    await app.toolResult({ stopId: "S1", count: 3 }, data);
+
+    app.answer(sncfBoard());
+    $("button[data-action=next]").click();
+    await flush();
+    const modes = ["HIGHSPEED_RAIL", "LONG_DISTANCE", "NIGHT_RAIL", "REGIONAL_FAST_RAIL", "REGIONAL_RAIL", "SUBURBAN"];
+    expect(app.callServerTool).toHaveBeenLastCalledWith({
+      name: "departures",
+      arguments: { stopId: "S1", count: 3, modes, pageCursor: "LATER|1791864300" },
+    });
+    expect(document.querySelector("h3")).toBeNull();
+
+    app.answer(sncfBoard());
+    $("button[data-action=previous]").click();
+    await flush();
+    expect(app.callServerTool).toHaveBeenLastCalledWith({ name: "departures", arguments: expect.objectContaining({ modes }) });
+  });
+
+  it("keeps the generic board at a French stop without trains", async () => {
+    const app = await loadView("departures");
+    const data = sncfBoard();
+    data.stopTimes.forEach((st) => (st.mode = "BUS"));
     await app.toolResult({ stopId: "S1" }, data);
 
     expect(document.querySelector("ol.sncf-board")).toBeNull();

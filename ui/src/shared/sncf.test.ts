@@ -9,6 +9,13 @@ describe("SNCF pictograms", () => {
     expect(train("HIGHSPEED_RAIL", "TGV Lyria 9277")?.logo).toContain("<svg");
     expect(train("HIGHSPEED_RAIL", "EST", "Eurostar", "9014")).toMatchObject({ brand: "EST", number: "9014" });
     expect(train("HIGHSPEED_RAIL", "EST", "Eurostar")?.logo).toContain("<svg");
+    expect(train("HIGHSPEED_RAIL", "FR 6650", "TRENITALIA", "6650")).toMatchObject({ brand: "FR", number: "6650" });
+    expect(train("HIGHSPEED_RAIL", "FR 6650", "TRENITALIA", "6650")?.logo).toContain("<svg");
+    expect(train("HIGHSPEED_RAIL", "FRS 9281")?.logo).toBeUndefined();
+    expect(train("LONG_DISTANCE", "IC 4202", "SNCF VOYAGEURS", "4202")?.logo).toContain("INTER");
+    expect(train("LONG_DISTANCE", "IC 4202", "")?.logo).toContain("INTER");
+    // the Intercity of other countries
+    expect(train("LONG_DISTANCE", "IC 2084", "DB Fernverkehr AG")?.logo).toBeUndefined();
     expect(train("REGIONAL_RAIL", "TER", "SNCF VOYAGEURS", "891001")).toEqual({ brand: "TER", number: "891001", logo: undefined });
     // the number of the line name is not the train number
     expect(train("REGIONAL_RAIL", "K 14", "SNCF VOYAGEURS", "123")).toMatchObject({ brand: "K 14", number: "123" });

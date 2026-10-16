@@ -8,3 +8,10 @@ Logos of the SNCF train brands (white variants, for the dark departures board) a
 
 Changes: a `viewBox` replaces the fixed `width`/`height` of the root element so that the pictograms scale,
 and the `transilienX.svg` files are renamed `line-X.svg`.
+
+`frecciarossa.svg`: logo of the Frecciarossa trains of Trenitalia, from
+[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Frecciarossa_TR_-_Logo.svg), in the public domain (text logo,
+trademark of Trenitalia). Changes: white variant (all fills `#fff`), XML prolog removed and whitespace collapsed.
+
+`intercites.svg`: not a logo, the name of the Intercités trains of SNCF written in white (no free logo available), made
+for this project.

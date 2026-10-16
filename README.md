@@ -65,6 +65,10 @@ cd web && npm ci && npm run dev   # http://localhost:5173 (the sandbox is served
 npm test
 ```
 
+To test the views without a model (no OpenRouter key), open http://localhost:5173/dev.html (dev server only): pick a
+tool, type its arguments in JSON and call it; its view is rendered as in the chat, the view's own tool calls go to the
+server.
+
 Deployment: Docker image (nginx), see [Self-hosting](docs/SELF-HOSTING.md#web-chat-image), or S3 + CloudFront, see
 [AWS deployment](docs/AWS-DEPLOYMENT.md#web-chat).
 

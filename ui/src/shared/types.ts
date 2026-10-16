@@ -74,6 +74,17 @@ export interface DeparturesResult {
   stopTimes: StopTimeDto[];
   nextPageCursor?: string;
   previousPageCursor?: string;
+  /** Lines of the station of the stop, on the first page of a railway station. */
+  stationLines?: StationLineDto[];
+}
+
+/** Line with departures at a station: train brand ("TGV INOUI") for the long-distance trains. */
+export interface StationLineDto {
+  mode: string;
+  line: string;
+  agency: string;
+  routeColor?: string;
+  routeTextColor?: string;
 }
 
 export interface LegDto {

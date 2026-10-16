@@ -1,14 +1,32 @@
 package org.litote.motis.mcp.tools
 
 import io.modelcontextprotocol.kotlin.sdk.server.Server
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
+import org.litote.motis.client.model.Mode
 import org.litote.motis.mcp.MotisGateway
 import org.litote.motis.mcp.MotisToolException
+import org.litote.motis.mcp.StopTimesQuery
 import org.litote.motis.mcp.UnknownStopException
 import org.litote.motis.mcp.apps.UiView
 import org.litote.motis.mcp.dto.DeparturesResult
 import org.litote.motis.mcp.dto.ItineraryDto
+import org.litote.motis.mcp.dto.STATION_RADIUS
 import org.litote.motis.mcp.dto.TripResult
+import org.litote.motis.mcp.dto.distinctTrains
+import org.litote.motis.mcp.dto.followedBy
+import org.litote.motis.mcp.dto.label
+import org.litote.motis.mcp.dto.onLines
+import org.litote.motis.mcp.dto.stationLines
 import org.litote.motis.mcp.dto.toDto
+import org.litote.motis.mcp.dto.withNearbyTrains
+
+/** Modes of the trains: RAIL also includes the metros for MOTIS. */
+private val TRAIN_MODES =
+    listOf(Mode.HIGHSPEED_RAIL, Mode.LONG_DISTANCE, Mode.NIGHT_RAIL, Mode.REGIONAL_FAST_RAIL, Mode.REGIONAL_RAIL, Mode.SUBURBAN)
+
+private val RAIL_LABELS = TRAIN_MODES.map { it.label() } + Mode.RAIL.label()
 
 private fun DeparturesResult.summary(): String =
     buildString {
@@ -20,6 +38,10 @@ private fun DeparturesResult.summary(): String =
             val cancelled = if (st.cancelled) " CANCELLED" else ""
             val track = st.track?.let { " track $it" } ?: ""
             appendLine("- ${hhmm(st.time, stop.tz)}$delay ${st.mode} ${st.line} → ${st.headsign}$track$cancelled tripId=${st.tripId}")
+        }
+        stationLines?.let { lines ->
+            appendLine("Lines of the station (departures with station=true, modes and lines):")
+            lines.groupBy { it.mode }.forEach { (mode, l) -> appendLine("- $mode: ${l.joinToString { "${it.line} (${it.agency})" }}") }
         }
     }.trimEnd()
 
@@ -40,6 +62,114 @@ internal fun ItineraryDto.describe(): String =
         }
     }.trimEnd()
 
+/**
+ * Families of the lines of a station, each probed with its next stop times (MOTIS has no list of the lines of a stop): the
+ * long-distance trains, the other trains, metros, trams, buses.
+ */
+private val STATION_FAMILIES =
+    listOf(
+        listOf(Mode.HIGHSPEED_RAIL, Mode.LONG_DISTANCE, Mode.NIGHT_RAIL),
+        listOf(Mode.REGIONAL_FAST_RAIL, Mode.REGIONAL_RAIL, Mode.SUBURBAN),
+        listOf(Mode.SUBWAY, Mode.METRO),
+        listOf(Mode.TRAM),
+        listOf(Mode.BUS, Mode.COACH),
+    )
+
+/** Stop times probed per family: enough to find the lines of a big station, without the next stops of the trips. */
+private const val STATION_PROBE = 40
+
+/** Pages of MOTIS read to find [n] stop times of the requested lines. */
+private const val LINE_PAGES = 4
+
+/** Departures (or arrivals) asked by the arguments of the departures tool. */
+private class DeparturesRequest(private val gateway: MotisGateway, private val args: Args) {
+    private val language = args.stringList("language")
+    private val arriveBy = args.boolean("arriveBy") ?: false
+    private val n = args.int("count") ?: MotisGateway.DEFAULT_STOP_TIMES
+    private val modes = args.modes("modes")
+    private val station = args.boolean("station") ?: false
+    private val lines = args.stringList("lines")?.toSet()
+    private val pageCursor = args.string("pageCursor")
+    private val earlier = pageCursor?.startsWith("EARLIER") == true
+
+    suspend fun departures(): DeparturesResult {
+        val stopId =
+            args.string("stopId")
+                ?: resolveStop()
+                ?: throw MotisToolException("Invalid argument: 'stopId' or 'stop' is required")
+        return try {
+            departures(stopId)
+        } catch (e: UnknownStopException) {
+            // unknown stopId given with the stop name: use the name
+            val resolved = if (args.string("stopId") != null) resolveStop() else null
+            if (resolved == null || resolved == stopId) throw e
+            departures(resolved)
+        }
+    }
+
+    private suspend fun resolveStop(): String? = args.string("stop")?.let { gateway.resolvePlace(it, stopsOnly = true, language = language).id }
+
+    private suspend fun departures(id: String) = if (station) stationStopTimes(id) else withNearbyTrains(id)
+
+    private suspend fun stopTimes(
+        id: String,
+        modes: List<Mode>?,
+        radius: Long? = null,
+        cursor: String? = pageCursor,
+        count: Int = n,
+        fetchStops: Boolean = true,
+    ) = gateway.stopTimes(
+        StopTimesQuery(
+            stopId = id,
+            time = args.instant("time"),
+            arriveBy = arriveBy,
+            n = count,
+            modes = modes,
+            pageCursor = cursor,
+            language = language,
+            radius = radius,
+            fetchStops = fetchStops,
+        ),
+    ).toDto(arriveBy)
+
+    /** All the stops of the station: pages of MOTIS read until n stop times of the requested lines. */
+    private suspend fun stationStopTimes(id: String): DeparturesResult {
+        var page = stopTimes(id, modes, STATION_RADIUS).distinctTrains()
+        val lines = lines ?: return page
+        var result = page.onLines(lines)
+        repeat(LINE_PAGES - 1) {
+            val cursor = (if (earlier) page.previousPageCursor else page.nextPageCursor) ?: return result
+            if (result.stopTimes.size >= n) return result
+            page = stopTimes(id, modes, STATION_RADIUS, cursor)
+            result = result.followedBy(page.onLines(lines), earlier)
+        }
+        return result
+    }
+
+    /** The trains of a station may be at stops of other feeds, e.g. the TGV of the IDFM stop "Gare de Lyon". */
+    private suspend fun withNearbyTrains(id: String): DeparturesResult {
+        val result = stopTimes(id, modes)
+        val trainModes = modes?.let { m -> if (Mode.RAIL in m) TRAIN_MODES else TRAIN_MODES.filter { it in m } } ?: TRAIN_MODES
+        if (trainModes.isEmpty() || result.stopTimes.none { it.mode in RAIL_LABELS }) return result
+        val nearby = stopTimes(id, trainModes, STATION_RADIUS)
+        return result
+            .withNearbyTrains(nearby, n, earlier)
+            .copy(stationLines = stationLines(probes(id)).takeIf { it.isNotEmpty() })
+    }
+
+    /** First page of a railway station: its lines, for the tabs of its board. */
+    private suspend fun probes(id: String): List<DeparturesResult> =
+        if (pageCursor != null) {
+            emptyList()
+        } else {
+            coroutineScope {
+                STATION_FAMILIES
+                    .map { family -> async { stopTimes(id, family, STATION_RADIUS, null, STATION_PROBE, fetchStops = false) } }
+                    .awaitAll()
+            }
+        }
+}
+
 fun Server.addTimetableTools(gateway: MotisGateway) {
     motisTool(
         name = "departures",
@@ -48,6 +178,8 @@ fun Server.addTimetableTools(gateway: MotisGateway) {
             """
             Next departures (or arrivals) at a stop, with real-time delays, cancellations and tracks when available.
             Give 'stopId' (from search_places or explore_area) or a stop name in 'stop'.
+            For a railway station, the first page also lists the lines of the station (all its stops within 200 m): their
+            departures are given by 'station' true, with 'modes' and 'lines'.
             """.trimIndent(),
         view = UiView.DEPARTURES,
         schema = {
@@ -57,37 +189,13 @@ fun Server.addTimetableTools(gateway: MotisGateway) {
             boolean("arriveBy", "true: arrivals instead of departures.")
             integer("count", "Number of departures (default 20).", minimum = 1, maximum = 100)
             stringArray("modes", "Only these transit modes.", TRANSIT_MODES)
+            boolean("station", "true: departures of all the stops of the station (within 200 m), not only of this stop.")
+            stringArray("lines", "Only these lines of the station (names listed in the station lines), with 'station' true.")
             string("pageCursor", "Cursor returned by a previous call, to get the next or previous page.")
             string("language", LANGUAGE_DESCRIPTION)
         },
     ) { args ->
-        val language = args.stringList("language")
-        suspend fun resolveStop(): String? = args.string("stop")?.let { gateway.resolvePlace(it, stopsOnly = true, language = language).id }
-        val stopId =
-            args.string("stopId")
-                ?: resolveStop()
-                ?: throw MotisToolException("Invalid argument: 'stopId' or 'stop' is required")
-        val arriveBy = args.boolean("arriveBy") ?: false
-        suspend fun stopTimes(id: String) =
-            gateway.stopTimes(
-                stopId = id,
-                time = args.instant("time"),
-                arriveBy = arriveBy,
-                n = args.int("count") ?: MotisGateway.DEFAULT_STOP_TIMES,
-                modes = args.modes("modes"),
-                pageCursor = args.string("pageCursor"),
-                language = language,
-            )
-        val body =
-            try {
-                stopTimes(stopId)
-            } catch (e: UnknownStopException) {
-                // unknown stopId given with the stop name: use the name
-                val resolved = if (args.string("stopId") != null) resolveStop() else null
-                if (resolved == null || resolved == stopId) throw e
-                stopTimes(resolved)
-            }
-        val result = body.toDto(arriveBy)
+        val result = DeparturesRequest(gateway, args).departures()
         ToolOutput.of(result.summary(), DeparturesResult.serializer(), result)
     }
 

@@ -34,6 +34,8 @@ const en = {
 
   thinking: "Thinking…",
   "tool.running": "running…",
+  "tool.arguments": "Arguments",
+  "tool.result": "Result",
   "view.unavailable": "View unavailable: {error}",
   "view.close": "Close",
   "view.closeTitle": "Close (Escape)",
@@ -85,6 +87,8 @@ const fr: Record<MessageKey, string> = {
 
   thinking: "Réflexion en cours…",
   "tool.running": "en cours…",
+  "tool.arguments": "Arguments",
+  "tool.result": "Réponse",
   "view.unavailable": "Vue indisponible : {error}",
   "view.close": "Fermer",
   "view.closeTitle": "Fermer (Échap)",

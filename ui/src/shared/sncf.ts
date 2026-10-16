@@ -1,6 +1,8 @@
 // SNCF pictograms: logos of the train brands and pictograms of the Île-de-France lines (see sncf/README.md).
 import eurostar from "./sncf/eurostar.svg?raw";
+import frecciarossa from "./sncf/frecciarossa.svg?raw";
 import inoui from "./sncf/inoui.svg?raw";
+import intercites from "./sncf/intercites.svg?raw";
 import lyria from "./sncf/lyria.svg?raw";
 import ouigo from "./sncf/ouigo.svg?raw";
 import thalys from "./sncf/thalys.svg?raw";
@@ -22,13 +24,21 @@ export const RAIL_MODES = new Set([
   "SUBURBAN",
 ]);
 
-/** Logos of the brands, by the start of the line name ("TGV INOUI 6633") or the agency. */
-const BRANDS: { logo: string; line?: RegExp; agency?: RegExp }[] = [
+/** Filter of the trains in a query: RAIL also includes the metros for MOTIS. */
+export const TRAIN_MODES = [...RAIL_MODES].filter((mode) => mode !== "RAIL");
+
+/**
+ * Logos of the brands, by the start of the line name ("TGV INOUI 6633") or the agency; [lineAgency]: agency required with
+ * [line] (IC is also the Intercity of other countries).
+ */
+const BRANDS: { logo: string; line?: RegExp; lineAgency?: RegExp; agency?: RegExp }[] = [
   { logo: inoui.trim(), line: /^TGV\s*INOUI\b/i },
   { logo: ouigo.trim(), line: /^OUIGO/i },
   { logo: lyria.trim(), line: /^(TGV\s*)?LYRIA\b/i },
   { logo: thalys.trim(), line: /^THALYS\b/i },
   { logo: eurostar.trim(), line: /^(EST|EUROSTAR)\b/i, agency: /^Eurostar$/i },
+  { logo: frecciarossa.trim(), line: /^(FR|FRECCIAROSSA)$/i },
+  { logo: intercites.trim(), line: /^(IC|INTERCIT[EÉ]S)$/i, lineAgency: /^(SNCF\b.*)?$/i },
 ];
 
 /** Agencies of the RER, Transilien and tram lines of Île-de-France: other networks have lines named "A" or "T1". */
@@ -47,7 +57,9 @@ export function train(mode: string, line?: string | null, agency?: string | null
   if (!RAIL_MODES.has(mode) || !line) return null;
   const match = /^(.*\S)\s+(\d+)$/.exec(line.trim());
   const brand = match && (!number || match[2] === number) ? match[1] : line.trim();
-  const logo = BRANDS.find((b) => b.line?.test(brand) || (agency && b.agency?.test(agency)))?.logo;
+  const logo = BRANDS.find(
+    (b) => (b.line?.test(brand) && (!b.lineAgency || b.lineAgency.test(agency ?? ""))) || (agency && b.agency?.test(agency)),
+  )?.logo;
   return { logo, brand, number: number ?? match?.[2] };
 }
 

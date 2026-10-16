@@ -67,7 +67,8 @@ a { color: var(--accent); }
 
 .tool-call { margin: 8px 0; }
 .tool-call-header summary { cursor: pointer; color: var(--muted); font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
-.tool-call-header pre { background: var(--surface); padding: 8px; border-radius: 8px; font-size: 0.8rem; overflow-x: auto; }
+.tool-call-label { color: var(--muted); font-size: 0.8rem; margin-top: 8px; }
+.tool-call-header pre { max-height: 400px; overflow-y: auto; background: var(--surface); padding: 8px; border-radius: 8px; font-size: 0.8rem; overflow-x: auto; }
 .tool-status { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
 .tool-status.done { background: #2e9d5b; }
 .tool-status.error { background: var(--error); }
@@ -106,3 +107,11 @@ a { color: var(--accent); }
 .thinking span:nth-child(3) { animation-delay: 0.3s; }
 @keyframes bounce { 0%, 60%, 100% { opacity: 0.3; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-4px); } }
 @media (prefers-reduced-motion: reduce) { .thinking span { animation: pulse 1s infinite alternate; } }
+
+.dev { max-width: 932px; margin: 0 auto; padding: 16px; }
+.dev-form { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.dev-form select, .dev-args { border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; background: var(--bg); color: var(--fg); }
+.dev-args { font-family: ui-monospace, monospace; font-size: 0.85rem; resize: vertical; }
+.dev-actions { display: flex; gap: 8px; }
+.dev-description { color: var(--muted); font-size: 0.85rem; margin: 0; white-space: pre-wrap; }
+.dev-messages { color: var(--muted); font-size: 0.85rem; }

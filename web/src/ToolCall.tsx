@@ -48,7 +48,14 @@ export function ToolCall({ toolCallId, toolName, args, argsText, result, isError
           <code>{toolName}</code>
           {running && <span className="tool-running">{t("tool.running")}</span>}
         </summary>
+        <div className="tool-call-label">{t("tool.arguments")}</div>
         <pre>{argsText || JSON.stringify(args, null, 2)}</pre>
+        {mcpResult && (
+          <>
+            <div className="tool-call-label">{t("tool.result")}</div>
+            <pre>{JSON.stringify(mcpResult, null, 2)}</pre>
+          </>
+        )}
       </details>
       {errorText && <div className="tool-error">{errorText}</div>}
       {hasView && mcpResult && !isError && (

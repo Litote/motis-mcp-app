@@ -58,7 +58,11 @@ sonar {
         // Root module: the views (ui/), the web chat (web/) and the Terraform (infra/), without the vitest tests and
         // their fixtures. The Kotlin modules (server, lambda) are analysed from their Gradle source sets.
         property("sonar.sources", "ui/src,web/src,infra")
-        property("sonar.exclusions", "**/*.test.ts,**/*.test.tsx,ui/src/test/**,**/.terraform/**")
+        // web/src/DevHost.tsx, dev.tsx: dev host of the views (dev.html), served by the Vite dev server only, not deployed
+        property(
+            "sonar.exclusions",
+            "**/*.test.ts,**/*.test.tsx,ui/src/test/**,**/.terraform/**,web/src/DevHost.tsx,web/src/dev.tsx",
+        )
         // Translations: the dictionaries of each language have the same keys
         property("sonar.cpd.exclusions", "**/i18n.ts")
         // vitest coverage (npm run coverage in ui/ and web/)
