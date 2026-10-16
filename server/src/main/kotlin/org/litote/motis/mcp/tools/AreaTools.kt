@@ -9,6 +9,7 @@ import org.litote.motis.mcp.apps.UiView
 import org.litote.motis.mcp.dto.AreaResult
 import org.litote.motis.mcp.dto.PlaceDto
 import org.litote.motis.mcp.dto.ReachabilityResult
+import org.litote.motis.mcp.dto.routeName
 import org.litote.motis.mcp.dto.toAreaResult
 import org.litote.motis.mcp.dto.toDto
 import kotlin.math.roundToInt
@@ -70,7 +71,7 @@ fun Server.addAreaTools(gateway: MotisGateway) {
         view = UiView.EXPLORER,
         schema = {
             areaArguments()
-            stringArray("modes", "Only stops served by these modes.", TRANSIT_MODES)
+            stringArray("modes", "Only the stops and routes of these modes.", TRANSIT_MODES)
             string("language", LANGUAGE_DESCRIPTION)
         },
     ) { args ->
@@ -78,8 +79,10 @@ fun Server.addAreaTools(gateway: MotisGateway) {
         val radiusKm = (bbox.maxLat - bbox.minLat) * 111.32 / 2
         val zoom = BoundingBox.zoomFor(radiusKm)
         val language = args.stringList("language")
-        val (stops, routes) = gateway.area(bbox, zoom, args.modes("modes"), language)
-        val result = routes.toAreaResult(title, bbox, zoom, stops)
+        val modes = args.modes("modes")
+        val (stops, routes) = gateway.area(bbox, zoom, modes, language)
+        // filtered here as well: MOTIS (Transitous) ignores the modes of the stops, and the routes have none
+        val result = routes.toAreaResult(title, bbox, zoom, stops, modes)
         ToolOutput.of(result.summary(), AreaResult.serializer(), result)
     }
 
@@ -96,7 +99,7 @@ fun Server.addAreaTools(gateway: MotisGateway) {
         val routeIdx = args.long("routeIdx") ?: throw MotisToolException("Invalid argument: 'routeIdx' is required")
         val details = gateway.routeDetails(routeIdx, args.stringList("language"))
         val route = details.routes.firstOrNull { it.routeIdx == routeIdx } ?: details.routes.firstOrNull()
-        val name = route?.let { r -> "${r.mode.serialName()} ${r.transitRoutes.joinToString(", ") { it.shortName.ifBlank { it.longName } }}" }
+        val name = route?.let { r -> "${r.mode.serialName()} ${r.transitRoutes.joinToString(", ") { routeName(it.shortName, it.longName) }}" }
         val result = details.toAreaResult(name ?: "Route $routeIdx")
         ToolOutput.of(
             "${result.title}: ${result.stops.size} stop(s): ${result.stops.joinToString(" → ") { it.name }}",
@@ -121,9 +124,11 @@ fun Server.addAreaTools(gateway: MotisGateway) {
             boolean("arriveBy", "true: places from which 'place' can be reached.")
             integer("maxTransfers", "Maximum number of transfers.", minimum = 0, maximum = 10)
             stringArray("modes", "Allowed transit modes (default: all).", TRANSIT_MODES)
+            // MOTIS one-to-all has no language: the reachable stops keep the names of the timetable
+            string("language", "Preferred language of the origin name, as ISO 639-1 code (e.g. fr, de).")
         },
     ) { args ->
-        val origin = gateway.resolvePlace(args.requireString("place"))
+        val origin = gateway.resolvePlace(args.requireString("place"), language = args.stringList("language"))
         val maxTravelTime = args.int("maxTravelTimeMinutes") ?: 30
         val reachable =
             gateway.oneToAll(

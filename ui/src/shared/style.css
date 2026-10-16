@@ -199,6 +199,11 @@ button[aria-pressed="true"] {
   color: var(--color-text-success);
 }
 
+.theoretical {
+  font-size: 0.85em;
+  font-style: italic;
+}
+
 .cancelled {
   text-decoration: line-through;
   color: var(--color-text-danger);

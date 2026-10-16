@@ -106,19 +106,25 @@ const fr: Record<MessageKey, string> = {
 
 const MESSAGES = { en, fr };
 
-/** Suggestions of the empty thread. */
+/** Suggestions of the empty thread: one per tool rendered by a view (see docs/MCP-SERVER.md). */
 const SUGGESTIONS = {
   en: [
     "Next departures at Lyon Part-Dieu",
     "How to go from Paris Gare de Lyon to Versailles?",
     "Which lines run around Place Bellecour in Lyon?",
     "Shared bikes near Châtelet, Paris",
+    "Show me the route of tram T1 in Lyon",
+    "Where can I go in 30 minutes by transit from Lyon Part-Dieu?",
+    "Which stops does the next TGV from Lyon Part-Dieu to Paris serve?",
   ],
   fr: [
     "Prochains départs à Lyon Part-Dieu",
     "Comment aller de Paris Gare de Lyon à Versailles ?",
     "Quelles lignes passent autour de la place Bellecour à Lyon ?",
     "Vélos en libre-service près de Châtelet, à Paris",
+    "Montre-moi le tracé du tram T1 à Lyon",
+    "Où peut-on aller en 30 minutes en transports depuis Lyon Part-Dieu ?",
+    "Quels arrêts dessert le prochain TGV de Lyon Part-Dieu vers Paris ?",
   ],
 };
 

@@ -1,7 +1,6 @@
 {
   "name": "motis-mcp-app-web",
   "private": true,
-  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

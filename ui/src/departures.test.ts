@@ -135,6 +135,31 @@ describe("departures view", () => {
     expect($("#fullscreen").hidden).toBe(false);
   });
 
+  it("marks the scheduled times of a board mixing real and scheduled times", async () => {
+    const app = await loadView("departures");
+    const mixed = board();
+    mixed.stopTimes[2].realTime = false;
+    await app.toolResult({ stop: "Lyon Part-Dieu" }, mixed);
+
+    // the cancelled departure is not marked
+    expect(rows()[1]).not.toContain("scheduled");
+    expect(rows()[2]).toBe("06:04 scheduled 6602 Paris Gare de Lyon Hall 1 - 2SNCF VOYAGEURS");
+    expect(document.querySelector(".theoretical-note")).toBeNull();
+
+    await app.toolResult({ stopId: "S1" }, { ...sncfBoard(), stopTimes: mixed.stopTimes });
+    expect(trains().map((train) => train.querySelector(".theoretical") !== null)).toEqual([false, false, true]);
+  });
+
+  it("says once that a board without real time has scheduled times", async () => {
+    const app = await loadView("departures");
+    const scheduled = sncfBoard();
+    scheduled.stopTimes.forEach((st) => Object.assign(st, { realTime: false, time: st.scheduledTime }));
+    await app.toolResult({ stopId: "S1" }, scheduled);
+
+    expect($(".theoretical-note").textContent).toBe("Scheduled times: no real-time data for these departures.");
+    expect(document.querySelectorAll(".theoretical:not(.theoretical-note)")).toHaveLength(0);
+  });
+
   it("shows the board of a French station like the SNCF boards", async () => {
     const app = await loadView("departures");
     await app.toolResult({ stopId: "S1", count: 3 }, sncfBoard());

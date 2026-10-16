@@ -84,8 +84,40 @@ private val MODE_ORDER =
 
 private fun modeRank(mode: String): Int = MODE_ORDER.indexOf(mode).let { if (it < 0) MODE_ORDER.size else it }
 
+/** Short name made of two UN/LOCODE station codes, e.g. "BEBMI -> FRQBM" (Eurostar): unreadable, unlike its long name. */
+private val STATION_CODES_NAME = Regex("""^[A-Z]{5}\s*(->|→|-|/)\s*[A-Z]{5}$""")
+
+/**
+ * Displayed name of a line: the first of [names] neither blank nor made of station codes, else [longName], else the
+ * first of [names] not blank (station codes rather than nothing).
+ */
+fun lineName(names: List<String?>, longName: String?): String? =
+    names.firstOrNull { !it.isNullOrBlank() && !STATION_CODES_NAME.matches(it.trim()) }
+        ?: longName?.takeIf { it.isNotBlank() }
+        ?: names.firstOrNull { !it.isNullOrBlank() }
+
+/** Displayed name of a route: its short name, unless blank or made of station codes (see [lineName]). */
+fun routeName(shortName: String, longName: String): String = lineName(listOf(shortName), longName) ?: ""
+
 private fun RouteInfo.names(): List<String> =
-    transitRoutes.map { it.shortName.ifBlank { it.longName } }.filter { it.isNotBlank() }.distinct()
+    transitRoutes.map { routeName(it.shortName, it.longName) }.filter { it.isNotBlank() }.distinct()
+
+/** Trains for MOTIS `RAIL`, which also includes the metros. */
+private val RAIL_MODES =
+    setOf(
+        Mode.RAIL, Mode.HIGHSPEED_RAIL, Mode.LONG_DISTANCE, Mode.NIGHT_RAIL, Mode.REGIONAL_FAST_RAIL, Mode.REGIONAL_RAIL,
+        Mode.SUBURBAN, Mode.SUBWAY, Mode.METRO,
+    )
+
+/**
+ * Filter of the routes on the transit [modes] (MOTIS semantics: `TRANSIT` for all of them, `RAIL` for the trains and
+ * metros), null to keep them all.
+ */
+fun routeModeFilter(modes: List<Mode>?): ((Mode) -> Boolean)? {
+    if (modes.isNullOrEmpty() || Mode.TRANSIT in modes) return null
+    val accepted = modes.toSet() + (if (Mode.RAIL in modes) RAIL_MODES else emptySet())
+    return { it in accepted }
+}
 
 /**
  * Routes grouped by mode, names and color: MOTIS returns one route per stop sequence,
@@ -113,17 +145,20 @@ private fun groupRoutes(routes: List<RouteInfo>): Pair<List<RouteDto>, Map<Long,
 
 /**
  * Polylines of the [routes], clipped to [clip] when given (the shapes of long distance routes are huge),
- * without duplicates, within a size budget. The routeIndexes of MOTIS are positions in [routes].
+ * without duplicates, within a size budget. The routeIndexes of MOTIS are positions in [routes] (all of them, before
+ * [keepMode]): a polyline is dropped when all its routes are filtered out.
  */
 private fun polylines(
     polylines: List<RoutePolyline>,
     routes: List<RouteInfo>,
     representative: Map<Long, Long>,
     clip: BoundingBox?,
+    keepMode: ((Mode) -> Boolean)?,
 ): List<RoutePolylineDto> {
     var budget = MAX_POLYLINE_CHARS
     return polylines
         .asSequence()
+        .filter { p -> keepMode == null || p.routeIndexes.any { i -> routes.getOrNull(i.toInt())?.mode?.let(keepMode) == true } }
         .flatMap { p ->
             val precision = p.polyline.precision.toInt()
             val parts =
@@ -135,7 +170,7 @@ private fun polylines(
                 }
             val routeIdx =
                 p.routeIndexes
-                    .mapNotNull { routes.getOrNull(it.toInt())?.routeIdx }
+                    .mapNotNull { routes.getOrNull(it.toInt())?.takeIf { r -> keepMode?.invoke(r.mode) ?: true }?.routeIdx }
                     .map { representative[it] ?: it }
                     .distinct()
             parts.map { RoutePolylineDto(Polyline(it, precision), color(p.colors.firstOrNull()), routeIdx) }
@@ -149,30 +184,43 @@ private fun polylines(
 /** Display of an area: [clip] clips the route polylines (null: not clipped). */
 private class AreaFrame(val kind: String, val title: String, val bbox: BoundingBox, val zoom: Double, val clip: BoundingBox?)
 
+/**
+ * [keepMode] filters the stops (one of their modes), the routes and their polylines (their mode), null: all of them.
+ * A stop without known modes is filtered out.
+ */
 private fun areaResult(
     frame: AreaFrame,
     stops: List<Place>,
     routes: List<RouteInfo>,
     polylines: List<RoutePolyline>,
     zoomFiltered: Boolean,
+    keepMode: ((Mode) -> Boolean)? = null,
 ): AreaResult {
-    val (routeDtos, representative) = groupRoutes(routes)
+    val kept = routes.filter { keepMode?.invoke(it.mode) ?: true }
+    val keptStops = if (keepMode == null) stops else stops.filter { it.modes?.any(keepMode) == true }
+    val (routeDtos, representative) = groupRoutes(kept)
     return AreaResult(
         kind = frame.kind,
         title = frame.title,
         bbox = frame.bbox.toDto(),
         zoom = frame.zoom,
-        stops = stops.sortedByDescending { it.importance ?: 0.0 }.take(MAX_STOPS).map { it.toDto() },
+        stops = keptStops.sortedByDescending { it.importance ?: 0.0 }.take(MAX_STOPS).map { it.toDto() },
         routes = routeDtos.take(MAX_ROUTES),
-        polylines = polylines(polylines, routes, representative, frame.clip),
-        totalStops = stops.size,
+        polylines = polylines(polylines, routes, representative, frame.clip, keepMode),
+        totalStops = keptStops.size,
         totalRoutes = routeDtos.size,
         zoomFiltered = zoomFiltered,
     )
 }
 
-fun MapClient.RoutesResponseBody.toAreaResult(title: String, bbox: BoundingBox, zoom: Double, stops: List<Place>): AreaResult =
-    areaResult(AreaFrame("area", title, bbox, zoom, clip = bbox.expand(1.3)), stops, routes, polylines, zoomFiltered)
+fun MapClient.RoutesResponseBody.toAreaResult(
+    title: String,
+    bbox: BoundingBox,
+    zoom: Double,
+    stops: List<Place>,
+    modes: List<Mode>? = null,
+): AreaResult =
+    areaResult(AreaFrame("area", title, bbox, zoom, clip = bbox.expand(1.3)), stops, routes, polylines, zoomFiltered, routeModeFilter(modes))
 
 fun MapClient.RouteDetailsResponseBody.toAreaResult(title: String): AreaResult {
     val lats = stops.map { it.lat }
@@ -195,7 +243,7 @@ fun StopTime.toDto(arriveBy: Boolean): StopTimeDto {
         realTime = realTime,
         cancelled = cancelled || tripCancelled,
         mode = mode.label(),
-        line = displayName.ifBlank { routeShortName.ifBlank { routeLongName } },
+        line = lineName(listOf(displayName, routeShortName), routeLongName) ?: "",
         headsign = if (numberAsHeadsign) tripTo.name else headsign.ifBlank { tripTo.name },
         routeColor = color(routeColor),
         routeTextColor = color(routeTextColor),
@@ -233,7 +281,7 @@ fun Leg.toDto(): LegDto =
         durationSeconds = duration,
         realTime = realTime,
         distanceMeters = distance,
-        line = listOf(displayName, routeShortName, routeLongName).firstOrNull { !it.isNullOrBlank() },
+        line = lineName(listOf(displayName, routeShortName), routeLongName),
         headsign = headsign?.ifBlank { null } ?: tripTo?.name.takeIf { tripId != null },
         routeColor = color(routeColor),
         routeTextColor = color(routeTextColor),

@@ -8,7 +8,7 @@ import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.plugins.cors.routing.CORS
 import io.modelcontextprotocol.kotlin.sdk.server.StdioServerTransport
-import io.modelcontextprotocol.kotlin.sdk.server.mcpStreamableHttp
+import io.modelcontextprotocol.kotlin.sdk.server.mcpStatelessStreamableHttp
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.asSink
@@ -63,13 +63,12 @@ fun main(args: Array<String>) {
                 allowMethod(HttpMethod.Delete)
                 allowHeader(HttpHeaders.ContentType)
                 allowHeader(HttpHeaders.Authorization)
-                allowHeader("Mcp-Session-Id")
                 allowHeader("Mcp-Protocol-Version")
-                allowHeader("Last-Event-ID")
-                exposeHeader("Mcp-Session-Id")
             }
             rejectUnknownMcpHosts()
-            mcpStreamableHttp(path = MCP_ROUTE, allowedHosts = allowedHosts?.plus(listOf("localhost", "127.0.0.1"))) {
+            // stateless, as the Lambda: the tools keep no state, and the SDK never expires the idle sessions of the
+            // stateful mode (a long-running server would keep those of every client in memory)
+            mcpStatelessStreamableHttp(path = MCP_ROUTE, allowedHosts = allowedHosts?.plus(listOf("localhost", "127.0.0.1"))) {
                 create(viewDomain(config))
             }
         }.start(wait = true)

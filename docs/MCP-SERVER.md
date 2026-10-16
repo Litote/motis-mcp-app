@@ -5,17 +5,17 @@ See the [README](../README.md) for an overview, the AWS Lambda deployment, the w
 
 ## Tools
 
-| Tool             | MOTIS API                            | View                                   |
-|------------------|--------------------------------------|----------------------------------------|
-| `search_places`  | geocode, reverse-geocode             | —                                      |
-| `server_info`    | health, map/initial                  | —                                      |
-| `explore_area`   | map/stops, map/routes                | map of the stops and lines of an area  |
-| `route_details`  | map/route-details                    | map of a line and its stops            |
-| `reachability`   | one-to-all                           | isochrone map                          |
-| `departures`     | stoptimes                            | departure/arrival board (real time), by line tab in railway stations |
-| `trip_details`   | trip                                 | trip timeline                          |
-| `plan_journey`   | plan                                 | itineraries list and map               |
-| `rentals`        | map/rentals                          | shared bikes, scooters and cars map    |
+| Tool             | MOTIS API                | View                                                                   | Example prompt                                              |
+|------------------|--------------------------|------------------------------------------------------------------------|-------------------------------------------------------------|
+| `search_places`  | geocode, reverse-geocode | —                                                                      | "What is the stop id of Lyon Part-Dieu?"                    |
+| `server_info`    | health, map/initial      | —                                                                      | "Which timetable data does the server use?"                 |
+| `explore_area`   | map/stops, map/routes    | map of the stops and lines of an area                                  | "Which lines run around Place Bellecour in Lyon?"           |
+| `route_details`  | map/route-details        | map of a line and its stops                                            | "Show me the route of tram T1 in Lyon"                      |
+| `reachability`   | one-to-all               | isochrone map                                                          | "Where can I go in 30 minutes by transit from Lyon Part-Dieu?" |
+| `departures`     | stoptimes                | departure/arrival board (real time), by line tab in railway stations  | "Next departures at Lyon Part-Dieu"                         |
+| `trip_details`   | trip                     | trip timeline                                                          | "Which stops does the next TGV from Lyon Part-Dieu to Paris serve?" |
+| `plan_journey`   | plan                     | itineraries list and map                                               | "How to go from Paris Gare de Lyon to Versailles?"          |
+| `rentals`        | map/rentals              | shared bikes, scooters and cars map                                    | "Shared bikes near Châtelet, Paris"                         |
 
 `plan_journey` walks up to 25 minutes to the first stop and from the last stop (`maxWalkMinutes`, MOTIS default:
 15 minutes). Transfers on foot come from the timetable, not routed on the streets (`useRoutedTransfers=false`): the

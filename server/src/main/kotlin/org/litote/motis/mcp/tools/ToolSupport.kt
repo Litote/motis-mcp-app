@@ -18,7 +18,6 @@ import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.doubleOrNull
-import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.longOrNull
 import kotlinx.serialization.json.put
@@ -58,6 +57,9 @@ class SchemaBuilder {
     private val properties = mutableMapOf<String, JsonObject>()
     private val required = mutableListOf<String>()
 
+    /** Bounds of the integer arguments: the SDK does not validate the arguments against the schema, [Args] does. */
+    val bounds = mutableMapOf<String, LongRange>()
+
     private fun property(name: String, type: String, description: String, required: Boolean, extra: JsonObjectBuilder.() -> Unit = {}) {
         properties[name] =
             buildJsonObject {
@@ -75,11 +77,15 @@ class SchemaBuilder {
 
     fun number(name: String, description: String, required: Boolean = false) = property(name, "number", description, required)
 
-    fun integer(name: String, description: String, required: Boolean = false, minimum: Int? = null, maximum: Int? = null) =
+    fun integer(name: String, description: String, required: Boolean = false, minimum: Int? = null, maximum: Int? = null) {
         property(name, "integer", description, required) {
             minimum?.let { put("minimum", it) }
             maximum?.let { put("maximum", it) }
         }
+        if (minimum != null || maximum != null) {
+            bounds[name] = (minimum?.toLong() ?: Long.MIN_VALUE)..(maximum?.toLong() ?: Long.MAX_VALUE)
+        }
+    }
 
     fun boolean(name: String, description: String, required: Boolean = false) = property(name, "boolean", description, required)
 
@@ -94,8 +100,8 @@ class SchemaBuilder {
     fun build(): ToolSchema = ToolSchema(properties = JsonObject(properties), required = required.ifEmpty { null })
 }
 
-/** Typed access to the tool arguments. Invalid values are reported to the caller. */
-class Args(private val arguments: JsonObject) {
+/** Typed access to the tool arguments. Invalid values, out of their [bounds] included, are reported to the caller. */
+class Args(private val arguments: JsonObject, private val bounds: Map<String, LongRange> = emptyMap()) {
     private fun primitive(name: String): JsonPrimitive? =
         (arguments[name] as? JsonPrimitive)?.takeUnless { it.contentOrNull.isNullOrBlank() }
 
@@ -106,11 +112,24 @@ class Args(private val arguments: JsonObject) {
     fun double(name: String): Double? =
         primitive(name)?.let { it.doubleOrNull ?: it.contentOrNull?.toDoubleOrNull() ?: invalid("'$name' must be a number") }
 
-    fun int(name: String): Int? =
-        primitive(name)?.let { it.intOrNull ?: it.contentOrNull?.toIntOrNull() ?: invalid("'$name' must be an integer") }
+    fun int(name: String): Int? = long(name)?.let { if (it in Int.MIN_VALUE..Int.MAX_VALUE) it.toInt() else outOfBounds(name) }
 
     fun long(name: String): Long? =
-        primitive(name)?.let { it.longOrNull ?: it.contentOrNull?.toLongOrNull() ?: invalid("'$name' must be an integer") }
+        primitive(name)
+            ?.let { it.longOrNull ?: it.contentOrNull?.toLongOrNull() ?: invalid("'$name' must be an integer") }
+            ?.also { value -> bounds[name]?.let { if (value !in it) outOfBounds(name) } }
+
+    private fun outOfBounds(name: String): Nothing {
+        val range = bounds[name]
+        invalid(
+            when {
+                range == null -> "'$name' is out of range"
+                range.last == Long.MAX_VALUE -> "'$name' must be at least ${range.first}"
+                range.first == Long.MIN_VALUE -> "'$name' must be at most ${range.last}"
+                else -> "'$name' must be between ${range.first} and ${range.last}"
+            },
+        )
+    }
 
     fun boolean(name: String): Boolean? =
         primitive(name)?.let { it.booleanOrNull ?: it.contentOrNull?.toBooleanStrictOrNull() ?: invalid("'$name' must be a boolean") }
@@ -159,18 +178,19 @@ fun Server.motisTool(
     schema: SchemaBuilder.() -> Unit = {},
     handler: suspend (Args) -> ToolOutput,
 ) {
+    val schemaBuilder = SchemaBuilder().apply(schema)
     addTool(
         Tool(
             name = name,
             title = title,
             description = description,
-            inputSchema = SchemaBuilder().apply(schema).build(),
+            inputSchema = schemaBuilder.build(),
             annotations = ToolAnnotations(title = title, readOnlyHint = true, destructiveHint = false, openWorldHint = true),
             meta = view?.toolMeta(visibility),
         ),
     ) { request ->
         try {
-            val output = handler(Args(request.arguments ?: JsonObject(emptyMap())))
+            val output = handler(Args(request.arguments ?: JsonObject(emptyMap()), schemaBuilder.bounds))
             CallToolResult(content = listOf(TextContent(output.text)), structuredContent = output.structured)
         } catch (e: MotisToolException) {
             logger.info { "Tool $name failed: ${e.message}" }

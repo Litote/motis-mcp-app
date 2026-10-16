@@ -16,12 +16,16 @@ import org.litote.motis.client.model.Mode
 import org.litote.motis.client.model.PedestrianProfile
 import org.litote.motis.client.model.Place
 import org.litote.motis.client.model.Reachable
+import org.litote.motis.mcp.dto.StationLineDto
 import org.litote.motis.mcp.dto.distanceKm
 import org.litote.motis.mcp.dto.toDto
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.log2
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
+import kotlin.time.TimeSource
 
 /** Error reported by the MOTIS API, or invalid user input: returned to the caller as a tool error. */
 open class MotisToolException(message: String) : RuntimeException(message)
@@ -78,13 +82,41 @@ data class ResolvedPlace(
     val label: String get() = name + (area?.takeUnless { name.contains(it, ignoreCase = true) }?.let { " ($it)" } ?: "")
 }
 
-/** Wraps the MOTIS clients: unwraps the sealed responses and resolves free text places. */
-class MotisGateway(configuration: ClientConfiguration) {
+/**
+ * Wraps the MOTIS clients: unwraps the sealed responses and resolves free text places.
+ *
+ * The responses that do not depend on real time (geocoding, server state, route details) are cached in memory, see
+ * [TtlCache]: one gateway is shared by the requests of a process or of a Lambda instance.
+ */
+class MotisGateway(configuration: ClientConfiguration, timeSource: TimeSource = TimeSource.Monotonic) {
     private val client = Client(configuration)
     private val geocodeClient = GeocodeClient(configuration)
     private val mapClient = MapClient(configuration)
     private val timetableClient = TimetableClient(configuration)
     private val routingClient = RoutingClient(configuration)
+
+    private data class GeocodeKey(
+        val text: String,
+        val types: List<LocationType>?,
+        val near: String?,
+        val numResults: Int?,
+        val language: List<String>?,
+    )
+
+    private val geocodeCache = TtlCache<GeocodeKey, List<Match>>(maxSize = 1000, ttl = 1.hours, timeSource)
+    private val healthCache = TtlCache<Unit, HealthResponse>(maxSize = 1, ttl = 1.minutes, timeSource)
+    private val initialCache = TtlCache<Unit, MapClient.InitialResponseBody>(maxSize = 1, ttl = 1.hours, timeSource)
+
+    // route indexes are those of the timetable loaded by MOTIS: kept a short time, as they change when it is reloaded
+    private val routeDetailsCache =
+        TtlCache<Pair<Long, List<String>?>, MapClient.RouteDetailsResponseBody>(maxSize = 200, ttl = 5.minutes, timeSource)
+
+    /**
+     * Lines of the railway stations by stop id and language, found by the departures tool from the next departures
+     * (several MOTIS calls). Not cached when empty: a quiet period or a transient MOTIS answer would hide the tabs.
+     */
+    internal val stationLines =
+        TtlCache<Pair<String, List<String>?>, List<StationLineDto>>(maxSize = 500, ttl = 1.hours, timeSource) { it.isNotEmpty() }
 
     suspend fun geocode(
         text: String,
@@ -92,6 +124,17 @@ class MotisGateway(configuration: ClientConfiguration) {
         near: String? = null,
         numResults: Int? = null,
         language: List<String>? = null,
+    ): List<Match> =
+        geocodeCache.getOrPut(GeocodeKey(text, types, near, numResults, language)) {
+            fetchGeocode(text, types, near, numResults, language)
+        }
+
+    private suspend fun fetchGeocode(
+        text: String,
+        types: List<LocationType>?,
+        near: String?,
+        numResults: Int?,
+        language: List<String>?,
     ): List<Match> =
         when (
             val r =
@@ -170,18 +213,22 @@ class MotisGateway(configuration: ClientConfiguration) {
         }
 
     suspend fun health(): HealthResponse =
-        when (val r = client.health()) {
-            is Client.HealthResponseSuccess -> r.body
-            // unhealthy server: the body still describes the state
-            is Client.HealthResponseFailure -> r.body
-            is Client.HealthResponseUnknownFailure -> failStatus(r.statusCode)
+        healthCache.getOrPut(Unit) {
+            when (val r = client.health()) {
+                is Client.HealthResponseSuccess -> r.body
+                // unhealthy server: the body still describes the state
+                is Client.HealthResponseFailure -> r.body
+                is Client.HealthResponseUnknownFailure -> failStatus(r.statusCode)
+            }
         }
 
     suspend fun initial(): MapClient.InitialResponseBody =
-        when (val r = mapClient.initial()) {
-            is MapClient.InitialResponseSuccess -> r.body
-            is MapClient.InitialResponseFailure -> fail(r.body.error)
-            is MapClient.InitialResponseUnknownFailure -> failStatus(r.statusCode)
+        initialCache.getOrPut(Unit) {
+            when (val r = mapClient.initial()) {
+                is MapClient.InitialResponseSuccess -> r.body
+                is MapClient.InitialResponseFailure -> fail(r.body.error)
+                is MapClient.InitialResponseUnknownFailure -> failStatus(r.statusCode)
+            }
         }
 
     suspend fun stops(bbox: BoundingBox, modes: List<Mode>? = null, language: List<String>? = null): List<Place> =
@@ -212,10 +259,12 @@ class MotisGateway(configuration: ClientConfiguration) {
         }
 
     suspend fun routeDetails(routeIdx: Long, language: List<String>? = null): MapClient.RouteDetailsResponseBody =
-        when (val r = mapClient.routeDetails(routeIdx = routeIdx, language = language)) {
-            is MapClient.RouteDetailsResponseSuccess -> r.body
-            is MapClient.RouteDetailsResponseFailure -> fail(r.body.error)
-            is MapClient.RouteDetailsResponseUnknownFailure -> failStatus(r.statusCode)
+        routeDetailsCache.getOrPut(routeIdx to language) {
+            when (val r = mapClient.routeDetails(routeIdx = routeIdx, language = language)) {
+                is MapClient.RouteDetailsResponseSuccess -> r.body
+                is MapClient.RouteDetailsResponseFailure -> fail(r.body.error)
+                is MapClient.RouteDetailsResponseUnknownFailure -> failStatus(r.statusCode)
+            }
         }
 
     suspend fun stopTimes(query: StopTimesQuery): TimetableClient.StoptimesResponseBody =
@@ -364,8 +413,18 @@ class MotisGateway(configuration: ClientConfiguration) {
 
         private fun fail(message: String): Nothing = throw MotisToolException("MOTIS error: $message")
 
+        /** Transient failures tell the model to retry, the others are reported as is. */
         private fun failStatus(statusCode: Int): Nothing =
-            throw MotisToolException("MOTIS API call failed (HTTP status $statusCode)")
+            throw MotisToolException(
+                when (statusCode) {
+                    // not an HTTP status: the client reports its own exceptions (network error, timeout, unreadable
+                    // response) as a 500 status, MOTIS answers its 500 errors with an error body
+                    500 -> "MOTIS server unreachable or invalid response: retry in a moment"
+                    429 -> "MOTIS server rate limit reached: retry in a minute"
+                    502, 503, 504 -> "MOTIS server temporarily unavailable (HTTP status $statusCode): retry in a moment"
+                    else -> "MOTIS API call failed (HTTP status $statusCode)"
+                },
+            )
     }
 }
 

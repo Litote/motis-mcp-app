@@ -13,6 +13,7 @@ import org.litote.motis.mcp.apps.UiView
 import org.litote.motis.mcp.dto.DeparturesResult
 import org.litote.motis.mcp.dto.ItineraryDto
 import org.litote.motis.mcp.dto.STATION_RADIUS
+import org.litote.motis.mcp.dto.StationLineDto
 import org.litote.motis.mcp.dto.TripResult
 import org.litote.motis.mcp.dto.distinctTrains
 import org.litote.motis.mcp.dto.followedBy
@@ -154,19 +155,25 @@ private class DeparturesRequest(private val gateway: MotisGateway, private val a
         val nearby = stopTimes(id, trainModes, STATION_RADIUS)
         return result
             .withNearbyTrains(nearby, n, earlier)
-            .copy(stationLines = stationLines(probes(id)).takeIf { it.isNotEmpty() })
+            .copy(stationLines = stationLines(id).takeIf { it.isNotEmpty() })
     }
 
-    /** First page of a railway station: its lines, for the tabs of its board. */
+    /**
+     * Lines of a railway station, for the tabs of the first page of its board. They are found from the next departures
+     * of the probe time: only those of now are cached, a given time may be a quiet period with fewer lines.
+     */
+    private suspend fun stationLines(id: String): List<StationLineDto> =
+        when {
+            pageCursor != null -> emptyList()
+            args.instant("time") != null -> stationLines(probes(id))
+            else -> gateway.stationLines.getOrPut(id to language) { stationLines(probes(id)) }
+        }
+
     private suspend fun probes(id: String): List<DeparturesResult> =
-        if (pageCursor != null) {
-            emptyList()
-        } else {
-            coroutineScope {
-                STATION_FAMILIES
-                    .map { family -> async { stopTimes(id, family, STATION_RADIUS, null, STATION_PROBE, fetchStops = false) } }
-                    .awaitAll()
-            }
+        coroutineScope {
+            STATION_FAMILIES
+                .map { family -> async { stopTimes(id, family, STATION_RADIUS, null, STATION_PROBE, fetchStops = false) } }
+                .awaitAll()
         }
 }
 

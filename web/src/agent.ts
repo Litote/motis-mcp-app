@@ -195,7 +195,7 @@ export function createAgent(settings: AgentSettings): ChatModelAdapter {
           const running = parts(result.text, toolCalls);
           yield { content: [...done, ...running] };
           const results = await Promise.all( // NOSONAR each step needs the tool results of the previous one
-            toolCalls.map((call) => callTool(mcp, call.function.name, { ...parseArguments(call.function.arguments) })),
+            toolCalls.map((call) => callTool(mcp, call.function.name, { ...parseArguments(call.function.arguments) }, abortSignal)),
           );
           results.forEach((toolResult, i) => {
             chat.push({ role: "tool", tool_call_id: toolCalls[i].id, content: truncate(resultText(toolResult)) });
@@ -208,6 +208,8 @@ export function createAgent(settings: AgentSettings): ChatModelAdapter {
             }),
           );
           yield { content: done };
+          // stopped by the user during the tool calls: no model call with their (cancelled) results
+          abortSignal.throwIfAborted();
         }
         done.push({ type: "text", text: "\n\n_Stopped: too many steps for one question._" });
         yield { content: done, status: { type: "incomplete", reason: "other" } };

@@ -93,6 +93,66 @@ class MotisToolsTest {
     }
 
     @Test
+    fun `geocoding and server state are cached, timetables are not`() {
+        val motis = transitous()
+        withMcpClient(motis) { client ->
+            fun calls(path: String) = motis.requests.count { it.url.encodedPath == path }
+            val stopTimesCalls =
+                List(2) {
+                    client.callTool("search_places", mapOf("text" to "Lyon Part-Dieu"))
+                    client.callTool("server_info", emptyMap())
+                    client.callTool("departures", mapOf("stopId" to "stop"))
+                    calls("/api/v6/stoptimes")
+                }
+            client.callTool("search_places", mapOf("text" to "Lyon Part-Dieu", "language" to "fr"))
+
+            assertEquals(2, calls("/api/v1/geocode"))
+            assertEquals(1, calls("/api/v1/health"))
+            assertEquals(1, calls("/api/v1/map/initial"))
+            // the departures are asked again (only the lines of the station are cached)
+            assertTrue(stopTimesCalls[1] > stopTimesCalls[0])
+        }
+    }
+
+    @Test
+    fun `the lines of a station are cached, except for a given time`() {
+        val motis = transitous()
+        withMcpClient(motis) { client ->
+            suspend fun stopTimesCalls(arguments: Map<String, Any>): Int {
+                val before = motis.requests.count { it.url.encodedPath == "/api/v6/stoptimes" }
+                val result = client.callTool("departures", arguments)
+                assertNotNull(result.data(DeparturesResult.serializer()).stationLines)
+                return motis.requests.count { it.url.encodedPath == "/api/v6/stoptimes" } - before
+            }
+
+            // one probe per family of lines: long-distance trains, other trains, metros, trams, buses
+            val probes = 5
+            val first = stopTimesCalls(mapOf("stopId" to "stop"))
+            assertEquals(first - probes, stopTimesCalls(mapOf("stopId" to "stop")))
+            assertEquals(first, stopTimesCalls(mapOf("stopId" to "stop", "language" to "fr")))
+            assertEquals(first, stopTimesCalls(mapOf("stopId" to "stop", "time" to "2026-10-12T23:00:00+02:00")))
+        }
+    }
+
+    @Test
+    fun `integer arguments out of their bounds are tool errors`() {
+        val motis = transitous()
+        withMcpClient(motis) { client ->
+            val departures = client.callTool("departures", mapOf("stopId" to "stop", "count" to 1000))
+            assertEquals(true, departures.isError)
+            assertEquals("Invalid argument: 'count' must be between 1 and 100", departures.text())
+
+            val reachability = client.callTool("reachability", mapOf("place" to "45.7605,4.8597", "maxTravelTimeMinutes" to 100_000))
+            assertEquals("Invalid argument: 'maxTravelTimeMinutes' must be between 1 and 240", reachability.text())
+
+            val route = client.callTool("route_details", mapOf("routeIdx" to -1))
+            assertEquals("Invalid argument: 'routeIdx' must be at least 0", route.text())
+
+            assertEquals(emptyList(), motis.requests)
+        }
+    }
+
+    @Test
     fun `search_places without match`() {
         withMcpClient(MockMotis { respondJson("[]") }) { client ->
             val result = client.callTool("search_places", mapOf("text" to "Nowhere"))
@@ -137,7 +197,7 @@ class MotisToolsTest {
     fun `explore_area groups the route variants and links the polylines to the routes`() {
         val motis = transitous()
         withMcpClient(motis) { client ->
-            val result = client.callTool("explore_area", mapOf("place" to "45.7605,4.8597", "radiusKm" to 0.5, "modes" to listOf("BUS")))
+            val result = client.callTool("explore_area", mapOf("place" to "45.7605,4.8597", "radiusKm" to 0.5))
 
             val area = result.data(AreaResult.serializer())
             assertEquals("area", area.kind)
@@ -159,13 +219,33 @@ class MotisToolsTest {
             assertTrue(area.polylines.all { routeIdx.containsAll(it.routeIdx) }, area.polylines.map { it.routeIdx }.toString())
             assertTrue(area.polylines.any { it.routeIdx == listOf(940073L) && it.color == "#e8308a" })
 
-            assertEquals("BUS", motis.request("/api/v6/map/stops").url.parameters["modes"])
             val routes = motis.request("/api/experimental/map/routes")
             assertEquals(area.zoom, routes.url.parameters["zoom"]?.toDouble())
             val text = result.text()
             assertTrue(text.startsWith("45.7605,4.8597 (0.5 km): 12 stop(s), 4 route(s)."), text)
             assertTrue(text.contains("- 803145: HIGHSPEED_RAIL AVE INT (9 stops)"), text)
             assertTrue(text.contains("Main stops (stopId):\n- LYON-PART-DIEU (it-trenitalia_870072319) HIGHSPEED_RAIL"), text)
+        }
+    }
+
+    @Test
+    fun `explore_area keeps the stops and routes of the requested modes`() {
+        val motis = transitous()
+        withMcpClient(motis) { client ->
+            val bus = client.callTool("explore_area", mapOf("place" to "45.7605,4.8597", "modes" to listOf("BUS"))).data(AreaResult.serializer())
+
+            assertEquals("BUS", motis.requests.first { it.url.encodedPath == "/api/v6/map/stops" }.url.parameters["modes"])
+            assertEquals(listOf(940073L), bus.routes.map { it.routeIdx })
+            assertEquals(1, bus.totalRoutes)
+            assertEquals(listOf(listOf(940073L)), bus.polylines.map { it.routeIdx })
+            assertEquals(8, bus.totalStops)
+            assertTrue(bus.stops.all { "BUS" in it.modes.orEmpty() }, bus.stops.toString())
+
+            // RAIL: the trains and the metros
+            val rail = client.callTool("explore_area", mapOf("place" to "45.7605,4.8597", "modes" to listOf("RAIL"))).data(AreaResult.serializer())
+            assertEquals(listOf("HIGHSPEED_RAIL", "SUBWAY", "HIGHSPEED_RAIL"), rail.routes.map { it.mode })
+            assertEquals(setOf("LYON-PART-DIEU", "Lyon Part Dieu"), rail.stops.map { it.name }.toSet())
+            assertEquals(4, client.callTool("explore_area", mapOf("place" to "45.7605,4.8597", "modes" to listOf("TRANSIT"))).data(AreaResult.serializer()).totalRoutes)
         }
     }
 
@@ -214,6 +294,16 @@ class MotisToolsTest {
             assertEquals("943560", motis.request("/api/experimental/map/route-details").url.parameters["routeIdx"])
             assertTrue(result.text().startsWith("TRAM T4: 16 stop(s): Lycée Lumière → "), result.text())
             assertTrue(result.text().endsWith(" → IUT Feyssine"), result.text())
+        }
+    }
+
+    @Test
+    fun `reachability geocodes its origin in the requested language`() {
+        val motis = transitous()
+        withMcpClient(motis) { client ->
+            client.callTool("reachability", mapOf("place" to "Lyon Part-Dieu", "language" to "fr"))
+
+            assertEquals("fr", motis.request("/api/v1/geocode").url.parameters["language"])
         }
     }
 
@@ -686,7 +776,32 @@ class MotisToolsTest {
             val result = client.callTool("trip_details", mapOf("tripId" to "trip"))
 
             assertEquals(true, result.isError)
-            assertTrue(result.text().contains("500"), result.text())
+            assertEquals("MOTIS server unreachable or invalid response: retry in a moment", result.text())
+        }
+    }
+
+    @Test
+    fun `network errors are tool errors asking to retry`() {
+        withMcpClient(MockMotis { throw java.io.IOException("connection reset") }) { client ->
+            val result = client.callTool("trip_details", mapOf("tripId" to "trip"))
+
+            assertEquals(true, result.isError)
+            assertEquals("MOTIS server unreachable or invalid response: retry in a moment", result.text())
+        }
+    }
+
+    @Test
+    fun `transient HTTP statuses are tool errors asking to retry`() {
+        withMcpClient(MockMotis { respondJson("", HttpStatusCode.ServiceUnavailable) }) { client ->
+            val result = client.callTool("trip_details", mapOf("tripId" to "trip"))
+
+            assertEquals(true, result.isError)
+            assertEquals("MOTIS server temporarily unavailable (HTTP status 503): retry in a moment", result.text())
+        }
+        withMcpClient(MockMotis { respondJson("", HttpStatusCode.TooManyRequests) }) { client ->
+            val result = client.callTool("trip_details", mapOf("tripId" to "trip"))
+
+            assertEquals("MOTIS server rate limit reached: retry in a minute", result.text())
         }
     }
 }

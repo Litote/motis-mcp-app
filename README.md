@@ -59,7 +59,7 @@ without credits), and everything runs in the browser.
   being in their frame).
 
 ```bash
-# MCP server on http://localhost:3001/mcp (stateful HTTP mode, localhost)
+# MCP server on http://localhost:3001/mcp (stateless HTTP mode, localhost)
 MOTIS_APP_CONTACT=you@example.org server/build/install/server/bin/server --http --port 3001
 cd web && npm ci && npm run dev   # http://localhost:5173 (the sandbox is served on http://127.0.0.1:5173)
 npm test

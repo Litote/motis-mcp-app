@@ -88,7 +88,10 @@ describe("tools", () => {
 
     const result = await callTool(server, "departures", { stop: "Lyon" });
 
-    expect(client.callTool).toHaveBeenCalledWith({ name: "departures", arguments: { stop: "Lyon" } });
+    expect(client.callTool).toHaveBeenCalledWith({ name: "departures", arguments: { stop: "Lyon" } }, { signal: undefined });
+    const signal = new AbortController().signal;
+    await callTool(server, "departures", {}, signal);
+    expect(client.callTool).toHaveBeenLastCalledWith({ name: "departures", arguments: {} }, { signal });
     expect(resultText(result)).toBe("ok\n[image]");
 
     expect(await callTool(server, "unknown", {})).toEqual({ content: [{ type: "text", text: "Unknown tool: unknown" }], isError: true });

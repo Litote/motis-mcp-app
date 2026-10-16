@@ -55,6 +55,31 @@ const settings = (onRunEnd = vi.fn()) => ({
 afterEach(() => vi.resetAllMocks());
 
 describe("createAgent", () => {
+  it("stops after the tool calls when the user stops the run", async () => {
+    const controller = new AbortController();
+    mcp.connectMcp.mockResolvedValue(server);
+    mcp.callTool.mockImplementation(async () => {
+      controller.abort();
+      return { content: [{ type: "text", text: "cancelled" }], isError: true };
+    });
+    openrouter.streamChat.mockImplementationOnce(
+      answer({ text: "", toolCalls: [{ id: "c1", type: "function", function: { name: "departures", arguments: "{}" } }] }),
+    );
+    const onRunEnd = vi.fn();
+    const options = { messages: [userMessage], abortSignal: controller.signal } as unknown as ChatModelRunOptions;
+    const results: ChatModelRunResult[] = [];
+
+    await expect(async () => {
+      for await (const result of createAgent(settings(onRunEnd)).run(options) as AsyncGenerator<ChatModelRunResult>) results.push(result);
+    }).rejects.toThrow();
+
+    expect(mcp.callTool).toHaveBeenCalledWith(server, "departures", {}, controller.signal);
+    expect(openrouter.streamChat).toHaveBeenCalledTimes(1);
+    // the tool call is shown with its result before stopping
+    expect(results.at(-1)!.content).toEqual([expect.objectContaining({ type: "tool-call", toolCallId: "c1", isError: true })]);
+    expect(onRunEnd).toHaveBeenCalled();
+  });
+
   it("calls the tools asked by the model, then streams its answer", async () => {
     mcp.connectMcp.mockResolvedValue(server);
     mcp.callTool.mockResolvedValue({ content: [{ type: "text", text: "12:04 TER" }] });
@@ -67,7 +92,7 @@ describe("createAgent", () => {
 
     const results = await run(settings(onRunEnd));
 
-    expect(mcp.callTool).toHaveBeenCalledWith(server, "departures", { stop: "Lyon" });
+    expect(mcp.callTool).toHaveBeenCalledWith(server, "departures", { stop: "Lyon" }, expect.any(AbortSignal));
     const last = results.at(-1)!;
     expect(last.status).toEqual({ type: "complete", reason: "stop" });
     expect(last.content).toEqual([

@@ -65,10 +65,20 @@ function show(data: BoardData, push: boolean): void {
   else renderBoard(data);
 }
 
-/** Time with its delay: "08:12 +3" in red, or green when on time in real time. */
-function timeCell(actual: string | undefined, scheduled: string | undefined, realTime: boolean, tz?: string): string {
+/** A theoretical time (no real time) cannot be told from an on-time one: marked on a board mixing both. */
+const theoreticalMark = () => `<span class="muted theoretical" title="${t("departures.theoretical.title")}">${t("departures.theoretical")}</span>`;
+
+/**
+ * Time with its delay: "08:12 +3" in red, or green when on time in real time. A theoretical time is followed by
+ * [theoreticalMark] when [markTheoretical].
+ */
+function timeCell(st: StopTimeDto, markTheoretical: boolean, tz?: string): string {
+  const { time: actual, scheduledTime: scheduled } = st;
   const delay = delayMinutes(actual, scheduled);
-  if (!realTime) return `<span>${time(scheduled ?? actual, tz)}</span>`;
+  if (!st.realTime) {
+    const mark = markTheoretical && !st.cancelled ? " " + theoreticalMark() : "";
+    return `<span>${time(scheduled ?? actual, tz)}</span>${mark}`;
+  }
   if (delay === 0) return `<span class="on-time" title="${t("departures.realTime")}">${time(actual, tz)}</span>`;
   const sign = delay > 0 ? "+" : "";
   return `<span class="late" title="${t("departures.scheduled", { time: time(scheduled, tz) })}"><s class="muted">${time(scheduled, tz)}</s> ${time(actual, tz)} (${sign}${delay})</span>`;
@@ -94,7 +104,7 @@ function sncfOrigin(st: StopTimeDto): string {
   return lineBadge(st.mode, st.line, st.routeColor, st.routeTextColor, st.agency);
 }
 
-function sncfRow(st: StopTimeDto, index: number, arriveBy: boolean, tz?: string): string {
+function sncfRow(st: StopTimeDto, index: number, arriveBy: boolean, markTheoretical: boolean, tz?: string): string {
   const number = train(st.mode, st.line, st.agency, st.trainNumber)?.number;
   // the end of the trip (origin of an arrival) is the big label: the intermediate stops are on the second line
   const stops = arriveBy ? (st.stops ?? []).slice(1) : (st.stops ?? []).slice(0, -1);
@@ -109,6 +119,8 @@ function sncfRow(st: StopTimeDto, index: number, arriveBy: boolean, tz?: string)
   } else if (delay > 0) {
     status = `<span class="min" title="${t("departures.expected", { time: time(st.time, tz) })}">${t("departures.delay", { minutes: delay })}</span>`;
     state = "delayed";
+  } else if (markTheoretical && !st.realTime) {
+    status = theoreticalMark();
   }
   return `
     <li class="train ${state}" data-index="${index}">
@@ -132,24 +144,29 @@ function renderBoard(data: DeparturesResult): void {
   const firstDay = first ? ` · ${day(first, tz)}` : "";
   subtitle.textContent = `${t(data.arriveBy ? "departures.arrivals" : "departures.departures")}${firstDay}`;
   const all = data.stopTimes.map((st, index) => ({ st, index }));
+  // no real time at all (e.g. a feed without it): said once, rather than on each departure
+  const theoretical = data.stopTimes.filter((st) => !st.cancelled && !st.realTime).length;
+  const allTheoretical = theoretical > 0 && !data.stopTimes.some((st) => st.realTime);
+  const mark = theoretical > 0 && !allTheoretical;
+  const note = allTheoretical ? `<p class="muted theoretical-note">${t("departures.theoretical.all")}</p>` : "";
   if (isFrenchStation(data)) {
     const trains = all.filter(({ st }) => onSncfBoard(st));
     const others = all.filter(({ st }) => !onSncfBoard(st));
-    const rows = trains.map(({ st, index }) => sncfRow(st, index, data.arriveBy, tz)).join("");
-    const otherLines = others.length ? `<h3>${t("departures.otherLines")}</h3>${boardTable(others, tz)}` : "";
-    renderToolbarAnd(data, `<ol class="sncf-board ${data.arriveBy ? "arrivals" : ""}">${rows}</ol>${otherLines}`);
+    const rows = trains.map(({ st, index }) => sncfRow(st, index, data.arriveBy, mark, tz)).join("");
+    const otherLines = others.length ? `<h3>${t("departures.otherLines")}</h3>${boardTable(others, mark, tz)}` : "";
+    renderToolbarAnd(data, `${note}<ol class="sncf-board ${data.arriveBy ? "arrivals" : ""}">${rows}</ol>${otherLines}`);
     return;
   }
-  renderToolbarAnd(data, all.length ? boardTable(all, tz) : `<p class="muted">${t("departures.none")}</p>`);
+  renderToolbarAnd(data, all.length ? note + boardTable(all, mark, tz) : `<p class="muted">${t("departures.none")}</p>`);
 }
 
 /** Generic board of the [departures], with their index in the result. */
-function boardTable(departures: { st: StopTimeDto; index: number }[], tz?: string): string {
+function boardTable(departures: { st: StopTimeDto; index: number }[], markTheoretical: boolean, tz?: string): string {
   const rows = departures
     .map(
       ({ st, index }) => `
       <tr class="clickable" data-index="${index}">
-        <td class="${st.cancelled ? "cancelled" : ""}">${timeCell(st.time, st.scheduledTime, st.realTime, tz)}</td>
+        <td class="${st.cancelled ? "cancelled" : ""}">${timeCell(st, markTheoretical, tz)}</td>
         <td>${lineBadge(st.mode, st.line, st.routeColor, st.routeTextColor)}</td>
         <td>${esc(st.headsign)}${st.cancelled ? ` <strong class="late">${t("departures.cancelled")}</strong>` : ""}<div class="muted">${esc(st.agency)}</div></td>
         <td class="muted">${st.track ? t("track", { track: esc(st.track) }) : ""}</td>
@@ -299,6 +316,7 @@ style.textContent = `
   ol.sncf-board .station-label > span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   ol.sncf-board .min { flex: none; padding: 0.1rem 0.25rem; border-radius: 4px; background: #ff7300; font-size: 0.7rem; font-weight: 700; white-space: nowrap; }
   ol.sncf-board .min.deleted { background: #ff2e00; }
+  ol.sncf-board .theoretical { flex: none; color: #cdd5e0; font-size: 0.7rem; font-weight: 400; white-space: nowrap; }
   ol.sncf-board .second-line { margin-top: 2px; font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   ol.sncf-board .second-line:empty { display: none; }
   ol.sncf-board .platform { flex: none; display: flex; align-items: center; justify-content: center; min-width: 2rem; height: 2rem; padding: 0 0.1rem; box-sizing: border-box; border: 2px solid #eee; border-radius: 4px; background: #eee; color: #333; font-size: 1.25rem; font-weight: 700; white-space: nowrap; }

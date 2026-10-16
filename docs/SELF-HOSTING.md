@@ -10,7 +10,7 @@ server and [AWS deployment](AWS-DEPLOYMENT.md) for the Lambda + CloudFront deplo
 
 | Service | Image                              | URL                                                         |
 |---------|------------------------------------|-------------------------------------------------------------|
-| `mcp`   | `ghcr.io/litote/motis-mcp-app`     | `http://localhost:3001/mcp` (Streamable HTTP, stateful)     |
+| `mcp`   | `ghcr.io/litote/motis-mcp-app`     | `http://localhost:3001/mcp` (Streamable HTTP, stateless)    |
 | `web`   | `ghcr.io/litote/motis-mcp-app-web` | `http://localhost:8080` (chat), `http://localhost:8081` (view sandbox) |
 
 ```bash

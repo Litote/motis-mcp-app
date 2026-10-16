@@ -59,12 +59,18 @@ export function modelTools(mcp: McpServer): ChatTool[] {
     }));
 }
 
-export async function callTool(mcp: McpServer, name: string, args: Record<string, unknown>): Promise<CallToolResult> {
+/** Calls a tool: failures, and cancellations by [signal], become error results. */
+export async function callTool(
+  mcp: McpServer,
+  name: string,
+  args: Record<string, unknown>,
+  signal?: AbortSignal,
+): Promise<CallToolResult> {
   if (!mcp.tools.has(name)) {
     return { content: [{ type: "text", text: `Unknown tool: ${name}` }], isError: true };
   }
   try {
-    return (await mcp.client.callTool({ name, arguments: args })) as CallToolResult;
+    return (await mcp.client.callTool({ name, arguments: args }, { signal })) as CallToolResult;
   } catch (e) {
     return { content: [{ type: "text", text: `Tool call failed: ${e instanceof Error ? e.message : e}` }], isError: true };
   }

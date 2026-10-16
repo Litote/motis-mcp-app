@@ -1,5 +1,6 @@
 package org.litote.motis.mcp
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.engine.HttpClientEngineFactory
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.logging.LogLevel
@@ -8,6 +9,8 @@ import org.litote.motis.client.motisClientConfiguration
 
 const val APP_NAME = "motis-mcp-app"
 const val APP_URL = "https://github.com/Litote/motis-mcp-app"
+
+private val logger = KotlinLogging.logger {}
 
 /**
  * Server configuration, read from the environment.
@@ -31,15 +34,27 @@ data class MotisMcpConfig(
         }
     }
 
-    fun clientConfiguration(engine: HttpClientEngineFactory<*> = OkHttp): ClientConfiguration =
-        motisClientConfiguration(
-            applicationName = APP_NAME,
-            applicationVersion = APP_VERSION,
-            contact = contact ?: APP_URL,
-            baseUrl = baseUrl,
-            logLevel = logLevel,
+    /** The clients catch their exceptions (returned as a 500 status): they are logged here rather than printed. */
+    fun clientConfiguration(engine: HttpClientEngineFactory<*> = OkHttp): ClientConfiguration {
+        val base =
+            motisClientConfiguration(
+                applicationName = APP_NAME,
+                applicationVersion = APP_VERSION,
+                contact = contact ?: APP_URL,
+                baseUrl = baseUrl,
+                logLevel = logLevel,
+                engine = engine,
+            )
+        return ClientConfiguration(
+            baseUrl = base.baseUrl,
+            logLevel = base.logLevel,
+            userAgent = base.userAgent,
             engine = engine,
+            json = base.json,
+            client = base.client,
+            exceptionLogger = { logger.warn(this) { "MOTIS API call failed: $this" } },
         )
+    }
 
     companion object {
         const val DEFAULT_BASE_URL = "https://api.transitous.org/"
