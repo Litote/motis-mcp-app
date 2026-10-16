@@ -17,6 +17,9 @@ describe("SNCF pictograms", () => {
     // the Intercity of other countries
     expect(train("LONG_DISTANCE", "IC 2084", "DB Fernverkehr AG")?.logo).toBeUndefined();
     expect(train("REGIONAL_RAIL", "TER", "SNCF VOYAGEURS", "891001")).toEqual({ brand: "TER", number: "891001", logo: undefined });
+    // line codes of the SNCF regional trains
+    expect(train("REGIONAL_RAIL", "C17", "SNCF VOYAGEURS", "847459")).toMatchObject({ brand: "TER", number: "847459" });
+    expect(train("REGIONAL_RAIL", "C17", "NMBS/SNCB", "63")).toMatchObject({ brand: "C17" });
     // the number of the line name is not the train number
     expect(train("REGIONAL_RAIL", "K 14", "SNCF VOYAGEURS", "123")).toMatchObject({ brand: "K 14", number: "123" });
     expect(train("BUS", "TGV INOUI 6633")).toBeNull();
@@ -26,6 +29,7 @@ describe("SNCF pictograms", () => {
   it("finds the pictograms of the Île-de-France lines only", () => {
     expect(linePictogram("REGIONAL_RAIL", "A", "RER")).toContain("<svg");
     expect(linePictogram("REGIONAL_RAIL", "N", "Transilien")).toContain("<svg");
+    expect(linePictogram("REGIONAL_RAIL", "V", "Transilien")).toContain("#9f9825");
     expect(linePictogram("TRAM", "T4", "SNCF")).toContain("<svg");
     // lines of other networks
     expect(linePictogram("SUBURBAN", "A", "DSB")).toBeNull();

@@ -52,11 +52,20 @@ export interface Train {
   number?: string;
 }
 
+/** Line code of the SNCF regional trains of some feeds ("C17", "K14": lines of TER Hauts-de-France), shown as TER. */
+const TER_LINE_CODE = /^[A-Z]{1,2}\d{1,3}$/;
+const REGIONAL_MODES = new Set(["REGIONAL_FAST_RAIL", "REGIONAL_RAIL"]);
+
+function isTerLine(mode: string, line: string, agency?: string | null): boolean {
+  return REGIONAL_MODES.has(mode) && /^SNCF\b/i.test(agency ?? "") && TER_LINE_CODE.test(line);
+}
+
 /** Brand and number of a train, from its line name ("TGV INOUI 6633" or "TER" with number 891001); null for other modes. */
 export function train(mode: string, line?: string | null, agency?: string | null, number?: string | null): Train | null {
   if (!RAIL_MODES.has(mode) || !line) return null;
   const match = /^(.*\S)\s+(\d+)$/.exec(line.trim());
-  const brand = match && (!number || match[2] === number) ? match[1] : line.trim();
+  const lineBrand = match && (!number || match[2] === number) ? match[1] : line.trim();
+  const brand = isTerLine(mode, lineBrand, agency) ? "TER" : lineBrand;
   const logo = BRANDS.find(
     (b) => (b.line?.test(brand) && (!b.lineAgency || b.lineAgency.test(agency ?? ""))) || (agency && b.agency?.test(agency)),
   )?.logo;

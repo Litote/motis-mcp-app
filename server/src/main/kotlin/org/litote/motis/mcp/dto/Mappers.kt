@@ -186,21 +186,23 @@ fun MapClient.RouteDetailsResponseBody.toAreaResult(title: String): AreaResult {
     return areaResult(AreaFrame("routeDetails", title, bbox, 0.0, clip = null), stops, routes, polylines, zoomFiltered)
 }
 
-fun StopTime.toDto(arriveBy: Boolean): StopTimeDto =
-    StopTimeDto(
+fun StopTime.toDto(arriveBy: Boolean): StopTimeDto {
+    // the SNCF regional trains of some feeds have their number as headsign ("847459" for the train "C17")
+    val numberAsHeadsign = tripShortName.isBlank() && headsign.isNotEmpty() && headsign.all(Char::isDigit)
+    return StopTimeDto(
         time = (if (arriveBy) place.arrival else place.departure)?.toString(),
         scheduledTime = (if (arriveBy) place.scheduledArrival else place.scheduledDeparture)?.toString(),
         realTime = realTime,
         cancelled = cancelled || tripCancelled,
         mode = mode.label(),
         line = displayName.ifBlank { routeShortName.ifBlank { routeLongName } },
-        headsign = headsign.ifBlank { tripTo.name },
+        headsign = if (numberAsHeadsign) tripTo.name else headsign.ifBlank { tripTo.name },
         routeColor = color(routeColor),
         routeTextColor = color(routeTextColor),
         track = place.track ?: place.scheduledTrack,
         agency = agencyName,
         tripId = tripId,
-        trainNumber = tripShortName.ifBlank { null },
+        trainNumber = if (numberAsHeadsign) headsign else tripShortName.ifBlank { null },
         stops =
             if (arriveBy) {
                 previousStops?.map { StopCallDto(it.name, (it.departure ?: it.scheduledDeparture)?.toString()) }
@@ -208,6 +210,7 @@ fun StopTime.toDto(arriveBy: Boolean): StopTimeDto =
                 nextStops?.map { StopCallDto(it.name, (it.arrival ?: it.scheduledArrival)?.toString()) }
             },
     )
+}
 
 fun TimetableClient.StoptimesResponseBody.toDto(arriveBy: Boolean): DeparturesResult =
     DeparturesResult(

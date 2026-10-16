@@ -15,3 +15,6 @@ trademark of Trenitalia). Changes: white variant (all fills `#fff`), XML prolog 
 
 `intercites.svg`: not a logo, the name of the Intercités trains of SNCF written in white (no free logo available), made
 for this project.
+
+`line-V.svg`: pictogram of the Transilien line V (opened after the last commit of the repository above), made for this
+project in the same template: color `#9f9825` of the line, letter drawn like the other ones.
