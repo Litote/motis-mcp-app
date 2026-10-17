@@ -66,7 +66,8 @@ class MotisToolsTest {
                 )
 
             val search = result.data(SearchResult.serializer())
-            assertEquals(listOf("LYON-PART-DIEU", "Lyon Part Dieu (FR)"), search.matches.map { it.name })
+            // the stop without lines after the others
+            assertEquals(listOf("LYON-PART-DIEU", "Gare Part-Dieu V.Merle"), search.matches.map { it.name })
             assertEquals("STOP", search.matches.first().type)
             val request = motis.request("/api/v1/geocode")
             assertEquals("Lyon Part-Dieu", request.url.parameters["text"])
@@ -75,6 +76,17 @@ class MotisToolsTest {
             assertEquals("2", request.url.parameters["numResults"])
             assertEquals("fr", request.url.parameters["language"])
             assertTrue(result.text().startsWith("2 result(s) for \"Lyon Part-Dieu\":\n- LYON-PART-DIEU [STOP] id=es-RENFE"), result.text())
+        }
+    }
+
+    @Test
+    fun `search_places lists the stops without lines last`() {
+        withMcpClient(transitous()) { client ->
+            val result = client.callTool("search_places", mapOf("text" to "Lyon Part-Dieu"))
+
+            val search = result.data(SearchResult.serializer())
+            assertEquals(listOf("LYON-PART-DIEU", "Gare Part-Dieu V.Merle", "Lyon Part Dieu (FR)"), search.matches.map { it.name })
+            assertTrue(result.text().lines().last().let { it.contains("id=be-sncb_8772319") && it.endsWith(" — Lyon no lines") }, result.text())
         }
     }
 
@@ -421,6 +433,25 @@ class MotisToolsTest {
     }
 
     @Test
+    fun `departures of a stop without stop times are the trains around the stop`() {
+        val motis =
+            MockMotis { request ->
+                if (request.url.encodedPath == "/api/v6/stoptimes" && request.url.parameters["radius"] == null) {
+                    respondJson("""{"stopTimes":[],"place":{"name":"Lyon Part Dieu (FR)","stopId":"be-sncb_8772319","lat":45.76,"lon":4.86,"level":0.0,"tz":"Europe/Paris"},"previousPageCursor":"EARLIER|1","nextPageCursor":"LATER|1"}""")
+                } else {
+                    respondJson(fixture(FIXTURES.getValue(request.url.encodedPath)))
+                }
+            }
+        withMcpClient(motis) { client ->
+            val result = client.callTool("departures", mapOf("stopId" to "be-sncb_8772319"))
+
+            val data = result.data(DeparturesResult.serializer())
+            assertEquals(listOf("6633", "9852", "6602"), data.stopTimes.map { it.trainNumber })
+            assertEquals(listOf("TGV INOUI"), data.stationLines?.map { it.line })
+        }
+    }
+
+    @Test
     fun `departures of buses only do not look for the trains around the stop`() {
         val motis = transitous()
         withMcpClient(motis) { client ->
@@ -501,7 +532,22 @@ class MotisToolsTest {
         withMcpClient(motis) { client ->
             val result = client.callTool("departures", mapOf("stopId" to "es-RENFE-Larga-Distancia-y-AVE_87303", "station" to true))
 
-            assertEquals(3, result.data(DeparturesResult.serializer()).stopTimes.size)
+            val data = result.data(DeparturesResult.serializer())
+            assertEquals(3, data.stopTimes.size)
+            // the lines of the station, for the tabs: the board, then one probe per family of lines
+            assertEquals(1 + 5, motis.requests.count { it.url.encodedPath == "/api/v6/stoptimes" })
+            assertEquals(listOf("TGV INOUI"), data.stationLines?.map { it.line })
+        }
+    }
+
+    @Test
+    fun `departures of modes of a station do not list the lines of the station`() {
+        val motis = transitous()
+        withMcpClient(motis) { client ->
+            val result =
+                client.callTool("departures", mapOf("stopId" to "es-RENFE-Larga-Distancia-y-AVE_87303", "station" to true, "modes" to listOf("HIGHSPEED_RAIL")))
+
+            assertNull(result.data(DeparturesResult.serializer()).stationLines)
             assertEquals(1, motis.requests.count { it.url.encodedPath == "/api/v6/stoptimes" })
         }
     }

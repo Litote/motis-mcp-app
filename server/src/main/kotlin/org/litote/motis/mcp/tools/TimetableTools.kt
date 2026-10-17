@@ -146,7 +146,8 @@ private class DeparturesRequest(private val gateway: MotisGateway, private val a
     /** All the stops of the station: pages of MOTIS read until n stop times of the requested lines. */
     private suspend fun stationStopTimes(id: String): DeparturesResult {
         var page = stopTimes(id, modes, STATION_RADIUS).distinctTrains()
-        val lines = lines ?: return page
+        // the whole board of the station (asked by the model): its lines, for the tabs
+        val lines = lines ?: return if (modes == null) page.withStationLines(id) else page
         var result = page.onLines(lines)
         repeat(LINE_PAGES - 1) {
             val cursor = (if (earlier) page.previousPageCursor else page.nextPageCursor) ?: return result
@@ -157,16 +158,21 @@ private class DeparturesRequest(private val gateway: MotisGateway, private val a
         return result
     }
 
-    /** The trains of a station may be at stops of other feeds, e.g. the TGV of the IDFM stop "Gare de Lyon". */
+    /**
+     * The trains of a station may be at stops of other feeds, e.g. the TGV of the IDFM stop "Gare de Lyon". A stop without
+     * stop times may be a copy of a station in another feed, e.g. "Lyon Part Dieu (FR)" of the SNCB: its trains are nearby.
+     */
     private suspend fun withNearbyTrains(id: String): DeparturesResult {
         val result = stopTimes(id, modes)
         val trainModes = modes?.let { m -> if (Mode.RAIL in m) TRAIN_MODES else TRAIN_MODES.filter { it in m } } ?: TRAIN_MODES
-        if (trainModes.isEmpty() || result.stopTimes.none { it.mode in RAIL_LABELS }) return result
+        if (trainModes.isEmpty() || result.stopTimes.isNotEmpty() && result.stopTimes.none { it.mode in RAIL_LABELS }) return result
         val nearby = stopTimes(id, trainModes, STATION_RADIUS)
-        return result
-            .withNearbyTrains(nearby, n, earlier)
-            .copy(stationLines = stationLines(id).takeIf { it.isNotEmpty() })
+        return result.withNearbyTrains(nearby, n, earlier).withStationLines(id)
     }
+
+    /** Lines of the station of a board with trains. */
+    private suspend fun DeparturesResult.withStationLines(id: String): DeparturesResult =
+        if (stopTimes.none { it.mode in RAIL_LABELS }) this else copy(stationLines = stationLines(id).takeIf { it.isNotEmpty() })
 
     /**
      * Lines of a railway station, for the tabs of the first page of its board. They are found from the next departures

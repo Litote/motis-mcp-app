@@ -46,7 +46,10 @@ fun Server.addPlaceTools(gateway: MotisGateway, baseUrl: String) {
                     numResults = limit,
                     language = args.stringList("language"),
                 )
-            }.take(limit)
+            }
+                // a stop without lines (e.g. a copy of a station in another feed) has no departures: after the others
+                .sortedBy { it.type == LocationType.STOP && it.modes.isNullOrEmpty() }
+                .take(limit)
         val result = SearchResult(query = text, matches = matches.map { it.toDto() })
         val summary =
             if (result.matches.isEmpty()) {
@@ -55,7 +58,11 @@ fun Server.addPlaceTools(gateway: MotisGateway, baseUrl: String) {
                 result.matches.joinToString("\n", "${result.matches.size} result(s) for \"$text\":\n") { m ->
                     "- ${m.name} [${m.type}] id=${m.id} (${m.lat},${m.lon})" +
                         (m.area?.let { " — $it" } ?: "") +
-                        (m.modes?.let { " modes=${it.joinToString(",")}" } ?: "")
+                        when {
+                            m.modes != null -> " modes=${m.modes.joinToString(",")}"
+                            m.type == "STOP" -> " no lines"
+                            else -> ""
+                        }
                 }
             }
         ToolOutput.of(summary, SearchResult.serializer(), result)
