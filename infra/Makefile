@@ -74,10 +74,25 @@ certificate:
 	$(TF) apply $(TF_VARS) -target=aws_acm_certificate.web
 	$(TF) output certificate_validation_records
 
+# Sources of the Lambda zip: a zip older than their last commit would deploy an old server (ALLOW_STALE_ZIP=1 to skip)
+ZIP_SOURCES := server lambda ui gradle build.gradle.kts settings.gradle.kts gradle.properties
+
+.PHONY: check-zip
+check-zip:
+	@test -f $(ZIP) || (echo "✗ $(ZIP) missing: run make build" && exit 1)
+	@if [ -z "$(ALLOW_STALE_ZIP)" ]; then \
+		zip_time=$$(date -r $(ZIP) +%s); \
+		source_time=$$(cd $(ROOT) && git log -1 --format=%ct -- $(ZIP_SOURCES)); \
+		if [ "$$zip_time" -lt "$$source_time" ]; then \
+			echo "✗ $(ZIP) ($$(date -r $(ZIP) '+%F %T')) is older than the last commit of the server" \
+				"($$(cd $(ROOT) && git log -1 --format='%h %ci' -- $(ZIP_SOURCES))): run make build (or ALLOW_STALE_ZIP=1)"; \
+			exit 1; \
+		fi; \
+	fi
+
 # Deploys the zip built by `make build`
 .PHONY: apply
-apply:
-	@test -f $(ZIP) || (echo "✗ $(ZIP) missing: run make build" && exit 1)
+apply: check-zip
 	$(TF) apply $(TF_VARS)
 
 .PHONY: deploy

@@ -21,8 +21,14 @@ make deploy        # make build (native zip: lambda/build/libs/lambda.zip) + ter
 make logs
 ```
 
+`make apply` deploys the zip in `lambda/build/libs/` as it is: it refuses a zip older than the last commit of the server
+(`server/`, `lambda/`, `ui/`, Gradle files), which would replace the function deployed by CI with an old one. Run
+`make build` first, or `ALLOW_STALE_ZIP=1 make apply` to deploy it anyway.
+
 `bootstrap/` keeps a local state (gitignored): keep `infra/bootstrap/terraform.tfstate`. It reuses the GitHub OIDC
-identity provider of the account; on an account without one, run it with `-var create_github_oidc_provider=true`.
+identity provider of the account; on an account without one, run it with `-var create_github_oidc_provider=true`, and
+keep that variable on every later apply: without it, Terraform would delete the provider it created (`prevent_destroy`
+makes that apply fail instead).
 The roles trust the `sub` claim of the GitHub OIDC tokens: `github_sub_prefix` is the immutable prefix of this
 repository (`gh api repos/<owner>/<name>/actions/oidc/customization/sub`); for a fork, set your own (or `null` with
 legacy claims).

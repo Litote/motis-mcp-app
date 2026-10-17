@@ -125,6 +125,11 @@ resource "aws_iam_openid_connect_provider" "github" {
   count          = var.create_github_oidc_provider ? 1 : 0
   url            = "https://token.actions.githubusercontent.com"
   client_id_list = ["sts.amazonaws.com"]
+
+  # an apply without create_github_oidc_provider=true would delete it, and with it every GitHub Actions deploy
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 data "aws_iam_openid_connect_provider" "github" {
