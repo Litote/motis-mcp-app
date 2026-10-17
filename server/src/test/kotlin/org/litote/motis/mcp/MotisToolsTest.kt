@@ -896,6 +896,23 @@ class MotisToolsTest {
     }
 
     @Test
+    fun `ambiguous candidates without area are listed with their stop id`() {
+        val matches =
+            """
+            [
+              {"id":"lyon","name":"Gare","type":"STOP","lat":45.76,"lon":4.86,"score":-20.0,"areas":[],"tokens":[]},
+              {"id":"paris","name":"GARE","type":"STOP","lat":48.84,"lon":2.37,"score":-20.1,"areas":[],"tokens":[]}
+            ]
+            """.trimIndent()
+        withMcpClient(MockMotis { respondJson(matches) }) { client ->
+            val result = client.callTool("departures", mapOf("stop" to "Gare"))
+
+            assertEquals(true, result.isError)
+            assertTrue(result.text().contains("- Gare id=lyon (45.76,4.86)\n- Gare id=paris (48.84,2.37)\n"), result.text())
+        }
+    }
+
+    @Test
     fun `MOTIS failures without error body are tool errors`() {
         withMcpClient(MockMotis { respondJson("oops", HttpStatusCode.InternalServerError) }) { client ->
             val result = client.callTool("trip_details", mapOf("tripId" to "trip"))

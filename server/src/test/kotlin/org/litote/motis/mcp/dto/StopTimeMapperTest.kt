@@ -4,6 +4,8 @@ import kotlinx.serialization.json.Json
 import org.litote.motis.client.client.TimetableClient
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
+import kotlin.time.Instant
 
 class StopTimeMapperTest {
     private val stopTime =
@@ -40,5 +42,18 @@ class StopTimeMapperTest {
 
         assertEquals("Lyon Perrache", dto.headsign)
         assertEquals(listOf("Milano Porta Garibaldi", "Lyon Perrache"), dto.stops?.map { it.name })
+    }
+
+    @Test
+    fun `the stops of an arrival are the previous ones, at their scheduled time without real time`() {
+        val previous = stopTime.place.copy(name = "PARIS GARE DE LYON", departure = null, scheduledDeparture = Instant.parse("2026-10-12T19:00:00Z"))
+        val next = stopTime.place.copy(name = "Lyon Perrache", arrival = null, scheduledArrival = Instant.parse("2026-10-12T21:30:00Z"))
+
+        val arrival = stopTime.copy(previousStops = listOf(previous), nextStops = listOf(next)).toDto(arriveBy = true)
+        val departure = stopTime.copy(previousStops = listOf(previous), nextStops = listOf(next)).toDto(arriveBy = false)
+
+        assertEquals(listOf(StopCallDto("Paris Gare de Lyon", "2026-10-12T19:00:00Z")), arrival.stops)
+        assertEquals(listOf(StopCallDto("Lyon Perrache", "2026-10-12T21:30:00Z")), departure.stops)
+        assertNull(stopTime.copy(nextStops = null).toDto(arriveBy = false).stops)
     }
 }

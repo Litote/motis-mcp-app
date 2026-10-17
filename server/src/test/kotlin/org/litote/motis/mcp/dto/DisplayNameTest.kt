@@ -15,6 +15,11 @@ class DisplayNameTest {
         assertEquals("Chambéry Challes-les-Eaux", displayName("CHAMBÉRY CHALLES-LES-EAUX"))
         assertEquals("Lyon St Exupéry TGV", displayName("LYON ST EXUPÉRY TGV"))
         assertEquals("Aéroport CDG 2", displayName("AÉROPORT CDG 2"))
+        assertEquals("L’Isle d’Abeau", displayName("L’ISLE D’ABEAU"))
+        assertEquals("Mt Blanc Terminal B", displayName("MT BLANC TERMINAL B"))
+        // a single letter is a word, not an elision, without apostrophe
+        assertEquals("Lyon A Gare", displayName("LYON A GARE"))
+        assertEquals("Terminal B", displayName("TERMINAL B"))
     }
 
     @Test

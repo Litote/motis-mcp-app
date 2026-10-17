@@ -84,7 +84,7 @@ fun loadViews(tiles: MapTiles, load: (UiView) -> String = ::loadView): Map<UiVie
     UiView.entries.associateWith { injectTiles(load(it), tiles) }
 
 /** Registers every view as a `ui://` resource: [html] of [loadViews], CSP allowing the [tiles]. */
-fun Server.addAppResources(tiles: MapTiles, domain: String? = null, html: (UiView) -> String) {
+fun Server.addAppResources(tiles: MapTiles, domain: String?, html: (UiView) -> String) {
     val resourceMeta = resourceMeta(tiles, domain)
     addResources(
         UiView.entries.map { view ->
