@@ -96,8 +96,10 @@ jobs:
 
       - name: Web chat tests
         working-directory: web
+        # vitest does not check the types: tsc is otherwise only run by the deployment build
         run: |
           npm ci --no-audit --no-fund
+          npm run typecheck
           npm run coverage
 
       - name: Jacoco aggregated report
