@@ -254,6 +254,13 @@ data "aws_iam_policy_document" "deploy" {
     actions   = ["cloudfront:*"]
     resources = ["*"]
   }
+
+  # Custom domain certificate (us-east-1): its id is generated at creation
+  statement {
+    sid       = "WebCertificate"
+    actions   = ["acm:*"]
+    resources = ["*"]
+  }
 }
 
 resource "aws_iam_role_policy" "deploy" {
@@ -353,6 +360,12 @@ data "aws_iam_policy_document" "plan" {
   statement {
     sid       = "WebCloudFront"
     actions   = ["cloudfront:Get*", "cloudfront:List*", "cloudfront:Describe*"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid       = "WebCertificate"
+    actions   = ["acm:Describe*", "acm:Get*", "acm:List*"]
     resources = ["*"]
   }
 }

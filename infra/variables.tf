@@ -107,3 +107,20 @@ variable "web_price_class" {
   type        = string
   default     = "PriceClass_100"
 }
+
+variable "domain_name" {
+  description = "Custom domain of the web chat and of the MCP endpoint (https://<domain>/mcp), e.g. motis.example.org. Empty: the CloudFront domains. DNS managed outside AWS: see docs/AWS-DEPLOYMENT.md."
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = var.domain_name == "" || can(regex("^([a-z0-9-]+\\.)+[a-z]{2,}$", var.domain_name))
+    error_message = "domain_name must be a lowercase domain name, without scheme nor path."
+  }
+}
+
+variable "sandbox_domain_name" {
+  description = "Domain of the view sandbox, another origin than domain_name. Empty: sandbox.<domain_name>."
+  type        = string
+  default     = ""
+}

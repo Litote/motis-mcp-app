@@ -64,6 +64,7 @@ GitHub configuration:
 | variable                     | `MOTIS_APP_CONTACT`                             | contact sent in the User-Agent (Transitous policy)   |
 | variable (optional)          | `MOTIS_TILE_URL`, `MOTIS_TILE_ATTRIBUTION`      | tile provider                                        |
 | variable (optional)          | `MOTIS_VIEW_DOMAINS`                            | dedicated origin of the views per host, JSON: `{"chatgpt":"https://…"}` |
+| variable (optional)          | `WEB_DOMAIN`                                    | custom domain of the chat and of the MCP endpoint, see [Custom domain](#custom-domain) |
 | variable (optional)          | `RESERVED_CONCURRENCY`                          | default 10; `-1` while the account concurrency quota is below 20 (new accounts: 10) |
 | environment                  | `production`                                    | deployment branch policy: `main` only                |
 
@@ -83,3 +84,24 @@ tile provider (`tile_url`) for a public use.
 Deployment (`infra/web.tf`): an S3 bucket and two CloudFront distributions (chat, sandbox); `config.json` (MCP
 endpoint, sandbox URL, allowed origins) is written by Terraform. `make web` (part of `make deploy`) builds and uploads the
 files; CI does the same after `terraform apply`. Terraform output `web_url`.
+
+The chat distribution also serves the MCP endpoint: `/mcp*` is proxied to the Lambda function URL, so the chat and its
+MCP server share one origin, and the `mcp_url` output is `https://<chat domain>/mcp`. The function URL (output
+`function_url`) still answers directly.
+
+## Custom domain
+
+`domain_name` (GitHub variable `WEB_DOMAIN`) serves the chat on `https://<domain>/` and the MCP endpoint on
+`https://<domain>/mcp`; the view sandbox needs another origin: `sandbox_domain_name`, by default `sandbox.<domain>`.
+The certificate (ACM, us-east-1 as required by CloudFront) covers both. With a DNS provider outside AWS:
+
+1. Set `domain_name` in `terraform.tfvars`, and run `make certificate`: it requests the certificate and prints its
+   validation records (output `certificate_validation_records`).
+2. Create these CNAME records at the DNS provider, and the CNAME records of the domains to the distributions: output
+   `dns_records` (`terraform output dns_records`), e.g. `motis.example.org. CNAME d111111abcdef8.cloudfront.net.`
+3. Set the GitHub variable `WEB_DOMAIN` to the same domain (otherwise the next CI deploy removes it), and run
+   `make apply` (or push): it waits until the certificate is issued (15 min at most), then adds the domains to the
+   distributions.
+
+The records must stay: ACM renews the certificate with the validation records. The deploy role needs the ACM
+permissions of `bootstrap/` (`make bootstrap` again on an account bootstrapped before).

@@ -206,6 +206,8 @@ jobs:
           TF_VAR_tile_attribution: ${{ vars.MOTIS_TILE_ATTRIBUTION }}
           # JSON map, e.g. {"chatgpt":"https://motis.example.org"}
           TF_VAR_view_domains: ${{ vars.MOTIS_VIEW_DOMAINS || '{}' }}
+          # custom domain of the chat and of the MCP endpoint, e.g. motis.example.org (docs/AWS-DEPLOYMENT.md)
+          TF_VAR_domain_name: ${{ vars.WEB_DOMAIN }}
           # -1 while the account concurrency quota is below 20 (10 executions must stay unreserved)
           TF_VAR_reserved_concurrency: ${{ vars.RESERVED_CONCURRENCY || 10 }}
         # read-only role: no state lock
@@ -263,6 +265,8 @@ jobs:
           TF_VAR_tile_attribution: ${{ vars.MOTIS_TILE_ATTRIBUTION }}
           # JSON map, e.g. {"chatgpt":"https://motis.example.org"}
           TF_VAR_view_domains: ${{ vars.MOTIS_VIEW_DOMAINS || '{}' }}
+          # custom domain of the chat and of the MCP endpoint, e.g. motis.example.org (docs/AWS-DEPLOYMENT.md)
+          TF_VAR_domain_name: ${{ vars.WEB_DOMAIN }}
           # -1 while the account concurrency quota is below 20 (10 executions must stay unreserved)
           TF_VAR_reserved_concurrency: ${{ vars.RESERVED_CONCURRENCY || 10 }}
         run: terraform apply -input=false -auto-approve -no-color

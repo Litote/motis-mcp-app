@@ -67,6 +67,13 @@ init:
 plan:
 	$(TF) plan $(TF_VARS)
 
+# Custom domain (domain_name): requests the certificate and prints its validation records, to create at the DNS
+# provider before `make apply` (which waits until the certificate is issued)
+.PHONY: certificate
+certificate:
+	$(TF) apply $(TF_VARS) -target=aws_acm_certificate.web
+	$(TF) output certificate_validation_records
+
 # Deploys the zip built by `make build`
 .PHONY: apply
 apply:
