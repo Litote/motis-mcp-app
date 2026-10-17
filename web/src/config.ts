@@ -13,10 +13,12 @@ export interface AppConfig {
 
 let config: Promise<AppConfig> | undefined;
 
+/** Fetched once; fetched again after a failure (e.g. a network error), which would otherwise last until a reload. */
 export function loadConfig(): Promise<AppConfig> {
   config ??= fetch("/config.json", { cache: "no-store" }).then((response) => {
     if (!response.ok) throw new Error(`config.json: HTTP ${response.status}`);
     return response.json() as Promise<AppConfig>;
   });
+  config.catch(() => (config = undefined));
   return config;
 }

@@ -16,6 +16,7 @@ import io.modelcontextprotocol.kotlin.sdk.types.Implementation
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.litote.motis.mcp.apps.UiView
+import org.litote.motis.mcp.apps.loadViews
 import java.util.Collections
 import kotlin.time.Duration.Companion.seconds
 
@@ -54,7 +55,7 @@ fun withMcpClient(motis: MockMotis, block: suspend (Client) -> Unit): Unit =
                     MotisGateway(config.clientConfiguration(motis.engine)),
                     config.baseUrl,
                     config.tiles,
-                    TEST_VIEWS,
+                    loadViews(config.tiles) { TEST_VIEWS.getValue(it) },
                 )
             val (clientTransport, serverTransport) = InMemoryTransport.pair()
             server.createSession(serverTransport)

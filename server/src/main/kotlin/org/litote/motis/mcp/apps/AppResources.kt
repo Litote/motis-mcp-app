@@ -76,12 +76,19 @@ fun loadView(view: UiView): String =
     UiView::class.java.getResource("/ui/${view.file}")?.readText()
         ?: error("UI view ${view.file} not found in the classpath: run ./gradlew :server:buildUi")
 
-/** Registers every view as a `ui://` resource. */
-fun Server.addAppResources(tiles: MapTiles, domain: String? = null, load: (UiView) -> String = ::loadView) {
+/**
+ * HTML of the views, with the configuration of the [tiles]: prepared once, as a server is created for each request in
+ * stateless mode (about 1.7 MB of HTML).
+ */
+fun loadViews(tiles: MapTiles, load: (UiView) -> String = ::loadView): Map<UiView, String> =
+    UiView.entries.associateWith { injectTiles(load(it), tiles) }
+
+/** Registers every view as a `ui://` resource: [html] of [loadViews], CSP allowing the [tiles]. */
+fun Server.addAppResources(tiles: MapTiles, domain: String?, html: (UiView) -> String) {
     val resourceMeta = resourceMeta(tiles, domain)
     addResources(
         UiView.entries.map { view ->
-            val html = injectTiles(load(view), tiles)
+            val html = html(view)
             RegisteredResource(
                 Resource(
                     uri = view.uri,

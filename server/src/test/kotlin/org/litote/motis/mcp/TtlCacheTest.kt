@@ -1,6 +1,10 @@
 package org.litote.motis.mcp
 
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.yield
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -46,5 +50,42 @@ class TtlCacheTest {
 
             assertFailsWith<MotisToolException> { cache.getOrPut("a") { throw MotisToolException("down") } }
             assertEquals("a1", cache.get("a"))
+        }
+
+    @Test
+    fun `concurrent misses share a single load`() =
+        runBlocking {
+            val cache = TtlCache<String, String>(maxSize = 10, ttl = 5.minutes, time)
+            val gate = CompletableDeferred<Unit>()
+
+            val values =
+                List(3) {
+                    async {
+                        cache.getOrPut("a") {
+                            gate.await()
+                            "a${++loads}"
+                        }
+                    }
+                }
+            yield()
+            gate.complete(Unit)
+
+            assertEquals(listOf("a1", "a1", "a1"), values.awaitAll())
+            assertEquals(1, loads)
+        }
+
+    @Test
+    fun `a cancelled load is retried by the other callers`() =
+        runBlocking {
+            val cache = TtlCache<String, String>(maxSize = 10, ttl = 5.minutes, time)
+            val started = CompletableDeferred<Unit>()
+
+            val first = async { cache.getOrPut("a") { started.complete(Unit); CompletableDeferred<String>().await() } }
+            started.await()
+            val second = async { cache.get("a") }
+            yield()
+            first.cancel()
+
+            assertEquals("a1", second.await())
         }
 }

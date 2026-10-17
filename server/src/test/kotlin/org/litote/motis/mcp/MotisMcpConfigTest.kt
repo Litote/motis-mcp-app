@@ -1,5 +1,6 @@
 package org.litote.motis.mcp
 
+import io.ktor.client.plugins.logging.LogLevel
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -42,6 +43,26 @@ class MotisMcpConfigTest {
             MotisMcpConfig.fromEnv(
                 mapOf(contact, "MOTIS_VIEW_DOMAIN_CHATGPT" to "https://motis.example.org", "MOTIS_VIEW_DOMAIN_CLAUDE" to " "),
             ).viewDomains,
+        )
+    }
+
+    @Test
+    fun `log level is case-insensitive and validated`() {
+        val contact = "MOTIS_APP_CONTACT" to "you@example.org"
+        assertEquals(LogLevel.NONE, MotisMcpConfig.fromEnv(mapOf(contact, "MOTIS_LOG_LEVEL" to " ")).logLevel)
+        assertEquals(LogLevel.HEADERS, MotisMcpConfig.fromEnv(mapOf(contact, "MOTIS_LOG_LEVEL" to "headers")).logLevel)
+        val error = assertFailsWith<IllegalArgumentException> { MotisMcpConfig.fromEnv(mapOf(contact, "MOTIS_LOG_LEVEL" to "verbose")) }
+        assertTrue(error.message!!.startsWith("MOTIS_LOG_LEVEL must be one of "), error.message)
+    }
+
+    @Test
+    fun `allowed hosts are a comma-separated list`() {
+        val contact = "MOTIS_APP_CONTACT" to "you@example.org"
+        assertNull(MotisMcpConfig.fromEnv(mapOf(contact)).allowedHosts)
+        assertNull(MotisMcpConfig.fromEnv(mapOf(contact, "MCP_ALLOWED_HOSTS" to " , ")).allowedHosts)
+        assertEquals(
+            listOf("mcp.example.org", "motis.example.org"),
+            MotisMcpConfig.fromEnv(mapOf(contact, "MCP_ALLOWED_HOSTS" to "mcp.example.org, motis.example.org,")).allowedHosts,
         )
     }
 

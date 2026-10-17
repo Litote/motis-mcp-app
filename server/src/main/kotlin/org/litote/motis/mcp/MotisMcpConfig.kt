@@ -20,6 +20,9 @@ private val logger = KotlinLogging.logger {}
  *
  * [viewDomains] are the dedicated origins of the views requested to each host on its endpoint `/mcp/<host>`
  * (`_meta.ui.domain`, e.g. to allowlist at the tile provider): their format depends on the host (see [McpHost]).
+ *
+ * [allowedHosts] are the host names accepted by the HTTP server in addition to localhost (DNS rebinding protection),
+ * null for localhost only.
  */
 data class MotisMcpConfig(
     val contact: String?,
@@ -27,6 +30,7 @@ data class MotisMcpConfig(
     val logLevel: LogLevel = LogLevel.NONE,
     val tiles: MapTiles = MapTiles(),
     val viewDomains: Map<McpHost, String> = emptyMap(),
+    val allowedHosts: List<String>? = null,
 ) {
     init {
         require(contact != null || !isTransitous(baseUrl)) {
@@ -69,7 +73,7 @@ data class MotisMcpConfig(
             MotisMcpConfig(
                 contact = env["MOTIS_APP_CONTACT"]?.takeIf { it.isNotBlank() },
                 baseUrl = env["MOTIS_BASE_URL"]?.takeIf { it.isNotBlank() } ?: DEFAULT_BASE_URL,
-                logLevel = env["MOTIS_LOG_LEVEL"]?.let { LogLevel.valueOf(it.uppercase()) } ?: LogLevel.NONE,
+                logLevel = env["MOTIS_LOG_LEVEL"]?.takeIf { it.isNotBlank() }?.let(::parseLogLevel) ?: LogLevel.NONE,
                 tiles =
                     MapTiles(
                         url = env["MOTIS_TILE_URL"]?.takeIf { it.isNotBlank() } ?: MapTiles.OSM_URL,
@@ -79,7 +83,18 @@ data class MotisMcpConfig(
                     McpHost.entries
                         .mapNotNull { host -> env[host.envName]?.takeIf { it.isNotBlank() }?.let { host to it } }
                         .toMap(),
+                allowedHosts =
+                    env["MCP_ALLOWED_HOSTS"]
+                        ?.split(',')
+                        ?.map { it.trim() }
+                        ?.filter { it.isNotEmpty() }
+                        ?.ifEmpty { null },
             )
+
+        private fun parseLogLevel(value: String): LogLevel =
+            requireNotNull(LogLevel.entries.firstOrNull { it.name.equals(value.trim(), ignoreCase = true) }) {
+                "MOTIS_LOG_LEVEL must be one of ${LogLevel.entries.joinToString()}: \"$value\""
+            }
     }
 }
 

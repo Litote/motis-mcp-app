@@ -14,6 +14,8 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.io.asSink
 import kotlinx.io.asSource
 import kotlinx.io.buffered
+import org.litote.motis.mcp.apps.loadViews
+import kotlin.system.exitProcess
 
 // lazy: the logging library must be configured before its first use (see main)
 private val logger by lazy { KotlinLogging.logger {} }
@@ -38,6 +40,29 @@ Environment:
   MCP_ALLOWED_HOSTS    comma-separated host names accepted in HTTP mode (default: localhost only)
 """
 
+/** Options of the command line. */
+internal data class CliOptions(val http: Boolean = false, val port: Int = DEFAULT_PORT, val host: String = DEFAULT_HOST) {
+    companion object {
+        const val DEFAULT_PORT = 3001
+        const val DEFAULT_HOST = "127.0.0.1"
+    }
+}
+
+/** Invalid command line, reported with the usage. */
+internal class UsageException(message: String) : IllegalArgumentException(message)
+
+internal fun parseArguments(args: Array<String>): CliOptions {
+    /** Value of the option [name], an error when it has none. */
+    fun option(name: String): String? =
+        args.indexOf(name).takeIf { it >= 0 }?.let {
+            args.getOrNull(it + 1)?.takeUnless { value -> value.startsWith("--") } ?: throw UsageException("$name requires a value")
+        }
+
+    val port =
+        option("--port")?.let { it.toIntOrNull()?.takeIf { port -> port in 1..65535 } ?: throw UsageException("invalid port \"$it\"") }
+    return CliOptions(http = "--http" in args, port = port ?: CliOptions.DEFAULT_PORT, host = option("--host") ?: CliOptions.DEFAULT_HOST)
+}
+
 fun main(args: Array<String>) {
     // kotlin-logging prints a startup message on stdout, which carries the MCP protocol in stdio mode
     System.setProperty("kotlin-logging.logStartupMessage", "false")
@@ -45,15 +70,18 @@ fun main(args: Array<String>) {
         println(USAGE.trimIndent())
         return
     }
-    val config = MotisMcpConfig.fromEnv()
+    val (options, config) =
+        try {
+            parseArguments(args) to MotisMcpConfig.fromEnv()
+        } catch (e: IllegalArgumentException) {
+            usageError(e.message ?: "invalid arguments")
+        }
     val gateway = MotisGateway(config.clientConfiguration())
-    val views = loadViews()
+    val views = loadViews(config.tiles)
     val create = { viewDomain: String? -> createMotisMcpServer(gateway, config.baseUrl, config.tiles, views, viewDomain) }
 
-    if ("--http" in args) {
-        val port = args.option("--port")?.toInt() ?: 3001
-        val host = args.option("--host") ?: "127.0.0.1"
-        val allowedHosts = System.getenv("MCP_ALLOWED_HOSTS")?.split(',')?.map { it.trim() }?.filter { it.isNotEmpty() }
+    if (options.http) {
+        val (_, port, host) = options
         logger.info { "MCP server listening on http://$host:$port$MCP_PATH (MOTIS: ${config.baseUrl})" }
         embeddedServer(CIO, host = host, port = port) {
             install(CORS) {
@@ -68,7 +96,7 @@ fun main(args: Array<String>) {
             rejectUnknownMcpHosts()
             // stateless, as the Lambda: the tools keep no state, and the SDK never expires the idle sessions of the
             // stateful mode (a long-running server would keep those of every client in memory)
-            mcpStatelessStreamableHttp(path = MCP_ROUTE, allowedHosts = allowedHosts?.plus(listOf("localhost", "127.0.0.1"))) {
+            mcpStatelessStreamableHttp(path = MCP_ROUTE, allowedHosts = config.allowedHosts?.plus(listOf("localhost", "127.0.0.1"))) {
                 create(viewDomain(config))
             }
         }.start(wait = true)
@@ -85,4 +113,9 @@ fun main(args: Array<String>) {
     }
 }
 
-private fun Array<String>.option(name: String): String? = indexOf(name).takeIf { it >= 0 }?.let { getOrNull(it + 1) }
+/** Invalid arguments or configuration: reported on stderr (stdout carries the MCP protocol in stdio mode). */
+private fun usageError(message: String): Nothing {
+    System.err.println("Error: $message")
+    System.err.println(USAGE.trimIndent())
+    exitProcess(2)
+}

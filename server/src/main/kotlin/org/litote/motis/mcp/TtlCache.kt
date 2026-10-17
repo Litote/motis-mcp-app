@@ -1,5 +1,9 @@
 package org.litote.motis.mcp
 
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlin.time.Duration
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
@@ -9,7 +13,7 @@ import kotlin.time.TimeSource
  * of a warm Lambda instance): values are kept [ttl], at most [maxSize] of them (the least recently used is evicted).
  *
  * Failures are not cached (the exception of [getOrPut] loader propagates), nor the values rejected by [keep].
- * Concurrent misses of a key both call MOTIS: simpler than coalescing them, and rare.
+ * Concurrent misses of a key share a single load, e.g. the lines of a station asked by several clients (5 MOTIS calls).
  */
 internal class TtlCache<K : Any, V : Any>(
     private val maxSize: Int,
@@ -24,12 +28,36 @@ internal class TtlCache<K : Any, V : Any>(
             override fun removeEldestEntry(eldest: MutableMap.MutableEntry<K, Entry<V>>): Boolean = size > maxSize
         }
 
+    /** Loads in progress, guarded by [entries]. */
+    private val loads = mutableMapOf<K, CompletableDeferred<V>>()
+
     suspend fun getOrPut(key: K, load: suspend () -> V): V {
-        synchronized(entries) {
-            entries[key]?.let { if (it.expiry.hasNotPassedNow()) return it.value else entries.remove(key) }
+        val (pending, loader) =
+            synchronized(entries) {
+                entries[key]?.let { if (it.expiry.hasNotPassedNow()) return it.value else entries.remove(key) }
+                loads[key]?.let { it to false } ?: (CompletableDeferred<V>().also { loads[key] = it } to true)
+            }
+        if (!loader) {
+            return try {
+                pending.await()
+            } catch (e: CancellationException) {
+                // the loader was cancelled, not this caller: it loads the value itself
+                currentCoroutineContext().ensureActive()
+                getOrPut(key, load)
+            }
         }
-        val value = load()
-        if (keep(value)) synchronized(entries) { entries[key] = Entry(value, timeSource.markNow() + ttl) }
-        return value
+        try {
+            val value = load()
+            synchronized(entries) {
+                if (keep(value)) entries[key] = Entry(value, timeSource.markNow() + ttl)
+                loads.remove(key)
+            }
+            pending.complete(value)
+            return value
+        } catch (e: Throwable) {
+            synchronized(entries) { loads.remove(key) }
+            pending.completeExceptionally(e)
+            throw e
+        }
     }
 }

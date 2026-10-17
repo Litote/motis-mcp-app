@@ -95,9 +95,6 @@ private class DeparturesRequest(private val gateway: MotisGateway, private val a
     private val pageCursor = args.string("pageCursor")
     private val earlier = pageCursor?.startsWith("EARLIER") == true
 
-    /** Start time, set once the stop is known: a time without offset is in the time zone of the stop. */
-    private var time: Instant? = null
-
     suspend fun departures(): DeparturesResult {
         val stopId = args.string("stopId")
         val stop =
@@ -118,79 +115,83 @@ private class DeparturesRequest(private val gateway: MotisGateway, private val a
     private suspend fun resolveStop(): ResolvedPlace? = args.string("stop")?.let { gateway.resolvePlace(it, stopsOnly = true, language = language) }
 
     private suspend fun departures(stop: ResolvedPlace): DeparturesResult {
-        time = args.instant("time") { stop.tz ?: gateway.stop(stop.id)?.tz }
-        return if (station) stationStopTimes(stop.id) else withNearbyTrains(stop.id)
+        // a time without offset is in the time zone of the stop
+        val board = Board(args.instant("time") { stop.tz ?: gateway.stop(stop.id)?.tz })
+        return if (station) board.stationStopTimes(stop.id) else board.withNearbyTrains(stop.id)
     }
 
-    private suspend fun stopTimes(
-        id: String,
-        modes: List<Mode>?,
-        radius: Long? = null,
-        cursor: String? = pageCursor,
-        count: Int = n,
-        fetchStops: Boolean = true,
-    ) = gateway.stopTimes(
-        StopTimesQuery(
-            stopId = id,
-            time = time,
-            arriveBy = arriveBy,
-            n = count,
-            modes = modes,
-            pageCursor = cursor,
-            language = language,
-            radius = radius,
-            fetchStops = fetchStops,
-        ),
-    ).toDto(arriveBy)
+    /** Stop times from [time], null for now. */
+    private inner class Board(private val time: Instant?) {
+        private suspend fun stopTimes(
+            id: String,
+            modes: List<Mode>?,
+            radius: Long? = null,
+            cursor: String? = pageCursor,
+            count: Int = n,
+            fetchStops: Boolean = true,
+        ) = gateway.stopTimes(
+            StopTimesQuery(
+                stopId = id,
+                time = time,
+                arriveBy = arriveBy,
+                n = count,
+                modes = modes,
+                pageCursor = cursor,
+                language = language,
+                radius = radius,
+                fetchStops = fetchStops,
+            ),
+        ).toDto(arriveBy)
 
-    /** All the stops of the station: pages of MOTIS read until n stop times of the requested lines. */
-    private suspend fun stationStopTimes(id: String): DeparturesResult {
-        var page = stopTimes(id, modes, STATION_RADIUS).distinctTrains()
-        // the whole board of the station (asked by the model): its lines, for the tabs
-        val lines = lines ?: return if (modes == null) page.withStationLines(id) else page
-        var result = page.onLines(lines)
-        repeat(LINE_PAGES - 1) {
-            val cursor = (if (earlier) page.previousPageCursor else page.nextPageCursor) ?: return result
-            if (result.stopTimes.size >= n) return result
-            page = stopTimes(id, modes, STATION_RADIUS, cursor)
-            result = result.followedBy(page.onLines(lines), earlier)
+        /** All the stops of the station: pages of MOTIS read until n stop times of the requested lines. */
+        suspend fun stationStopTimes(id: String): DeparturesResult {
+            var page = stopTimes(id, modes, STATION_RADIUS).distinctTrains()
+            // the whole board of the station (asked by the model): its lines, for the tabs
+            val lines = lines ?: return if (modes == null) page.withStationLines(id) else page
+            var result = page.onLines(lines)
+            repeat(LINE_PAGES - 1) {
+                val cursor = (if (earlier) page.previousPageCursor else page.nextPageCursor) ?: return result
+                if (result.stopTimes.size >= n) return result
+                page = stopTimes(id, modes, STATION_RADIUS, cursor)
+                result = result.followedBy(page.onLines(lines), earlier)
+            }
+            return result
         }
-        return result
+
+        /**
+         * The trains of a station may be at stops of other feeds, e.g. the TGV of the IDFM stop "Gare de Lyon". A stop without
+         * stop times may be a copy of a station in another feed, e.g. "Lyon Part Dieu (FR)" of the SNCB: its trains are nearby.
+         */
+        suspend fun withNearbyTrains(id: String): DeparturesResult {
+            val result = stopTimes(id, modes)
+            val trainModes = modes?.let { m -> if (Mode.RAIL in m) TRAIN_MODES else TRAIN_MODES.filter { it in m } } ?: TRAIN_MODES
+            if (trainModes.isEmpty() || result.stopTimes.isNotEmpty() && result.stopTimes.none { it.mode in RAIL_LABELS }) return result
+            val nearby = stopTimes(id, trainModes, STATION_RADIUS)
+            return result.withNearbyTrains(nearby, n, earlier).withStationLines(id)
+        }
+
+        /** Lines of the station of a board with trains. */
+        private suspend fun DeparturesResult.withStationLines(id: String): DeparturesResult =
+            if (stopTimes.none { it.mode in RAIL_LABELS }) this else copy(stationLines = stationLines(id).takeIf { it.isNotEmpty() })
+
+        /**
+         * Lines of a railway station, for the tabs of the first page of its board. They are found from the next departures
+         * of the probe time: only those of now are cached, a given time may be a quiet period with fewer lines.
+         */
+        private suspend fun stationLines(id: String): List<StationLineDto> =
+            when {
+                pageCursor != null -> emptyList()
+                time != null -> stationLines(probes(id))
+                else -> gateway.stationLines.getOrPut(id to language) { stationLines(probes(id)) }
+            }
+
+        private suspend fun probes(id: String): List<DeparturesResult> =
+            coroutineScope {
+                STATION_FAMILIES
+                    .map { family -> async { stopTimes(id, family, STATION_RADIUS, null, STATION_PROBE, fetchStops = false) } }
+                    .awaitAll()
+            }
     }
-
-    /**
-     * The trains of a station may be at stops of other feeds, e.g. the TGV of the IDFM stop "Gare de Lyon". A stop without
-     * stop times may be a copy of a station in another feed, e.g. "Lyon Part Dieu (FR)" of the SNCB: its trains are nearby.
-     */
-    private suspend fun withNearbyTrains(id: String): DeparturesResult {
-        val result = stopTimes(id, modes)
-        val trainModes = modes?.let { m -> if (Mode.RAIL in m) TRAIN_MODES else TRAIN_MODES.filter { it in m } } ?: TRAIN_MODES
-        if (trainModes.isEmpty() || result.stopTimes.isNotEmpty() && result.stopTimes.none { it.mode in RAIL_LABELS }) return result
-        val nearby = stopTimes(id, trainModes, STATION_RADIUS)
-        return result.withNearbyTrains(nearby, n, earlier).withStationLines(id)
-    }
-
-    /** Lines of the station of a board with trains. */
-    private suspend fun DeparturesResult.withStationLines(id: String): DeparturesResult =
-        if (stopTimes.none { it.mode in RAIL_LABELS }) this else copy(stationLines = stationLines(id).takeIf { it.isNotEmpty() })
-
-    /**
-     * Lines of a railway station, for the tabs of the first page of its board. They are found from the next departures
-     * of the probe time: only those of now are cached, a given time may be a quiet period with fewer lines.
-     */
-    private suspend fun stationLines(id: String): List<StationLineDto> =
-        when {
-            pageCursor != null -> emptyList()
-            time != null -> stationLines(probes(id))
-            else -> gateway.stationLines.getOrPut(id to language) { stationLines(probes(id)) }
-        }
-
-    private suspend fun probes(id: String): List<DeparturesResult> =
-        coroutineScope {
-            STATION_FAMILIES
-                .map { family -> async { stopTimes(id, family, STATION_RADIUS, null, STATION_PROBE, fetchStops = false) } }
-                .awaitAll()
-        }
 }
 
 fun Server.addTimetableTools(gateway: MotisGateway) {

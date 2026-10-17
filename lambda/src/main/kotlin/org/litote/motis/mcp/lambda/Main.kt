@@ -12,7 +12,7 @@ import org.litote.motis.mcp.MCP_ROUTE
 import org.litote.motis.mcp.MotisGateway
 import org.litote.motis.mcp.MotisMcpConfig
 import org.litote.motis.mcp.createMotisMcpServer
-import org.litote.motis.mcp.loadViews
+import org.litote.motis.mcp.apps.loadViews
 import org.litote.motis.mcp.rejectUnknownMcpHosts
 import org.litote.motis.mcp.viewDomain
 
@@ -51,7 +51,7 @@ class McpLambda(createServer: RoutingContext.() -> Server) {
 fun createMcpLambda(): McpLambda {
     val config = MotisMcpConfig.fromEnv()
     val gateway = MotisGateway(config.clientConfiguration())
-    val views = loadViews()
+    val views = loadViews(config.tiles)
     return McpLambda { createMotisMcpServer(gateway, config.baseUrl, config.tiles, views, viewDomain(config)) }
 }
 
