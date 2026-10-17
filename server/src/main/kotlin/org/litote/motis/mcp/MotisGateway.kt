@@ -17,6 +17,7 @@ import org.litote.motis.client.model.PedestrianProfile
 import org.litote.motis.client.model.Place
 import org.litote.motis.client.model.Reachable
 import org.litote.motis.mcp.dto.StationLineDto
+import org.litote.motis.mcp.dto.displayName
 import org.litote.motis.mcp.dto.distanceKm
 import org.litote.motis.mcp.dto.toDto
 import kotlin.math.abs
@@ -36,12 +37,19 @@ class UnknownStopException(val stopId: String) :
         "Unknown stop id \"$stopId\": get a valid one from search_places or explore_area, or give the stop name in 'stop'.",
     )
 
+/** Length of a degree of latitude, in km. */
+internal const val KM_PER_DEGREE = 111.32
+
 /** Geographic bounding box. MOTIS expects `min` = south-west corner and `max` = north-east corner. */
 data class BoundingBox(val minLat: Double, val minLon: Double, val maxLat: Double, val maxLon: Double) {
     val min: String get() = "$minLat,$minLon"
     val max: String get() = "$maxLat,$maxLon"
     val centerLat: Double get() = (minLat + maxLat) / 2
     val centerLon: Double get() = (minLon + maxLon) / 2
+
+    /** Half of the largest side, in km: the radius of the area. */
+    val radiusKm: Double
+        get() = maxOf(maxLat - minLat, (maxLon - minLon) * cos(Math.toRadians(centerLat))) * KM_PER_DEGREE / 2
 
     /** Same center, sides multiplied by [factor]. */
     fun expand(factor: Double): BoundingBox {
@@ -51,8 +59,6 @@ data class BoundingBox(val minLat: Double, val minLon: Double, val maxLat: Doubl
     }
 
     companion object {
-        private const val KM_PER_DEGREE = 111.32
-
         fun around(lat: Double, lon: Double, radiusKm: Double): BoundingBox {
             val dLat = radiusKm / KM_PER_DEGREE
             val dLon = radiusKm / (KM_PER_DEGREE * cos(Math.toRadians(lat)).coerceAtLeast(0.01))
@@ -191,28 +197,34 @@ class MotisGateway(configuration: ClientConfiguration, timeSource: TimeSource = 
                     "\nRetry with one of these stop ids or coordinates, or a more precise name (e.g. with the city).",
                 ) { m ->
                     val stopId = if (m.type == LocationType.STOP) " id=${m.id}" else ""
-                    "- ${m.name}${m.toDto().area?.let { " — $it" } ?: ""}$stopId (${m.lat},${m.lon})"
+                    val dto = m.toDto()
+                    "- ${dto.name}${dto.area?.let { " — $it" } ?: ""}$stopId (${m.lat},${m.lon})"
                 },
             )
         }
         val isStop = match.type == LocationType.STOP
+        val dto = match.toDto()
         return ResolvedPlace(
             id = if (isStop) match.id else "${match.lat},${match.lon}",
-            name = match.name,
+            name = dto.name,
             lat = match.lat,
             lon = match.lon,
             isStop = isStop,
-            area = match.toDto().area,
+            area = dto.area,
             tz = match.tz,
         )
     }
 
-    /** The stop of id [stopId], null when MOTIS does not know it. */
+    /**
+     * The stop of id [stopId], null when MOTIS does not know it (an error body: unknown feed or stop). The failures of
+     * the server (network, rate limit, unavailability) are reported, not taken for an unknown stop.
+     */
     suspend fun stop(stopId: String): ResolvedPlace? =
         when (val r = timetableClient.stoptimes(stopId = stopId, n = 1)) {
             is TimetableClient.StoptimesResponseSuccess ->
-                r.body.place.let { ResolvedPlace(stopId, it.name, it.lat, it.lon, isStop = true, tz = it.tz) }
-            else -> null
+                r.body.place.let { ResolvedPlace(stopId, displayName(it.name), it.lat, it.lon, isStop = true, tz = it.tz) }
+            is TimetableClient.StoptimesResponseFailure -> null
+            is TimetableClient.StoptimesResponseUnknownFailure -> failStatus(r.statusCode)
         }
 
     /**

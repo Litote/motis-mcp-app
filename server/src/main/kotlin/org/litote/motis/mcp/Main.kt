@@ -14,6 +14,8 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.io.asSink
 import kotlinx.io.asSource
 import kotlinx.io.buffered
+import org.litote.motis.mcp.apps.loadViews
+import kotlin.system.exitProcess
 
 // lazy: the logging library must be configured before its first use (see main)
 private val logger by lazy { KotlinLogging.logger {} }
@@ -45,15 +47,21 @@ fun main(args: Array<String>) {
         println(USAGE.trimIndent())
         return
     }
-    val config = MotisMcpConfig.fromEnv()
+    val config =
+        try {
+            MotisMcpConfig.fromEnv()
+        } catch (e: IllegalArgumentException) {
+            usageError(e.message ?: "invalid configuration")
+        }
     val gateway = MotisGateway(config.clientConfiguration())
-    val views = loadViews()
+    val views = loadViews(config.tiles)
     val create = { viewDomain: String? -> createMotisMcpServer(gateway, config.baseUrl, config.tiles, views, viewDomain) }
 
     if ("--http" in args) {
-        val port = args.option("--port")?.toInt() ?: 3001
+        val port =
+            args.option("--port")?.let { it.toIntOrNull()?.takeIf { port -> port in 1..65535 } ?: usageError("invalid port \"$it\"") }
+                ?: 3001
         val host = args.option("--host") ?: "127.0.0.1"
-        val allowedHosts = System.getenv("MCP_ALLOWED_HOSTS")?.split(',')?.map { it.trim() }?.filter { it.isNotEmpty() }
         logger.info { "MCP server listening on http://$host:$port$MCP_PATH (MOTIS: ${config.baseUrl})" }
         embeddedServer(CIO, host = host, port = port) {
             install(CORS) {
@@ -68,7 +76,7 @@ fun main(args: Array<String>) {
             rejectUnknownMcpHosts()
             // stateless, as the Lambda: the tools keep no state, and the SDK never expires the idle sessions of the
             // stateful mode (a long-running server would keep those of every client in memory)
-            mcpStatelessStreamableHttp(path = MCP_ROUTE, allowedHosts = allowedHosts?.plus(listOf("localhost", "127.0.0.1"))) {
+            mcpStatelessStreamableHttp(path = MCP_ROUTE, allowedHosts = config.allowedHosts?.plus(listOf("localhost", "127.0.0.1"))) {
                 create(viewDomain(config))
             }
         }.start(wait = true)
@@ -85,4 +93,13 @@ fun main(args: Array<String>) {
     }
 }
 
-private fun Array<String>.option(name: String): String? = indexOf(name).takeIf { it >= 0 }?.let { getOrNull(it + 1) }
+/** Value of the option [name], an error when it has none. */
+private fun Array<String>.option(name: String): String? =
+    indexOf(name).takeIf { it >= 0 }?.let { getOrNull(it + 1)?.takeUnless { value -> value.startsWith("--") } ?: usageError("$name requires a value") }
+
+/** Invalid arguments or configuration: reported on stderr (stdout carries the MCP protocol in stdio mode). */
+private fun usageError(message: String): Nothing {
+    System.err.println("Error: $message")
+    System.err.println(USAGE.trimIndent())
+    exitProcess(2)
+}

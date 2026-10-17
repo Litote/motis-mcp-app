@@ -67,7 +67,7 @@ class MotisToolsTest {
 
             val search = result.data(SearchResult.serializer())
             // the stop without lines after the others
-            assertEquals(listOf("LYON-PART-DIEU", "Gare Part-Dieu V.Merle"), search.matches.map { it.name })
+            assertEquals(listOf("Lyon-Part-Dieu", "Gare Part-Dieu V.Merle"), search.matches.map { it.name })
             assertEquals("STOP", search.matches.first().type)
             val request = motis.request("/api/v1/geocode")
             assertEquals("Lyon Part-Dieu", request.url.parameters["text"])
@@ -75,7 +75,7 @@ class MotisToolsTest {
             assertEquals("45.76,4.86", request.url.parameters["place"])
             assertEquals("2", request.url.parameters["numResults"])
             assertEquals("fr", request.url.parameters["language"])
-            assertTrue(result.text().startsWith("2 result(s) for \"Lyon Part-Dieu\":\n- LYON-PART-DIEU [STOP] id=es-RENFE"), result.text())
+            assertTrue(result.text().startsWith("2 result(s) for \"Lyon Part-Dieu\":\n- Lyon-Part-Dieu [STOP] id=es-RENFE"), result.text())
         }
     }
 
@@ -85,7 +85,7 @@ class MotisToolsTest {
             val result = client.callTool("search_places", mapOf("text" to "Lyon Part-Dieu"))
 
             val search = result.data(SearchResult.serializer())
-            assertEquals(listOf("LYON-PART-DIEU", "Gare Part-Dieu V.Merle", "Lyon Part Dieu (FR)"), search.matches.map { it.name })
+            assertEquals(listOf("Lyon-Part-Dieu", "Gare Part-Dieu V.Merle", "Lyon Part Dieu (FR)"), search.matches.map { it.name })
             assertTrue(result.text().lines().last().let { it.contains("id=be-sncb_8772319") && it.endsWith(" — Lyon no lines") }, result.text())
         }
     }
@@ -270,7 +270,7 @@ class MotisToolsTest {
             assertEquals("45.7605,4.8597 (0.5 km)", area.title)
             assertEquals(12, area.totalStops)
             // the main stops first
-            assertEquals("LYON-PART-DIEU", area.stops.first().name)
+            assertEquals("Lyon-Part-Dieu", area.stops.first().name)
             // the two AVE INT variants are grouped under the longest one; the routes without names come last
             assertEquals(4, area.totalRoutes)
             val ave = area.routes.single { it.names == listOf("AVE INT") }
@@ -290,7 +290,7 @@ class MotisToolsTest {
             val text = result.text()
             assertTrue(text.startsWith("45.7605,4.8597 (0.5 km): 12 stop(s), 4 route(s)."), text)
             assertTrue(text.contains("- 803145: HIGHSPEED_RAIL AVE INT (9 stops)"), text)
-            assertTrue(text.contains("Main stops (stopId):\n- LYON-PART-DIEU (it-trenitalia_870072319) HIGHSPEED_RAIL"), text)
+            assertTrue(text.contains("Main stops (stopId):\n- Lyon-Part-Dieu (it-trenitalia_870072319) HIGHSPEED_RAIL"), text)
         }
     }
 
@@ -310,7 +310,7 @@ class MotisToolsTest {
             // RAIL: the trains and the metros
             val rail = client.callTool("explore_area", mapOf("place" to "45.7605,4.8597", "modes" to listOf("RAIL"))).data(AreaResult.serializer())
             assertEquals(listOf("HIGHSPEED_RAIL", "SUBWAY", "HIGHSPEED_RAIL"), rail.routes.map { it.mode })
-            assertEquals(setOf("LYON-PART-DIEU", "Lyon Part Dieu"), rail.stops.map { it.name }.toSet())
+            assertEquals(setOf("Lyon-Part-Dieu", "Lyon Part Dieu"), rail.stops.map { it.name }.toSet())
             assertEquals(4, client.callTool("explore_area", mapOf("place" to "45.7605,4.8597", "modes" to listOf("TRANSIT"))).data(AreaResult.serializer()).totalRoutes)
         }
     }
@@ -657,7 +657,7 @@ class MotisToolsTest {
             assertEquals("600", request.url.parameters["maxPostTransitTime"])
             assertEquals("false", request.url.parameters["useRoutedTransfers"])
             assertNull(request.url.parameters["maxMatchingDistance"])
-            assertTrue(result.text().startsWith("From 45.7605,4.8597 to LYON-PART-DIEU: 3 itinerary(ies).\n1. "), result.text())
+            assertTrue(result.text().startsWith("From 45.7605,4.8597 to Lyon-Part-Dieu: 3 itinerary(ies).\n1. "), result.text())
         }
     }
 
@@ -736,7 +736,15 @@ class MotisToolsTest {
 
     @Test
     fun `unknown places are tool errors`() {
-        withMcpClient(MockMotis { respondJson("[]") }) { client ->
+        val motis =
+            MockMotis { request ->
+                when (request.url.encodedPath) {
+                    "/api/v1/geocode" -> respondJson("[]")
+                    // not a stop id either
+                    else -> respondJson("""{"error":"unknown feed id \"Nowhere\""}""", HttpStatusCode.NotFound)
+                }
+            }
+        withMcpClient(motis) { client ->
             val result = client.callTool("plan_journey", mapOf("from" to "Nowhere", "to" to "45.7,4.8"))
 
             assertEquals(true, result.isError)
@@ -813,6 +821,23 @@ class MotisToolsTest {
 
             assertEquals(true, result.isError)
             assertEquals("No place found for \"nope_123\"", result.text())
+        }
+    }
+
+    @Test
+    fun `stop ids are not reported unknown when MOTIS is unavailable`() {
+        val motis =
+            MockMotis { request ->
+                when (request.url.encodedPath) {
+                    "/api/v1/geocode" -> respondJson("[]")
+                    else -> respondJson("", HttpStatusCode.ServiceUnavailable)
+                }
+            }
+        withMcpClient(motis) { client ->
+            val result = client.callTool("reachability", mapOf("place" to "fr-horaires-sncf_87723197"))
+
+            assertEquals(true, result.isError)
+            assertEquals("MOTIS server temporarily unavailable (HTTP status 503): retry in a moment", result.text())
         }
     }
 

@@ -14,4 +14,18 @@ class AppResourcesTest {
         assertEquals("https://motis.example.org", ui.getValue("domain").jsonPrimitive.content)
         assertNull(resourceMeta(MapTiles()).getValue("ui").jsonObject["domain"])
     }
+
+    @Test
+    fun `the tiles are injected once in each view`() {
+        val tiles = MapTiles(url = "https://{s}.tiles.example.org/{z}/{x}/{y}.png", attribution = "<b>Tiles & co</b>")
+
+        val views = loadViews(tiles) { "<html><head></head><body>${it.name}</body></html>" }
+
+        assertEquals(UiView.entries.toSet(), views.keys)
+        assertEquals(
+            "<html><head><meta name=\"motis-tiles\" content=\"https://{s}.tiles.example.org/{z}/{x}/{y}.png\" " +
+                "data-attribution=\"&lt;b&gt;Tiles &amp; co&lt;/b&gt;\" /></head><body>EXPLORER</body></html>",
+            views.getValue(UiView.EXPLORER),
+        )
+    }
 }

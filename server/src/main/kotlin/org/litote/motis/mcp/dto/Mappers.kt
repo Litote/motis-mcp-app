@@ -6,6 +6,7 @@ import org.litote.motis.client.client.TimetableClient
 import org.litote.motis.client.model.EncodedPolyline
 import org.litote.motis.client.model.Itinerary
 import org.litote.motis.client.model.Leg
+import org.litote.motis.client.model.LocationType
 import org.litote.motis.client.model.Match
 import org.litote.motis.client.model.Mode
 import org.litote.motis.client.model.Place
@@ -14,6 +15,7 @@ import org.litote.motis.client.model.RouteInfo
 import org.litote.motis.client.model.RoutePolyline
 import org.litote.motis.client.model.StopTime
 import org.litote.motis.mcp.BoundingBox
+import org.litote.motis.mcp.KM_PER_DEGREE
 
 /** Maximum number of stops sent to the views: the most important ones are kept. */
 const val MAX_STOPS = 400
@@ -53,7 +55,8 @@ fun EncodedPolyline.toDto(): Polyline = Polyline(points, precision.toInt())
 
 fun Place.toDto(): PlaceDto =
     PlaceDto(
-        name = name,
+        // not the coordinates named START and END by MOTIS
+        name = if (stopId != null) displayName(name) else name,
         lat = lat,
         lon = lon,
         stopId = stopId,
@@ -70,7 +73,7 @@ fun Place.toDto(): PlaceDto =
 fun Match.toDto(): PlaceMatchDto =
     PlaceMatchDto(
         id = id,
-        name = name,
+        name = if (type == LocationType.STOP) displayName(name) else name,
         type = type.serialName(),
         lat = lat,
         lon = lon,
@@ -247,7 +250,7 @@ fun StopTime.toDto(arriveBy: Boolean): StopTimeDto {
         cancelled = cancelled || tripCancelled,
         mode = mode.label(),
         line = lineName(listOf(displayName, routeShortName), routeLongName) ?: "",
-        headsign = if (numberAsHeadsign) tripTo.name else headsign.ifBlank { tripTo.name },
+        headsign = displayName(if (numberAsHeadsign) tripTo.name else headsign.ifBlank { tripTo.name }),
         routeColor = color(routeColor),
         routeTextColor = color(routeTextColor),
         track = place.track ?: place.scheduledTrack,
@@ -256,9 +259,9 @@ fun StopTime.toDto(arriveBy: Boolean): StopTimeDto {
         trainNumber = if (numberAsHeadsign) headsign else tripShortName.ifBlank { null },
         stops =
             if (arriveBy) {
-                previousStops?.map { StopCallDto(it.name, (it.departure ?: it.scheduledDeparture)?.toString()) }
+                previousStops?.map { StopCallDto(displayName(it.name), (it.departure ?: it.scheduledDeparture)?.toString()) }
             } else {
-                nextStops?.map { StopCallDto(it.name, (it.arrival ?: it.scheduledArrival)?.toString()) }
+                nextStops?.map { StopCallDto(displayName(it.name), (it.arrival ?: it.scheduledArrival)?.toString()) }
             },
     )
 }
@@ -285,7 +288,7 @@ fun Leg.toDto(): LegDto =
         realTime = realTime,
         distanceMeters = distance,
         line = lineName(listOf(displayName, routeShortName), routeLongName),
-        headsign = headsign?.ifBlank { null } ?: tripTo?.name.takeIf { tripId != null },
+        headsign = (headsign?.ifBlank { null } ?: tripTo?.name.takeIf { tripId != null })?.let(::displayName),
         routeColor = color(routeColor),
         routeTextColor = color(routeTextColor),
         agency = agencyName,
@@ -351,7 +354,7 @@ fun Reachable.toDto(origin: PlaceDto, maxTravelTimeMinutes: Int): ReachabilityRe
         places =
             reachable.take(MAX_REACHABLE).map {
                 val place = requireNotNull(it.place)
-                ReachablePlaceDto(place.name, place.lat, place.lon, place.stopId, it.duration, it.k?.let { k -> k - 1 })
+                ReachablePlaceDto(place.stopId?.let { displayName(place.name) } ?: place.name, place.lat, place.lon, place.stopId, it.duration, it.k?.let { k -> k - 1 })
             },
         totalPlaces = reachable.size,
     )
@@ -361,7 +364,7 @@ fun Reachable.toDto(origin: PlaceDto, maxTravelTimeMinutes: Int): ReachabilityRe
 fun distanceKm(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
     val x = (lon2 - lon1) * kotlin.math.cos(Math.toRadians((lat1 + lat2) / 2))
     val y = lat2 - lat1
-    return kotlin.math.sqrt(x * x + y * y) * 111.32
+    return kotlin.math.sqrt(x * x + y * y) * KM_PER_DEGREE
 }
 
 /**

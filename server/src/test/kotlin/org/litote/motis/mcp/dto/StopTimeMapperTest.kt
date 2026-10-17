@@ -28,4 +28,17 @@ class StopTimeMapperTest {
         assertEquals("847459", dto.trainNumber)
         assertEquals("Lyon Perrache", dto.headsign)
     }
+
+    @Test
+    fun `destinations and next stops in capitals get the mixed case`() {
+        val dto =
+            stopTime
+                .copy(
+                    headsign = "LYON PERRACHE",
+                    nextStops = listOf(stopTime.place.copy(name = "MILANO PORTA GARIBALDI"), stopTime.place.copy(name = "LYON PERRACHE")),
+                ).toDto(arriveBy = false)
+
+        assertEquals("Lyon Perrache", dto.headsign)
+        assertEquals(listOf("Milano Porta Garibaldi", "Lyon Perrache"), dto.stops?.map { it.name })
+    }
 }

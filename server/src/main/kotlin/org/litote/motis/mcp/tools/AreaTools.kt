@@ -76,8 +76,7 @@ fun Server.addAreaTools(gateway: MotisGateway) {
         },
     ) { args ->
         val (title, bbox) = args.area(gateway)
-        val radiusKm = (bbox.maxLat - bbox.minLat) * 111.32 / 2
-        val zoom = BoundingBox.zoomFor(radiusKm)
+        val zoom = BoundingBox.zoomFor(bbox.radiusKm)
         val language = args.stringList("language")
         val modes = args.modes("modes")
         val (stops, routes) = gateway.area(bbox, zoom, modes, language)

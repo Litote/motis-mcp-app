@@ -7,6 +7,7 @@ import io.modelcontextprotocol.kotlin.sdk.types.TextContent
 import io.modelcontextprotocol.kotlin.sdk.types.Tool
 import io.modelcontextprotocol.kotlin.sdk.types.ToolAnnotations
 import io.modelcontextprotocol.kotlin.sdk.types.ToolSchema
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -37,12 +38,20 @@ internal val dtoJson =
         explicitNulls = false
     }
 
-/** Transit modes accepted by the tools (MOTIS `Mode` values, street modes excluded). */
-val TRANSIT_MODES: List<String> =
-    listOf(
-        "TRANSIT", "TRAM", "SUBWAY", "FERRY", "AIRPLANE", "BUS", "COACH", "RAIL", "HIGHSPEED_RAIL", "LONG_DISTANCE",
-        "NIGHT_RAIL", "REGIONAL_FAST_RAIL", "REGIONAL_RAIL", "SUBURBAN", "FUNICULAR", "AERIAL_LIFT", "OTHER",
+/**
+ * MOTIS modes that are not transit: street and on-demand modes, debug routes, the misspelled alias of `AERIAL_LIFT`.
+ * The other modes are transit: those added by MOTIS are accepted without a change here.
+ */
+private val NON_TRANSIT_MODES =
+    setOf(
+        Mode.WALK, Mode.BIKE, Mode.RENTAL, Mode.CAR, Mode.CAR_PARKING, Mode.CAR_DROPOFF, Mode.ODM, Mode.RIDE_SHARING,
+        Mode.FLEX, Mode.DEBUG_BUS_ROUTE, Mode.DEBUG_RAILWAY_ROUTE, Mode.DEBUG_FERRY_ROUTE, Mode.AREAL_LIFT, Mode.UNKNOWN_,
     )
+
+private val TRANSIT_MODE_VALUES: List<Mode> = Mode.entries - NON_TRANSIT_MODES
+
+/** Transit modes accepted by the tools (MOTIS `Mode` values). */
+val TRANSIT_MODES: List<String> = TRANSIT_MODE_VALUES.map { it.serialName() }
 
 /** Result of a tool: a short text for the model, and structured data for the view. */
 class ToolOutput(val text: String, val structured: JsonObject? = null) {
@@ -168,7 +177,7 @@ class Args(private val arguments: JsonObject, private val bounds: Map<String, Lo
 
     fun modes(name: String): List<Mode>? =
         stringList(name)?.map { value ->
-            Mode.entries.firstOrNull { it != Mode.UNKNOWN_ && it.serialName().equals(value, ignoreCase = true) }
+            TRANSIT_MODE_VALUES.firstOrNull { it.serialName().equals(value, ignoreCase = true) }
                 ?: invalid("unknown mode '$value' (expected one of ${TRANSIT_MODES.joinToString()})")
         }
 
@@ -178,7 +187,7 @@ class Args(private val arguments: JsonObject, private val bounds: Map<String, Lo
 
 /**
  * Registers a read-only tool calling the MOTIS API, optionally rendered by [view].
- * [MotisToolException]s are returned as tool errors (`isError = true`).
+ * [MotisToolException]s are returned as tool errors (`isError = true`), the other exceptions as a generic tool error.
  */
 fun Server.motisTool(
     name: String,
@@ -206,6 +215,12 @@ fun Server.motisTool(
         } catch (e: MotisToolException) {
             logger.info { "Tool $name failed: ${e.message}" }
             CallToolResult(content = listOf(TextContent(e.message ?: "error")), isError = true)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            // a bug or an unexpected MOTIS answer: logged with its stack trace, its details are not given to the caller
+            logger.error(e) { "Tool $name failed unexpectedly" }
+            CallToolResult(content = listOf(TextContent("Internal error of the tool $name")), isError = true)
         }
     }
 }
