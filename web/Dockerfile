@@ -15,7 +15,7 @@ RUN npm run build \
     && cat sandbox-csp.cjs nginx/sandbox-csp.njs.js > sandbox-csp.js
 
 # ─── Runtime ──────────────────────────────────────────────────────────────────
-FROM nginx:1.30.5-alpine
+FROM nginx:1.31.6-alpine
 ARG VERSION_NAME=main-SNAPSHOT
 LABEL org.opencontainers.image.title="motis-mcp-app-web" \
       org.opencontainers.image.description="Web chat (OpenRouter) of motis-mcp-app, with the MCP App views" \
