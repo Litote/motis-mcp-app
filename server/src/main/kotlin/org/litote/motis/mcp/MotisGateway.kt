@@ -196,7 +196,7 @@ class MotisGateway(configuration: ClientConfiguration, timeSource: TimeSource = 
                     "\"$input\" is ambiguous, candidates:\n",
                     "\nRetry with one of these stop ids or coordinates, or a more precise name (e.g. with the city).",
                 ) { m ->
-                    val stopId = if (m.type == LocationType.STOP) " id=${m.id}" else ""
+                    val stopId = if (m.type == LocationType.STOP) " id=\"${m.id}\"" else ""
                     val dto = m.toDto()
                     "- ${dto.name}${dto.area?.let { " — $it" } ?: ""}$stopId (${m.lat},${m.lon})"
                 },

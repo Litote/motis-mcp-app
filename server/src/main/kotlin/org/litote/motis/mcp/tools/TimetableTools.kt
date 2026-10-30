@@ -34,13 +34,13 @@ private val RAIL_LABELS = TRAIN_MODES.map { it.label() } + Mode.RAIL.label()
 private fun DeparturesResult.summary(): String =
     buildString {
         val what = if (arriveBy) "Arrivals" else "Departures"
-        appendLine("$what at ${stop.name} (stopId=${stop.stopId}):")
+        appendLine("$what at ${stop.name} (stopId=\"${stop.stopId}\"):")
         if (stopTimes.isEmpty()) appendLine("none in the requested period.")
         stopTimes.forEach { st ->
             val delay = if (st.realTime && st.time != st.scheduledTime) " (scheduled ${hhmm(st.scheduledTime, stop.tz)})" else ""
             val cancelled = if (st.cancelled) " CANCELLED" else ""
             val track = st.track?.let { " track $it" } ?: ""
-            appendLine("- ${hhmm(st.time, stop.tz)}$delay ${st.mode} ${st.line} → ${st.headsign}$track$cancelled tripId=${st.tripId}")
+            appendLine("- ${hhmm(st.time, stop.tz)}$delay ${st.mode} ${st.line} → ${st.headsign}$track$cancelled tripId=\"${st.tripId}\"")
         }
         stationLines?.let { lines ->
             appendLine("Lines of the station (departures with station=true, modes and lines):")

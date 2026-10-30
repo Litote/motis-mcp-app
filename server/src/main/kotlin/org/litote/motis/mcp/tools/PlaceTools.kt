@@ -55,8 +55,9 @@ fun Server.addPlaceTools(gateway: MotisGateway, baseUrl: String) {
             if (result.matches.isEmpty()) {
                 "No place found for \"$text\"."
             } else {
+                // ids quoted: some end with ":" (e.g. SNCF stops), taken for punctuation and dropped by the models when not quoted
                 result.matches.joinToString("\n", "${result.matches.size} result(s) for \"$text\":\n") { m ->
-                    "- ${m.name} [${m.type}] id=${m.id} (${m.lat},${m.lon})" +
+                    "- ${m.name} [${m.type}] id=\"${m.id}\" (${m.lat},${m.lon})" +
                         (m.area?.let { " — $it" } ?: "") +
                         when {
                             m.modes != null -> " modes=${m.modes.joinToString(",")}"

@@ -75,7 +75,7 @@ class MotisToolsTest {
             assertEquals("45.76,4.86", request.url.parameters["place"])
             assertEquals("2", request.url.parameters["numResults"])
             assertEquals("fr", request.url.parameters["language"])
-            assertTrue(result.text().startsWith("2 result(s) for \"Lyon Part-Dieu\":\n- Lyon-Part-Dieu [STOP] id=es-RENFE"), result.text())
+            assertTrue(result.text().startsWith("2 result(s) for \"Lyon Part-Dieu\":\n- Lyon-Part-Dieu [STOP] id=\"es-RENFE"), result.text())
         }
     }
 
@@ -86,7 +86,7 @@ class MotisToolsTest {
 
             val search = result.data(SearchResult.serializer())
             assertEquals(listOf("Lyon-Part-Dieu", "Gare Part-Dieu V.Merle", "Lyon Part Dieu (FR)"), search.matches.map { it.name })
-            assertTrue(result.text().lines().last().let { it.contains("id=be-sncb_8772319") && it.endsWith(" — Lyon no lines") }, result.text())
+            assertTrue(result.text().lines().last().let { it.contains("id=\"be-sncb_8772319\"") && it.endsWith(" — Lyon no lines") }, result.text())
         }
     }
 
@@ -290,7 +290,7 @@ class MotisToolsTest {
             val text = result.text()
             assertTrue(text.startsWith("45.7605,4.8597 (0.5 km): 12 stop(s), 4 route(s)."), text)
             assertTrue(text.contains("- 803145: HIGHSPEED_RAIL AVE INT (9 stops)"), text)
-            assertTrue(text.contains("Main stops (stopId):\n- Lyon-Part-Dieu (it-trenitalia_870072319) HIGHSPEED_RAIL"), text)
+            assertTrue(text.contains("Main stops (stopId):\n- Lyon-Part-Dieu (\"it-trenitalia_870072319\") HIGHSPEED_RAIL"), text)
         }
     }
 
@@ -885,8 +885,8 @@ class MotisToolsTest {
             assertEquals(
                 """
                 "Saint-Michel" is ambiguous, candidates:
-                - Saint Michel — Bordeaux id=bordeaux (44.834,-0.563)
-                - Saint Michel — Bourges id=bourges (47.105,2.424)
+                - Saint Michel — Bordeaux id="bordeaux" (44.834,-0.563)
+                - Saint Michel — Bourges id="bourges" (47.105,2.424)
                 Retry with one of these stop ids or coordinates, or a more precise name (e.g. with the city).
                 """.trimIndent(),
                 result.text(),
@@ -908,7 +908,7 @@ class MotisToolsTest {
             val result = client.callTool("departures", mapOf("stop" to "Gare"))
 
             assertEquals(true, result.isError)
-            assertTrue(result.text().contains("- Gare id=lyon (45.76,4.86)\n- Gare id=paris (48.84,2.37)\n"), result.text())
+            assertTrue(result.text().contains("- Gare id=\"lyon\" (45.76,4.86)\n- Gare id=\"paris\" (48.84,2.37)\n"), result.text())
         }
     }
 

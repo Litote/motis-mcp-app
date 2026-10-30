@@ -52,7 +52,7 @@ private fun AreaResult.summary(): String =
         }
         if (stops.isNotEmpty()) {
             appendLine("Main stops (stopId):")
-            stops.take(20).forEach { appendLine("- ${it.name} (${it.stopId})${it.modes?.let { m -> " ${m.joinToString(",")}" } ?: ""}") }
+            stops.take(20).forEach { appendLine("- ${it.name} (\"${it.stopId}\")${it.modes?.let { m -> " ${m.joinToString(",")}" } ?: ""}") }
         }
     }.trimEnd()
 

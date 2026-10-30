@@ -48,7 +48,7 @@ internal fun rentalsSummary(title: String, result: RentalsResult): String =
         appendLine("Shared mobility around $title: ${result.providers.size} provider(s).")
         result.providers.forEach { p ->
             val stations = result.stations.filter { it.providerId == p.id }
-            append("- ${p.name} (id=${p.id}${p.operator?.let { ", operator $it" } ?: ""}): ${p.formFactors.joinToString(",")}")
+            append("- ${p.name} (id=\"${p.id}\"${p.operator?.let { ", operator $it" } ?: ""}): ${p.formFactors.joinToString(",")}")
             append(", ${p.stations} station(s) or parking spot(s)")
             if (stations.isNotEmpty()) append(" (${stations.count { it.vehiclesAvailable > 0 }} shown with vehicles)")
             append(", ${p.vehicles} free-floating vehicle(s)")
