@@ -6,81 +6,86 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import io.ktor.client.request.prepareGet
 import io.ktor.client.statement.bodyAsBytes
+import io.ktor.client.statement.bodyAsChannel
 import io.ktor.http.HttpHeaders
 import io.ktor.http.isSuccess
+import io.ktor.utils.io.jvm.javaio.toInputStream
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.protobuf.ProtoBuf
 import org.litote.motis.client.model.Place
 import org.litote.motis.client.model.StopTime
 import org.litote.motis.mcp.TtlCache
+import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
+import kotlin.time.measureTimedValue
 
 private val logger = KotlinLogging.logger {}
 
 /**
- * Real time of the SNCF trains (TGV, Intercités, TER) from the open GTFS-RT trip updates of the SNCF, for the stop times
- * of the `fr-horaires-sncf` feed of Transitous without real time.
+ * Real time of the SNCF trains (TGV, Intercités, TER) from the open data of the SNCF, for the stop times of the
+ * `fr-horaires-sncf` feed of Transitous without real time: times and cancellations from the GTFS-RT trip updates, tracks
+ * from the SIRI Lite estimated timetable (the GTFS-RT feed has none, nor the timetable of Transitous).
  *
- * Transitous imports the timetable of the SNCF from its NeTEx export: its trip and stop ids are not those of the GTFS-RT
- * feed. A stop time is matched by its train number and its scheduled time at the stop, the same in both sources (the
- * trip id of the feed starts with the train number, e.g. `OCESN5537F…`); it is left as it is when no trip of the feed,
- * or more than one, matches. The feed only has the trips running or leaving within about an hour.
+ * Transitous imports the timetable of the SNCF from its NeTEx export: its trip and stop ids are not those of these feeds.
+ * A stop time is matched by its train number and its scheduled time at the stop, the same in all the sources (the trip id
+ * of the GTFS-RT feed starts with the train number, e.g. `OCESN5537F…`, SIRI gives it in `TrainNumberRef`); it is left as
+ * it is when no trip of a feed, or more than one, matches. The feeds only have the trips running or leaving within about
+ * an hour, and the tracks are only known shortly before the departure.
  *
- * The feed (about 1 MB, updated every 2 minutes) is downloaded at most once a [ttl] by a process or a Lambda instance.
- * When it fails or is too slow, the overlay is disabled [retryDelay], the stop times keep their scheduled times.
+ * Each feed is downloaded at most once a TTL by a process or a Lambda instance (the GTFS-RT one, about 1 MB, every
+ * minute; the SIRI one, about 16 MB, every 3 minutes). A feed that fails or is too slow is not used for 5 minutes,
+ * without disabling the other one.
  */
 class SncfRealtimeOverlay(
     private val httpClient: HttpClient,
     private val userAgent: String?,
     private val url: String = FEED_URL,
-    private val timeSource: TimeSource = TimeSource.Monotonic,
+    private val tracksUrl: String = TRACKS_URL,
+    timeSource: TimeSource = TimeSource.Monotonic,
+    /** Dispatcher of the blocking reading of the SIRI feed. */
+    private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO,
 ) : RealtimeOverlay {
     override val source: String = "SNCF GTFS-RT"
 
-    private val ttl = 1.minutes
-    private val timeout = 3.seconds
-    private val retryDelay = 5.minutes
-
-    private val feed = TtlCache<Unit, TrainIndex>(maxSize = 1, ttl = ttl, timeSource)
-
-    @Volatile
-    private var disabledUntil: TimeMark? = null
+    private val tripUpdates = CachedFeed("SNCF GTFS-RT", ttl = 1.minutes, timeout = 3.seconds, timeSource) { TrainIndex(fetch()) }
+    private val tracks = CachedFeed("SNCF SIRI Lite", ttl = 3.minutes, timeout = 6.seconds, timeSource) { fetchTracks() }
 
     override suspend fun patch(stopTimes: List<StopTime>): Map<Int, StopTime> {
         val candidates = stopTimes.withIndex().filter { (_, st) -> !st.realTime && st.tripId.contains("_${FEED_ID}_") }
         if (candidates.isEmpty()) return emptyMap()
-        val index = index() ?: return emptyMap()
-        val patched = candidates.mapNotNull { (i, st) -> index.patch(st)?.let { i to it } }.toMap()
+        val (trips, tracks) =
+            coroutineScope {
+                val trips = async { tripUpdates.get() }
+                val tracks = async { tracks.get() }
+                trips.await() to tracks.await()
+            }
+        if (trips == null && tracks == null) return emptyMap()
+        var times = 0
+        var withTracks = 0
+        val patched =
+            candidates
+                .mapNotNull { (i, st) ->
+                    val timed = trips?.patch(st)?.also { times++ } ?: st
+                    val tracked = tracks?.patch(timed)?.also { withTracks++ } ?: timed
+                    tracked.takeIf { it !== st }?.let { i to it }
+                }.toMap()
         // all the stop times of the feed without real time: MOTIS has it again when there are none
-        logger.info { "SNCF real time: ${patched.size}/${candidates.size} stop times without real time matched" }
+        logger.info { "SNCF real time: ${candidates.size} stop times without real time, $times with times, $withTracks with tracks" }
         return patched
-    }
-
-    private suspend fun index(): TrainIndex? {
-        if (disabledUntil?.hasNotPassedNow() == true) return null
-        return try {
-            feed.getOrPut(Unit) { withTimeout(timeout) { TrainIndex(fetch()) } }
-        } catch (e: TimeoutCancellationException) {
-            disable("no answer within $timeout")
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            disable(e.toString())
-        }
-    }
-
-    private fun disable(reason: String): Nothing? {
-        logger.warn { "SNCF real time unavailable ($reason): disabled for $retryDelay" }
-        disabledUntil = timeSource.markNow() + retryDelay
-        return null
     }
 
     private suspend fun fetch(): FeedMessage {
@@ -91,11 +96,59 @@ class SncfRealtimeOverlay(
         return feed
     }
 
+    private suspend fun fetchTracks(): TrackIndex =
+        httpClient.prepareGet(tracksUrl) { userAgent?.let { header(HttpHeaders.UserAgent, it) } }.execute { response ->
+            check(response.status.isSuccess()) { "HTTP status ${response.status.value}" }
+            val channel = response.bodyAsChannel()
+            // blocking parser, read in a stream rather than loaded in memory
+            val (index, duration) = withContext(ioDispatcher) { measureTimedValue { channel.toInputStream().use(TrackIndex::parse) } }
+            logger.info { "SNCF tracks: ${index.size} journeys, read in $duration" }
+            index
+        }
+
     companion object {
         const val FEED_URL = "https://proxy.transport.data.gouv.fr/resource/sncf-gtfs-rt-trip-updates"
+        const val TRACKS_URL = "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-estimated-timetable"
 
         /** Feed of the SNCF trains in Transitous: its trip ids are `<date>_<time>_fr-horaires-sncf_<NeTEx id>`. */
         const val FEED_ID = "fr-horaires-sncf"
+    }
+}
+
+/**
+ * Feed loaded at most once a [ttl]. When it fails or does not load within [timeout], it is not used for [retryDelay]:
+ * [get] returns null.
+ */
+internal class CachedFeed<T : Any>(
+    private val name: String,
+    ttl: Duration,
+    private val timeout: Duration,
+    private val timeSource: TimeSource,
+    private val retryDelay: Duration = 5.minutes,
+    private val load: suspend () -> T,
+) {
+    private val cache = TtlCache<Unit, T>(maxSize = 1, ttl = ttl, timeSource)
+
+    @Volatile
+    private var disabledUntil: TimeMark? = null
+
+    suspend fun get(): T? {
+        if (disabledUntil?.hasNotPassedNow() == true) return null
+        return try {
+            cache.getOrPut(Unit) { withTimeout(timeout) { load() } }
+        } catch (e: TimeoutCancellationException) {
+            disable("no answer within $timeout")
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            disable(e.toString())
+        }
+    }
+
+    private fun disable(reason: String): Nothing? {
+        logger.warn { "$name unavailable ($reason): disabled for $retryDelay" }
+        disabledUntil = timeSource.markNow() + retryDelay
+        return null
     }
 }
 

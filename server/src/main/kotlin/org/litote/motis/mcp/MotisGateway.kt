@@ -310,8 +310,9 @@ class MotisGateway(
         val sources = mutableMapOf<String, String>()
         overlays.forEach { overlay ->
             overlay.patch(stopTimes).forEach { (i, stopTime) ->
+                // the source of the times: an overlay may only give a track
+                if (stopTime.realTime && !stopTimes[i].realTime) sources[stopTime.tripId] = overlay.source
                 stopTimes[i] = stopTime
-                sources[stopTime.tripId] = overlay.source
             }
         }
         return StopTimes(body.copy(stopTimes = stopTimes), sources)
