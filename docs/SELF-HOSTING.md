@@ -35,7 +35,7 @@ The variables are read from `.env` (see `.env.sample`):
 |------------------------------------------------------------------|-----------------------------|----------------------------------------------|
 | `MOTIS_APP_CONTACT`                                              | —                           | required with Transitous (usage policy)      |
 | `MOTIS_MCP_APP_VERSION`                                          | `latest`                    | tag of the two images                        |
-| `MOTIS_BASE_URL`, `MOTIS_LOG_LEVEL`, `MOTIS_TILE_URL`, `MOTIS_TILE_ATTRIBUTION`, `MOTIS_VIEW_DOMAIN_<HOST>`, `MCP_ALLOWED_HOSTS` | see [MCP server reference](MCP-SERVER.md#usage) | MCP server |
+| `MOTIS_BASE_URL`, `MOTIS_LOG_LEVEL`, `MOTIS_TILE_URL`, `MOTIS_TILE_ATTRIBUTION`, `MOTIS_VIEW_DOMAIN_<HOST>`, `MCP_ALLOWED_HOSTS`, `MOTIS_SNCF_REALTIME` | see [MCP server reference](MCP-SERVER.md#usage) | MCP server |
 | `MCP_URL`                                                        | `http://localhost:3001/mcp` | MCP endpoint, as seen by the browser         |
 | `APP_ORIGIN`                                                     | `http://localhost:8080`     | origin of the chat, as seen by the browser   |
 | `SANDBOX_ORIGIN`                                                 | `http://localhost:8081`     | origin of the view sandbox                   |
