@@ -128,6 +128,20 @@ class SncfRealtimeOverlayTest {
         }
 
     @Test
+    fun `the SNCF trains of a regional feed without real time are patched, not the trains of other operators`() =
+        runBlocking {
+            // TER of the ZOU ! feed (Provence), from the NeTEx of the SNCF, and a Trenitalia train
+            val zou = stopTimes.first { it.tripShortName == "886173" }.copy(realTime = false)
+            val trenitalia = tracksStopTimes.first { it.tripId.contains("_it-trenitalia_") }
+            val feed = encode(feedOf(zou, delay = 300), feedOf(trenitalia, delay = 300))
+
+            val patched = overlay { feed }.patch(listOf(zou, trenitalia))
+
+            assertEquals(setOf(0), patched.keys)
+            assertEquals(zou.place.scheduledDeparture!! + 5.minutes, patched.getValue(0).place.departure)
+        }
+
+    @Test
     fun `cancelled trips and skipped stops are cancelled`() =
         runBlocking {
             val (first, second) = stopTimes.filter { !it.realTime }
