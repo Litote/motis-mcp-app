@@ -108,7 +108,8 @@ MOTIS_APP_CONTACT=you@example.org server/build/install/server/bin/server --http 
 | `MCP_ALLOWED_HOSTS`      | localhost only                                   | host names accepted in HTTP mode             |
 | `MOTIS_SNCF_REALTIME`    | `true`                                           | SNCF real time overlay (see below)           |
 
-When MOTIS has no real time for the SNCF trains (feed `fr-horaires-sncf` of Transitous), the departures take their
+When MOTIS has no real time for the SNCF trains (feed `fr-horaires-sncf` of Transitous, or regional feeds of TER such
+as ZOU !), the departures take their
 times from the open [SNCF GTFS-RT trip updates](https://transport.data.gouv.fr/datasets/horaires-sncf) and their tracks
 from the SIRI Lite estimated timetable of the SNCF, matched by train number and scheduled time (`realTimeSource` of the
 stop times). The feeds are downloaded at most once a minute (GTFS-RT, ~1 MB) and every 3 minutes (SIRI, ~16 MB), only

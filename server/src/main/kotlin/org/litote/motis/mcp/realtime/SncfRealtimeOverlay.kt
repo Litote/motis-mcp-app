@@ -36,8 +36,9 @@ import kotlin.time.measureTimedValue
 private val logger = KotlinLogging.logger {}
 
 /**
- * Real time of the SNCF trains (TGV, Intercités, TER) from the open data of the SNCF, for the stop times of the
- * `fr-horaires-sncf` feed of Transitous without real time: times and cancellations from the GTFS-RT trip updates, tracks
+ * Real time of the SNCF trains (TGV, Intercités, TER) from the open data of the SNCF, for their stop times without real
+ * time in Transitous: those of the `fr-horaires-sncf` feed, and of the regional feeds of TER taken from the NeTEx of the
+ * SNCF (e.g. ZOU ! in Provence), told by their trip id. Times and cancellations come from the GTFS-RT trip updates, tracks
  * from the SIRI Lite estimated timetable (the GTFS-RT feed has none, nor the timetable of Transitous).
  *
  * Transitous imports the timetable of the SNCF from its NeTEx export: its trip and stop ids are not those of these feeds.
@@ -65,7 +66,7 @@ class SncfRealtimeOverlay(
     private val tracks = CachedFeed("SNCF SIRI Lite", ttl = 3.minutes, timeout = 6.seconds, timeSource) { fetchTracks() }
 
     override suspend fun patch(stopTimes: List<StopTime>): Map<Int, StopTime> {
-        val candidates = stopTimes.withIndex().filter { (_, st) -> !st.realTime && st.tripId.contains("_${FEED_ID}_") }
+        val candidates = stopTimes.withIndex().filter { (_, st) -> !st.realTime && SNCF_TRIP.containsMatchIn(st.tripId) }
         if (candidates.isEmpty()) return emptyMap()
         val (trips, tracks) =
             coroutineScope {
@@ -110,8 +111,12 @@ class SncfRealtimeOverlay(
         const val FEED_URL = "https://proxy.transport.data.gouv.fr/resource/sncf-gtfs-rt-trip-updates"
         const val TRACKS_URL = "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-estimated-timetable"
 
-        /** Feed of the SNCF trains in Transitous: its trip ids are `<date>_<time>_fr-horaires-sncf_<NeTEx id>`. */
-        const val FEED_ID = "fr-horaires-sncf"
+        /**
+         * Trip of the SNCF in Transitous, of the `fr-horaires-sncf` feed or of a regional one: its NeTEx id is a service
+         * journey of the SNCF, e.g. `<date>_<time>_fr-horaires-sncf_FR:ServiceJourney::SN6823FERRE_…` or
+         * `<date>_<time>_fr-trains-express-regionaux-zou-…_SNC:FR:ServiceJourney::SN17703FERRE_…`.
+         */
+        private val SNCF_TRIP = Regex("""ServiceJourney::SN\d""")
     }
 }
 
