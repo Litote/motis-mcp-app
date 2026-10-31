@@ -1,11 +1,14 @@
 package org.litote.motis.mcp
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngineFactory
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.logging.LogLevel
 import org.litote.motis.client.client.ClientConfiguration
 import org.litote.motis.client.motisClientConfiguration
+import org.litote.motis.mcp.realtime.RealtimeOverlay
+import org.litote.motis.mcp.realtime.SncfRealtimeOverlay
 
 const val APP_NAME = "motis-mcp-app"
 const val APP_URL = "https://github.com/Litote/motis-mcp-app"
@@ -23,6 +26,8 @@ private val logger = KotlinLogging.logger {}
  *
  * [allowedHosts] are the host names accepted by the HTTP server in addition to localhost (DNS rebinding protection),
  * null for localhost only.
+ *
+ * [sncfRealtime] adds the real time of the SNCF to its trains without real time in MOTIS, see [SncfRealtimeOverlay].
  */
 data class MotisMcpConfig(
     val contact: String?,
@@ -31,6 +36,7 @@ data class MotisMcpConfig(
     val tiles: MapTiles = MapTiles(),
     val viewDomains: Map<McpHost, String> = emptyMap(),
     val allowedHosts: List<String>? = null,
+    val sncfRealtime: Boolean = true,
 ) {
     init {
         require(contact != null || !isTransitous(baseUrl)) {
@@ -59,6 +65,10 @@ data class MotisMcpConfig(
             exceptionLogger = { logger.warn(this) { "MOTIS API call failed: $this" } },
         )
     }
+
+    /** Real-time overlays of the stop times (see [MotisGateway]), sending the [userAgent] of the MOTIS clients. */
+    fun realtimeOverlays(userAgent: String?, engine: HttpClientEngineFactory<*> = OkHttp): List<RealtimeOverlay> =
+        if (sncfRealtime) listOf(SncfRealtimeOverlay(HttpClient(engine), userAgent)) else emptyList()
 
     companion object {
         const val DEFAULT_BASE_URL = "https://api.transitous.org/"
@@ -89,7 +99,11 @@ data class MotisMcpConfig(
                         ?.map { it.trim() }
                         ?.filter { it.isNotEmpty() }
                         ?.ifEmpty { null },
+                sncfRealtime = env["MOTIS_SNCF_REALTIME"]?.takeIf { it.isNotBlank() }?.let(::parseBoolean) ?: true,
             )
+
+        private fun parseBoolean(value: String): Boolean =
+            requireNotNull(value.trim().lowercase().toBooleanStrictOrNull()) { "MOTIS_SNCF_REALTIME must be true or false: \"$value\"" }
 
         private fun parseLogLevel(value: String): LogLevel =
             requireNotNull(LogLevel.entries.firstOrNull { it.name.equals(value.trim(), ignoreCase = true) }) {

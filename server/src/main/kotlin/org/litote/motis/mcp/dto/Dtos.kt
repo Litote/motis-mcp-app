@@ -129,6 +129,8 @@ data class StopTimeDto(
     val mode: String,
     val line: String,
     val headsign: String,
+    /** Source of the real time when it is not MOTIS (feed without real time in MOTIS), e.g. "SNCF GTFS-RT". */
+    val realTimeSource: String? = null,
     val routeColor: String? = null,
     val routeTextColor: String? = null,
     val track: String? = null,

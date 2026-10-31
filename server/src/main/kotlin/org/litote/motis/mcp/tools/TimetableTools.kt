@@ -40,7 +40,8 @@ private fun DeparturesResult.summary(): String =
             val delay = if (st.realTime && st.time != st.scheduledTime) " (scheduled ${hhmm(st.scheduledTime, stop.tz)})" else ""
             val cancelled = if (st.cancelled) " CANCELLED" else ""
             val track = st.track?.let { " track $it" } ?: ""
-            appendLine("- ${hhmm(st.time, stop.tz)}$delay ${st.mode} ${st.line} → ${st.headsign}$track$cancelled tripId=\"${st.tripId}\"")
+            val source = st.realTimeSource?.let { " (real time: $it)" } ?: ""
+            appendLine("- ${hhmm(st.time, stop.tz)}$delay ${st.mode} ${st.line} → ${st.headsign}$track$cancelled$source tripId=\"${st.tripId}\"")
         }
         stationLines?.let { lines ->
             appendLine("Lines of the station (departures with station=true, modes and lines):")

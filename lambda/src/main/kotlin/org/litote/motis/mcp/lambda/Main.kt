@@ -50,7 +50,8 @@ class McpLambda(createServer: RoutingContext.() -> Server) {
 /** MCP server of the Lambda, configured from the environment (see the README). */
 fun createMcpLambda(): McpLambda {
     val config = MotisMcpConfig.fromEnv()
-    val gateway = MotisGateway(config.clientConfiguration())
+    val motis = config.clientConfiguration()
+    val gateway = MotisGateway(motis, overlays = config.realtimeOverlays(motis.userAgent))
     val views = loadViews(config.tiles)
     return McpLambda { createMotisMcpServer(gateway, config.baseUrl, config.tiles, views, viewDomain(config)) }
 }

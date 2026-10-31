@@ -20,6 +20,7 @@ import org.litote.motis.mcp.dto.StationLineDto
 import org.litote.motis.mcp.dto.displayName
 import org.litote.motis.mcp.dto.distanceKm
 import org.litote.motis.mcp.dto.toDto
+import org.litote.motis.mcp.realtime.RealtimeOverlay
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.log2
@@ -95,8 +96,14 @@ data class ResolvedPlace(
  *
  * The responses that do not depend on real time (geocoding, server state, route details) are cached in memory, see
  * [TtlCache]: one gateway is shared by the requests of a process or of a Lambda instance.
+ *
+ * The [overlays] add the real time of other sources to the stop times of the feeds without real time in MOTIS.
  */
-class MotisGateway(configuration: ClientConfiguration, timeSource: TimeSource = TimeSource.Monotonic) {
+class MotisGateway(
+    configuration: ClientConfiguration,
+    timeSource: TimeSource = TimeSource.Monotonic,
+    private val overlays: List<RealtimeOverlay> = emptyList(),
+) {
     private val client = Client(configuration)
     private val geocodeClient = GeocodeClient(configuration)
     private val mapClient = MapClient(configuration)
@@ -294,7 +301,23 @@ class MotisGateway(configuration: ClientConfiguration, timeSource: TimeSource = 
             }
         }
 
-    suspend fun stopTimes(query: StopTimesQuery): TimetableClient.StoptimesResponseBody =
+    suspend fun stopTimes(query: StopTimesQuery): StopTimes = withOverlays(fetchStopTimes(query))
+
+    /** [body] patched by the overlays, in their order: an overlay does not patch a stop time with real time. */
+    private suspend fun withOverlays(body: TimetableClient.StoptimesResponseBody): StopTimes {
+        if (overlays.isEmpty()) return StopTimes(body)
+        val stopTimes = body.stopTimes.toMutableList()
+        val sources = mutableMapOf<String, String>()
+        overlays.forEach { overlay ->
+            overlay.patch(stopTimes).forEach { (i, stopTime) ->
+                stopTimes[i] = stopTime
+                sources[stopTime.tripId] = overlay.source
+            }
+        }
+        return StopTimes(body.copy(stopTimes = stopTimes), sources)
+    }
+
+    private suspend fun fetchStopTimes(query: StopTimesQuery): TimetableClient.StoptimesResponseBody =
         when (
             val r =
                 timetableClient.stoptimes(
@@ -474,6 +497,9 @@ enum class BikeOption(val preTransitModes: List<Mode>?, val postTransitModes: Li
     TO_STATION(listOf(Mode.BIKE), listOf(Mode.WALK), listOf(Mode.WALK, Mode.BIKE)),
     ON_BOARD(listOf(Mode.BIKE), listOf(Mode.BIKE), listOf(Mode.BIKE)),
 }
+
+/** Stop times of MOTIS, with the source of the real time of the trips patched by an overlay, by trip id. */
+data class StopTimes(val body: TimetableClient.StoptimesResponseBody, val realTimeSources: Map<String, String> = emptyMap())
 
 /** Stop times query of [MotisGateway.stopTimes]: [radius] in meters around the stop, for all the stops of a station. */
 data class StopTimesQuery(

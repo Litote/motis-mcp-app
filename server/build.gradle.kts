@@ -13,6 +13,7 @@ dependencies {
     implementation(libs.ktor.server.cors)
     implementation(libs.ktor.client.okhttp)
     implementation(libs.serialization.json)
+    implementation(libs.serialization.protobuf)
     implementation(libs.kotlin.logging)
     runtimeOnly(libs.logback)
 

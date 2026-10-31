@@ -16,6 +16,7 @@ import org.litote.motis.client.model.RoutePolyline
 import org.litote.motis.client.model.StopTime
 import org.litote.motis.mcp.BoundingBox
 import org.litote.motis.mcp.KM_PER_DEGREE
+import org.litote.motis.mcp.StopTimes
 
 /** Maximum number of stops sent to the views: the most important ones are kept. */
 const val MAX_STOPS = 400
@@ -240,13 +241,15 @@ fun MapClient.RouteDetailsResponseBody.toAreaResult(title: String): AreaResult {
     return areaResult(AreaFrame("routeDetails", title, bbox, 0.0, clip = null), stops, routes, polylines, zoomFiltered)
 }
 
-fun StopTime.toDto(arriveBy: Boolean): StopTimeDto {
+/** [realTimeSource]: source of the real time when it is not MOTIS, see [org.litote.motis.mcp.realtime.RealtimeOverlay]. */
+fun StopTime.toDto(arriveBy: Boolean, realTimeSource: String? = null): StopTimeDto {
     // the SNCF regional trains of some feeds have their number as headsign ("847459" for the train "C17")
     val numberAsHeadsign = tripShortName.isBlank() && headsign.isNotEmpty() && headsign.all(Char::isDigit)
     return StopTimeDto(
         time = (if (arriveBy) place.arrival else place.departure)?.toString(),
         scheduledTime = (if (arriveBy) place.scheduledArrival else place.scheduledDeparture)?.toString(),
         realTime = realTime,
+        realTimeSource = realTimeSource,
         cancelled = cancelled || tripCancelled,
         mode = mode.label(),
         line = lineName(listOf(displayName, routeShortName), routeLongName) ?: "",
@@ -266,11 +269,13 @@ fun StopTime.toDto(arriveBy: Boolean): StopTimeDto {
     )
 }
 
-fun TimetableClient.StoptimesResponseBody.toDto(arriveBy: Boolean): DeparturesResult =
+fun StopTimes.toDto(arriveBy: Boolean): DeparturesResult = body.toDto(arriveBy, realTimeSources)
+
+fun TimetableClient.StoptimesResponseBody.toDto(arriveBy: Boolean, realTimeSources: Map<String, String> = emptyMap()): DeparturesResult =
     DeparturesResult(
         stop = place.toDto(),
         arriveBy = arriveBy,
-        stopTimes = stopTimes.map { it.toDto(arriveBy) },
+        stopTimes = stopTimes.map { it.toDto(arriveBy, realTimeSources[it.tripId]) },
         nextPageCursor = nextPageCursor.ifBlank { null },
         previousPageCursor = previousPageCursor.ifBlank { null },
     )
