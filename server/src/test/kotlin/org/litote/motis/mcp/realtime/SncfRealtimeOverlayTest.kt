@@ -41,13 +41,29 @@ class SncfRealtimeOverlayTest {
 
     private fun resource(path: String): ByteArray = SncfRealtimeOverlayTest::class.java.getResource(path)!!.readBytes()
 
-    private fun overlay(answer: () -> ByteArray?): SncfRealtimeOverlay =
+    private var tracksRequests = 0
+
+    /** Departures recorded with the SIRI feed of the SNCF (trimmed to their trains), a few minutes later. */
+    private val tracksStopTimesJson = resource("/realtime/stoptimes-sncf-tracks.json").decodeToString()
+    private val tracksStopTimes =
+        Json { ignoreUnknownKeys = true }.decodeFromString<TimetableClient.StoptimesResponseBody>(tracksStopTimesJson).stopTimes
+    private val recordedSiri = resource("/realtime/sncf-siri-et.xml")
+
+    /** Overlay answering [answer] for the GTFS-RT feed and [siri] for the SIRI one: null for an unavailable feed. */
+    private fun overlay(siri: () -> ByteArray? = { null }, answer: () -> ByteArray?): SncfRealtimeOverlay =
         SncfRealtimeOverlay(
             HttpClient(
                 MockEngine { request ->
-                    feedRequests++
                     assertEquals("tests", request.headers[HttpHeaders.UserAgent])
-                    answer()?.let { respond(it) } ?: respond("", HttpStatusCode.ServiceUnavailable)
+                    val body =
+                        if (request.url.toString() == SncfRealtimeOverlay.TRACKS_URL) {
+                            tracksRequests++
+                            siri()
+                        } else {
+                            feedRequests++
+                            answer()
+                        }
+                    body?.let { respond(it) } ?: respond("", HttpStatusCode.ServiceUnavailable)
                 },
             ),
             userAgent = "tests",
@@ -183,6 +199,72 @@ class SncfRealtimeOverlayTest {
         runBlocking {
             assertEquals(emptyMap(), overlay { "<html>maintenance</html>".encodeToByteArray() }.patch(stopTimes))
         }
+
+    @Test
+    fun `the recorded SIRI feed gives the tracks announced of the recorded departures`() =
+        runBlocking {
+            val patched = overlay(siri = { recordedSiri }) { null }.patch(tracksStopTimes)
+
+            assertEquals(
+                mapOf("895853" to "D", "12176" to "I", "5332" to "J", "18511" to "K", "889421" to "B", "886760" to "G", "893905" to "D"),
+                patched.values.associate { it.tripShortName to it.place.track },
+            )
+            // a track does not make the times real time
+            assertTrue(patched.values.none { it.realTime })
+        }
+
+    @Test
+    fun `times and tracks are both applied, each feed failing alone`() =
+        runBlocking {
+            val st = tracksStopTimes.first()
+            var siri: ByteArray? = recordedSiri
+            val overlay = overlay(siri = { siri }) { encode(feedOf(st, delay = 120)) }
+
+            val both = overlay.patch(listOf(st)).getValue(0)
+            assertEquals("D", both.place.track)
+            assertEquals(st.place.scheduledDeparture!! + 2.minutes, both.place.departure)
+
+            siri = null
+            time += 3.minutes
+            val timesOnly = overlay.patch(listOf(st)).getValue(0)
+            assertNull(timesOnly.place.track)
+            assertTrue(timesOnly.realTime)
+            assertEquals(2, tracksRequests)
+        }
+
+    @Test
+    fun `the SIRI feed is downloaded every 3 minutes and keeps the tracks of MOTIS`() =
+        runBlocking {
+            val overlay = overlay(siri = { recordedSiri }) { null }
+            val st = tracksStopTimes.first()
+
+            assertEquals(emptyMap(), overlay.patch(listOf(st.copy(place = st.place.copy(scheduledTrack = "3")))))
+            time += 2.minutes
+            overlay.patch(tracksStopTimes)
+            assertEquals(1, tracksRequests)
+            time += 1.minutes
+            overlay.patch(tracksStopTimes)
+            assertEquals(2, tracksRequests)
+        }
+
+    @Test
+    fun `the SIRI calls without aimed time or train number are skipped`() {
+        val xml =
+            """
+            <Siri xmlns="http://www.siri.org.uk/siri"><ServiceDelivery><EstimatedTimetableDelivery><EstimatedJourneyVersionFrame>
+            <EstimatedVehicleJourney><EstimatedCalls><EstimatedCall><AimedDepartureTime>2026-10-31T11:36:00+01:00</AimedDepartureTime>
+            <DeparturePlatformName>D</DeparturePlatformName></EstimatedCall></EstimatedCalls></EstimatedVehicleJourney>
+            <EstimatedVehicleJourney><TrainNumbers><TrainNumberRef>0895853</TrainNumberRef></TrainNumbers><EstimatedCalls>
+            <EstimatedCall><AimedDepartureTime>invalid</AimedDepartureTime><DeparturePlatformName>E</DeparturePlatformName></EstimatedCall>
+            <EstimatedCall><AimedDepartureTime>2026-10-31T11:36:00+01:00</AimedDepartureTime><DeparturePlatformName> </DeparturePlatformName></EstimatedCall>
+            </EstimatedCalls></EstimatedVehicleJourney></EstimatedJourneyVersionFrame></EstimatedTimetableDelivery></ServiceDelivery></Siri>
+            """.trimIndent()
+        val index = TrackIndex.parse(xml.byteInputStream())
+
+        assertEquals(1, index.size)
+        // the train is matched, its track is not known yet
+        assertNull(index.patch(tracksStopTimes.first { it.tripShortName == "895853" }))
+    }
 
     @Test
     fun `the departures of the gateway tell the source of their real time`() =

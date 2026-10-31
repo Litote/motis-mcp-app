@@ -8,7 +8,7 @@ import org.litote.motis.client.model.StopTime
  * overlay patches nothing.
  */
 interface RealtimeOverlay {
-    /** Name of the source, given with the stop times it patched. */
+    /** Name of the source, given with the stop times it gave the real time of (not only a track). */
     val source: String
 
     /** The stop times it patched, by index in [stopTimes], the others left as they are. Never fails: empty instead. */

@@ -108,10 +108,12 @@ MOTIS_APP_CONTACT=you@example.org server/build/install/server/bin/server --http 
 | `MCP_ALLOWED_HOSTS`      | localhost only                                   | host names accepted in HTTP mode             |
 | `MOTIS_SNCF_REALTIME`    | `true`                                           | SNCF real time overlay (see below)           |
 
-When MOTIS has no real time for the SNCF trains (feed `fr-horaires-sncf` of Transitous), the departures take it from
-the open [SNCF GTFS-RT trip updates](https://transport.data.gouv.fr/datasets/horaires-sncf), matched by train number and
-scheduled time (`realTimeSource` of the stop times). The feed is downloaded at most once a minute, only when a departures
-board has such trains, and only covers the trains of the next hour or so. `MOTIS_SNCF_REALTIME=false` disables it.
+When MOTIS has no real time for the SNCF trains (feed `fr-horaires-sncf` of Transitous), the departures take their
+times from the open [SNCF GTFS-RT trip updates](https://transport.data.gouv.fr/datasets/horaires-sncf) and their tracks
+from the SIRI Lite estimated timetable of the SNCF, matched by train number and scheduled time (`realTimeSource` of the
+stop times). The feeds are downloaded at most once a minute (GTFS-RT, ~1 MB) and every 3 minutes (SIRI, ~16 MB), only
+when a departures board has such trains. They cover the trains of the next hour or so, and the tracks are only known
+shortly before the departure. `MOTIS_SNCF_REALTIME=false` disables it.
 
 The default OpenStreetMap tiles are subject to the [tile usage policy](https://operations.osmfoundation.org/policies/tiles/):
 for an intensive use, configure another tile provider. The tile origin is declared in the CSP of the views.
