@@ -55,15 +55,17 @@ class CityJourneys(
         }
         val key = "${from.id}>${to.id}"
         val known = load(key)?.takeIf { java.time.Duration.between(it.discoveredAt, now()) < refreshAfter.toJavaDuration() }
-        return when {
-            known == null -> discover(key, fromCity, toCity, query)
-            // no long-distance train between the cities: the journeys between the centers
-            known.from.isEmpty() || known.to.isEmpty() -> gateway.plan(query).toDto().fromMainLineStations(fromCity, toCity)
-            else -> planPairs(from, to, query, stationPairs(known.from, known.to).map { (f, t) -> StationPair(f, t) })
+        return if (known == null) {
+            discover(key, fromCity, toCity, query)
+        } else {
+            planPairs(from, to, query, stationPairs(known.from, known.to).map { (f, t) -> StationPair(f, t) })
         }
     }
 
-    /** Journeys between the city centers, cut at the stations; their stations are kept for the next journeys. */
+    /**
+     * Journeys between the city centers, cut at the stations; their stations are kept for the next journeys. Nothing is
+     * kept without station: no long-distance train at this time does not tell there are none (e.g. only coaches at night).
+     */
     private suspend fun discover(key: String, fromCity: Coordinates, toCity: Coordinates, query: PlanQuery): JourneyResult {
         val journeys =
             gateway
@@ -71,7 +73,7 @@ class CityJourneys(
                 .toDto()
                 .fromMainLineStations(fromCity, toCity)
         val (fromStations, toStations) = journeys.cityStations(fromCity, toCity)
-        save(key, CityStations(fromStations, toStations, now()))
+        if (fromStations.isNotEmpty() && toStations.isNotEmpty()) save(key, CityStations(fromStations, toStations, now()))
         return journeys
     }
 

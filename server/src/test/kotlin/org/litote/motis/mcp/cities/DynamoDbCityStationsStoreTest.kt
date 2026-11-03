@@ -64,17 +64,6 @@ class DynamoDbCityStationsStoreTest {
             assertEquals("${1_800_000_000 + 30 * 86_400}", item.getValue("expiresAt").asN())
         }
 
-    @Test
-    fun `cities without long-distance train are saved without stations`() =
-        withStore { store, _ ->
-            val key = "paris>versailles-${System.nanoTime()}"
-            val stations = CityStations(emptyList(), emptyList(), Instant.ofEpochSecond(1_800_000_000))
-
-            store.put(key, stations)
-
-            assertEquals(stations, store.get(key))
-        }
-
     private companion object {
         const val TABLE = "city-stations-test"
     }

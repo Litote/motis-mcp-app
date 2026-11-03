@@ -34,7 +34,7 @@ private val logger = KotlinLogging.logger {}
  * [sncfRealtime] adds the real time of the SNCF to its trains without real time in MOTIS, see [SncfRealtimeOverlay].
  *
  * [cityStationsTable] is the DynamoDB table of the stations of the journeys between cities (in [awsRegion]), null to
- * keep them in memory, see [CityJourneys].
+ * keep them in memory, see [CityJourneys]. [dynamoDbEndpoint] replaces the endpoint of the region, e.g. DynamoDB Local.
  */
 data class MotisMcpConfig(
     val contact: String?,
@@ -46,6 +46,7 @@ data class MotisMcpConfig(
     val sncfRealtime: Boolean = true,
     val cityStationsTable: String? = null,
     val awsRegion: String? = null,
+    val dynamoDbEndpoint: String? = null,
 ) {
     init {
         require(contact != null || !isTransitous(baseUrl)) {
@@ -78,7 +79,11 @@ data class MotisMcpConfig(
     /** Store of the stations of the journeys between cities: created once, shared by the server instances. */
     fun cityStationsStore(): CityStationsStore =
         cityStationsTable?.let { table ->
-            DynamoDbCityStationsStore.create(table, requireNotNull(awsRegion) { "AWS_REGION is required with MOTIS_CITY_STATIONS_TABLE" })
+            DynamoDbCityStationsStore.create(
+                table,
+                requireNotNull(awsRegion) { "AWS_REGION is required with MOTIS_CITY_STATIONS_TABLE" },
+                dynamoDbEndpoint,
+            )
         } ?: InMemoryCityStationsStore()
 
     /** Real-time overlays of the stop times (see [MotisGateway]), sending the [userAgent] of the MOTIS clients. */
@@ -117,6 +122,7 @@ data class MotisMcpConfig(
                 sncfRealtime = env["MOTIS_SNCF_REALTIME"]?.takeIf { it.isNotBlank() }?.let(::parseBoolean) ?: true,
                 cityStationsTable = env["MOTIS_CITY_STATIONS_TABLE"]?.takeIf { it.isNotBlank() },
                 awsRegion = (env["AWS_REGION"] ?: env["AWS_DEFAULT_REGION"])?.takeIf { it.isNotBlank() },
+                dynamoDbEndpoint = env["AWS_ENDPOINT_URL_DYNAMODB"]?.takeIf { it.isNotBlank() },
             )
 
         private fun parseBoolean(value: String): Boolean =

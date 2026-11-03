@@ -115,7 +115,7 @@ MOTIS_APP_CONTACT=you@example.org server/build/install/server/bin/server --http 
 | `MOTIS_VIEW_DOMAIN_<HOST>` | default sandbox origin of the host             | dedicated origin of the views (see below)    |
 | `MCP_ALLOWED_HOSTS`      | localhost only                                   | host names accepted in HTTP mode             |
 | `MOTIS_SNCF_REALTIME`    | `true`                                           | SNCF real time overlay (see below)           |
-| `MOTIS_CITY_STATIONS_TABLE` | in memory                                     | DynamoDB table of the stations of the journeys between cities (partition key `pair`, string; TTL attribute `expiresAt`), in `AWS_REGION`, with the default AWS credentials |
+| `MOTIS_CITY_STATIONS_TABLE` | in memory                                     | DynamoDB table of the stations of the journeys between cities (partition key `pair`, string; TTL attribute `expiresAt`), in `AWS_REGION` (or at `AWS_ENDPOINT_URL_DYNAMODB`, e.g. DynamoDB Local), with the default AWS credentials |
 
 When MOTIS has no real time for the SNCF trains (feed `fr-horaires-sncf` of Transitous, or regional feeds of TER such
 as ZOU !), the departures take their

@@ -25,6 +25,7 @@ private const val NANTES = "nantes"
 /** Paris and Nantes geocoded as cities; the journeys from their centers, and from the stations of Paris to Nantes. */
 private class ParisNantes(
     private val failingPairs: Set<String> = emptySet(),
+    private val onlyCoaches: Boolean = false,
 ) {
     private val center = place("START", 48.853, 2.348)
     private val cite = place("Cité", 48.855, 2.347, "m4-cite")
@@ -58,6 +59,12 @@ private class ParisNantes(
         }
 
     private fun plan(from: String, cursor: String?): String =
+        when {
+            onlyCoaches -> plan(listOf(itinerary(leg("COACH", center, end, "22:00", "23:30", "coach"))), "", "")
+            else -> stationPlan(from, cursor)
+        }
+
+    private fun stationPlan(from: String, cursor: String?): String =
         when (from) {
             MONTPARNASSE ->
                 if (cursor == null) {
@@ -259,15 +266,15 @@ class CityJourneysTest {
     }
 
     @Test
-    fun `cities without long-distance train between them are journeys between their centers`() {
-        val paris = ParisNantes()
+    fun `no station is kept when the journeys take no long-distance train`() {
+        val paris = ParisNantes(onlyCoaches = true)
         val store = InMemoryCityStationsStore()
         withMcpClient(paris.motis, store) { client ->
-            store.put("48.853,2.348>47.218,-1.554", CityStations(emptyList(), emptyList(), Instant.now()))
+            val journey = client.callTool("plan_journey", PARIS_NANTES).journey()
 
-            client.callTool("plan_journey", PARIS_NANTES).journey()
-
-            assertEquals("48.853,2.348", paris.motis.plans().single().url.parameters["fromPlace"])
+            assertEquals(listOf(listOf("coach")), listOf(journey).trips())
+            // e.g. only coaches at night: the trains of the day are discovered by the next journey
+            assertNull(store.get("48.853,2.348>47.218,-1.554"))
         }
     }
 

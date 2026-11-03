@@ -88,6 +88,9 @@ class MotisMcpConfigTest {
         assertEquals("motis-mcp-app-city-stations", inRegion.cityStationsTable)
         assertTrue(inRegion.cityStationsStore() is DynamoDbCityStationsStore)
         assertEquals("eu-west-1", MotisMcpConfig.fromEnv(mapOf(contact, table, "AWS_DEFAULT_REGION" to "eu-west-1")).awsRegion)
+        val local = MotisMcpConfig.fromEnv(mapOf(contact, table, "AWS_REGION" to "eu-west-3", "AWS_ENDPOINT_URL_DYNAMODB" to "http://localhost:8000"))
+        assertEquals("http://localhost:8000", local.dynamoDbEndpoint)
+        assertTrue(local.cityStationsStore() is DynamoDbCityStationsStore)
 
         val error = assertFailsWith<IllegalArgumentException> { MotisMcpConfig.fromEnv(mapOf(contact, table)).cityStationsStore() }
         assertEquals("AWS_REGION is required with MOTIS_CITY_STATIONS_TABLE", error.message)

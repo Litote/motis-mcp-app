@@ -4,14 +4,15 @@ import aws.sdk.kotlin.services.dynamodb.DynamoDbClient
 import aws.sdk.kotlin.services.dynamodb.model.AttributeValue
 import aws.sdk.kotlin.services.dynamodb.getItem
 import aws.sdk.kotlin.services.dynamodb.putItem
+import aws.smithy.kotlin.runtime.net.url.Url
 import java.time.Instant
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 
 /**
  * Stop ids of the stations of the journeys between two cities, most used first: [from] in the city of departure, [to]
- * in the city of arrival (e.g. Paris Montparnasse and Massy TGV, then Nantes). Empty when no long-distance train links
- * them (e.g. Paris and Versailles). [discoveredAt]: when they were found from the journeys between the city centers.
+ * in the city of arrival (e.g. Paris Montparnasse and Massy TGV, then Nantes). [discoveredAt]: when they were found from
+ * the journeys between the city centers.
  */
 data class CityStations(val from: List<String>, val to: List<String>, val discoveredAt: Instant)
 
@@ -82,8 +83,17 @@ class DynamoDbCityStationsStore(
         private const val DISCOVERED_AT = "discoveredAt"
         private const val EXPIRES_AT = "expiresAt"
 
-        /** Client of the AWS [region], with the default credentials (environment variables on Lambda, else profile). */
-        fun create(table: String, region: String): DynamoDbCityStationsStore =
-            DynamoDbCityStationsStore(DynamoDbClient { this.region = region }, table)
+        /**
+         * Client of the AWS [region], with the default credentials (environment variables on Lambda, else profile).
+         * [endpoint]: another endpoint than the one of the region, e.g. DynamoDB Local.
+         */
+        fun create(table: String, region: String, endpoint: String? = null): DynamoDbCityStationsStore =
+            DynamoDbCityStationsStore(
+                DynamoDbClient {
+                    this.region = region
+                    endpointUrl = endpoint?.let(Url::parse)
+                },
+                table,
+            )
     }
 }
