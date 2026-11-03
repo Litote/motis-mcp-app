@@ -26,9 +26,9 @@ Between two places geocoded as cities (e.g. "Paris" to "Nantes", not an address 
 long-distance itineraries go from station to station, without the local legs to/from the city centers. The stations of
 a pair of cities are discovered from a first search between the city centers (the first station of each long-distance
 itinerary in the city of departure, the last one in the city of arrival, within 25 km of the center, or a known
-outer station such as Marne-la-Vallée – Chessy for Paris: e.g. Paris Montparnasse and Massy TGV to Nantes), kept 7 days (`MOTIS_CITY_STATIONS_TABLE`), then searched from each station to
-each station (at most 4 pairs) and merged. One journey in 100 also searches between the centers, to add the stations
-the first search did not see; the page cursor gathers the cursors of every pair. With one city only, the
+outer station such as Marne-la-Vallée – Chessy for Paris: e.g. Paris Montparnasse and Massy TGV to Nantes), kept (`MOTIS_CITY_STATIONS_TABLE`), then searched from each station to
+each station (at most 4 pairs) and merged. The search between the centers is done again after 7 days, and for one
+journey in 100: the stations it finds are added to the known ones, first; the page cursor gathers the cursors of every pair. With one city only, the
 itineraries are only cut at its stations. Its options, set by the model
 from the request or in the **Options** panel of the itineraries view:
 

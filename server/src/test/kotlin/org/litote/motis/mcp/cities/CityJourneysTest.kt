@@ -255,16 +255,46 @@ class CityJourneysTest {
     }
 
     @Test
-    fun `old stations are discovered again`() {
+    fun `old stations are discovered again and kept after the stations found`() {
         val paris = ParisNantes()
         val store = InMemoryCityStationsStore()
         withMcpClient(paris.motis, store) { client ->
-            store.put("48.853,2.348>47.218,-1.554", CityStations(listOf(MASSY), listOf(NANTES), Instant.EPOCH))
+            store.put(PAIR, CityStations(listOf("old", MASSY), listOf(NANTES), Instant.EPOCH))
 
             client.callTool("plan_journey", PARIS_NANTES).journey()
 
             assertEquals("48.853,2.348", paris.motis.plans().single().url.parameters["fromPlace"])
-            assertEquals(listOf(MONTPARNASSE, MASSY), store.get("48.853,2.348>47.218,-1.554")!!.from)
+            val stations = store.get(PAIR)!!
+            assertEquals(listOf(MONTPARNASSE, MASSY, "old"), stations.from)
+            assertTrue(stations.discoveredAt > Instant.EPOCH)
+        }
+    }
+
+    @Test
+    fun `old stations are kept when the discovery finds no long-distance train`() {
+        val paris = ParisNantes(onlyCoaches = true)
+        val store = InMemoryCityStationsStore()
+        val known = CityStations(listOf(MASSY), listOf(NANTES), Instant.EPOCH)
+        withMcpClient(paris.motis, store) { client ->
+            store.put(PAIR, known)
+
+            client.callTool("plan_journey", PARIS_NANTES).journey()
+
+            assertEquals(known, store.get(PAIR))
+        }
+    }
+
+    @Test
+    fun `the stations seen the least recently are dropped when there are too many`() {
+        val paris = ParisNantes()
+        val store = InMemoryCityStationsStore()
+        val old = (1..10).map { "old-$it" }
+        withMcpClient(paris.motis, store) { client ->
+            store.put(PAIR, CityStations(old, listOf(NANTES), Instant.EPOCH))
+
+            client.callTool("plan_journey", PARIS_NANTES).journey()
+
+            assertEquals(listOf(MONTPARNASSE, MASSY) + old.take(8), store.get(PAIR)!!.from)
         }
     }
 

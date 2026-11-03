@@ -33,12 +33,13 @@ private val logger = KotlinLogging.logger {}
  *
  * The stations of a pair of cities are found once from the journeys between the city centers ([discover]: the first
  * station of each long-distance itinerary in the city of departure, the last one in the city of arrival), then kept in
- * the [store] for [refreshAfter]. The next journeys are searched from each station of departure to each station of
- * arrival (at most [MAX_STATION_PAIRS] pairs), and merged: the time asked is the departure from the station, not from
- * the center, and each station has its own best trains.
+ * the [store] and searched again after [refreshAfter]. The next journeys are searched from each station of departure
+ * to each station of arrival (at most [MAX_STATION_PAIRS] pairs), and merged: the time asked is the departure from the
+ * station, not from the center, and each station has its own best trains.
  *
- * A discovery at one time of day only sees the stations of its trains: [rediscover] tells the journeys of known cities
- * which also search between the centers, to add the stations they find ([addStations]).
+ * A discovery at one time of day only sees the stations of its trains, so the stations found are added to the known
+ * ones, never replacing them: the stations gone sink in the list, as only the first ones are used. [rediscover] tells
+ * the journeys of known cities which also search between the centers, to add stations sooner ([addStations]).
  *
  * The cursor of the merged journeys gathers the cursors of every pair of stations ([StationPairsCursor]).
  */
@@ -60,8 +61,10 @@ class CityJourneys(
             return planPairs(from, to, query, pairs.pairs)
         }
         val key = "${from.id}>${to.id}"
-        val known = load(key)?.takeIf { java.time.Duration.between(it.discoveredAt, now()) < refreshAfter.toJavaDuration() }
-        if (known == null) return discover(key, fromCity, toCity, query)
+        val known = load(key)
+        if (known == null || java.time.Duration.between(known.discoveredAt, now()) >= refreshAfter.toJavaDuration()) {
+            return discover(key, known, fromCity, toCity, query)
+        }
         val pairs = stationPairs(known.from, known.to).map { (f, t) -> StationPair(f, t) }
         if (!rediscover()) return planPairs(from, to, query, pairs)
         // awaited: a Lambda is frozen once it has answered
@@ -72,30 +75,42 @@ class CityJourneys(
     }
 
     /**
-     * Journeys between the city centers, cut at the stations; their stations are kept for the next journeys. Nothing is
-     * kept without station: no long-distance train at this time does not tell there are none (e.g. only coaches at night).
+     * Journeys between the city centers, cut at the stations; their stations are added to the [known] ones for the next
+     * journeys. Nothing is kept without station: no long-distance train at this time does not tell there are none (e.g.
+     * only coaches at night).
      */
-    private suspend fun discover(key: String, fromCity: Coordinates, toCity: Coordinates, query: PlanQuery): JourneyResult {
+    private suspend fun discover(
+        key: String,
+        known: CityStations?,
+        fromCity: Coordinates,
+        toCity: Coordinates,
+        query: PlanQuery,
+    ): JourneyResult {
         val journeys = centerJourneys(fromCity, toCity, query)
         val (fromStations, toStations) = journeys.cityStations(fromCity, toCity)
-        if (fromStations.isNotEmpty() && toStations.isNotEmpty()) save(key, CityStations(fromStations, toStations, now()))
+        if (fromStations.isNotEmpty() && toStations.isNotEmpty()) {
+            save(key, CityStations(added(fromStations, known?.from), added(toStations, known?.to), now()))
+        }
         return journeys
     }
 
     /**
-     * Adds to the [known] stations those of the journeys between the centers, first: they are used when there are too
-     * many stations. [CityStations.discoveredAt] does not change: the next discovery still drops the stations gone. A
-     * failure only leaves the stations as they are.
+     * Adds to the [known] stations those of the journeys between the centers. [CityStations.discoveredAt] does not
+     * change: the discovery still comes after [refreshAfter]. A failure only leaves the stations as they are.
      */
     private suspend fun addStations(key: String, known: CityStations, fromCity: Coordinates, toCity: Coordinates, query: PlanQuery) {
         try {
             val (fromStations, toStations) = centerJourneys(fromCity, toCity, query).cityStations(fromCity, toCity)
-            val stations = known.copy(from = (fromStations + known.from).distinct(), to = (toStations + known.to).distinct())
+            val stations = known.copy(from = added(fromStations, known.from), to = added(toStations, known.to))
             if (stations != known) save(key, stations)
         } catch (e: MotisToolException) {
             logger.warn { "Stations of $key not searched again: ${e.message}" }
         }
     }
+
+    /** The stations [found] first, as only the first ones are searched, then the [known] ones seen less recently. */
+    private fun added(found: List<String>, known: List<String>?): List<String> =
+        (found + known.orEmpty()).distinct().take(MAX_KNOWN_STATIONS)
 
     private suspend fun centerJourneys(fromCity: Coordinates, toCity: Coordinates, query: PlanQuery): JourneyResult =
         gateway
@@ -171,6 +186,9 @@ class CityJourneys(
 
         /** Stations of each city at most, the most used first. */
         private const val MAX_STATIONS = 3
+
+        /** Stations of each city kept at most: the least recently seen are dropped. */
+        private const val MAX_KNOWN_STATIONS = 10
 
         private val random = SecureRandom()
 
