@@ -34,6 +34,7 @@ private val INSTRUCTIONS =
  * @param views HTML of the views ([org.litote.motis.mcp.apps.loadViews]), loaded once and shared by every server instance
  * @param cityStations stations of the journeys between cities, shared by every server instance (see [CityJourneys])
  * @param viewDomain dedicated origin of the views (`_meta.ui.domain`), null: the default of the host
+ * @param rediscoverStations tells the journeys between known cities searching their stations again (see [CityJourneys])
  */
 fun createMotisMcpServer(
     gateway: MotisGateway,
@@ -42,6 +43,7 @@ fun createMotisMcpServer(
     views: Map<UiView, String>,
     cityStations: CityStationsStore,
     viewDomain: String? = null,
+    rediscoverStations: () -> Boolean = CityJourneys.ONE_IN_100,
 ): Server =
     Server(
         serverInfo = Implementation(name = APP_NAME, version = APP_VERSION, title = "MOTIS explorer"),
@@ -59,6 +61,6 @@ fun createMotisMcpServer(
         addPlaceTools(gateway, baseUrl)
         addAreaTools(gateway)
         addTimetableTools(gateway)
-        addRoutingTools(gateway, CityJourneys(gateway, cityStations))
+        addRoutingTools(gateway, CityJourneys(gateway, cityStations, rediscover = rediscoverStations))
         addRentalTools(gateway)
     }

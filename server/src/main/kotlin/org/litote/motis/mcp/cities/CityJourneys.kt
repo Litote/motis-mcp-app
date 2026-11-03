@@ -5,6 +5,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.litote.motis.mcp.MotisGateway
@@ -18,6 +19,7 @@ import org.litote.motis.mcp.dto.cityStations
 import org.litote.motis.mcp.dto.fromMainLineStations
 import org.litote.motis.mcp.dto.merged
 import org.litote.motis.mcp.dto.toDto
+import java.security.SecureRandom
 import java.time.Instant
 import kotlin.io.encoding.Base64
 import kotlin.time.Duration
@@ -35,6 +37,9 @@ private val logger = KotlinLogging.logger {}
  * arrival (at most [MAX_STATION_PAIRS] pairs), and merged: the time asked is the departure from the station, not from
  * the center, and each station has its own best trains.
  *
+ * A discovery at one time of day only sees the stations of its trains: [rediscover] tells the journeys of known cities
+ * which also search between the centers, to add the stations they find ([addStations]).
+ *
  * The cursor of the merged journeys gathers the cursors of every pair of stations ([StationPairsCursor]).
  */
 class CityJourneys(
@@ -42,6 +47,7 @@ class CityJourneys(
     private val store: CityStationsStore,
     private val refreshAfter: Duration = 7.days,
     private val now: () -> Instant = Instant::now,
+    private val rediscover: () -> Boolean = ONE_IN_100,
 ) {
     /** Journeys of [query] (between the centers of [from] and [to]) from station to station. */
     suspend fun plan(from: ResolvedPlace, to: ResolvedPlace, query: PlanQuery): JourneyResult {
@@ -55,10 +61,13 @@ class CityJourneys(
         }
         val key = "${from.id}>${to.id}"
         val known = load(key)?.takeIf { java.time.Duration.between(it.discoveredAt, now()) < refreshAfter.toJavaDuration() }
-        return if (known == null) {
-            discover(key, fromCity, toCity, query)
-        } else {
-            planPairs(from, to, query, stationPairs(known.from, known.to).map { (f, t) -> StationPair(f, t) })
+        if (known == null) return discover(key, fromCity, toCity, query)
+        val pairs = stationPairs(known.from, known.to).map { (f, t) -> StationPair(f, t) }
+        if (!rediscover()) return planPairs(from, to, query, pairs)
+        // awaited: a Lambda is frozen once it has answered
+        return coroutineScope {
+            launch { addStations(key, known, fromCity, toCity, query) }
+            planPairs(from, to, query, pairs)
         }
     }
 
@@ -67,15 +76,32 @@ class CityJourneys(
      * kept without station: no long-distance train at this time does not tell there are none (e.g. only coaches at night).
      */
     private suspend fun discover(key: String, fromCity: Coordinates, toCity: Coordinates, query: PlanQuery): JourneyResult {
-        val journeys =
-            gateway
-                .plan(query.copy(numItineraries = maxOf(query.numItineraries ?: 0, DISCOVERY_ITINERARIES)))
-                .toDto()
-                .fromMainLineStations(fromCity, toCity)
+        val journeys = centerJourneys(fromCity, toCity, query)
         val (fromStations, toStations) = journeys.cityStations(fromCity, toCity)
         if (fromStations.isNotEmpty() && toStations.isNotEmpty()) save(key, CityStations(fromStations, toStations, now()))
         return journeys
     }
+
+    /**
+     * Adds to the [known] stations those of the journeys between the centers, first: they are used when there are too
+     * many stations. [CityStations.discoveredAt] does not change: the next discovery still drops the stations gone. A
+     * failure only leaves the stations as they are.
+     */
+    private suspend fun addStations(key: String, known: CityStations, fromCity: Coordinates, toCity: Coordinates, query: PlanQuery) {
+        try {
+            val (fromStations, toStations) = centerJourneys(fromCity, toCity, query).cityStations(fromCity, toCity)
+            val stations = known.copy(from = (fromStations + known.from).distinct(), to = (toStations + known.to).distinct())
+            if (stations != known) save(key, stations)
+        } catch (e: MotisToolException) {
+            logger.warn { "Stations of $key not searched again: ${e.message}" }
+        }
+    }
+
+    private suspend fun centerJourneys(fromCity: Coordinates, toCity: Coordinates, query: PlanQuery): JourneyResult =
+        gateway
+            .plan(query.copy(numItineraries = maxOf(query.numItineraries ?: 0, DISCOVERY_ITINERARIES)))
+            .toDto()
+            .fromMainLineStations(fromCity, toCity)
 
     private suspend fun planPairs(from: ResolvedPlace, to: ResolvedPlace, query: PlanQuery, pairs: List<StationPair>): JourneyResult {
         val fromCity = from.center()
@@ -145,6 +171,11 @@ class CityJourneys(
 
         /** Stations of each city at most, the most used first. */
         private const val MAX_STATIONS = 3
+
+        private val random = SecureRandom()
+
+        /** True for one call in 100 on average, whatever the Lambda instance: no state to share. */
+        val ONE_IN_100: () -> Boolean = { random.nextInt(100) == 0 }
 
         /**
          * Pairs of the most used stations of each city, at most [MAX_STATION_PAIRS]: a station of the city with the

@@ -51,6 +51,7 @@ val TEST_VIEWS: Map<UiView, String> =
 fun withMcpClient(
     motis: MockMotis,
     cityStations: CityStationsStore = InMemoryCityStationsStore(),
+    rediscoverStations: () -> Boolean = { false },
     block: suspend (Client) -> Unit,
 ): Unit =
     runBlocking {
@@ -63,6 +64,7 @@ fun withMcpClient(
                     config.tiles,
                     loadViews(config.tiles) { TEST_VIEWS.getValue(it) },
                     cityStations,
+                    rediscoverStations = rediscoverStations,
                 )
             val (clientTransport, serverTransport) = InMemoryTransport.pair()
             server.createSession(serverTransport)

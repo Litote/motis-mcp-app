@@ -11,6 +11,7 @@ import org.litote.motis.mcp.dto.JourneyResult
 import org.litote.motis.mcp.respondJson
 import org.litote.motis.mcp.withMcpClient
 import java.time.Instant
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -134,6 +135,8 @@ private fun CallToolResult.journey(): JourneyResult {
 private fun CallToolResult.text(): String = (content.single() as TextContent).text
 
 private fun MockMotis.plans(): List<HttpRequestData> = requests.filter { it.url.encodedPath == "/api/v6/plan" }
+
+private const val PAIR = "48.853,2.348>47.218,-1.554"
 
 private val PARIS_NANTES = mapOf("from" to "Paris", "to" to "Nantes", "time" to "2026-11-04T06:00:00+01:00")
 
@@ -262,6 +265,57 @@ class CityJourneysTest {
 
             assertEquals("48.853,2.348", paris.motis.plans().single().url.parameters["fromPlace"])
             assertEquals(listOf(MONTPARNASSE, MASSY), store.get("48.853,2.348>47.218,-1.554")!!.from)
+        }
+    }
+
+    @Test
+    fun `the stations found by a new search between the centers are added to the known ones`() {
+        val paris = ParisNantes()
+        val store = InMemoryCityStationsStore()
+        val discoveredAt = Instant.now()
+        withMcpClient(paris.motis, store, rediscoverStations = { true }) { client ->
+            store.put(PAIR, CityStations(listOf("old", MASSY), listOf(NANTES), discoveredAt))
+
+            val journey = client.callTool("plan_journey", PARIS_NANTES).journey()
+
+            // the journey of this request is from the known stations
+            assertEquals(setOf("48.853,2.348", "old", MASSY), paris.motis.plans().map { it.url.parameters["fromPlace"] }.toSet())
+            assertTrue(journey.nextPageCursor!!.startsWith("stations:"))
+            assertEquals(CityStations(listOf(MONTPARNASSE, MASSY, "old"), listOf(NANTES), discoveredAt), store.get(PAIR))
+        }
+    }
+
+    @Test
+    fun `the known stations are not searched again without need`() {
+        val paris = ParisNantes()
+        val store = InMemoryCityStationsStore()
+        val calls = AtomicInteger()
+        withMcpClient(paris.motis, store, rediscoverStations = { calls.incrementAndGet() > 1 }) { client ->
+            store.put(PAIR, CityStations(listOf(MONTPARNASSE), listOf(NANTES), Instant.now()))
+
+            val journey = client.callTool("plan_journey", PARIS_NANTES).journey()
+            assertEquals(listOf(MONTPARNASSE), paris.motis.plans().map { it.url.parameters["fromPlace"] })
+
+            // the next page is no new search
+            paris.motis.requests.clear()
+            client.callTool("plan_journey", PARIS_NANTES + ("pageCursor" to journey.nextPageCursor!!)).journey()
+            assertEquals(listOf(MONTPARNASSE), paris.motis.plans().map { it.url.parameters["fromPlace"] })
+            assertEquals(1, calls.get())
+        }
+    }
+
+    @Test
+    fun `a failure of the new search between the centers does not fail the journey`() {
+        val paris = ParisNantes(failingPairs = setOf("48.853,2.348"))
+        val store = InMemoryCityStationsStore()
+        val known = CityStations(listOf(MASSY), listOf(NANTES), Instant.now())
+        withMcpClient(paris.motis, store, rediscoverStations = { true }) { client ->
+            store.put(PAIR, known)
+
+            val journey = client.callTool("plan_journey", PARIS_NANTES).journey()
+
+            assertEquals(listOf(listOf("tgv-b")), listOf(journey).trips())
+            assertEquals(known, store.get(PAIR))
         }
     }
 
