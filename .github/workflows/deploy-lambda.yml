@@ -95,45 +95,9 @@ jobs:
           file bootstrap
           file bootstrap | grep -q "ARM aarch64" || { echo "::error::bootstrap is not arm64"; exit 1; }
 
-      # Runs the executable in the Lambda runtime image: catches missing native-image metadata (make trace)
+      # Runs the executable in the Lambda runtime image, with MOTIS mocked: Transitous does not block the deployments
       - name: Smoke test in the Lambda runtime emulator
-        run: |
-          # DynamoDB Local checks no signature, only that the request has one
-          dynamodb() {
-            curl -sf http://localhost:8000 -H "X-Amz-Target: DynamoDB_20120810.$1" -H 'Content-Type: application/x-amz-json-1.0' \
-              -H 'Authorization: AWS4-HMAC-SHA256 Credential=local/20260101/eu-west-3/dynamodb/aws4_request, SignedHeaders=host, Signature=local' \
-              -d "$2"
-          }
-          dynamodb CreateTable '{"TableName":"city-stations","BillingMode":"PAY_PER_REQUEST",
-            "AttributeDefinitions":[{"AttributeName":"pair","AttributeType":"S"}],
-            "KeySchema":[{"AttributeName":"pair","KeyType":"HASH"}]}'
-          docker run -d --name lambda -p 9000:8080 \
-            --add-host=host.docker.internal:host-gateway \
-            -e "MOTIS_APP_CONTACT=https://github.com/${GITHUB_REPOSITORY}" \
-            -e MOTIS_CITY_STATIONS_TABLE=city-stations \
-            -e AWS_REGION=eu-west-3 -e AWS_ACCESS_KEY_ID=local -e AWS_SECRET_ACCESS_KEY=local \
-            -e AWS_ENDPOINT_URL_DYNAMODB=http://host.docker.internal:8000 \
-            -v "$PWD/lambda/build/native/nativeCompile/bootstrap:/var/runtime/bootstrap:ro" \
-            public.ecr.aws/lambda/provided:al2023 bootstrap
-          sleep 3
-          invoke() {
-            jq -n --arg body "$1" '{version: "2.0", rawPath: "/mcp", rawQueryString: "",
-              headers: {host: "localhost", "content-type": "application/json",
-                accept: "application/json, text/event-stream", "mcp-protocol-version": "2025-11-25"},
-              requestContext: {http: {method: "POST", path: "/mcp"}}, body: $body, isBase64Encoded: false}' |
-              curl -sf --data-binary @- http://localhost:9000/2015-03-31/functions/function/invocations
-          }
-          invoke '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' |
-            jq -e '.statusCode == 200 and (.body | fromjson | .result.tools | map(.name) | index("plan_journey"))'
-          invoke '{"jsonrpc":"2.0","id":2,"method":"resources/read","params":{"uri":"ui://motis/explorer.html"}}' |
-            jq -e '.statusCode == 200 and (.body | fromjson | .result.contents[0].text | contains("<html"))'
-          # journeys between cities, in the day (only coaches at night): discovery of the stations kept in DynamoDB, then
-          # from station to station, read from it
-          journey=$(jq -nc --arg time "$(date -u -d tomorrow +%Y-%m-%dT08:00:00Z)" '{jsonrpc: "2.0", id: 3, method: "tools/call",
-            params: {name: "plan_journey", arguments: {from: "Paris", to: "Nantes", time: $time}}}')
-          invoke "$journey" | jq -e '.statusCode == 200 and (.body | fromjson | .result.isError | not)'
-          dynamodb Scan '{"TableName":"city-stations"}' | jq -e '.Count == 1 and (.Items[0].from.L | length > 0)'
-          invoke "$journey" | jq -e '.statusCode == 200 and (.body | fromjson | .result.structuredContent.nextPageCursor | startswith("stations:"))'
+        run: ./gradlew :lambda:smokeTest
 
       - name: Lambda emulator logs
         if: always()
