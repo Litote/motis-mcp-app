@@ -31,6 +31,13 @@ jobs:
     permissions:
       contents: read
 
+    # DynamoDB store of the stations of the journeys between cities (DynamoDbCityStationsStoreTest)
+    services:
+      dynamodb:
+        image: amazon/dynamodb-local@sha256:6ada631ec7aa5fc83446855eb17233e3dad184fec47477e8140c6c569cfe0c86 # latest of 2026-10-15
+        ports:
+          - 8000:8000
+
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -87,6 +94,8 @@ jobs:
           fi
 
       - name: Build & test
+        env:
+          DYNAMODB_LOCAL_ENDPOINT: http://localhost:8000
         run: ./gradlew check
 
       - name: Views tests

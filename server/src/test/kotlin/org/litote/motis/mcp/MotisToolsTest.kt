@@ -661,6 +661,36 @@ class MotisToolsTest {
         }
     }
 
+    /** Places geocoded as [type] with [category] (journeys between cities: see CityJourneysTest); the first itinerary of the plan takes a high-speed train. */
+    private fun citiesMotis(type: String, category: String?) =
+        MockMotis { request ->
+            when (request.url.encodedPath) {
+                "/api/v1/geocode" -> {
+                    val text = request.url.parameters["text"]!!
+                    val lat = if (text == "Paris") 48.85 else 47.21
+                    respondJson(
+                        """[{"type":"$type",${category?.let { "\"category\":\"$it\"," } ?: ""}"name":"$text","id":"node/$text",""" +
+                            """"lat":$lat,"lon":2.35,"score":0.0,"tokens":[],"areas":[],"tz":"Europe/Paris"}]""",
+                    )
+                }
+                "/api/v6/plan" -> respondJson(fixture("plan").replaceFirst("\"mode\": \"BUS\"", "\"mode\": \"HIGHSPEED_RAIL\""))
+                else -> error("unexpected ${request.url}")
+            }
+        }
+
+    @Test
+    fun `plan_journey between addresses or points of interest goes door to door`() {
+        listOf("ADDRESS" to null, "PLACE" to "museum_16", "PLACE" to "place_of_worship_16").forEach { (type, category) ->
+            withMcpClient(citiesMotis(type, category)) { client ->
+                val result = client.callTool("plan_journey", mapOf("from" to "Paris", "to" to "Nantes"))
+
+                val journey = result.data(JourneyResult.serializer())
+                assertEquals(listOf("WALK", "HIGHSPEED_RAIL", "WALK"), journey.itineraries.first().legs.map { it.mode }, "$type $category")
+                assertTrue(!result.text().contains("stations of"), result.text())
+            }
+        }
+    }
+
     @Test
     fun `plan_journey walks up to 25 minutes to the first stop and from the last stop by default`() {
         val motis = transitous()

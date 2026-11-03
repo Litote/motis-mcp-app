@@ -6,6 +6,8 @@ import io.modelcontextprotocol.kotlin.sdk.types.Implementation
 import io.modelcontextprotocol.kotlin.sdk.types.ServerCapabilities
 import org.litote.motis.mcp.apps.UiView
 import org.litote.motis.mcp.apps.addAppResources
+import org.litote.motis.mcp.cities.CityJourneys
+import org.litote.motis.mcp.cities.CityStationsStore
 import org.litote.motis.mcp.tools.addAreaTools
 import org.litote.motis.mcp.tools.addPlaceTools
 import org.litote.motis.mcp.tools.addRentalTools
@@ -30,6 +32,7 @@ private val INSTRUCTIONS =
  * Creates the MCP server: tools calling MOTIS, and the MCP App views as `ui://` resources.
  *
  * @param views HTML of the views ([org.litote.motis.mcp.apps.loadViews]), loaded once and shared by every server instance
+ * @param cityStations stations of the journeys between cities, shared by every server instance (see [CityJourneys])
  * @param viewDomain dedicated origin of the views (`_meta.ui.domain`), null: the default of the host
  */
 fun createMotisMcpServer(
@@ -37,6 +40,7 @@ fun createMotisMcpServer(
     baseUrl: String,
     tiles: MapTiles,
     views: Map<UiView, String>,
+    cityStations: CityStationsStore,
     viewDomain: String? = null,
 ): Server =
     Server(
@@ -55,6 +59,6 @@ fun createMotisMcpServer(
         addPlaceTools(gateway, baseUrl)
         addAreaTools(gateway)
         addTimetableTools(gateway)
-        addRoutingTools(gateway)
+        addRoutingTools(gateway, CityJourneys(gateway, cityStations))
         addRentalTools(gateway)
     }

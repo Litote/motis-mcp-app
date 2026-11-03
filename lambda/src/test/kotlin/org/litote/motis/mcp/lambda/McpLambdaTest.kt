@@ -9,6 +9,7 @@ import org.litote.motis.mcp.MotisGateway
 import org.litote.motis.mcp.claudeViewDomain
 import org.litote.motis.mcp.MotisMcpConfig
 import org.litote.motis.mcp.apps.UiView
+import org.litote.motis.mcp.cities.InMemoryCityStationsStore
 import org.litote.motis.mcp.createMotisMcpServer
 import org.litote.motis.mcp.viewDomain
 import kotlin.test.Test
@@ -28,6 +29,7 @@ class McpLambdaTest {
                     config.baseUrl,
                     config.tiles,
                     UiView.entries.associateWith { "<html><head></head><body>${it.name}</body></html>" },
+                    InMemoryCityStationsStore(),
                     viewDomain(config),
                 )
             }

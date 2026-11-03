@@ -86,6 +86,8 @@ data class ResolvedPlace(
     val isStop: Boolean,
     val area: String? = null,
     val tz: String? = null,
+    /** A city, town or village asked by its name: its journeys start or end at its long-distance stations. */
+    val isCity: Boolean = false,
 ) {
     /** Name with its area when the name does not tell it, e.g. `Saint Michel (Bordeaux)`. */
     val label: String get() = name + (area?.takeUnless { name.contains(it, ignoreCase = true) }?.let { " ($it)" } ?: "")
@@ -219,6 +221,7 @@ class MotisGateway(
             isStop = isStop,
             area = dto.area,
             tz = match.tz,
+            isCity = match.type == LocationType.PLACE && match.category?.matches(CITY_CATEGORY) == true,
         )
     }
 
@@ -452,6 +455,12 @@ class MotisGateway(
 
         private fun Match.isRivalOf(best: Match): Boolean =
             abs(score - best.score) < AMBIGUOUS_SCORE_GAP && distanceKm(lat, lon, best.lat, best.lon) > DISTINCT_PLACES_KM
+
+        /**
+         * Geocoding categories of the cities, towns and villages (Transitous: `place_6`, `place_capital_8`, `town`,
+         * `village`), not of the points of interest (e.g. `museum_16`, `place_of_worship_16`) nor the hamlets.
+         */
+        private val CITY_CATEGORY = Regex("""place_(capital_)?\d+|city|town|village""")
 
         private val COORDINATES = Regex("""^\s*(-?\d{1,2}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)\s*$""")
 

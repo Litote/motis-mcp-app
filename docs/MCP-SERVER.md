@@ -20,7 +20,15 @@ See the [README](../README.md) for an overview, the AWS Lambda deployment, the w
 `plan_journey` walks up to 25 minutes to the first stop and from the last stop (`maxWalkMinutes`, MOTIS default:
 15 minutes). Transfers on foot come from the timetable, not routed on the streets (`useRoutedTransfers=false`): the
 server caps the routed ones (about 15 minutes), which drops walks between nearby stations such as Paris Gare de Lyon
-and Austerlitz. Its options, set by the model
+and Austerlitz.
+
+Between two places geocoded as cities (e.g. "Paris" to "Nantes", not an address nor a point of interest), the
+long-distance itineraries go from station to station, without the local legs to/from the city centers. The stations of
+a pair of cities are discovered from a first search between the city centers (the first station of each long-distance
+itinerary in the city of departure, the last one in the city of arrival, within 25 km of the center, or a known
+outer station such as Marne-la-Vallée – Chessy for Paris: e.g. Paris Montparnasse and Massy TGV to Nantes), kept 7 days (`MOTIS_CITY_STATIONS_TABLE`), then searched from each station to
+each station (at most 4 pairs) and merged; the page cursor gathers the cursors of every pair. With one city only, the
+itineraries are only cut at its stations. Its options, set by the model
 from the request or in the **Options** panel of the itineraries view:
 
 | Argument          | Values                              | MOTIS                                                           |
@@ -107,6 +115,7 @@ MOTIS_APP_CONTACT=you@example.org server/build/install/server/bin/server --http 
 | `MOTIS_VIEW_DOMAIN_<HOST>` | default sandbox origin of the host             | dedicated origin of the views (see below)    |
 | `MCP_ALLOWED_HOSTS`      | localhost only                                   | host names accepted in HTTP mode             |
 | `MOTIS_SNCF_REALTIME`    | `true`                                           | SNCF real time overlay (see below)           |
+| `MOTIS_CITY_STATIONS_TABLE` | in memory                                     | DynamoDB table of the stations of the journeys between cities (partition key `pair`, string; TTL attribute `expiresAt`), in `AWS_REGION`, with the default AWS credentials |
 
 When MOTIS has no real time for the SNCF trains (feed `fr-horaires-sncf` of Transitous, or regional feeds of TER such
 as ZOU !), the departures take their

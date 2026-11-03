@@ -203,8 +203,29 @@ data "aws_iam_policy_document" "deploy" {
       "iam:ListAttachedRolePolicies",
       "iam:ListRolePolicies",
       "iam:ListInstanceProfilesForRole",
+      "iam:PutRolePolicy",
+      "iam:GetRolePolicy",
+      "iam:DeleteRolePolicy",
     ]
     resources = ["arn:aws:iam::${local.account_id}:role/${var.name}-lambda"]
+  }
+
+  # Stations of the journeys between cities
+  statement {
+    sid = "CityStationsTable"
+    actions = [
+      "dynamodb:CreateTable",
+      "dynamodb:DeleteTable",
+      "dynamodb:DescribeTable",
+      "dynamodb:UpdateTable",
+      "dynamodb:DescribeTimeToLive",
+      "dynamodb:UpdateTimeToLive",
+      "dynamodb:DescribeContinuousBackups",
+      "dynamodb:TagResource",
+      "dynamodb:UntagResource",
+      "dynamodb:ListTagsOfResource",
+    ]
+    resources = ["arn:aws:dynamodb:${var.aws_region}:${local.account_id}:table/${var.name}-city-stations"]
   }
 
   statement {
@@ -330,10 +351,22 @@ data "aws_iam_policy_document" "plan" {
     sid = "LambdaRole"
     actions = [
       "iam:GetRole",
+      "iam:GetRolePolicy",
       "iam:ListAttachedRolePolicies",
       "iam:ListRolePolicies",
     ]
     resources = ["arn:aws:iam::${local.account_id}:role/${var.name}-lambda"]
+  }
+
+  statement {
+    sid = "CityStationsTable"
+    actions = [
+      "dynamodb:DescribeTable",
+      "dynamodb:DescribeTimeToLive",
+      "dynamodb:DescribeContinuousBackups",
+      "dynamodb:ListTagsOfResource",
+    ]
+    resources = ["arn:aws:dynamodb:${var.aws_region}:${local.account_id}:table/${var.name}-city-stations"]
   }
 
   statement {

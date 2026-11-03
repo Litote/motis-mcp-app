@@ -33,10 +33,45 @@ resource "aws_iam_role" "lambda" {
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
 }
 
-# Logs only: the server calls MOTIS and no other AWS service
+# Logs
 resource "aws_iam_role_policy_attachment" "basic_execution" {
   role       = aws_iam_role.lambda.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+# Stations of the journeys between cities: read and written by the Lambda
+data "aws_iam_policy_document" "city_stations" {
+  statement {
+    actions   = ["dynamodb:GetItem", "dynamodb:PutItem"]
+    resources = [aws_dynamodb_table.city_stations.arn]
+  }
+}
+
+resource "aws_iam_role_policy" "city_stations" {
+  name   = "city-stations"
+  role   = aws_iam_role.lambda.id
+  policy = data.aws_iam_policy_document.city_stations.json
+}
+
+# ─── DynamoDB ─────────────────────────────────────────────────────────────────
+
+# Stations of the journeys between two cities (e.g. Paris Montparnasse and Massy TGV to Nantes), discovered from the
+# journeys between their centers: a cache, rebuilt by the server when lost (no backup). Pairs not discovered again
+# for 30 days are deleted by the TTL.
+resource "aws_dynamodb_table" "city_stations" {
+  name         = "${var.name}-city-stations"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "pair"
+
+  attribute {
+    name = "pair"
+    type = "S"
+  }
+
+  ttl {
+    attribute_name = "expiresAt"
+    enabled        = true
+  }
 }
 
 # ─── Lambda ───────────────────────────────────────────────────────────────────
@@ -61,12 +96,15 @@ resource "aws_lambda_function" "mcp" {
       MOTIS_APP_CONTACT = var.motis_app_contact
       MOTIS_BASE_URL    = var.motis_base_url
       MOTIS_LOG_LEVEL   = var.motis_log_level
+      # AWS_REGION is set by Lambda
+      MOTIS_CITY_STATIONS_TABLE = aws_dynamodb_table.city_stations.name
     }, local.optional_env)
   }
 
   depends_on = [
     aws_cloudwatch_log_group.lambda,
     aws_iam_role_policy_attachment.basic_execution,
+    aws_iam_role_policy.city_stations,
   ]
 }
 

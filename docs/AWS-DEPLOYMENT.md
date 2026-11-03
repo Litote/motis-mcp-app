@@ -111,3 +111,7 @@ The certificate (ACM, us-east-1 as required by CloudFront) covers both. With a D
 
 The records must stay: ACM renews the certificate with the validation records. The deploy role needs the ACM
 permissions of `bootstrap/` (`make bootstrap` again on an account bootstrapped before).
+
+The stations of the journeys between cities are kept in the DynamoDB table `<name>-city-stations` (on demand, TTL of
+30 days, read and written by the Lambda): the deploy and plan roles need its permissions in `bootstrap/` (`make bootstrap`
+again on an account bootstrapped before).

@@ -15,6 +15,7 @@ dependencies {
     implementation(libs.serialization.json)
     implementation(libs.serialization.protobuf)
     implementation(libs.kotlin.logging)
+    implementation(libs.aws.dynamodb)
     runtimeOnly(libs.logback)
 
     testImplementation(kotlin("test"))
@@ -101,4 +102,7 @@ jacoco {
 
 tasks.test {
     useJUnitPlatform()
+    // DynamoDbCityStationsStoreTest runs against DynamoDB Local when set (CI service): an input, not to reuse the results
+    // of a run without it
+    inputs.property("dynamodbLocalEndpoint", providers.environmentVariable("DYNAMODB_LOCAL_ENDPOINT").orElse(""))
 }
