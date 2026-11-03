@@ -191,6 +191,46 @@ class CityJourneysTest {
     }
 
     @Test
+    fun `the next journeys of a discovery are those between the centers`() {
+        val paris = ParisNantes()
+        withMcpClient(paris.motis) { client ->
+            val discovery = client.callTool("plan_journey", PARIS_NANTES).journey()
+            paris.motis.requests.clear()
+
+            val next = client.callTool("plan_journey", PARIS_NANTES + ("pageCursor" to discovery.nextPageCursor!!)).journey()
+
+            val request = paris.motis.plans().single()
+            assertEquals("48.853,2.348", request.url.parameters["fromPlace"])
+            assertEquals("center-next", request.url.parameters["pageCursor"])
+            assertEquals(listOf(listOf("tgv-a"), listOf("tgv-b")), listOf(next).trips())
+        }
+    }
+
+    @Test
+    fun `an invalid cursor of the pairs of stations is reported`() {
+        withMcpClient(ParisNantes().motis) { client ->
+            val result = client.callTool("plan_journey", PARIS_NANTES + ("pageCursor" to "stations:e30"))
+
+            assertEquals(true, result.isError)
+            assertTrue(result.text().contains("'pageCursor' is not a cursor returned by plan_journey"), result.text())
+        }
+    }
+
+    @Test
+    fun `all the pairs of stations failing fail the journey`() {
+        val paris = ParisNantes(failingPairs = setOf(MONTPARNASSE, MASSY))
+        val store = InMemoryCityStationsStore()
+        withMcpClient(paris.motis, store) { client ->
+            store.put("48.853,2.348>47.218,-1.554", CityStations(listOf(MONTPARNASSE, MASSY), listOf(NANTES), Instant.now()))
+
+            val result = client.callTool("plan_journey", PARIS_NANTES)
+
+            assertEquals(true, result.isError)
+            assertTrue(result.text().contains("no route"), result.text())
+        }
+    }
+
+    @Test
     fun `a pair of stations without journeys is left out`() {
         val paris = ParisNantes(failingPairs = setOf(MASSY))
         val store = InMemoryCityStationsStore()

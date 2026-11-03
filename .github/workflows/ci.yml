@@ -38,6 +38,11 @@ jobs:
         ports:
           - 8000:8000
 
+    # every step: an input of the tests, which the steps after the build would otherwise run again without it (and
+    # without the coverage of the DynamoDB store)
+    env:
+      DYNAMODB_LOCAL_ENDPOINT: http://localhost:8000
+
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -94,8 +99,6 @@ jobs:
           fi
 
       - name: Build & test
-        env:
-          DYNAMODB_LOCAL_ENDPOINT: http://localhost:8000
         run: ./gradlew check
 
       - name: Views tests
