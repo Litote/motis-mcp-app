@@ -12,6 +12,7 @@ lambda-runtime = "0.9.7"
 graalvm-native = "1.1.17"
 sonarqube = "7.5.0.8588"
 jacoco = "0.8.15"
+aws-sdk-kotlin = "1.9.24"
 
 [libraries]
 mcp-server = { module = "io.modelcontextprotocol:kotlin-sdk-server", version.ref = "mcp" }
@@ -27,6 +28,7 @@ serialization-protobuf = { module = "org.jetbrains.kotlinx:kotlinx-serialization
 kotlin-logging = { module = "io.github.oshai:kotlin-logging-jvm", version.ref = "kotlin-logging" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
 lambda-runtime = { module = "com.asyncant.aws.lambda:runtime-jvm", version.ref = "lambda-runtime" }
+aws-dynamodb = { module = "aws.sdk.kotlin:dynamodb", version.ref = "aws-sdk-kotlin" }
 logback = { module = "ch.qos.logback:logback-classic", version.ref = "logback" }
 
 [plugins]

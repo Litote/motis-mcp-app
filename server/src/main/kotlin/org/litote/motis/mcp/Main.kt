@@ -80,7 +80,8 @@ fun main(args: Array<String>) {
     val motis = config.clientConfiguration()
     val gateway = MotisGateway(motis, overlays = config.realtimeOverlays(motis.userAgent))
     val views = loadViews(config.tiles)
-    val create = { viewDomain: String? -> createMotisMcpServer(gateway, config.baseUrl, config.tiles, views, viewDomain) }
+    val cityStations = config.cityStationsStore()
+    val create = { viewDomain: String? -> createMotisMcpServer(gateway, config.baseUrl, config.tiles, views, cityStations, viewDomain) }
 
     if (options.http) {
         val (_, port, host) = options

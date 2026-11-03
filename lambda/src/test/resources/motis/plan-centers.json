@@ -1,0 +1,2207 @@
+{
+  "requestParameters": {},
+  "debugOutput": {},
+  "from": {
+    "name": "START",
+    "lat": 48.8534951,
+    "lon": 2.3483915,
+    "vertexType": "NORMAL"
+  },
+  "to": {
+    "name": "END",
+    "lat": 47.2186371,
+    "lon": -1.5541362,
+    "vertexType": "NORMAL"
+  },
+  "direct": [],
+  "itineraries": [
+    {
+      "duration": 10080,
+      "startTime": "2026-11-04T08:20:00Z",
+      "endTime": "2026-11-04T11:08:00Z",
+      "transfers": 2,
+      "id": "CoYBIezl0lM/bUhAKZSilXuByQJAMkNmci1yZXNlYXUtdXJiYWluLWV0LWludGVydXJiYWluLWRpbGUtZGUtZnJhbmNlLW1vYmlsaXRlc19JREZNOjIyMTM3OZKMnIU9bUhAQdxx1Bv/vwJASLDVq9cGUNTYq9cGWgRXQUxLYAFxAAAAAAAACMAKzAIKATQSejIwMjYxMTA0XzA5OjA4X2ZyLXJlc2VhdS11cmJhaW4tZXQtaW50ZXJ1cmJhaW4tZGlsZS1kZS1mcmFuY2UtbW9iaWxpdGVzX0lERk06UkFUUDpDT1VfUkFUUF8wNEpPRUxCRVJUMl8yMDI2X0JhZ2wwNE9ybGUwNS02GkNmci1yZXNlYXUtdXJiYWluLWV0LWludGVydXJiYWluLWRpbGUtZGUtZnJhbmNlLW1vYmlsaXRlc19JREZNOjIyMTM3IZKMnIU9bUhAKdxx1Bv/vwJAMkNmci1yZXNlYXUtdXJiYWluLWV0LWludGVydXJiYWluLWRpbGUtZGUtZnJhbmNlLW1vYmlsaXRlc19JREZNOjIyMTQzOdTQBmADbEhAQegMMQM6mAJASNTYq9cGUIDbq9cGWgZTVUJXQVlgAWkAAAAAAAAIwArGARpDZnItcmVzZWF1LXVyYmFpbi1ldC1pbnRlcnVyYmFpbi1kaWxlLWRlLWZyYW5jZS1tb2JpbGl0ZXNfSURGTToyMjE0MyHU0AZgA2xIQCnoDDEDOpgCQDI+ZnItaG9yYWlyZXMtc25jZl9GUjo6TE1VOjk1MjAzZWIwLWNiMGEtMTFlOC04YmZhLWY3ODRjMWM3YzYxMTo5zCcrhqtrSEBB+kffpGmQAkBIgNur1wZQpN6r1wZaBFdBTEtgAXEAAAAAAAAAQAqtAgoOVEdWIElOT1VJIDg5MTMSRzIwMjYxMTA0XzA5OjM5X2ZyLWhvcmFpcmVzLXNuY2ZfRlI6U2VydmljZUpvdXJuZXk6OlNOODkxM0ZFUlJFXzEzMjAyNDc2Gj5mci1ob3JhaXJlcy1zbmNmX0ZSOjpMTVU6OTUyMDNlYjAtY2IwYS0xMWU4LThiZmEtZjc4NGMxYzdjNjExOiHMJyuGq2tIQCn6R9+kaZACQDI+ZnItaG9yYWlyZXMtc25jZl9GUjo6TE1VOjk4NDFjYTAwLWNiMGEtMTFlOC04YmZhLWY3ODRjMWM3YzYxMTo5UBa+vtabR0BB5Z6u7lis+L9IpN6r1wZQyJ2s1wZaDkhJR0hTUEVFRF9SQUlMYAFpAAAAAAAAAEBxAAAAAAAAAAAKvwEaPmZyLWhvcmFpcmVzLXNuY2ZfRlI6OkxNVTo5ODQxY2EwMC1jYjBhLTExZTgtOGJmYS1mNzg0YzFjN2M2MTE6IVAWvr7Wm0dAKeWeru5YrPi/Mjxmci1yZXNlYXUtZGUtdHJhbnNwb3J0cy1jb2xsZWN0aWZzLW5hb2xpYl9GUl9OQU9MSUI6UXVheTo1NDg5RzfCoiKcR0BB/dXjvtW6+L9IyJ2s1wZQ9J+s1wZaBFdBTEtgAWkAAAAAAAAAAAqxAgoCMTISeDIwMjYxMTA0XzExOjQwX2ZyLXJlc2VhdS1kZS10cmFuc3BvcnRzLWNvbGxlY3RpZnMtbmFvbGliX0ZSX05BT0xJQjpWZWhpY2xlSm91cm5leTo0OTU3OTc5NS1DUl8yNl8yNy1IUzI3QkUxMy1NZXJjcmVkaS0wMRo8ZnItcmVzZWF1LWRlLXRyYW5zcG9ydHMtY29sbGVjdGlmcy1uYW9saWJfRlJfTkFPTElCOlF1YXk6NTQ4IUc3wqIinEdAKf3V477Vuvi/Mjxmci1yZXNlYXUtZGUtdHJhbnNwb3J0cy1jb2xsZWN0aWZzLW5hb2xpYl9GUl9OQU9MSUI6UXVheTo1MzI5x5dQweGbR0BBJPCHn//e+L9IqKGs1wZQmKOs1wZaA0JVU2ABCnYaPGZyLXJlc2VhdS1kZS10cmFuc3BvcnRzLWNvbGxlY3RpZnMtbmFvbGliX0ZSX05BT0xJQjpRdWF5OjUzMiHHl1DB4ZtHQCkk8Ief/974vzmdGO1M/JtHQEG3eYjrvd34v0iYo6zXBlCQpKzXBloEV0FMS2AB",
+      "legs": [
+        {
+          "mode": "WALK",
+          "from": {
+            "name": "START",
+            "lat": 48.8534951,
+            "lon": 2.3483915,
+            "tz": "Europe/Paris",
+            "departure": "2026-11-04T08:20:00Z",
+            "scheduledDeparture": "2026-11-04T08:20:00Z",
+            "vertexType": "NORMAL"
+          },
+          "to": {
+            "name": "Saint-Michel Notre-Dame",
+            "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:22137",
+            "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:73620",
+            "importance": 0.00356289092451334,
+            "lat": 48.85343999999999,
+            "lon": 2.3437482999999997,
+            "level": -3,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T08:27:00Z",
+            "scheduledArrival": "2026-11-04T08:27:00Z",
+            "vertexType": "TRANSIT",
+            "modes": [
+              "REGIONAL_RAIL",
+              "SUBWAY",
+              "BUS"
+            ]
+          },
+          "duration": 420,
+          "startTime": "2026-11-04T08:20:00Z",
+          "endTime": "2026-11-04T08:27:00Z",
+          "scheduledStartTime": "2026-11-04T08:20:00Z",
+          "scheduledEndTime": "2026-11-04T08:27:00Z",
+          "realTime": false,
+          "scheduled": false,
+          "distance": 4.4E+2,
+          "legGeometry": {
+            "points": "",
+            "precision": 6,
+            "length": 0
+          },
+          "steps": []
+        },
+        {
+          "mode": "SUBWAY",
+          "from": {
+            "name": "Saint-Michel Notre-Dame",
+            "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:22137",
+            "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:73620",
+            "importance": 0.00356289092451334,
+            "lat": 48.85343999999999,
+            "lon": 2.3437482999999997,
+            "level": -3,
+            "tz": "Europe/Paris",
+            "departure": "2026-11-04T08:27:00Z",
+            "scheduledDeparture": "2026-11-04T08:27:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "departureTimestampReason": "NO_RT_DATA",
+            "alerts": [
+              {
+                "communicationPeriod": [
+                  {
+                    "start": "2026-10-11T16:00:00Z",
+                    "end": "2026-12-20T03:30:00Z"
+                  }
+                ],
+                "impactPeriod": [
+                  {
+                    "start": "2026-10-11T16:00:00Z",
+                    "end": "2026-12-20T03:30:00Z"
+                  }
+                ],
+                "cause": "CONSTRUCTION",
+                "effect": "NO_SERVICE",
+                "headerText": "Métro 4 : Travaux de rénovation - Arrêt non desservi",
+                "descriptionText": "<p>Jusqu'au 19 décembre inclus, l'arrêt n'est pas desservi à Saint-Michel en raison de travaux de rénovation</p>"
+              },
+              {
+                "communicationPeriod": [
+                  {
+                    "start": "2026-11-03T22:22:00Z",
+                    "end": "1970-01-01T00:00:00Z"
+                  }
+                ],
+                "impactPeriod": [
+                  {
+                    "start": "2026-11-03T22:22:00Z",
+                    "end": "1970-01-01T00:00:00Z"
+                  }
+                ],
+                "cause": "TECHNICAL_PROBLEM",
+                "effect": "ACCESSIBILITY_ISSUE",
+                "headerText": "2 ascenseurs sur 5 hors service — Saint-Michel Notre-Dame",
+                "descriptionText": "2 ascenseurs sur 5 sont actuellement hors service dans cette station."
+              }
+            ],
+            "modes": [
+              "REGIONAL_RAIL",
+              "SUBWAY",
+              "BUS"
+            ]
+          },
+          "to": {
+            "name": "Gare Montparnasse",
+            "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:22143",
+            "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:71139",
+            "importance": 0.0060801575891673565,
+            "lat": 48.843852999999996,
+            "lon": 2.3243294,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T08:32:00Z",
+            "scheduledArrival": "2026-11-04T08:32:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "departureTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "REGIONAL_RAIL",
+              "SUBWAY",
+              "BUS"
+            ]
+          },
+          "duration": 300,
+          "startTime": "2026-11-04T08:27:00Z",
+          "endTime": "2026-11-04T08:32:00Z",
+          "scheduledStartTime": "2026-11-04T08:27:00Z",
+          "scheduledEndTime": "2026-11-04T08:32:00Z",
+          "realTime": false,
+          "scheduled": true,
+          "interlineWithPreviousLeg": false,
+          "headsign": "Bagneux - Lucie Aubrac",
+          "tripFrom": {
+            "name": "Porte de Clignancourt",
+            "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:463073",
+            "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:478883",
+            "importance": 0.001441058237105608,
+            "lat": 48.897526,
+            "lon": 2.344624,
+            "tz": "Europe/Paris",
+            "departure": "2026-11-04T08:08:00Z",
+            "scheduledDeparture": "2026-11-04T08:08:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NOT_ALLOWED",
+            "cancelled": false,
+            "departureTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "SUBWAY",
+              "TRAM",
+              "BUS"
+            ]
+          },
+          "tripTo": {
+            "name": "Bagneux - Lucie Aubrac",
+            "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:483314",
+            "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:483315",
+            "importance": 0.0013603626284748316,
+            "lat": 48.803546999999995,
+            "lon": 2.317458399999999,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T08:45:00Z",
+            "scheduledArrival": "2026-11-04T08:45:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NOT_ALLOWED",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "SUBWAY"
+            ]
+          },
+          "routeId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:C01374",
+          "routeUrl": "",
+          "directionId": "1",
+          "routeColor": "a0006e",
+          "routeTextColor": "ffffff",
+          "routeType": 1,
+          "agencyName": "RATP",
+          "agencyUrl": "https://www.iledefrance-mobilites.fr",
+          "agencyFareUrl": "https://app.idf-mobilites.fr/gtfs",
+          "agencyId": "IDFM:Operator_100",
+          "tripId": "20261104_09:08_fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:RATP:COU_RATP_04JOELBERT2_2026_Bagl04Orle05-6",
+          "routeShortName": "4",
+          "routeLongName": "",
+          "tripShortName": "RATP",
+          "displayName": "4",
+          "cancelled": false,
+          "source": "fr_reseau-urbain-et-interurbain-dile-de-france-mobilites.gtfs.zip/stop_times.txt:461879:461907",
+          "intermediateStops": [
+            {
+              "name": "Odéon",
+              "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:462995",
+              "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:73618",
+              "importance": 0.0022729085758328438,
+              "lat": 48.85235,
+              "lon": 2.3397279999999996,
+              "tz": "Europe/Paris",
+              "arrival": "2026-11-04T08:27:00Z",
+              "departure": "2026-11-04T08:28:00Z",
+              "scheduledArrival": "2026-11-04T08:27:00Z",
+              "scheduledDeparture": "2026-11-04T08:28:00Z",
+              "vertexType": "TRANSIT",
+              "pickupType": "NORMAL",
+              "dropoffType": "NORMAL",
+              "cancelled": false,
+              "arrivalTimestampReason": "NO_RT_DATA",
+              "departureTimestampReason": "NO_RT_DATA",
+              "modes": [
+                "SUBWAY",
+                "BUS"
+              ]
+            }
+          ],
+          "legGeometry": {
+            "points": "",
+            "precision": 6,
+            "length": 0
+          },
+          "bikesAllowed": false,
+          "wheelchairAccessible": "NOT_ACCESSIBLE",
+          "reservation": "NONE",
+          "ticketUrls": {
+            "web": "https://app.idf-mobilites.fr/gtfs?service_date=%5B%2220261104%22%5D&ticketing_trip_id=%5B%22IDFM:RATP:COU_RATP_04JOELBERT2_2026_Bagl04Orle05-6%22%5D&from_ticketing_stop_time_id=%5B%2214%22%5D&to_ticketing_stop_time_id=%5B%2219%22%5D&boarding_time=%5B%222026-11-04T08:27:00%2B00:00%22%5D&arrival_time=%5B%222026-11-04T08:32:00%2B00:00%22%5D",
+            "android": "https://app.idf-mobilites.fr/gtfs?service_date=%5B%2220261104%22%5D&ticketing_trip_id=%5B%22IDFM:RATP:COU_RATP_04JOELBERT2_2026_Bagl04Orle05-6%22%5D&from_ticketing_stop_time_id=%5B%2214%22%5D&to_ticketing_stop_time_id=%5B%2219%22%5D&boarding_time=%5B%222026-11-04T08:27:00%2B00:00%22%5D&arrival_time=%5B%222026-11-04T08:32:00%2B00:00%22%5D",
+            "ios": "https://app.idf-mobilites.fr/gtfs?service_date=%5B%2220261104%22%5D&ticketing_trip_id=%5B%22IDFM:RATP:COU_RATP_04JOELBERT2_2026_Bagl04Orle05-6%22%5D&from_ticketing_stop_time_id=%5B%2214%22%5D&to_ticketing_stop_time_id=%5B%2219%22%5D&boarding_time=%5B%222026-11-04T08:27:00%2B00:00%22%5D&arrival_time=%5B%222026-11-04T08:32:00%2B00:00%22%5D"
+          },
+          "alternatives": []
+        },
+        {
+          "mode": "WALK",
+          "from": {
+            "name": "Gare Montparnasse",
+            "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:22143",
+            "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:71139",
+            "importance": 0.0060801575891673565,
+            "lat": 48.843852999999996,
+            "lon": 2.3243294,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T08:32:00Z",
+            "departure": "2026-11-04T08:32:00Z",
+            "scheduledArrival": "2026-11-04T08:32:00Z",
+            "scheduledDeparture": "2026-11-04T08:32:00Z",
+            "vertexType": "TRANSIT",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "departureTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "REGIONAL_RAIL",
+              "SUBWAY",
+              "BUS"
+            ]
+          },
+          "to": {
+            "name": "Paris Montparnasse Hall 1 - 2",
+            "stopId": "fr-horaires-sncf_FR::LMU:95203eb0-cb0a-11e8-8bfa-f784c1c7c611:",
+            "importance": 0.006676458287984133,
+            "lat": 48.841172,
+            "lon": 2.320514,
+            "level": 2,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T08:39:00Z",
+            "scheduledArrival": "2026-11-04T08:39:00Z",
+            "vertexType": "TRANSIT",
+            "modes": [
+              "HIGHSPEED_RAIL",
+              "REGIONAL_RAIL",
+              "BUS"
+            ]
+          },
+          "duration": 420,
+          "startTime": "2026-11-04T08:32:00Z",
+          "endTime": "2026-11-04T08:39:00Z",
+          "scheduledStartTime": "2026-11-04T08:32:00Z",
+          "scheduledEndTime": "2026-11-04T08:39:00Z",
+          "realTime": false,
+          "scheduled": false,
+          "distance": 581,
+          "legGeometry": {
+            "points": "",
+            "precision": 6,
+            "length": 0
+          },
+          "steps": []
+        },
+        {
+          "mode": "HIGHSPEED_RAIL",
+          "from": {
+            "name": "Paris Montparnasse Hall 1 - 2",
+            "stopId": "fr-horaires-sncf_FR::LMU:95203eb0-cb0a-11e8-8bfa-f784c1c7c611:",
+            "importance": 0.006676458287984133,
+            "lat": 48.841172,
+            "lon": 2.320514,
+            "level": 2,
+            "tz": "Europe/Paris",
+            "departure": "2026-11-04T08:39:00Z",
+            "scheduledDeparture": "2026-11-04T08:39:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "departureTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "HIGHSPEED_RAIL",
+              "REGIONAL_RAIL",
+              "BUS"
+            ]
+          },
+          "to": {
+            "name": "Nantes",
+            "stopId": "fr-horaires-sncf_FR::LMU:9841ca00-cb0a-11e8-8bfa-f784c1c7c611:",
+            "importance": 0.003665023948997259,
+            "lat": 47.217490999999995,
+            "lon": -1.5420770000000001,
+            "level": 0,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T10:54:00Z",
+            "scheduledArrival": "2026-11-04T10:54:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "departureTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "HIGHSPEED_RAIL",
+              "LONG_DISTANCE",
+              "REGIONAL_RAIL",
+              "TRAM",
+              "BUS"
+            ]
+          },
+          "duration": 8100,
+          "startTime": "2026-11-04T08:39:00Z",
+          "endTime": "2026-11-04T10:54:00Z",
+          "scheduledStartTime": "2026-11-04T08:39:00Z",
+          "scheduledEndTime": "2026-11-04T10:54:00Z",
+          "realTime": false,
+          "scheduled": true,
+          "interlineWithPreviousLeg": false,
+          "headsign": "",
+          "tripFrom": {
+            "name": "Paris Montparnasse Hall 1 - 2",
+            "stopId": "fr-horaires-sncf_FR::LMU:95203eb0-cb0a-11e8-8bfa-f784c1c7c611:",
+            "importance": 0.006676458287984133,
+            "lat": 48.841172,
+            "lon": 2.320514,
+            "level": 2,
+            "tz": "Europe/Paris",
+            "departure": "2026-11-04T08:39:00Z",
+            "scheduledDeparture": "2026-11-04T08:39:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "departureTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "HIGHSPEED_RAIL",
+              "REGIONAL_RAIL",
+              "BUS"
+            ]
+          },
+          "tripTo": {
+            "name": "Le Croisic",
+            "stopId": "fr-horaires-sncf_FR::LMU:7327cda0-cb0a-11e8-8bfa-f784c1c7c611:",
+            "importance": 0.0003331592015456408,
+            "lat": 47.289888999999995,
+            "lon": -2.50734,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T12:03:00Z",
+            "scheduledArrival": "2026-11-04T12:03:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "HIGHSPEED_RAIL",
+              "REGIONAL_RAIL"
+            ]
+          },
+          "category": {
+            "id": "",
+            "name": "",
+            "shortName": ""
+          },
+          "routeId": "fr-horaires-sncf_-FR:Operator::07B82396-04B1-48F0-84BF-36C7F1B81442:-101",
+          "routeUrl": "",
+          "directionId": "1",
+          "routeType": 101,
+          "agencyName": "SNCF VOYAGEURS",
+          "agencyUrl": "",
+          "agencyFareUrl": "",
+          "agencyId": "FR:Operator::07B82396-04B1-48F0-84BF-36C7F1B81442:",
+          "tripId": "20261104_09:39_fr-horaires-sncf_FR:ServiceJourney::SN8913FERRE_13202476",
+          "routeShortName": "",
+          "routeLongName": "",
+          "tripShortName": "8913",
+          "displayName": "TGV INOUI 8913",
+          "cancelled": false,
+          "source": "fr_horaires-sncf.netex.zip/sncf_netexfr_20261101_2132.xml:596661189:596661189",
+          "intermediateStops": [
+            {
+              "name": "Le Mans",
+              "stopId": "fr-horaires-sncf_FR::LMU:8ef85130-cb0a-11e8-8bfa-f784c1c7c611:",
+              "importance": 0.0023328757379204035,
+              "lat": 47.99561500000001,
+              "lon": 0.19261400000000004,
+              "tz": "Europe/Paris",
+              "arrival": "2026-11-04T09:34:00Z",
+              "departure": "2026-11-04T09:37:00Z",
+              "scheduledArrival": "2026-11-04T09:34:00Z",
+              "scheduledDeparture": "2026-11-04T09:37:00Z",
+              "vertexType": "TRANSIT",
+              "pickupType": "NORMAL",
+              "dropoffType": "NORMAL",
+              "cancelled": false,
+              "arrivalTimestampReason": "NO_RT_DATA",
+              "departureTimestampReason": "NO_RT_DATA",
+              "modes": [
+                "HIGHSPEED_RAIL",
+                "REGIONAL_RAIL",
+                "BUS"
+              ]
+            }
+          ],
+          "legGeometry": {
+            "points": "",
+            "precision": 6,
+            "length": 0
+          },
+          "bikesAllowed": false,
+          "wheelchairAccessible": "NOT_ACCESSIBLE",
+          "reservation": "COMPULSORY",
+          "alternatives": []
+        },
+        {
+          "mode": "WALK",
+          "from": {
+            "name": "Nantes",
+            "stopId": "fr-horaires-sncf_FR::LMU:9841ca00-cb0a-11e8-8bfa-f784c1c7c611:",
+            "importance": 0.003665023948997259,
+            "lat": 47.217490999999995,
+            "lon": -1.5420770000000001,
+            "level": 0,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T10:54:00Z",
+            "departure": "2026-11-04T10:54:00Z",
+            "scheduledArrival": "2026-11-04T10:54:00Z",
+            "scheduledDeparture": "2026-11-04T10:54:00Z",
+            "vertexType": "TRANSIT",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "departureTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "HIGHSPEED_RAIL",
+              "LONG_DISTANCE",
+              "REGIONAL_RAIL",
+              "TRAM",
+              "BUS"
+            ]
+          },
+          "to": {
+            "name": "Sophie Trébuchet",
+            "stopId": "fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:Quay:548",
+            "parentId": "fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:StopPlace:202",
+            "importance": 0.00005363754462450743,
+            "lat": 47.219806999999996,
+            "lon": -1.5456139999999998,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T10:59:00Z",
+            "scheduledArrival": "2026-11-04T10:59:00Z",
+            "vertexType": "TRANSIT",
+            "modes": [
+              "BUS"
+            ]
+          },
+          "duration": 300,
+          "startTime": "2026-11-04T10:54:00Z",
+          "endTime": "2026-11-04T10:59:00Z",
+          "scheduledStartTime": "2026-11-04T10:54:00Z",
+          "scheduledEndTime": "2026-11-04T10:59:00Z",
+          "realTime": false,
+          "scheduled": false,
+          "distance": 444,
+          "legGeometry": {
+            "points": "",
+            "precision": 6,
+            "length": 0
+          },
+          "steps": []
+        },
+        {
+          "mode": "BUS",
+          "from": {
+            "name": "Sophie Trébuchet",
+            "stopId": "fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:Quay:548",
+            "parentId": "fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:StopPlace:202",
+            "importance": 0.00005363754462450743,
+            "lat": 47.219806999999996,
+            "lon": -1.5456139999999998,
+            "tz": "Europe/Paris",
+            "departure": "2026-11-04T11:02:00Z",
+            "scheduledDeparture": "2026-11-04T11:02:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "departureTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "BUS"
+            ]
+          },
+          "to": {
+            "name": "Hôtel de Ville",
+            "stopId": "fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:Quay:532",
+            "parentId": "fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:StopPlace:196",
+            "importance": 0.00008160841389326379,
+            "lat": 47.21782699999999,
+            "lon": -1.554443,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T11:06:00Z",
+            "scheduledArrival": "2026-11-04T11:06:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "departureTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "BUS"
+            ]
+          },
+          "duration": 240,
+          "startTime": "2026-11-04T11:02:00Z",
+          "endTime": "2026-11-04T11:06:00Z",
+          "scheduledStartTime": "2026-11-04T11:02:00Z",
+          "scheduledEndTime": "2026-11-04T11:06:00Z",
+          "realTime": false,
+          "scheduled": true,
+          "interlineWithPreviousLeg": false,
+          "headsign": "Beauséjour",
+          "tripFrom": {
+            "name": "Jules Verne",
+            "stopId": "fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:Quay:862",
+            "parentId": "fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:StopPlace:336",
+            "importance": 0.00001182117011921946,
+            "lat": 47.248665,
+            "lon": -1.5172139999999998,
+            "tz": "Europe/Paris",
+            "departure": "2026-11-04T10:40:00Z",
+            "scheduledDeparture": "2026-11-04T10:40:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "departureTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "BUS"
+            ]
+          },
+          "tripTo": {
+            "name": "Beauséjour",
+            "stopId": "fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:Quay:844",
+            "parentId": "fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:StopPlace:329",
+            "importance": 0.00015922616876196116,
+            "lat": 47.23792,
+            "lon": -1.586113,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T11:20:00Z",
+            "scheduledArrival": "2026-11-04T11:20:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "TRAM",
+              "BUS"
+            ]
+          },
+          "routeId": "fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:Line:12",
+          "routeUrl": "",
+          "directionId": "1",
+          "routeColor": "a1daf8",
+          "routeTextColor": "000000",
+          "routeType": 3,
+          "agencyName": "Naolib",
+          "agencyUrl": "https://www.naolib.fr",
+          "agencyFareUrl": "",
+          "agencyId": "FR_NAOLIB:Operator:1",
+          "tripId": "20261104_11:40_fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:VehicleJourney:49579795-CR_26_27-HS27BE13-Mercredi-01",
+          "routeShortName": "12",
+          "routeLongName": "Jules Verne - Beauséjour",
+          "tripShortName": "",
+          "displayName": "12",
+          "cancelled": false,
+          "source": "fr_reseau-de-transports-collectifs-naolib.gtfs.zip/stop_times.txt:1906116:1906152",
+          "intermediateStops": [
+            {
+              "name": "Foch - Cathédrale",
+              "stopId": "fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:Quay:546",
+              "parentId": "fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:StopPlace:201",
+              "importance": 0.00010634992941049859,
+              "lat": 47.219254,
+              "lon": -1.550459,
+              "tz": "Europe/Paris",
+              "arrival": "2026-11-04T11:04:00Z",
+              "departure": "2026-11-04T11:04:00Z",
+              "scheduledArrival": "2026-11-04T11:04:00Z",
+              "scheduledDeparture": "2026-11-04T11:04:00Z",
+              "vertexType": "TRANSIT",
+              "pickupType": "NORMAL",
+              "dropoffType": "NORMAL",
+              "cancelled": false,
+              "arrivalTimestampReason": "NO_RT_DATA",
+              "departureTimestampReason": "NO_RT_DATA",
+              "modes": [
+                "BUS"
+              ]
+            }
+          ],
+          "legGeometry": {
+            "points": "",
+            "precision": 6,
+            "length": 0
+          },
+          "bikesAllowed": false,
+          "wheelchairAccessible": "ACCESSIBLE",
+          "reservation": "NONE",
+          "alternatives": []
+        },
+        {
+          "mode": "WALK",
+          "from": {
+            "name": "Hôtel de Ville",
+            "stopId": "fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:Quay:532",
+            "parentId": "fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:StopPlace:196",
+            "importance": 0.00008160841389326379,
+            "lat": 47.21782699999999,
+            "lon": -1.554443,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T11:06:00Z",
+            "departure": "2026-11-04T11:06:00Z",
+            "scheduledArrival": "2026-11-04T11:06:00Z",
+            "scheduledDeparture": "2026-11-04T11:06:00Z",
+            "vertexType": "TRANSIT",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "departureTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "BUS"
+            ]
+          },
+          "to": {
+            "name": "END",
+            "lat": 47.2186371,
+            "lon": -1.5541362,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T11:08:00Z",
+            "scheduledArrival": "2026-11-04T11:08:00Z",
+            "vertexType": "NORMAL"
+          },
+          "duration": 120,
+          "startTime": "2026-11-04T11:06:00Z",
+          "endTime": "2026-11-04T11:08:00Z",
+          "scheduledStartTime": "2026-11-04T11:06:00Z",
+          "scheduledEndTime": "2026-11-04T11:08:00Z",
+          "realTime": false,
+          "scheduled": false,
+          "distance": 107,
+          "legGeometry": {
+            "points": "",
+            "precision": 6,
+            "length": 0
+          },
+          "steps": []
+        }
+      ]
+    },
+    {
+      "duration": 10560,
+      "startTime": "2026-11-04T09:05:00Z",
+      "endTime": "2026-11-04T12:01:00Z",
+      "transfers": 2,
+      "id": "CpkBIezl0lM/bUhAKZSilXuByQJAMlZmci1yZXNlYXUtdXJiYWluLWV0LWludGVydXJiYWluLWRpbGUtZGUtZnJhbmNlLW1vYmlsaXRlc19JREZNOm1vbm9tb2RhbFN0b3BQbGFjZTo0NDg3Nzn+WfPjL21IQEH3gC87esICQEi86qvXBlCk7avXBloEV0FMS2ABcQAAAAAAAAAACoEDCgFCEnkyMDI2MTEwNF8wOToyNF9mci1yZXNlYXUtdXJiYWluLWV0LWludGVydXJiYWluLWRpbGUtZGUtZnJhbmNlLW1vYmlsaXRlc19JREZNOlROOlNOQ0Y6NGEzYTBkZjUtOWUzZi00OWNhLWJkYjAtZTgyM2VlYjZlOWFkGlZmci1yZXNlYXUtdXJiYWluLWV0LWludGVydXJiYWluLWRpbGUtZGUtZnJhbmNlLW1vYmlsaXRlc19JREZNOm1vbm9tb2RhbFN0b3BQbGFjZTo0NDg3NyH+WfPjL21IQCn3gC87esICQDJWZnItcmVzZWF1LXVyYmFpbi1ldC1pbnRlcnVyYmFpbi1kaWxlLWRlLWZyYW5jZS1tb2JpbGl0ZXNfSURGTTptb25vbW9kYWxTdG9wUGxhY2U6NTg3NzQ5lti1vd1cSEBBHhAy2vQRAkBIpO2r1wZQzPer1wZaDVJFR0lPTkFMX1JBSUxgAWkAAAAAAAAAAHEAAAAAAAAAAAriARpWZnItcmVzZWF1LXVyYmFpbi1ldC1pbnRlcnVyYmFpbi1kaWxlLWRlLWZyYW5jZS1tb2JpbGl0ZXNfSURGTTptb25vbW9kYWxTdG9wUGxhY2U6NTg3NzQhlti1vd1cSEApHhAy2vQRAkAyPmZyLWhvcmFpcmVzLXNuY2ZfRlI6OkxNTzo5MzM3NWE3MC1jYjBhLTExZTgtOGJmYS1mNzg0YzFjN2M2MTE6ObxnXaPlXEhAQe6XT1YMFwJASMz3q9cGUMT4q9cGWgRXQUxLYAFpAAAAAAAAAABxAAAAAAAA8L8KrAIKDlRHViBJTk9VSSA1NDg2EkYyMDI2MTEwNF8wNzozMV9mci1ob3JhaXJlcy1zbmNmX0ZSOlNlcnZpY2VKb3VybmV5OjpTTjU0ODZGRVJSRV85MTMzNzgwGj5mci1ob3JhaXJlcy1zbmNmX0ZSOjpMTU86OTMzNzVhNzAtY2IwYS0xMWU4LThiZmEtZjc4NGMxYzdjNjExOiG8Z12j5VxIQCnul09WDBcCQDI+ZnItaG9yYWlyZXMtc25jZl9GUjo6TE1VOjk4NDFjYTAwLWNiMGEtMTFlOC04YmZhLWY3ODRjMWM3YzYxMTo5UBa+vtabR0BB5Z6u7lis+L9IrPur1wZQ6Les1wZaDkhJR0hTUEVFRF9SQUlMYAFpAAAAAAAA8L9xAAAAAAAAAAAKvwEaPmZyLWhvcmFpcmVzLXNuY2ZfRlI6OkxNVTo5ODQxY2EwMC1jYjBhLTExZTgtOGJmYS1mNzg0YzFjN2M2MTE6IVAWvr7Wm0dAKeWeru5YrPi/Mjxmci1yZXNlYXUtZGUtdHJhbnNwb3J0cy1jb2xsZWN0aWZzLW5hb2xpYl9GUl9OQU9MSUI6UXVheTo1NDg5RzfCoiKcR0BB/dXjvtW6+L9I6Les1wZQlLqs1wZaBFdBTEtgAWkAAAAAAAAAAAq6AgoCQzESgAEyMDI2MTEwNF8xMjo0MV9mci1yZXNlYXUtZGUtdHJhbnNwb3J0cy1jb2xsZWN0aWZzLW5hb2xpYl9GUl9OQU9MSUI6VmVoaWNsZUpvdXJuZXk6NDk4OTc0ODMtQ1JfMjZfMjctSEQyN0JFQTMtTWVyY3JlZGktMDItMDAxMDAwMBo8ZnItcmVzZWF1LWRlLXRyYW5zcG9ydHMtY29sbGVjdGlmcy1uYW9saWJfRlJfTkFPTElCOlF1YXk6NTQ4IUc3wqIinEdAKf3V477Vuvi/Mjxmci1yZXNlYXUtZGUtdHJhbnNwb3J0cy1jb2xsZWN0aWZzLW5hb2xpYl9GUl9OQU9MSUI6UXVheTo1MzI5x5dQweGbR0BBJPCHn//e+L9IlLqs1wZQhLys1wZaA0JVU2ABCnYaPGZyLXJlc2VhdS1kZS10cmFuc3BvcnRzLWNvbGxlY3RpZnMtbmFvbGliX0ZSX05BT0xJQjpRdWF5OjUzMiHHl1DB4ZtHQCkk8Ief/974vzmdGO1M/JtHQEG3eYjrvd34v0iEvKzXBlD8vKzXBloEV0FMS2AB",
+      "legs": [
+        {
+          "mode": "WALK",
+          "from": {
+            "name": "START",
+            "lat": 48.8534951,
+            "lon": 2.3483915,
+            "tz": "Europe/Paris",
+            "departure": "2026-11-04T09:05:00Z",
+            "scheduledDeparture": "2026-11-04T09:05:00Z",
+            "vertexType": "NORMAL"
+          },
+          "to": {
+            "name": "Saint-Michel Notre-Dame",
+            "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:monomodalStopPlace:44877",
+            "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:73620",
+            "importance": 0.00356289092451334,
+            "lat": 48.85302399999999,
+            "lon": 2.3449597,
+            "level": 0,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T09:11:00Z",
+            "scheduledArrival": "2026-11-04T09:11:00Z",
+            "vertexType": "TRANSIT",
+            "modes": [
+              "REGIONAL_RAIL",
+              "SUBWAY",
+              "BUS"
+            ]
+          },
+          "duration": 360,
+          "startTime": "2026-11-04T09:05:00Z",
+          "endTime": "2026-11-04T09:11:00Z",
+          "scheduledStartTime": "2026-11-04T09:05:00Z",
+          "scheduledEndTime": "2026-11-04T09:11:00Z",
+          "realTime": false,
+          "scheduled": false,
+          "distance": 352,
+          "legGeometry": {
+            "points": "",
+            "precision": 6,
+            "length": 0
+          },
+          "steps": []
+        },
+        {
+          "mode": "REGIONAL_RAIL",
+          "from": {
+            "name": "Saint-Michel Notre-Dame",
+            "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:monomodalStopPlace:44877",
+            "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:73620",
+            "importance": 0.00356289092451334,
+            "lat": 48.85302399999999,
+            "lon": 2.3449597,
+            "level": 0,
+            "tz": "Europe/Paris",
+            "departure": "2026-11-04T09:11:00Z",
+            "scheduledDeparture": "2026-11-04T09:11:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "departureTimestampReason": "NO_RT_DATA",
+            "alerts": [
+              {
+                "communicationPeriod": [
+                  {
+                    "start": "2026-11-03T22:22:00Z",
+                    "end": "1970-01-01T00:00:00Z"
+                  }
+                ],
+                "impactPeriod": [
+                  {
+                    "start": "2026-11-03T22:22:00Z",
+                    "end": "1970-01-01T00:00:00Z"
+                  }
+                ],
+                "cause": "TECHNICAL_PROBLEM",
+                "effect": "ACCESSIBILITY_ISSUE",
+                "headerText": "2 ascenseurs sur 5 hors service — Saint-Michel Notre-Dame",
+                "descriptionText": "2 ascenseurs sur 5 sont actuellement hors service dans cette station."
+              }
+            ],
+            "modes": [
+              "REGIONAL_RAIL",
+              "SUBWAY",
+              "BUS"
+            ]
+          },
+          "to": {
+            "name": "Massy - Palaiseau",
+            "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:monomodalStopPlace:58774",
+            "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:63244",
+            "importance": 0.00133117800578475,
+            "lat": 48.72551700000001,
+            "lon": 2.2587678,
+            "level": 0,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T09:33:00Z",
+            "scheduledArrival": "2026-11-04T09:33:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "departureTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "HIGHSPEED_RAIL",
+              "REGIONAL_RAIL",
+              "TRAM",
+              "BUS"
+            ]
+          },
+          "duration": 1320,
+          "startTime": "2026-11-04T09:11:00Z",
+          "endTime": "2026-11-04T09:33:00Z",
+          "scheduledStartTime": "2026-11-04T09:11:00Z",
+          "scheduledEndTime": "2026-11-04T09:33:00Z",
+          "realTime": false,
+          "scheduled": true,
+          "interlineWithPreviousLeg": false,
+          "headsign": "PIER",
+          "tripFrom": {
+            "name": "Aéroport CDG (Terminal 2) - TGV",
+            "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:monomodalStopPlace:473364",
+            "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:73699",
+            "importance": 0.0008313928265124559,
+            "lat": 49.004146999999996,
+            "lon": 2.57098,
+            "level": 0,
+            "tz": "Europe/Paris",
+            "departure": "2026-11-04T08:24:00Z",
+            "scheduledDeparture": "2026-11-04T08:24:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NOT_ALLOWED",
+            "cancelled": false,
+            "departureTimestampReason": "NO_RT_DATA",
+            "alerts": [
+              {
+                "communicationPeriod": [
+                  {
+                    "start": "2026-11-03T22:22:00Z",
+                    "end": "1970-01-01T00:00:00Z"
+                  }
+                ],
+                "impactPeriod": [
+                  {
+                    "start": "2026-11-03T22:22:00Z",
+                    "end": "1970-01-01T00:00:00Z"
+                  }
+                ],
+                "cause": "TECHNICAL_PROBLEM",
+                "effect": "ACCESSIBILITY_ISSUE",
+                "headerText": "1 ascenseur hors service — Aéroport CDG (Terminal 2) - TGV",
+                "descriptionText": "1 ascenseur sur 7 est actuellement hors service dans cette station."
+              }
+            ],
+            "modes": [
+              "REGIONAL_RAIL",
+              "TRAM",
+              "BUS"
+            ]
+          },
+          "tripTo": {
+            "name": "Saint-Rémy-lès-Chevreuse",
+            "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:monomodalStopPlace:47889",
+            "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:62978",
+            "importance": 0.00036354304756969213,
+            "lat": 48.70273200000001,
+            "lon": 2.0713858999999997,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T09:58:00Z",
+            "scheduledArrival": "2026-11-04T09:58:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NOT_ALLOWED",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "REGIONAL_RAIL",
+              "BUS"
+            ]
+          },
+          "routeId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:C01743",
+          "routeUrl": "",
+          "directionId": "1",
+          "routeColor": "5091cb",
+          "routeTextColor": "ffffff",
+          "routeType": 2,
+          "agencyName": "RER",
+          "agencyUrl": "https://www.iledefrance-mobilites.fr",
+          "agencyFareUrl": "https://app.idf-mobilites.fr/gtfs",
+          "agencyId": "IDFM:71",
+          "tripId": "20261104_09:24_fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:TN:SNCF:4a3a0df5-9e3f-49ca-bdb0-e823eeb6e9ad",
+          "routeShortName": "B",
+          "routeLongName": "",
+          "tripShortName": "PIER54",
+          "displayName": "B",
+          "cancelled": false,
+          "source": "fr_reseau-urbain-et-interurbain-dile-de-france-mobilites.gtfs.zip/stop_times.txt:1669157:1669188",
+          "intermediateStops": [
+            {
+              "name": "Luxembourg",
+              "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:monomodalStopPlace:43833",
+              "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:71161",
+              "importance": 0.0012293814215809107,
+              "lat": 48.845432,
+              "lon": 2.3398089999999994,
+              "level": -2,
+              "tz": "Europe/Paris",
+              "arrival": "2026-11-04T09:12:00Z",
+              "departure": "2026-11-04T09:13:00Z",
+              "scheduledArrival": "2026-11-04T09:12:00Z",
+              "scheduledDeparture": "2026-11-04T09:13:00Z",
+              "vertexType": "TRANSIT",
+              "pickupType": "NORMAL",
+              "dropoffType": "NORMAL",
+              "cancelled": false,
+              "arrivalTimestampReason": "NO_RT_DATA",
+              "departureTimestampReason": "NO_RT_DATA",
+              "modes": [
+                "REGIONAL_RAIL",
+                "BUS"
+              ]
+            }
+          ],
+          "legGeometry": {
+            "points": "",
+            "precision": 6,
+            "length": 0
+          },
+          "alerts": [
+            {
+              "communicationPeriod": [
+                {
+                  "start": "2026-11-07T02:00:00Z",
+                  "end": "2026-11-08T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-08T02:00:00Z",
+                  "end": "2026-11-09T02:00:00Z"
+                }
+              ],
+              "impactPeriod": [
+                {
+                  "start": "2026-11-07T02:00:00Z",
+                  "end": "2026-11-08T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-08T02:00:00Z",
+                  "end": "2026-11-09T02:00:00Z"
+                }
+              ],
+              "cause": "CONSTRUCTION",
+              "effect": "REDUCED_SERVICE",
+              "headerText": "RER B : Aulnay-sous-Bois <-> Mitry - Claye 07-08/11",
+              "descriptionText": "<p>RER B : Aulnay sous Bois &lt;&gt; Mitry Claye - Du 7 au 8 novembre 2026<br><br>P&#233;riode : les week-ends, toute la journ&#233;e.<br>Dates : Du 7 au 8 novembre 2026<br><br>Le trafic est interrompu entre Aulnay sous Bois &lt;&gt; Mitry Claye.<br><br>Un dispositif de bus de remplacement sera mis en place au d&#233;part de vos gares.<br><br>Les horaires du calculateur d'itin&#233;raire tiennent compte des travaux.<br><br>Motif : travaux sur le r&#233;seau ferr&#233;.</p>"
+            },
+            {
+              "communicationPeriod": [
+                {
+                  "start": "2026-11-05T02:00:00Z",
+                  "end": "2026-11-06T02:00:00Z"
+                }
+              ],
+              "impactPeriod": [
+                {
+                  "start": "2026-11-05T02:00:00Z",
+                  "end": "2026-11-06T02:00:00Z"
+                }
+              ],
+              "cause": "TECHNICAL_PROBLEM",
+              "effect": "REDUCED_SERVICE",
+              "headerText": "RER B : mouvement social national interprofessionnel le 05/11",
+              "descriptionText": "<p>Jeudi 5 novembre:<br><br>Le trafic sera perturb&#233;.</p><p>Pour pr&#233;parer votre trajet, rendez-vous la veille &#224; 17h sur le calculateur d&#8217;itin&#233;raires. Vous pouvez &#233;galement  personnaliser votre <a href=\"https://www.transilien.com/fr/les-fiches-horaires\"></a><a href=\"https://www.transilien.com/fr/les-fiches-horaires\">fiche horaire.</a><br><br>Nous vous conseillons de v&#233;rifier les horaires avant de vous rendre en gare.</p><p>Motif : mouvement social national interprofessionnel.</p>"
+            },
+            {
+              "communicationPeriod": [
+                {
+                  "start": "2026-10-29T23:00:00Z",
+                  "end": "2026-10-30T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-01T23:00:00Z",
+                  "end": "2026-11-02T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-02T23:00:00Z",
+                  "end": "2026-11-03T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-03T23:00:00Z",
+                  "end": "2026-11-04T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-04T23:00:00Z",
+                  "end": "2026-11-05T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-05T23:00:00Z",
+                  "end": "2026-11-06T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-08T23:00:00Z",
+                  "end": "2026-11-09T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-09T23:00:00Z",
+                  "end": "2026-11-10T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-11T23:00:00Z",
+                  "end": "2026-11-12T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-12T23:00:00Z",
+                  "end": "2026-11-13T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-15T23:00:00Z",
+                  "end": "2026-11-16T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-16T23:00:00Z",
+                  "end": "2026-11-17T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-17T23:00:00Z",
+                  "end": "2026-11-18T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-18T23:00:00Z",
+                  "end": "2026-11-19T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-19T23:00:00Z",
+                  "end": "2026-11-20T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-22T23:00:00Z",
+                  "end": "2026-11-23T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-23T23:00:00Z",
+                  "end": "2026-11-24T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-24T23:00:00Z",
+                  "end": "2026-11-25T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-25T23:00:00Z",
+                  "end": "2026-11-26T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-26T23:00:00Z",
+                  "end": "2026-11-27T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-29T23:00:00Z",
+                  "end": "2026-11-30T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-30T23:00:00Z",
+                  "end": "2026-12-01T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-01T23:00:00Z",
+                  "end": "2026-12-02T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-02T23:00:00Z",
+                  "end": "2026-12-03T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-03T23:00:00Z",
+                  "end": "2026-12-04T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-06T23:00:00Z",
+                  "end": "2026-12-07T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-07T23:00:00Z",
+                  "end": "2026-12-08T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-08T23:00:00Z",
+                  "end": "2026-12-09T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-09T23:00:00Z",
+                  "end": "2026-12-10T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-10T23:00:00Z",
+                  "end": "2026-12-11T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-13T23:00:00Z",
+                  "end": "2026-12-14T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-14T23:00:00Z",
+                  "end": "2026-12-15T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-15T23:00:00Z",
+                  "end": "2026-12-16T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-16T23:00:00Z",
+                  "end": "2026-12-17T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-17T23:00:00Z",
+                  "end": "2026-12-18T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-20T23:00:00Z",
+                  "end": "2026-12-21T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-21T23:00:00Z",
+                  "end": "2026-12-22T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-22T23:00:00Z",
+                  "end": "2026-12-23T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-23T23:00:00Z",
+                  "end": "2026-12-24T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-27T23:00:00Z",
+                  "end": "2026-12-28T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-28T23:00:00Z",
+                  "end": "2026-12-29T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-29T23:00:00Z",
+                  "end": "2026-12-30T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-30T23:00:00Z",
+                  "end": "2026-12-31T02:00:00Z"
+                }
+              ],
+              "impactPeriod": [
+                {
+                  "start": "2026-10-29T23:00:00Z",
+                  "end": "2026-10-30T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-01T23:00:00Z",
+                  "end": "2026-11-02T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-02T23:00:00Z",
+                  "end": "2026-11-03T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-03T23:00:00Z",
+                  "end": "2026-11-04T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-04T23:00:00Z",
+                  "end": "2026-11-05T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-05T23:00:00Z",
+                  "end": "2026-11-06T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-08T23:00:00Z",
+                  "end": "2026-11-09T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-09T23:00:00Z",
+                  "end": "2026-11-10T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-11T23:00:00Z",
+                  "end": "2026-11-12T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-12T23:00:00Z",
+                  "end": "2026-11-13T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-15T23:00:00Z",
+                  "end": "2026-11-16T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-16T23:00:00Z",
+                  "end": "2026-11-17T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-17T23:00:00Z",
+                  "end": "2026-11-18T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-18T23:00:00Z",
+                  "end": "2026-11-19T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-19T23:00:00Z",
+                  "end": "2026-11-20T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-22T23:00:00Z",
+                  "end": "2026-11-23T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-23T23:00:00Z",
+                  "end": "2026-11-24T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-24T23:00:00Z",
+                  "end": "2026-11-25T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-25T23:00:00Z",
+                  "end": "2026-11-26T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-26T23:00:00Z",
+                  "end": "2026-11-27T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-29T23:00:00Z",
+                  "end": "2026-11-30T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-30T23:00:00Z",
+                  "end": "2026-12-01T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-01T23:00:00Z",
+                  "end": "2026-12-02T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-02T23:00:00Z",
+                  "end": "2026-12-03T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-03T23:00:00Z",
+                  "end": "2026-12-04T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-06T23:00:00Z",
+                  "end": "2026-12-07T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-07T23:00:00Z",
+                  "end": "2026-12-08T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-08T23:00:00Z",
+                  "end": "2026-12-09T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-09T23:00:00Z",
+                  "end": "2026-12-10T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-10T23:00:00Z",
+                  "end": "2026-12-11T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-13T23:00:00Z",
+                  "end": "2026-12-14T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-14T23:00:00Z",
+                  "end": "2026-12-15T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-15T23:00:00Z",
+                  "end": "2026-12-16T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-16T23:00:00Z",
+                  "end": "2026-12-17T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-17T23:00:00Z",
+                  "end": "2026-12-18T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-20T23:00:00Z",
+                  "end": "2026-12-21T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-21T23:00:00Z",
+                  "end": "2026-12-22T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-22T23:00:00Z",
+                  "end": "2026-12-23T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-23T23:00:00Z",
+                  "end": "2026-12-24T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-27T23:00:00Z",
+                  "end": "2026-12-28T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-28T23:00:00Z",
+                  "end": "2026-12-29T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-29T23:00:00Z",
+                  "end": "2026-12-30T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-30T23:00:00Z",
+                  "end": "2026-12-31T02:00:00Z"
+                }
+              ],
+              "cause": "CONSTRUCTION",
+              "effect": "REDUCED_SERVICE",
+              "headerText": "RER B : Châtelet <-> Aéroport CDG2 - Mitry - Claye 01/06-31/12",
+              "descriptionText": "<p>P&#233;riode : en semaine &#224; partir de 22h45.<br><br>Dates : du lundi 1er juin au jeudi 31 d&#233;cembre<br><br>Le trafic est interrompu entre Ch&#226;telet Les Halles et A&#233;rop. C De Gaulle 2 et entre Ch&#226;telet Les Halles et Mitry - Claye.<br><br>Un dispositif de bus de remplacement sera mis en place au d&#233;part du Gare du Nord.<br><br>Pour plus d'informations, consultez le site du RER B<br><br>Motif : travaux sur le r&#233;seau ferroviaire.</p>"
+            },
+            {
+              "communicationPeriod": [
+                {
+                  "start": "2026-10-29T21:45:00Z",
+                  "end": "2026-10-30T02:00:00Z"
+                },
+                {
+                  "start": "2026-10-30T21:45:00Z",
+                  "end": "2026-10-31T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-02T21:45:00Z",
+                  "end": "2026-11-03T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-03T21:45:00Z",
+                  "end": "2026-11-04T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-04T21:45:00Z",
+                  "end": "2026-11-05T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-05T21:45:00Z",
+                  "end": "2026-11-06T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-06T21:45:00Z",
+                  "end": "2026-11-07T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-09T21:45:00Z",
+                  "end": "2026-11-10T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-10T21:45:00Z",
+                  "end": "2026-11-11T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-12T21:45:00Z",
+                  "end": "2026-11-13T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-13T21:45:00Z",
+                  "end": "2026-11-14T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-16T21:45:00Z",
+                  "end": "2026-11-17T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-17T21:45:00Z",
+                  "end": "2026-11-18T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-18T21:45:00Z",
+                  "end": "2026-11-19T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-19T21:45:00Z",
+                  "end": "2026-11-20T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-20T21:45:00Z",
+                  "end": "2026-11-21T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-23T21:45:00Z",
+                  "end": "2026-11-24T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-24T21:45:00Z",
+                  "end": "2026-11-25T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-25T21:45:00Z",
+                  "end": "2026-11-26T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-26T21:45:00Z",
+                  "end": "2026-11-27T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-27T21:45:00Z",
+                  "end": "2026-11-28T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-30T21:45:00Z",
+                  "end": "2026-12-01T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-01T21:45:00Z",
+                  "end": "2026-12-02T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-02T21:45:00Z",
+                  "end": "2026-12-03T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-03T21:45:00Z",
+                  "end": "2026-12-04T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-04T21:45:00Z",
+                  "end": "2026-12-05T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-07T21:45:00Z",
+                  "end": "2026-12-08T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-08T21:45:00Z",
+                  "end": "2026-12-09T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-09T21:45:00Z",
+                  "end": "2026-12-10T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-10T21:45:00Z",
+                  "end": "2026-12-11T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-11T21:45:00Z",
+                  "end": "2026-12-12T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-14T21:45:00Z",
+                  "end": "2026-12-15T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-15T21:45:00Z",
+                  "end": "2026-12-16T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-16T21:45:00Z",
+                  "end": "2026-12-17T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-17T21:45:00Z",
+                  "end": "2026-12-18T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-18T21:45:00Z",
+                  "end": "2026-12-19T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-21T21:45:00Z",
+                  "end": "2026-12-22T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-22T21:45:00Z",
+                  "end": "2026-12-23T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-23T21:45:00Z",
+                  "end": "2026-12-24T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-24T21:45:00Z",
+                  "end": "2026-12-25T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-28T21:45:00Z",
+                  "end": "2026-12-29T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-29T21:45:00Z",
+                  "end": "2026-12-30T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-30T21:45:00Z",
+                  "end": "2026-12-31T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-31T21:45:00Z",
+                  "end": "2027-01-01T02:00:00Z"
+                }
+              ],
+              "impactPeriod": [
+                {
+                  "start": "2026-10-29T21:45:00Z",
+                  "end": "2026-10-30T02:00:00Z"
+                },
+                {
+                  "start": "2026-10-30T21:45:00Z",
+                  "end": "2026-10-31T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-02T21:45:00Z",
+                  "end": "2026-11-03T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-03T21:45:00Z",
+                  "end": "2026-11-04T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-04T21:45:00Z",
+                  "end": "2026-11-05T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-05T21:45:00Z",
+                  "end": "2026-11-06T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-06T21:45:00Z",
+                  "end": "2026-11-07T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-09T21:45:00Z",
+                  "end": "2026-11-10T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-10T21:45:00Z",
+                  "end": "2026-11-11T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-12T21:45:00Z",
+                  "end": "2026-11-13T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-13T21:45:00Z",
+                  "end": "2026-11-14T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-16T21:45:00Z",
+                  "end": "2026-11-17T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-17T21:45:00Z",
+                  "end": "2026-11-18T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-18T21:45:00Z",
+                  "end": "2026-11-19T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-19T21:45:00Z",
+                  "end": "2026-11-20T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-20T21:45:00Z",
+                  "end": "2026-11-21T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-23T21:45:00Z",
+                  "end": "2026-11-24T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-24T21:45:00Z",
+                  "end": "2026-11-25T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-25T21:45:00Z",
+                  "end": "2026-11-26T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-26T21:45:00Z",
+                  "end": "2026-11-27T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-27T21:45:00Z",
+                  "end": "2026-11-28T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-30T21:45:00Z",
+                  "end": "2026-12-01T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-01T21:45:00Z",
+                  "end": "2026-12-02T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-02T21:45:00Z",
+                  "end": "2026-12-03T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-03T21:45:00Z",
+                  "end": "2026-12-04T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-04T21:45:00Z",
+                  "end": "2026-12-05T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-07T21:45:00Z",
+                  "end": "2026-12-08T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-08T21:45:00Z",
+                  "end": "2026-12-09T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-09T21:45:00Z",
+                  "end": "2026-12-10T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-10T21:45:00Z",
+                  "end": "2026-12-11T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-11T21:45:00Z",
+                  "end": "2026-12-12T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-14T21:45:00Z",
+                  "end": "2026-12-15T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-15T21:45:00Z",
+                  "end": "2026-12-16T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-16T21:45:00Z",
+                  "end": "2026-12-17T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-17T21:45:00Z",
+                  "end": "2026-12-18T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-18T21:45:00Z",
+                  "end": "2026-12-19T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-21T21:45:00Z",
+                  "end": "2026-12-22T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-22T21:45:00Z",
+                  "end": "2026-12-23T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-23T21:45:00Z",
+                  "end": "2026-12-24T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-24T21:45:00Z",
+                  "end": "2026-12-25T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-28T21:45:00Z",
+                  "end": "2026-12-29T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-29T21:45:00Z",
+                  "end": "2026-12-30T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-30T21:45:00Z",
+                  "end": "2026-12-31T02:00:00Z"
+                },
+                {
+                  "start": "2026-12-31T21:45:00Z",
+                  "end": "2027-01-01T02:00:00Z"
+                }
+              ],
+              "cause": "CONSTRUCTION",
+              "effect": "REDUCED_SERVICE",
+              "headerText": "RER B : Aéroport CDG2/Mitry <-> Châtelet Les H.",
+              "descriptionText": "<p>P&#233;riode : en semaine &#224; partir de 22h45 (sauf jour f&#233;ri&#233;).<br><br>Dates : toute l'ann&#233;e sauf les 25 septembre, 2 et 5 octobre et 11 et 13 novembre</p><p>Le trafic est interrompu entre Ch&#226;telet les Halles et A&#233;roport Charles de Gaulle/Mitry-Claye<br><br>Un dispositif de bus de remplacement sera mis en place au d&#233;part du Gare du Nord.<br><br>Les horaires du calculateur d'itin&#233;raire tiennent compte des travaux.<br><br>Motif : travaux sur le r&#233;seau ferroviaire</p>"
+            },
+            {
+              "communicationPeriod": [
+                {
+                  "start": "2026-11-21T02:00:00Z",
+                  "end": "2026-11-22T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-22T02:00:00Z",
+                  "end": "2026-11-23T02:00:00Z"
+                }
+              ],
+              "impactPeriod": [
+                {
+                  "start": "2026-11-21T02:00:00Z",
+                  "end": "2026-11-22T02:00:00Z"
+                },
+                {
+                  "start": "2026-11-22T02:00:00Z",
+                  "end": "2026-11-23T02:00:00Z"
+                }
+              ],
+              "cause": "CONSTRUCTION",
+              "effect": "REDUCED_SERVICE",
+              "headerText": "RER B : Aulnay-sous-Bois <-> Mitry - Claye 21-22/11",
+              "descriptionText": "<p>P&#233;riode : les week-ends, toute la journ&#233;e.</p><p>Dates : Du 21 au 22 novembre 2026</p><p>Le trafic est interrompu entre Aulnay sous Bois &lt;&gt; Mitry Claye.</p><p>Un dispositif de bus de remplacement sera mis en place au d&#233;part de vos gares.</p><p>Les horaires du calculateur d'itin&#233;raire tiennent compte des travaux.</p><p>Motif : travaux sur le r&#233;seau ferr&#233;</p>"
+            }
+          ],
+          "bikesAllowed": false,
+          "wheelchairAccessible": "ACCESSIBLE",
+          "reservation": "NONE",
+          "ticketUrls": {
+            "web": "https://app.idf-mobilites.fr/gtfs?service_date=%5B%2220261104%22%5D&ticketing_trip_id=%5B%22IDFM:TN:SNCF:4a3a0df5-9e3f-49ca-bdb0-e823eeb6e9ad%22%5D&from_ticketing_stop_time_id=%5B%2214%22%5D&to_ticketing_stop_time_id=%5B%2230%22%5D&boarding_time=%5B%222026-11-04T09:11:00%2B00:00%22%5D&arrival_time=%5B%222026-11-04T09:33:00%2B00:00%22%5D",
+            "android": "https://app.idf-mobilites.fr/gtfs?service_date=%5B%2220261104%22%5D&ticketing_trip_id=%5B%22IDFM:TN:SNCF:4a3a0df5-9e3f-49ca-bdb0-e823eeb6e9ad%22%5D&from_ticketing_stop_time_id=%5B%2214%22%5D&to_ticketing_stop_time_id=%5B%2230%22%5D&boarding_time=%5B%222026-11-04T09:11:00%2B00:00%22%5D&arrival_time=%5B%222026-11-04T09:33:00%2B00:00%22%5D",
+            "ios": "https://app.idf-mobilites.fr/gtfs?service_date=%5B%2220261104%22%5D&ticketing_trip_id=%5B%22IDFM:TN:SNCF:4a3a0df5-9e3f-49ca-bdb0-e823eeb6e9ad%22%5D&from_ticketing_stop_time_id=%5B%2214%22%5D&to_ticketing_stop_time_id=%5B%2230%22%5D&boarding_time=%5B%222026-11-04T09:11:00%2B00:00%22%5D&arrival_time=%5B%222026-11-04T09:33:00%2B00:00%22%5D"
+          },
+          "alternatives": []
+        },
+        {
+          "mode": "WALK",
+          "from": {
+            "name": "Massy - Palaiseau",
+            "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:monomodalStopPlace:58774",
+            "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:63244",
+            "importance": 0.00133117800578475,
+            "lat": 48.72551700000001,
+            "lon": 2.2587678,
+            "level": 0,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T09:33:00Z",
+            "departure": "2026-11-04T09:33:00Z",
+            "scheduledArrival": "2026-11-04T09:33:00Z",
+            "scheduledDeparture": "2026-11-04T09:33:00Z",
+            "vertexType": "TRANSIT",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "departureTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "HIGHSPEED_RAIL",
+              "REGIONAL_RAIL",
+              "TRAM",
+              "BUS"
+            ]
+          },
+          "to": {
+            "name": "Massy TGV",
+            "stopId": "fr-horaires-sncf_FR::LMO:93375a70-cb0a-11e8-8bfa-f784c1c7c611:",
+            "importance": 0.0015173788415268064,
+            "lat": 48.72575800000001,
+            "lon": 2.261254,
+            "level": -1,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T09:35:00Z",
+            "scheduledArrival": "2026-11-04T09:35:00Z",
+            "vertexType": "TRANSIT",
+            "modes": [
+              "HIGHSPEED_RAIL"
+            ]
+          },
+          "duration": 120,
+          "startTime": "2026-11-04T09:33:00Z",
+          "endTime": "2026-11-04T09:35:00Z",
+          "scheduledStartTime": "2026-11-04T09:33:00Z",
+          "scheduledEndTime": "2026-11-04T09:35:00Z",
+          "realTime": false,
+          "scheduled": false,
+          "distance": 497,
+          "legGeometry": {
+            "points": "",
+            "precision": 6,
+            "length": 0
+          },
+          "steps": []
+        },
+        {
+          "mode": "HIGHSPEED_RAIL",
+          "from": {
+            "name": "Massy TGV",
+            "stopId": "fr-horaires-sncf_FR::LMO:93375a70-cb0a-11e8-8bfa-f784c1c7c611:",
+            "importance": 0.0015173788415268064,
+            "lat": 48.72575800000001,
+            "lon": 2.261254,
+            "level": -1,
+            "tz": "Europe/Paris",
+            "departure": "2026-11-04T09:41:00Z",
+            "scheduledDeparture": "2026-11-04T09:41:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "departureTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "HIGHSPEED_RAIL"
+            ]
+          },
+          "to": {
+            "name": "Nantes",
+            "stopId": "fr-horaires-sncf_FR::LMU:9841ca00-cb0a-11e8-8bfa-f784c1c7c611:",
+            "importance": 0.003665023948997259,
+            "lat": 47.217490999999995,
+            "lon": -1.5420770000000001,
+            "level": 0,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T11:50:00Z",
+            "scheduledArrival": "2026-11-04T11:50:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "HIGHSPEED_RAIL",
+              "LONG_DISTANCE",
+              "REGIONAL_RAIL",
+              "TRAM",
+              "BUS"
+            ]
+          },
+          "duration": 7740,
+          "startTime": "2026-11-04T09:41:00Z",
+          "endTime": "2026-11-04T11:50:00Z",
+          "scheduledStartTime": "2026-11-04T09:41:00Z",
+          "scheduledEndTime": "2026-11-04T11:50:00Z",
+          "realTime": false,
+          "scheduled": true,
+          "interlineWithPreviousLeg": false,
+          "headsign": "",
+          "tripFrom": {
+            "name": "Strasbourg",
+            "stopId": "fr-horaires-sncf_FR::LMU:6a30e1a0-cb0a-11e8-8bfa-f784c1c7c611:",
+            "importance": 0.00873649027198553,
+            "lat": 48.58511000000001,
+            "lon": 7.733882,
+            "level": 1,
+            "tz": "Europe/Paris",
+            "departure": "2026-11-04T06:31:00Z",
+            "scheduledDeparture": "2026-11-04T06:31:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "departureTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "HIGHSPEED_RAIL",
+              "REGIONAL_RAIL",
+              "BUS"
+            ]
+          },
+          "tripTo": {
+            "name": "Nantes",
+            "stopId": "fr-horaires-sncf_FR::LMU:9841ca00-cb0a-11e8-8bfa-f784c1c7c611:",
+            "importance": 0.003665023948997259,
+            "lat": 47.217490999999995,
+            "lon": -1.5420770000000001,
+            "level": 0,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T11:50:00Z",
+            "scheduledArrival": "2026-11-04T11:50:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "HIGHSPEED_RAIL",
+              "LONG_DISTANCE",
+              "REGIONAL_RAIL",
+              "TRAM",
+              "BUS"
+            ]
+          },
+          "category": {
+            "id": "",
+            "name": "",
+            "shortName": ""
+          },
+          "routeId": "fr-horaires-sncf_-FR:Operator::07B82396-04B1-48F0-84BF-36C7F1B81442:-101",
+          "routeUrl": "",
+          "directionId": "1",
+          "routeType": 101,
+          "agencyName": "SNCF VOYAGEURS",
+          "agencyUrl": "",
+          "agencyFareUrl": "",
+          "agencyId": "FR:Operator::07B82396-04B1-48F0-84BF-36C7F1B81442:",
+          "tripId": "20261104_07:31_fr-horaires-sncf_FR:ServiceJourney::SN5486FERRE_9133780",
+          "routeShortName": "",
+          "routeLongName": "",
+          "tripShortName": "5486",
+          "displayName": "TGV INOUI 5486",
+          "cancelled": false,
+          "source": "fr_horaires-sncf.netex.zip/sncf_netexfr_20261101_2132.xml:405050264:405050264",
+          "intermediateStops": [
+            {
+              "name": "Le Mans",
+              "stopId": "fr-horaires-sncf_FR::LMU:8ef85130-cb0a-11e8-8bfa-f784c1c7c611:",
+              "importance": 0.0023328757379204035,
+              "lat": 47.99561500000001,
+              "lon": 0.19261400000000004,
+              "tz": "Europe/Paris",
+              "arrival": "2026-11-04T10:30:00Z",
+              "departure": "2026-11-04T10:33:00Z",
+              "scheduledArrival": "2026-11-04T10:30:00Z",
+              "scheduledDeparture": "2026-11-04T10:33:00Z",
+              "vertexType": "TRANSIT",
+              "pickupType": "NORMAL",
+              "dropoffType": "NORMAL",
+              "cancelled": false,
+              "arrivalTimestampReason": "NO_RT_DATA",
+              "departureTimestampReason": "NO_RT_DATA",
+              "modes": [
+                "HIGHSPEED_RAIL",
+                "REGIONAL_RAIL",
+                "BUS"
+              ]
+            }
+          ],
+          "legGeometry": {
+            "points": "",
+            "precision": 6,
+            "length": 0
+          },
+          "bikesAllowed": false,
+          "wheelchairAccessible": "NOT_ACCESSIBLE",
+          "reservation": "COMPULSORY",
+          "alternatives": []
+        },
+        {
+          "mode": "WALK",
+          "from": {
+            "name": "Nantes",
+            "stopId": "fr-horaires-sncf_FR::LMU:9841ca00-cb0a-11e8-8bfa-f784c1c7c611:",
+            "importance": 0.003665023948997259,
+            "lat": 47.217490999999995,
+            "lon": -1.5420770000000001,
+            "level": 0,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T11:50:00Z",
+            "departure": "2026-11-04T11:50:00Z",
+            "scheduledArrival": "2026-11-04T11:50:00Z",
+            "scheduledDeparture": "2026-11-04T11:50:00Z",
+            "vertexType": "TRANSIT",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "HIGHSPEED_RAIL",
+              "LONG_DISTANCE",
+              "REGIONAL_RAIL",
+              "TRAM",
+              "BUS"
+            ]
+          },
+          "to": {
+            "name": "Sophie Trébuchet",
+            "stopId": "fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:Quay:548",
+            "parentId": "fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:StopPlace:202",
+            "importance": 0.00005363754462450743,
+            "lat": 47.219806999999996,
+            "lon": -1.5456139999999998,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T11:55:00Z",
+            "scheduledArrival": "2026-11-04T11:55:00Z",
+            "vertexType": "TRANSIT",
+            "modes": [
+              "BUS"
+            ]
+          },
+          "duration": 300,
+          "startTime": "2026-11-04T11:50:00Z",
+          "endTime": "2026-11-04T11:55:00Z",
+          "scheduledStartTime": "2026-11-04T11:50:00Z",
+          "scheduledEndTime": "2026-11-04T11:55:00Z",
+          "realTime": false,
+          "scheduled": false,
+          "distance": 444,
+          "legGeometry": {
+            "points": "",
+            "precision": 6,
+            "length": 0
+          },
+          "steps": []
+        },
+        {
+          "mode": "BUS",
+          "from": {
+            "name": "Sophie Trébuchet",
+            "stopId": "fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:Quay:548",
+            "parentId": "fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:StopPlace:202",
+            "importance": 0.00005363754462450743,
+            "lat": 47.219806999999996,
+            "lon": -1.5456139999999998,
+            "tz": "Europe/Paris",
+            "departure": "2026-11-04T11:55:00Z",
+            "scheduledDeparture": "2026-11-04T11:55:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "departureTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "BUS"
+            ]
+          },
+          "to": {
+            "name": "Hôtel de Ville",
+            "stopId": "fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:Quay:532",
+            "parentId": "fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:StopPlace:196",
+            "importance": 0.00008160841389326379,
+            "lat": 47.21782699999999,
+            "lon": -1.554443,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T11:59:00Z",
+            "scheduledArrival": "2026-11-04T11:59:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "departureTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "BUS"
+            ]
+          },
+          "duration": 240,
+          "startTime": "2026-11-04T11:55:00Z",
+          "endTime": "2026-11-04T11:59:00Z",
+          "scheduledStartTime": "2026-11-04T11:55:00Z",
+          "scheduledEndTime": "2026-11-04T11:59:00Z",
+          "realTime": false,
+          "scheduled": true,
+          "interlineWithPreviousLeg": false,
+          "headsign": "Gare de Chantenay",
+          "tripFrom": {
+            "name": "Haluchère - Batignolles",
+            "stopId": "fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:Quay:148",
+            "parentId": "fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:StopPlace:32",
+            "importance": 0.00016363663598895073,
+            "lat": 47.248990000000006,
+            "lon": -1.523058,
+            "tz": "Europe/Paris",
+            "departure": "2026-11-04T11:41:00Z",
+            "scheduledDeparture": "2026-11-04T11:41:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "departureTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "TRAM",
+              "BUS"
+            ]
+          },
+          "tripTo": {
+            "name": "Gare de Chantenay",
+            "stopId": "fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:Quay:237",
+            "parentId": "fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:StopPlace:62",
+            "importance": 0.00018069047655444592,
+            "lat": 47.197914000000004,
+            "lon": -1.593612,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T12:17:00Z",
+            "scheduledArrival": "2026-11-04T12:17:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "REGIONAL_RAIL",
+              "BUS"
+            ]
+          },
+          "routeId": "fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:Line:C1",
+          "routeUrl": "",
+          "directionId": "1",
+          "routeColor": "0bbbef",
+          "routeTextColor": "ffffff",
+          "routeType": 3,
+          "agencyName": "Naolib",
+          "agencyUrl": "https://www.naolib.fr",
+          "agencyFareUrl": "",
+          "agencyId": "FR_NAOLIB:Operator:1",
+          "tripId": "20261104_12:41_fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:VehicleJourney:49897483-CR_26_27-HD27BEA3-Mercredi-02-0010000",
+          "routeShortName": "C1",
+          "routeLongName": "Haluchère - Batignolles - Gare de Chantenay",
+          "tripShortName": "",
+          "displayName": "C1",
+          "cancelled": false,
+          "source": "fr_reseau-de-transports-collectifs-naolib.gtfs.zip/stop_times.txt:1645906:1645935",
+          "intermediateStops": [
+            {
+              "name": "Foch - Cathédrale",
+              "stopId": "fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:Quay:546",
+              "parentId": "fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:StopPlace:201",
+              "importance": 0.00010634992941049859,
+              "lat": 47.219254,
+              "lon": -1.550459,
+              "tz": "Europe/Paris",
+              "arrival": "2026-11-04T11:57:00Z",
+              "departure": "2026-11-04T11:57:00Z",
+              "scheduledArrival": "2026-11-04T11:57:00Z",
+              "scheduledDeparture": "2026-11-04T11:57:00Z",
+              "vertexType": "TRANSIT",
+              "pickupType": "NORMAL",
+              "dropoffType": "NORMAL",
+              "cancelled": false,
+              "arrivalTimestampReason": "NO_RT_DATA",
+              "departureTimestampReason": "NO_RT_DATA",
+              "modes": [
+                "BUS"
+              ]
+            }
+          ],
+          "legGeometry": {
+            "points": "",
+            "precision": 6,
+            "length": 0
+          },
+          "bikesAllowed": false,
+          "wheelchairAccessible": "ACCESSIBLE",
+          "reservation": "NONE",
+          "alternatives": []
+        },
+        {
+          "mode": "WALK",
+          "from": {
+            "name": "Hôtel de Ville",
+            "stopId": "fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:Quay:532",
+            "parentId": "fr-reseau-de-transports-collectifs-naolib_FR_NAOLIB:StopPlace:196",
+            "importance": 0.00008160841389326379,
+            "lat": 47.21782699999999,
+            "lon": -1.554443,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T11:59:00Z",
+            "departure": "2026-11-04T11:59:00Z",
+            "scheduledArrival": "2026-11-04T11:59:00Z",
+            "scheduledDeparture": "2026-11-04T11:59:00Z",
+            "vertexType": "TRANSIT",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "departureTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "BUS"
+            ]
+          },
+          "to": {
+            "name": "END",
+            "lat": 47.2186371,
+            "lon": -1.5541362,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T12:01:00Z",
+            "scheduledArrival": "2026-11-04T12:01:00Z",
+            "vertexType": "NORMAL"
+          },
+          "duration": 120,
+          "startTime": "2026-11-04T11:59:00Z",
+          "endTime": "2026-11-04T12:01:00Z",
+          "scheduledStartTime": "2026-11-04T11:59:00Z",
+          "scheduledEndTime": "2026-11-04T12:01:00Z",
+          "realTime": false,
+          "scheduled": false,
+          "distance": 107,
+          "legGeometry": {
+            "points": "",
+            "precision": 6,
+            "length": 0
+          },
+          "steps": []
+        }
+      ]
+    }
+  ],
+  "previousPageCursor": "EARLIER|1793779200",
+  "nextPageCursor": "LATER|1793799060"
+}

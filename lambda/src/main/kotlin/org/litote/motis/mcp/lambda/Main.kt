@@ -53,7 +53,8 @@ fun createMcpLambda(): McpLambda {
     val motis = config.clientConfiguration()
     val gateway = MotisGateway(motis, overlays = config.realtimeOverlays(motis.userAgent))
     val views = loadViews(config.tiles)
-    return McpLambda { createMotisMcpServer(gateway, config.baseUrl, config.tiles, views, viewDomain(config)) }
+    val cityStations = config.cityStationsStore()
+    return McpLambda { createMotisMcpServer(gateway, config.baseUrl, config.tiles, views, cityStations, viewDomain(config)) }
 }
 
 fun main() {

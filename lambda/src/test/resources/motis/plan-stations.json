@@ -1,0 +1,546 @@
+{
+  "requestParameters": {},
+  "debugOutput": {},
+  "from": {
+    "name": "Paris Montparnasse Hall 1 - 2",
+    "stopId": "fr-horaires-sncf_FR::LMU:95203eb0-cb0a-11e8-8bfa-f784c1c7c611:",
+    "importance": 0.006676458287984133,
+    "lat": 48.841172,
+    "lon": 2.320514,
+    "level": 2,
+    "tz": "Europe/Paris",
+    "vertexType": "TRANSIT",
+    "modes": [
+      "HIGHSPEED_RAIL",
+      "REGIONAL_RAIL",
+      "BUS"
+    ]
+  },
+  "to": {
+    "name": "Nantes",
+    "stopId": "fr-horaires-sncf_FR::LMU:9841ca00-cb0a-11e8-8bfa-f784c1c7c611:",
+    "importance": 0.003665023948997259,
+    "lat": 47.217490999999995,
+    "lon": -1.5420770000000001,
+    "level": 0,
+    "tz": "Europe/Paris",
+    "vertexType": "TRANSIT",
+    "modes": [
+      "HIGHSPEED_RAIL",
+      "LONG_DISTANCE",
+      "REGIONAL_RAIL",
+      "TRAM",
+      "BUS"
+    ]
+  },
+  "direct": [],
+  "itineraries": [
+    {
+      "duration": 8100,
+      "startTime": "2026-11-04T08:39:00Z",
+      "endTime": "2026-11-04T10:54:00Z",
+      "transfers": 0,
+      "id": "Cq0CCg5UR1YgSU5PVUkgODkxMxJHMjAyNjExMDRfMDk6MzlfZnItaG9yYWlyZXMtc25jZl9GUjpTZXJ2aWNlSm91cm5leTo6U044OTEzRkVSUkVfMTMyMDI0NzYaPmZyLWhvcmFpcmVzLXNuY2ZfRlI6OkxNVTo5NTIwM2ViMC1jYjBhLTExZTgtOGJmYS1mNzg0YzFjN2M2MTE6IcwnK4ara0hAKfpH36RpkAJAMj5mci1ob3JhaXJlcy1zbmNmX0ZSOjpMTVU6OTg0MWNhMDAtY2IwYS0xMWU4LThiZmEtZjc4NGMxYzdjNjExOjlQFr6+1ptHQEHlnq7uWKz4v0ik3qvXBlDInazXBloOSElHSFNQRUVEX1JBSUxgAWkAAAAAAAAAQHEAAAAAAAAAAA==",
+      "legs": [
+        {
+          "mode": "HIGHSPEED_RAIL",
+          "from": {
+            "name": "Paris Montparnasse Hall 1 - 2",
+            "stopId": "fr-horaires-sncf_FR::LMU:95203eb0-cb0a-11e8-8bfa-f784c1c7c611:",
+            "importance": 0.006676458287984133,
+            "lat": 48.841172,
+            "lon": 2.320514,
+            "level": 2,
+            "tz": "Europe/Paris",
+            "departure": "2026-11-04T08:39:00Z",
+            "scheduledDeparture": "2026-11-04T08:39:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "departureTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "HIGHSPEED_RAIL",
+              "REGIONAL_RAIL",
+              "BUS"
+            ]
+          },
+          "to": {
+            "name": "Nantes",
+            "stopId": "fr-horaires-sncf_FR::LMU:9841ca00-cb0a-11e8-8bfa-f784c1c7c611:",
+            "importance": 0.003665023948997259,
+            "lat": 47.217490999999995,
+            "lon": -1.5420770000000001,
+            "level": 0,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T10:54:00Z",
+            "scheduledArrival": "2026-11-04T10:54:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "departureTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "HIGHSPEED_RAIL",
+              "LONG_DISTANCE",
+              "REGIONAL_RAIL",
+              "TRAM",
+              "BUS"
+            ]
+          },
+          "duration": 8100,
+          "startTime": "2026-11-04T08:39:00Z",
+          "endTime": "2026-11-04T10:54:00Z",
+          "scheduledStartTime": "2026-11-04T08:39:00Z",
+          "scheduledEndTime": "2026-11-04T10:54:00Z",
+          "realTime": false,
+          "scheduled": true,
+          "interlineWithPreviousLeg": false,
+          "headsign": "",
+          "tripFrom": {
+            "name": "Paris Montparnasse Hall 1 - 2",
+            "stopId": "fr-horaires-sncf_FR::LMU:95203eb0-cb0a-11e8-8bfa-f784c1c7c611:",
+            "importance": 0.006676458287984133,
+            "lat": 48.841172,
+            "lon": 2.320514,
+            "level": 2,
+            "tz": "Europe/Paris",
+            "departure": "2026-11-04T08:39:00Z",
+            "scheduledDeparture": "2026-11-04T08:39:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "departureTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "HIGHSPEED_RAIL",
+              "REGIONAL_RAIL",
+              "BUS"
+            ]
+          },
+          "tripTo": {
+            "name": "Le Croisic",
+            "stopId": "fr-horaires-sncf_FR::LMU:7327cda0-cb0a-11e8-8bfa-f784c1c7c611:",
+            "importance": 0.0003331592015456408,
+            "lat": 47.289888999999995,
+            "lon": -2.50734,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T12:03:00Z",
+            "scheduledArrival": "2026-11-04T12:03:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "HIGHSPEED_RAIL",
+              "REGIONAL_RAIL"
+            ]
+          },
+          "category": {
+            "id": "",
+            "name": "",
+            "shortName": ""
+          },
+          "routeId": "fr-horaires-sncf_-FR:Operator::07B82396-04B1-48F0-84BF-36C7F1B81442:-101",
+          "routeUrl": "",
+          "directionId": "1",
+          "routeType": 101,
+          "agencyName": "SNCF VOYAGEURS",
+          "agencyUrl": "",
+          "agencyFareUrl": "",
+          "agencyId": "FR:Operator::07B82396-04B1-48F0-84BF-36C7F1B81442:",
+          "tripId": "20261104_09:39_fr-horaires-sncf_FR:ServiceJourney::SN8913FERRE_13202476",
+          "routeShortName": "",
+          "routeLongName": "",
+          "tripShortName": "8913",
+          "displayName": "TGV INOUI 8913",
+          "cancelled": false,
+          "source": "fr_horaires-sncf.netex.zip/sncf_netexfr_20261101_2132.xml:596661189:596661189",
+          "intermediateStops": [
+            {
+              "name": "Le Mans",
+              "stopId": "fr-horaires-sncf_FR::LMU:8ef85130-cb0a-11e8-8bfa-f784c1c7c611:",
+              "importance": 0.0023328757379204035,
+              "lat": 47.99561500000001,
+              "lon": 0.19261400000000004,
+              "tz": "Europe/Paris",
+              "arrival": "2026-11-04T09:34:00Z",
+              "departure": "2026-11-04T09:37:00Z",
+              "scheduledArrival": "2026-11-04T09:34:00Z",
+              "scheduledDeparture": "2026-11-04T09:37:00Z",
+              "vertexType": "TRANSIT",
+              "pickupType": "NORMAL",
+              "dropoffType": "NORMAL",
+              "cancelled": false,
+              "arrivalTimestampReason": "NO_RT_DATA",
+              "departureTimestampReason": "NO_RT_DATA",
+              "modes": [
+                "HIGHSPEED_RAIL",
+                "REGIONAL_RAIL",
+                "BUS"
+              ]
+            }
+          ],
+          "legGeometry": {
+            "points": "",
+            "precision": 6,
+            "length": 0
+          },
+          "bikesAllowed": false,
+          "wheelchairAccessible": "NOT_ACCESSIBLE",
+          "reservation": "COMPULSORY",
+          "alternatives": []
+        }
+      ]
+    },
+    {
+      "duration": 8700,
+      "startTime": "2026-11-04T09:25:00Z",
+      "endTime": "2026-11-04T11:50:00Z",
+      "transfers": 1,
+      "id": "CqACCgpPVUlHTyA3NjE1EkcyMDI2MTEwNF8xMDoyNV9mci1ob3JhaXJlcy1zbmNmX0ZSOlNlcnZpY2VKb3VybmV5OjpTTjc2MTVGRVJSRV8xMzIzOTc5ORo+ZnItaG9yYWlyZXMtc25jZl9GUjo6TE1VOjk1MjAzZWIwLWNiMGEtMTFlOC04YmZhLWY3ODRjMWM3YzYxMTohzCcrhqtrSEAp+kffpGmQAkAyPmZyLWhvcmFpcmVzLXNuY2ZfRlI6OkxNVTo4ZWY4NTEzMC1jYjBhLTExZTgtOGJmYS1mNzg0YzFjN2M2MTE6ORs09E9w/0dAQSc5YFeTp8g/SOzzq9cGUNCNrNcGWg5ISUdIU1BFRURfUkFJTGABaQAAAAAAAABACrgBGj5mci1ob3JhaXJlcy1zbmNmX0ZSOjpMTVU6OGVmODUxMzAtY2IwYS0xMWU4LThiZmEtZjc4NGMxYzdjNjExOiEbNPRPcP9HQCknOWBXk6fIPzI+ZnItaG9yYWlyZXMtc25jZl9GUjo6TE1VOjhlZjg1MTMwLWNiMGEtMTFlOC04YmZhLWY3ODRjMWM3YzYxMTo5GzT0T3D/R0BBJzlgV5OnyD9I0I2s1wZQyI6s1wZaBFdBTEtgAQqjAgoOVEdWIElOT1VJIDU0ODYSRjIwMjYxMTA0XzA3OjMxX2ZyLWhvcmFpcmVzLXNuY2ZfRlI6U2VydmljZUpvdXJuZXk6OlNONTQ4NkZFUlJFXzkxMzM3ODAaPmZyLWhvcmFpcmVzLXNuY2ZfRlI6OkxNVTo4ZWY4NTEzMC1jYjBhLTExZTgtOGJmYS1mNzg0YzFjN2M2MTE6IRs09E9w/0dAKSc5YFeTp8g/Mj5mci1ob3JhaXJlcy1zbmNmX0ZSOjpMTVU6OTg0MWNhMDAtY2IwYS0xMWU4LThiZmEtZjc4NGMxYzdjNjExOjlQFr6+1ptHQEHlnq7uWKz4v0jck6zXBlDot6zXBloOSElHSFNQRUVEX1JBSUxgAXEAAAAAAAAAAA==",
+      "legs": [
+        {
+          "mode": "HIGHSPEED_RAIL",
+          "from": {
+            "name": "Paris Montparnasse Hall 1 - 2",
+            "stopId": "fr-horaires-sncf_FR::LMU:95203eb0-cb0a-11e8-8bfa-f784c1c7c611:",
+            "importance": 0.006676458287984133,
+            "lat": 48.841172,
+            "lon": 2.320514,
+            "level": 2,
+            "tz": "Europe/Paris",
+            "departure": "2026-11-04T09:25:00Z",
+            "scheduledDeparture": "2026-11-04T09:25:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "departureTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "HIGHSPEED_RAIL",
+              "REGIONAL_RAIL",
+              "BUS"
+            ]
+          },
+          "to": {
+            "name": "Le Mans",
+            "stopId": "fr-horaires-sncf_FR::LMU:8ef85130-cb0a-11e8-8bfa-f784c1c7c611:",
+            "importance": 0.0023328757379204035,
+            "lat": 47.99561500000001,
+            "lon": 0.19261400000000004,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T10:20:00Z",
+            "scheduledArrival": "2026-11-04T10:20:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "departureTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "HIGHSPEED_RAIL",
+              "REGIONAL_RAIL",
+              "BUS"
+            ]
+          },
+          "duration": 3300,
+          "startTime": "2026-11-04T09:25:00Z",
+          "endTime": "2026-11-04T10:20:00Z",
+          "scheduledStartTime": "2026-11-04T09:25:00Z",
+          "scheduledEndTime": "2026-11-04T10:20:00Z",
+          "realTime": false,
+          "scheduled": true,
+          "interlineWithPreviousLeg": false,
+          "headsign": "",
+          "tripFrom": {
+            "name": "Paris Montparnasse Hall 1 - 2",
+            "stopId": "fr-horaires-sncf_FR::LMU:95203eb0-cb0a-11e8-8bfa-f784c1c7c611:",
+            "importance": 0.006676458287984133,
+            "lat": 48.841172,
+            "lon": 2.320514,
+            "level": 2,
+            "tz": "Europe/Paris",
+            "departure": "2026-11-04T09:25:00Z",
+            "scheduledDeparture": "2026-11-04T09:25:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "departureTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "HIGHSPEED_RAIL",
+              "REGIONAL_RAIL",
+              "BUS"
+            ]
+          },
+          "tripTo": {
+            "name": "Quimper",
+            "stopId": "fr-horaires-sncf_FR::LMU:7d6ff1c0-cb0a-11e8-8bfa-f784c1c7c611:",
+            "importance": 0.0008135943789966404,
+            "lat": 47.994455,
+            "lon": -4.092103,
+            "level": 0,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T13:38:00Z",
+            "scheduledArrival": "2026-11-04T13:38:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "HIGHSPEED_RAIL",
+              "REGIONAL_RAIL",
+              "BUS"
+            ]
+          },
+          "category": {
+            "id": "",
+            "name": "",
+            "shortName": ""
+          },
+          "routeId": "fr-horaires-sncf_-FR:Operator::07B82396-04B1-48F0-84BF-36C7F1B81442:-101",
+          "routeUrl": "",
+          "directionId": "1",
+          "routeType": 101,
+          "agencyName": "SNCF VOYAGEURS",
+          "agencyUrl": "",
+          "agencyFareUrl": "",
+          "agencyId": "FR:Operator::07B82396-04B1-48F0-84BF-36C7F1B81442:",
+          "tripId": "20261104_10:25_fr-horaires-sncf_FR:ServiceJourney::SN7615FERRE_13239799",
+          "routeShortName": "",
+          "routeLongName": "",
+          "tripShortName": "7615",
+          "displayName": "OUIGO 7615",
+          "cancelled": false,
+          "source": "fr_horaires-sncf.netex.zip/sncf_netexfr_20261101_2132.xml:420742490:420742490",
+          "intermediateStops": [],
+          "legGeometry": {
+            "points": "",
+            "precision": 6,
+            "length": 0
+          },
+          "bikesAllowed": false,
+          "wheelchairAccessible": "NOT_ACCESSIBLE",
+          "reservation": "COMPULSORY",
+          "alternatives": []
+        },
+        {
+          "mode": "WALK",
+          "from": {
+            "name": "Le Mans",
+            "stopId": "fr-horaires-sncf_FR::LMU:8ef85130-cb0a-11e8-8bfa-f784c1c7c611:",
+            "importance": 0.0023328757379204035,
+            "lat": 47.99561500000001,
+            "lon": 0.19261400000000004,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T10:20:00Z",
+            "departure": "2026-11-04T10:20:00Z",
+            "scheduledArrival": "2026-11-04T10:20:00Z",
+            "scheduledDeparture": "2026-11-04T10:20:00Z",
+            "vertexType": "TRANSIT",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "departureTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "HIGHSPEED_RAIL",
+              "REGIONAL_RAIL",
+              "BUS"
+            ]
+          },
+          "to": {
+            "name": "Le Mans",
+            "stopId": "fr-horaires-sncf_FR::LMU:8ef85130-cb0a-11e8-8bfa-f784c1c7c611:",
+            "importance": 0.0023328757379204035,
+            "lat": 47.99561500000001,
+            "lon": 0.19261400000000004,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T10:22:00Z",
+            "scheduledArrival": "2026-11-04T10:22:00Z",
+            "vertexType": "TRANSIT",
+            "modes": [
+              "HIGHSPEED_RAIL",
+              "REGIONAL_RAIL",
+              "BUS"
+            ]
+          },
+          "duration": 120,
+          "startTime": "2026-11-04T10:20:00Z",
+          "endTime": "2026-11-04T10:22:00Z",
+          "scheduledStartTime": "2026-11-04T10:20:00Z",
+          "scheduledEndTime": "2026-11-04T10:22:00Z",
+          "realTime": false,
+          "scheduled": false,
+          "distance": 0,
+          "legGeometry": {
+            "points": "",
+            "precision": 6,
+            "length": 0
+          },
+          "steps": []
+        },
+        {
+          "mode": "HIGHSPEED_RAIL",
+          "from": {
+            "name": "Le Mans",
+            "stopId": "fr-horaires-sncf_FR::LMU:8ef85130-cb0a-11e8-8bfa-f784c1c7c611:",
+            "importance": 0.0023328757379204035,
+            "lat": 47.99561500000001,
+            "lon": 0.19261400000000004,
+            "tz": "Europe/Paris",
+            "departure": "2026-11-04T10:33:00Z",
+            "scheduledDeparture": "2026-11-04T10:33:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "departureTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "HIGHSPEED_RAIL",
+              "REGIONAL_RAIL",
+              "BUS"
+            ]
+          },
+          "to": {
+            "name": "Nantes",
+            "stopId": "fr-horaires-sncf_FR::LMU:9841ca00-cb0a-11e8-8bfa-f784c1c7c611:",
+            "importance": 0.003665023948997259,
+            "lat": 47.217490999999995,
+            "lon": -1.5420770000000001,
+            "level": 0,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T11:50:00Z",
+            "scheduledArrival": "2026-11-04T11:50:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "HIGHSPEED_RAIL",
+              "LONG_DISTANCE",
+              "REGIONAL_RAIL",
+              "TRAM",
+              "BUS"
+            ]
+          },
+          "duration": 4620,
+          "startTime": "2026-11-04T10:33:00Z",
+          "endTime": "2026-11-04T11:50:00Z",
+          "scheduledStartTime": "2026-11-04T10:33:00Z",
+          "scheduledEndTime": "2026-11-04T11:50:00Z",
+          "realTime": false,
+          "scheduled": true,
+          "interlineWithPreviousLeg": false,
+          "headsign": "",
+          "tripFrom": {
+            "name": "Strasbourg",
+            "stopId": "fr-horaires-sncf_FR::LMU:6a30e1a0-cb0a-11e8-8bfa-f784c1c7c611:",
+            "importance": 0.00873649027198553,
+            "lat": 48.58511000000001,
+            "lon": 7.733882,
+            "level": 1,
+            "tz": "Europe/Paris",
+            "departure": "2026-11-04T06:31:00Z",
+            "scheduledDeparture": "2026-11-04T06:31:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "departureTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "HIGHSPEED_RAIL",
+              "REGIONAL_RAIL",
+              "BUS"
+            ]
+          },
+          "tripTo": {
+            "name": "Nantes",
+            "stopId": "fr-horaires-sncf_FR::LMU:9841ca00-cb0a-11e8-8bfa-f784c1c7c611:",
+            "importance": 0.003665023948997259,
+            "lat": 47.217490999999995,
+            "lon": -1.5420770000000001,
+            "level": 0,
+            "tz": "Europe/Paris",
+            "arrival": "2026-11-04T11:50:00Z",
+            "scheduledArrival": "2026-11-04T11:50:00Z",
+            "vertexType": "TRANSIT",
+            "pickupType": "NORMAL",
+            "dropoffType": "NORMAL",
+            "cancelled": false,
+            "arrivalTimestampReason": "NO_RT_DATA",
+            "modes": [
+              "HIGHSPEED_RAIL",
+              "LONG_DISTANCE",
+              "REGIONAL_RAIL",
+              "TRAM",
+              "BUS"
+            ]
+          },
+          "category": {
+            "id": "",
+            "name": "",
+            "shortName": ""
+          },
+          "routeId": "fr-horaires-sncf_-FR:Operator::07B82396-04B1-48F0-84BF-36C7F1B81442:-101",
+          "routeUrl": "",
+          "directionId": "1",
+          "routeType": 101,
+          "agencyName": "SNCF VOYAGEURS",
+          "agencyUrl": "",
+          "agencyFareUrl": "",
+          "agencyId": "FR:Operator::07B82396-04B1-48F0-84BF-36C7F1B81442:",
+          "tripId": "20261104_07:31_fr-horaires-sncf_FR:ServiceJourney::SN5486FERRE_9133780",
+          "routeShortName": "",
+          "routeLongName": "",
+          "tripShortName": "5486",
+          "displayName": "TGV INOUI 5486",
+          "cancelled": false,
+          "source": "fr_horaires-sncf.netex.zip/sncf_netexfr_20261101_2132.xml:405050264:405050264",
+          "intermediateStops": [
+            {
+              "name": "Angers Saint-Laud",
+              "stopId": "fr-horaires-sncf_FR::LMU:706ca540-cb0a-11e8-8bfa-f784c1c7c611:",
+              "importance": 0.002717114519327879,
+              "lat": 47.464648999999994,
+              "lon": -0.5567700000000001,
+              "level": 0,
+              "tz": "Europe/Paris",
+              "arrival": "2026-11-04T11:10:00Z",
+              "departure": "2026-11-04T11:13:00Z",
+              "scheduledArrival": "2026-11-04T11:10:00Z",
+              "scheduledDeparture": "2026-11-04T11:13:00Z",
+              "vertexType": "TRANSIT",
+              "pickupType": "NORMAL",
+              "dropoffType": "NORMAL",
+              "cancelled": false,
+              "arrivalTimestampReason": "NO_RT_DATA",
+              "departureTimestampReason": "NO_RT_DATA",
+              "modes": [
+                "HIGHSPEED_RAIL",
+                "LONG_DISTANCE",
+                "COACH",
+                "REGIONAL_RAIL"
+              ]
+            }
+          ],
+          "legGeometry": {
+            "points": "",
+            "precision": 6,
+            "length": 0
+          },
+          "bikesAllowed": false,
+          "wheelchairAccessible": "NOT_ACCESSIBLE",
+          "reservation": "COMPULSORY",
+          "alternatives": []
+        }
+      ]
+    }
+  ],
+  "previousPageCursor": "EARLIER|1793779200",
+  "nextPageCursor": "LATER|1793791380"
+}

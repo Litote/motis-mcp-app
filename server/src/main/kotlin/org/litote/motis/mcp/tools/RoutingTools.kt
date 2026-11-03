@@ -9,11 +9,15 @@ import org.litote.motis.mcp.ResolvedPlace
 import org.litote.motis.mcp.TransferMargin
 import org.litote.motis.mcp.WalkingSpeed
 import org.litote.motis.mcp.apps.UiView
+import org.litote.motis.mcp.cities.CityJourneys
+import org.litote.motis.mcp.dto.Coordinates
 import org.litote.motis.mcp.dto.JourneyResult
+import org.litote.motis.mcp.dto.fromMainLineStations
+import org.litote.motis.mcp.dto.hasMainLineLegs
 import org.litote.motis.mcp.dto.toDto
 import org.litote.motis.mcp.dto.withEndNames
 
-fun Server.addRoutingTools(gateway: MotisGateway) {
+fun Server.addRoutingTools(gateway: MotisGateway, cityJourneys: CityJourneys) {
     motisTool(
         name = "plan_journey",
         title = "Plan a journey",
@@ -22,6 +26,8 @@ fun Server.addRoutingTools(gateway: MotisGateway) {
             Computes public transport itineraries between two places (names, stop ids or 'lat,lon'),
             with walking legs, transfers and real-time data. Shows them as a list and on a map.
             Fails listing the candidates when a name is ambiguous: retry with the right id.
+            Between city names (e.g. 'Paris' to 'Nantes'), the long-distance itineraries start and end at the stations,
+            without the local legs to/from the city center; give an address for door-to-door itineraries.
             """.trimIndent(),
         view = UiView.ITINERARY,
         schema = {
@@ -80,30 +86,37 @@ fun Server.addRoutingTools(gateway: MotisGateway) {
         // MOTIS rides a bike only from/to coordinates, not from/to stops
         val fromPlace = if (bike != BikeOption.NONE) from.coordinates() else from.id
         val toPlace = if (bike == BikeOption.ON_BOARD) to.coordinates() else to.id
-        val result =
-            gateway
-                .plan(
-                    PlanQuery(
-                        from = fromPlace,
-                        to = toPlace,
-                        time = args.instant("time") { gateway.timeZone(from) ?: gateway.timeZone(to) },
-                        arriveBy = args.boolean("arriveBy") ?: false,
-                        transitModes = args.modes("modes"),
-                        maxTransfers = args.int("maxTransfers"),
-                        maxWalkMinutes = args.int("maxWalkMinutes") ?: MotisGateway.DEFAULT_MAX_WALK_MINUTES,
-                        walkingSpeed = walkingSpeed,
-                        wheelchair = wheelchair,
-                        transferMargin = transferMargin,
-                        bike = bike,
-                        numItineraries = args.int("count"),
-                        pageCursor = pageCursor,
-                        language = language,
-                    ),
-                ).toDto()
-                .withEndNames(from.askedName(), to.askedName(), from.area, to.area)
+        val query =
+            PlanQuery(
+                from = fromPlace,
+                to = toPlace,
+                time = args.instant("time") { gateway.timeZone(from) ?: gateway.timeZone(to) },
+                arriveBy = args.boolean("arriveBy") ?: false,
+                transitModes = args.modes("modes"),
+                maxTransfers = args.int("maxTransfers"),
+                maxWalkMinutes = args.int("maxWalkMinutes") ?: MotisGateway.DEFAULT_MAX_WALK_MINUTES,
+                walkingSpeed = walkingSpeed,
+                wheelchair = wheelchair,
+                transferMargin = transferMargin,
+                bike = bike,
+                numItineraries = args.int("count"),
+                pageCursor = pageCursor,
+                language = language,
+            )
+        val journeys =
+            if (from.isCity && to.isCity && bike == BikeOption.NONE) {
+                // from station to station (a bike is ridden from the coordinates of the city)
+                cityJourneys.plan(from, to, query)
+            } else {
+                gateway.plan(query).toDto().fromMainLineStations(from.center().takeIf { from.isCity }, to.center().takeIf { to.isCity })
+            }
+        val result = journeys.withEndNames(from.askedName(), to.askedName(), from.area, to.area)
         val summary =
             buildString {
                 appendLine("From ${from.label} to ${to.label}: ${result.itineraries.size} itinerary(ies).")
+                listOfNotNull(from.label.takeIf { from.isCity }, to.label.takeIf { to.isCity })
+                    .takeIf { it.isNotEmpty() && result.hasMainLineLegs() }
+                    ?.let { appendLine("Long-distance trains from/to the stations of ${it.joinToString(" and ")}, without the local legs to/from the city center.") }
                 listOfNotNull(
                     walkingSpeed.takeIf { it != WalkingSpeed.NORMAL }?.let { "walking speed ${it.name}" },
                     "wheelchair".takeIf { wheelchair },
@@ -118,6 +131,8 @@ fun Server.addRoutingTools(gateway: MotisGateway) {
 }
 
 private fun ResolvedPlace.coordinates(): String = "$lat,$lon"
+
+private fun ResolvedPlace.center(): Coordinates = Coordinates(lat, lon)
 
 /** Name of a place given by name (geocoded), null for coordinates: names the ends of a journey sent as coordinates. */
 private fun ResolvedPlace.askedName(): String? = name.takeIf { MotisGateway.parseCoordinates(it) == null }

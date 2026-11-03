@@ -17,6 +17,7 @@ server/   Kotlin MCP server
   apps/AppResources   ui:// resources (text/html;profile=mcp-app), CSP, tool _meta.ui
 ui/       views (TypeScript, Vite, Leaflet), each bundled in a single HTML file
 lambda/   AWS Lambda entry point (GraalVM native): function URL events run through a Ktor engine without socket
+  smoke-test/         smoke test of the native executable (`:lambda:smokeTest`, MOTIS mocked by MockMotisServer.kt)
 infra/    Terraform (Lambda, function URL, web chat on S3 + CloudFront) and Makefile (native build in Docker, deploy)
 web/      web chat (OpenRouter, assistant-ui): agent loop in the browser, views in a sandbox
   nginx/              Docker image of the web chat (nginx + njs), smoke test
@@ -78,8 +79,9 @@ cd ui && npm run coverage                # views tests (npm test: without covera
 cd web && npm run coverage               # web chat tests
 ```
 
-The pull requests also build the native Lambda and run it in the Lambda runtime emulator (`deploy-lambda.yml`), and
-build the web chat image and run its smoke test (`web/nginx/smoke-test.sh`, `ci.yml`).
+The pull requests also build the native Lambda and run it in the Lambda runtime emulator with MOTIS mocked
+(`:lambda:smokeTest`, `deploy-lambda.yml`), and build the web chat image and run its smoke test
+(`web/nginx/smoke-test.sh`, `ci.yml`).
 
 ### Agent evaluation
 

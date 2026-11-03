@@ -7,6 +7,10 @@ import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.logging.LogLevel
 import org.litote.motis.client.client.ClientConfiguration
 import org.litote.motis.client.motisClientConfiguration
+import org.litote.motis.mcp.cities.CityJourneys
+import org.litote.motis.mcp.cities.CityStationsStore
+import org.litote.motis.mcp.cities.DynamoDbCityStationsStore
+import org.litote.motis.mcp.cities.InMemoryCityStationsStore
 import org.litote.motis.mcp.realtime.RealtimeOverlay
 import org.litote.motis.mcp.realtime.SncfRealtimeOverlay
 
@@ -28,6 +32,9 @@ private val logger = KotlinLogging.logger {}
  * null for localhost only.
  *
  * [sncfRealtime] adds the real time of the SNCF to its trains without real time in MOTIS, see [SncfRealtimeOverlay].
+ *
+ * [cityStationsTable] is the DynamoDB table of the stations of the journeys between cities (in [awsRegion]), null to
+ * keep them in memory, see [CityJourneys]. [dynamoDbEndpoint] replaces the endpoint of the region, e.g. DynamoDB Local.
  */
 data class MotisMcpConfig(
     val contact: String?,
@@ -37,6 +44,9 @@ data class MotisMcpConfig(
     val viewDomains: Map<McpHost, String> = emptyMap(),
     val allowedHosts: List<String>? = null,
     val sncfRealtime: Boolean = true,
+    val cityStationsTable: String? = null,
+    val awsRegion: String? = null,
+    val dynamoDbEndpoint: String? = null,
 ) {
     init {
         require(contact != null || !isTransitous(baseUrl)) {
@@ -65,6 +75,16 @@ data class MotisMcpConfig(
             exceptionLogger = { logger.warn(this) { "MOTIS API call failed: $this" } },
         )
     }
+
+    /** Store of the stations of the journeys between cities: created once, shared by the server instances. */
+    fun cityStationsStore(): CityStationsStore =
+        cityStationsTable?.let { table ->
+            DynamoDbCityStationsStore.create(
+                table,
+                requireNotNull(awsRegion) { "AWS_REGION is required with MOTIS_CITY_STATIONS_TABLE" },
+                dynamoDbEndpoint,
+            )
+        } ?: InMemoryCityStationsStore()
 
     /** Real-time overlays of the stop times (see [MotisGateway]), sending the [userAgent] of the MOTIS clients. */
     fun realtimeOverlays(userAgent: String?, engine: HttpClientEngineFactory<*> = OkHttp): List<RealtimeOverlay> =
@@ -100,6 +120,9 @@ data class MotisMcpConfig(
                         ?.filter { it.isNotEmpty() }
                         ?.ifEmpty { null },
                 sncfRealtime = env["MOTIS_SNCF_REALTIME"]?.takeIf { it.isNotBlank() }?.let(::parseBoolean) ?: true,
+                cityStationsTable = env["MOTIS_CITY_STATIONS_TABLE"]?.takeIf { it.isNotBlank() },
+                awsRegion = (env["AWS_REGION"] ?: env["AWS_DEFAULT_REGION"])?.takeIf { it.isNotBlank() },
+                dynamoDbEndpoint = env["AWS_ENDPOINT_URL_DYNAMODB"]?.takeIf { it.isNotBlank() },
             )
 
         private fun parseBoolean(value: String): Boolean =

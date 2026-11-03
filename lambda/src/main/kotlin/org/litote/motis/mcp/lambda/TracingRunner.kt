@@ -9,6 +9,8 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonObject
 import org.litote.motis.mcp.apps.UiView
+import java.time.LocalDate
+import java.time.ZoneOffset
 
 // place of the traced calls: stops, routes and rentals around it
 private const val PLACE = "Lyon Part-Dieu"
@@ -100,6 +102,12 @@ fun main() {
         "transferMargin" to "COMFORTABLE",
         "bike" to "ON_BOARD",
     )
+    // journeys between cities, in the day (only coaches at night): discovery of the stations, then from station to
+    // station, next page (cursor of the pairs)
+    val morning = LocalDate.now(ZoneOffset.UTC).plusDays(1).atTime(8, 0).toInstant(ZoneOffset.UTC).toString()
+    val cities = arrayOf("from" to "Paris", "to" to "Nantes", "time" to morning)
+    callTool("plan_journey", *cities)
+    callTool("plan_journey", *cities).firstValue("nextPageCursor")?.let { callTool("plan_journey", *cities, "pageCursor" to it.content) }
     callTool("reachability", "place" to PLACE)
     callTool("rentals", "place" to PLACE, "radiusKm" to 1)
     // error path: MOTIS error and invalid arguments

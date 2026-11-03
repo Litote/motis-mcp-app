@@ -17,6 +17,8 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import org.litote.motis.mcp.apps.UiView
 import org.litote.motis.mcp.apps.loadViews
+import org.litote.motis.mcp.cities.CityStationsStore
+import org.litote.motis.mcp.cities.InMemoryCityStationsStore
 import java.util.Collections
 import kotlin.time.Duration.Companion.seconds
 
@@ -46,7 +48,12 @@ val TEST_VIEWS: Map<UiView, String> =
  * Runs [block] with an MCP client connected in memory to a server using [motis].
  * runBlocking rather than runTest: the virtual time of runTest would expire the request timeouts of the SDK.
  */
-fun withMcpClient(motis: MockMotis, block: suspend (Client) -> Unit): Unit =
+fun withMcpClient(
+    motis: MockMotis,
+    cityStations: CityStationsStore = InMemoryCityStationsStore(),
+    rediscoverStations: () -> Boolean = { false },
+    block: suspend (Client) -> Unit,
+): Unit =
     runBlocking {
         withTimeout(30.seconds) {
             val config = MotisMcpConfig(contact = "https://example.org/tests")
@@ -56,6 +63,8 @@ fun withMcpClient(motis: MockMotis, block: suspend (Client) -> Unit): Unit =
                     config.baseUrl,
                     config.tiles,
                     loadViews(config.tiles) { TEST_VIEWS.getValue(it) },
+                    cityStations,
+                    rediscoverStations = rediscoverStations,
                 )
             val (clientTransport, serverTransport) = InMemoryTransport.pair()
             server.createSession(serverTransport)

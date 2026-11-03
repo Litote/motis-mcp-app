@@ -84,6 +84,15 @@ val packageNative by tasks.registering(Zip::class) {
     }
 }
 
+// After :lambda:packageNative, with DynamoDB Local on localhost:8000 (see lambda/smoke-test/smoke-test.sh)
+val smokeTest by tasks.registering(JavaExec::class) {
+    group = "verification"
+    description = "Runs the native executable in the Lambda runtime image, with MOTIS mocked."
+    mainClass.set("org.litote.motis.mcp.lambda.MockMotisServerKt")
+    classpath = sourceSets["test"].runtimeClasspath
+    args(file("smoke-test/smoke-test.sh"), layout.buildDirectory.file("native/nativeCompile/bootstrap").get().asFile)
+}
+
 jacoco {
     toolVersion = libs.versions.jacoco.get()
 }

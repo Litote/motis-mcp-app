@@ -13,8 +13,9 @@ TF_VARS         := -var="lambda_zip=$(ZIP)" -var="architecture=$(LAMBDA_ARCH)"
 
 # GraalVM native build in Docker. The views (ui/) are bundled on the host, the image has no Node.js;
 # motis-ktor-client snapshots are read from the host ~/.m2.
-DOCKER_GRADLE := docker run --rm \
+DOCKER_GRADLE = docker run --rm \
 	--platform $(LAMBDA_PLATFORM) \
+	$(DOCKER_GRADLE_ARGS) \
 	--entrypoint sh \
 	--user $(shell id -u):$(shell id -g) \
 	-e GRADLE_USER_HOME=/gradle-home \
@@ -36,11 +37,26 @@ build: ui gradle-permissions
 	$(DOCKER_GRADLE) "$(GRADLE) :lambda:packageNative"
 	@echo "✓ Lambda zip ($(LAMBDA_ARCH)): $(ZIP)"
 
+# DynamoDB Local of `make trace`, with the table of the stations of the journeys between cities (see ci.yml)
+DYNAMODB_IMAGE := amazon/dynamodb-local@sha256:6ada631ec7aa5fc83446855eb17233e3dad184fec47477e8140c6c569cfe0c86
+DYNAMODB_PORT  := 18000
+DYNAMODB_AWS   := AWS_ACCESS_KEY_ID=local AWS_SECRET_ACCESS_KEY=local AWS_REGION=eu-west-3 aws dynamodb --endpoint-url http://localhost:$(DYNAMODB_PORT) --no-cli-pager
+
 # Re-records the native-image metadata (lambda/src/main/resources/META-INF/native-image) by replaying MCP requests
-# against MOTIS under the native-image agent: run it after a change of the tools or of the dependencies.
+# against MOTIS and DynamoDB Local under the native-image agent: run it after a change of the tools or of the dependencies.
 .PHONY: trace
+trace: DOCKER_GRADLE_ARGS = --add-host=host.docker.internal:host-gateway \
+	-e AWS_ACCESS_KEY_ID=local -e AWS_SECRET_ACCESS_KEY=local -e AWS_REGION=eu-west-3 \
+	-e AWS_ENDPOINT_URL_DYNAMODB=http://host.docker.internal:$(DYNAMODB_PORT) \
+	-e MOTIS_CITY_STATIONS_TABLE=city-stations
 trace: ui gradle-permissions
-	$(DOCKER_GRADLE) "$(GRADLE) :lambda:tracing -Pagent && $(GRADLE) :lambda:metadataCopy"
+	docker run -d --rm --name motis-trace-dynamodb -p $(DYNAMODB_PORT):8000 $(DYNAMODB_IMAGE) > /dev/null
+	trap 'docker stop motis-trace-dynamodb > /dev/null' EXIT; \
+	until $(DYNAMODB_AWS) list-tables > /dev/null 2>&1; do sleep 1; done; \
+	$(DYNAMODB_AWS) create-table --table-name city-stations --billing-mode PAY_PER_REQUEST \
+		--attribute-definitions AttributeName=pair,AttributeType=S --key-schema AttributeName=pair,KeyType=HASH > /dev/null; \
+	$(DOCKER_GRADLE) "$(GRADLE) :lambda:tracing -Pagent && $(GRADLE) :lambda:metadataCopy"; \
+	$(DYNAMODB_AWS) scan --table-name city-stations --query 'Items[].pair.S' --output text
 
 .PHONY: ui
 ui:

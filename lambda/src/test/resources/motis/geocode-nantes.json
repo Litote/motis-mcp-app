@@ -1,0 +1,353 @@
+[
+  {
+    "type": "PLACE",
+    "category": "place_6",
+    "tokens": [
+      [
+        0,
+        6
+      ]
+    ],
+    "name": "Nantes",
+    "id": "node/26686548",
+    "lat": 47.2186371,
+    "lon": -1.5541362,
+    "country": "FR",
+    "zip": "44000;44100;44200;44300",
+    "tz": "Europe/Paris",
+    "areas": [
+      {
+        "name": "France",
+        "adminLevel": 2,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "France métropolitaine",
+        "adminLevel": 3,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Pays de la Loire",
+        "adminLevel": 4,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Loire-Atlantique",
+        "adminLevel": 6,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Nantes",
+        "adminLevel": 7,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Nantes",
+        "adminLevel": 8,
+        "matched": false,
+        "unique": true,
+        "default": true
+      },
+      {
+        "name": "Centre Ville",
+        "adminLevel": 1E+1,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Decré - Cathédrale",
+        "adminLevel": 11,
+        "matched": false,
+        "unique": false,
+        "default": false
+      }
+    ],
+    "score": -18.63800048828125
+  },
+  {
+    "type": "STOP",
+    "tokens": [
+      [
+        0,
+        6
+      ]
+    ],
+    "name": "Nantes",
+    "id": "fr-horaires-sncf_FR::LMU:9841ca00-cb0a-11e8-8bfa-f784c1c7c611:",
+    "lat": 47.217490999999995,
+    "lon": -1.5420770000000001,
+    "level": 0,
+    "country": "FR",
+    "zip": "44000;44100;44200;44300",
+    "tz": "Europe/Paris",
+    "areas": [
+      {
+        "name": "France",
+        "adminLevel": 2,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "France métropolitaine",
+        "adminLevel": 3,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Pays de la Loire",
+        "adminLevel": 4,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Loire-Atlantique",
+        "adminLevel": 6,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Nantes",
+        "adminLevel": 7,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Nantes",
+        "adminLevel": 8,
+        "matched": false,
+        "unique": true,
+        "default": true
+      },
+      {
+        "name": "Malakoff - Saint-Donatien",
+        "adminLevel": 1E+1,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Vieux Malakoff",
+        "adminLevel": 11,
+        "matched": false,
+        "unique": false,
+        "default": false
+      }
+    ],
+    "score": -18.09537696838379,
+    "modes": [
+      "HIGHSPEED_RAIL",
+      "LONG_DISTANCE",
+      "REGIONAL_RAIL",
+      "TRAM",
+      "BUS"
+    ],
+    "importance": 0.003665023948997259
+  },
+  {
+    "type": "STOP",
+    "tokens": [
+      [
+        0,
+        6
+      ]
+    ],
+    "name": "Nantes",
+    "id": "fr-offre-de-transport-du-reseau-de-laval-agglomeration-gtfs_lavnant0",
+    "lat": 48.070107,
+    "lon": -0.780761,
+    "country": "FR",
+    "zip": "53000",
+    "tz": "Europe/Paris",
+    "areas": [
+      {
+        "name": "France",
+        "adminLevel": 2,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "France métropolitaine",
+        "adminLevel": 3,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Pays de la Loire",
+        "adminLevel": 4,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Mayenne",
+        "adminLevel": 6,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Laval",
+        "adminLevel": 7,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Laval",
+        "adminLevel": 8,
+        "matched": false,
+        "unique": true,
+        "default": true
+      },
+      {
+        "name": "Centre Ville Rive Droite",
+        "adminLevel": 11,
+        "matched": false,
+        "unique": false,
+        "default": false
+      }
+    ],
+    "score": -16.100000381469727,
+    "modes": [
+      "BUS"
+    ],
+    "importance": 0.000004760659976454917
+  },
+  {
+    "type": "STOP",
+    "tokens": [
+      [
+        0,
+        6
+      ]
+    ],
+    "name": "Nantes",
+    "id": "fr-arrets-horaires-et-parcours-theoriques-des-reseaux-naq-nio-nva-m-1_MOBIITI:StopPlace:74783",
+    "lat": 46.34039,
+    "lon": -0.48763,
+    "country": "FR",
+    "zip": "79000",
+    "tz": "Europe/Paris",
+    "areas": [
+      {
+        "name": "France",
+        "adminLevel": 2,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "France métropolitaine",
+        "adminLevel": 3,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Nouvelle-Aquitaine",
+        "adminLevel": 4,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Deux-Sèvres",
+        "adminLevel": 6,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Niort",
+        "adminLevel": 7,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Niort",
+        "adminLevel": 8,
+        "matched": false,
+        "unique": true,
+        "default": true
+      },
+      {
+        "name": "Sainte-Pezenne",
+        "adminLevel": 1E+1,
+        "matched": false,
+        "unique": false,
+        "default": false
+      }
+    ],
+    "score": -16.100000381469727,
+    "modes": [
+      "BUS"
+    ],
+    "importance": 0.000008369945135200396
+  },
+  {
+    "type": "PLACE",
+    "category": "place_capital_8",
+    "tokens": [
+      [
+        0,
+        6
+      ]
+    ],
+    "name": "Vilar de Nantes",
+    "id": "node/3185651503",
+    "lat": 41.7087416,
+    "lon": -7.4511382,
+    "country": "PT",
+    "tz": "Europe/Lisbon",
+    "areas": [
+      {
+        "name": "Portugal",
+        "adminLevel": 2,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Vila Real",
+        "adminLevel": 6,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Chaves",
+        "adminLevel": 7,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Vilar de Nantes",
+        "adminLevel": 8,
+        "matched": false,
+        "unique": true,
+        "default": true
+      }
+    ],
+    "score": -15.510000228881836
+  }
+]

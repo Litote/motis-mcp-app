@@ -7,6 +7,27 @@
       "type": "android.os.Build$VERSION"
     },
     {
+      "type": "aws.smithy.kotlin.runtime.auth.awscredentials.CachedCredentialsProvider"
+    },
+    {
+      "type": "aws.smithy.kotlin.runtime.awsprotocol.ClockSkewInterceptor"
+    },
+    {
+      "type": "aws.smithy.kotlin.runtime.http.engine.HttpClientEngineBase"
+    },
+    {
+      "type": "aws.smithy.kotlin.runtime.http.engine.internal.HttpClientMetrics"
+    },
+    {
+      "type": "aws.smithy.kotlin.runtime.io.middleware.Middleware[]"
+    },
+    {
+      "type": "aws.smithy.kotlin.runtime.telemetry.GlobalTelemetryProvider$_instanceRefVolatile"
+    },
+    {
+      "type": "aws.smithy.kotlin.runtime.util.CachedValue"
+    },
+    {
       "type": "com.sun.crypto.provider.AESCipher$General",
       "methods": [
         {
@@ -417,10 +438,19 @@
       "type": "java.security.interfaces.ECPublicKey"
     },
     {
+      "type": "java.security.interfaces.RSAPrivateKey"
+    },
+    {
+      "type": "java.security.interfaces.RSAPublicKey"
+    },
+    {
       "type": "kotlin.Any"
     },
     {
       "type": "kotlin.Boolean"
+    },
+    {
+      "type": "kotlin.ByteArray"
     },
     {
       "type": "kotlin.Cloneable"
@@ -512,6 +542,12 @@
     },
     {
       "type": "kotlin.reflect.jvm.internal.impl.load.java.JavaIncompatibilityRulesOverridabilityCondition"
+    },
+    {
+      "type": "kotlinx.coroutines.AwaitAll"
+    },
+    {
+      "type": "kotlinx.coroutines.AwaitAll$AwaitAllNode"
     },
     {
       "type": "kotlinx.coroutines.CancellableContinuationImpl"
@@ -967,6 +1003,15 @@
     },
     {
       "type": "sun.security.rsa.RSASignature$SHA224withRSA",
+      "methods": [
+        {
+          "name": "<init>",
+          "parameterTypes": []
+        }
+      ]
+    },
+    {
+      "type": "sun.security.rsa.RSASignature$SHA256withRSA",
       "methods": [
         {
           "name": "<init>",

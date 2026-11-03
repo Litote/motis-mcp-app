@@ -1,6 +1,8 @@
 package org.litote.motis.mcp
 
 import io.ktor.client.plugins.logging.LogLevel
+import org.litote.motis.mcp.cities.DynamoDbCityStationsStore
+import org.litote.motis.mcp.cities.InMemoryCityStationsStore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -74,6 +76,24 @@ class MotisMcpConfigTest {
         assertEquals(emptyList(), MotisMcpConfig.fromEnv(mapOf(contact, "MOTIS_SNCF_REALTIME" to "false")).realtimeOverlays(userAgent = null))
         val error = assertFailsWith<IllegalArgumentException> { MotisMcpConfig.fromEnv(mapOf(contact, "MOTIS_SNCF_REALTIME" to "off")) }
         assertTrue(error.message!!.startsWith("MOTIS_SNCF_REALTIME must be true or false"), error.message)
+    }
+
+    @Test
+    fun `the stations of the journeys between cities are in memory, or in DynamoDB with a table`() {
+        val contact = "MOTIS_APP_CONTACT" to "you@example.org"
+        assertTrue(MotisMcpConfig.fromEnv(mapOf(contact)).cityStationsStore() is InMemoryCityStationsStore)
+
+        val table = "MOTIS_CITY_STATIONS_TABLE" to "motis-mcp-app-city-stations"
+        val inRegion = MotisMcpConfig.fromEnv(mapOf(contact, table, "AWS_REGION" to "eu-west-3"))
+        assertEquals("motis-mcp-app-city-stations", inRegion.cityStationsTable)
+        assertTrue(inRegion.cityStationsStore() is DynamoDbCityStationsStore)
+        assertEquals("eu-west-1", MotisMcpConfig.fromEnv(mapOf(contact, table, "AWS_DEFAULT_REGION" to "eu-west-1")).awsRegion)
+        val local = MotisMcpConfig.fromEnv(mapOf(contact, table, "AWS_REGION" to "eu-west-3", "AWS_ENDPOINT_URL_DYNAMODB" to "http://localhost:8000"))
+        assertEquals("http://localhost:8000", local.dynamoDbEndpoint)
+        assertTrue(local.cityStationsStore() is DynamoDbCityStationsStore)
+
+        val error = assertFailsWith<IllegalArgumentException> { MotisMcpConfig.fromEnv(mapOf(contact, table)).cityStationsStore() }
+        assertEquals("AWS_REGION is required with MOTIS_CITY_STATIONS_TABLE", error.message)
     }
 
     @Test

@@ -1,0 +1,273 @@
+[
+  {
+    "type": "PLACE",
+    "category": "place_6",
+    "tokens": [
+      [
+        0,
+        5
+      ]
+    ],
+    "name": "Paris",
+    "id": "node/17807753",
+    "lat": 48.8534951,
+    "lon": 2.3483915,
+    "country": "FR",
+    "zip": "75004",
+    "tz": "Europe/Paris",
+    "areas": [
+      {
+        "name": "France",
+        "adminLevel": 2,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "France métropolitaine",
+        "adminLevel": 3,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Île-de-France",
+        "adminLevel": 4,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Paris",
+        "adminLevel": 6,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Paris",
+        "adminLevel": 7,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Paris",
+        "adminLevel": 8,
+        "matched": false,
+        "unique": true,
+        "default": true
+      },
+      {
+        "name": "Paris 4e Arrondissement",
+        "adminLevel": 9,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Quartier Les Îles",
+        "adminLevel": 1E+1,
+        "matched": false,
+        "unique": false,
+        "default": false
+      }
+    ],
+    "score": -19.25
+  },
+  {
+    "type": "PLACE",
+    "category": "place_capital_8",
+    "tokens": [
+      [
+        0,
+        5
+      ]
+    ],
+    "name": "Paris",
+    "id": "node/105715620",
+    "lat": 33.6617962,
+    "lon": -95.555513,
+    "country": "US",
+    "tz": "America/Chicago",
+    "areas": [
+      {
+        "name": "United States",
+        "adminLevel": 2,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Texas",
+        "adminLevel": 4,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Lamar County",
+        "adminLevel": 6,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Paris",
+        "adminLevel": 8,
+        "matched": false,
+        "unique": true,
+        "default": true
+      }
+    ],
+    "score": -16.871999740600586
+  },
+  {
+    "type": "PLACE",
+    "category": "place_capital_8",
+    "tokens": [
+      [
+        0,
+        5
+      ]
+    ],
+    "name": "Paris",
+    "id": "node/153536155",
+    "lat": 36.3019461,
+    "lon": -88.3258578,
+    "country": "US",
+    "tz": "America/Chicago",
+    "areas": [
+      {
+        "name": "United States",
+        "adminLevel": 2,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Tennessee",
+        "adminLevel": 4,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "West Tennessee",
+        "adminLevel": 5,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Henry County",
+        "adminLevel": 6,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Paris",
+        "adminLevel": 8,
+        "matched": false,
+        "unique": true,
+        "default": true
+      }
+    ],
+    "score": -16.798999786376953
+  },
+  {
+    "type": "PLACE",
+    "category": "place_capital_8",
+    "tokens": [
+      [
+        0,
+        5
+      ]
+    ],
+    "name": "Paris",
+    "id": "node/153467139",
+    "lat": 39.611146,
+    "lon": -87.6961374,
+    "country": "US",
+    "tz": "America/Chicago",
+    "areas": [
+      {
+        "name": "United States",
+        "adminLevel": 2,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Illinois",
+        "adminLevel": 4,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Edgar County",
+        "adminLevel": 6,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Paris",
+        "adminLevel": 8,
+        "matched": false,
+        "unique": true,
+        "default": true
+      }
+    ],
+    "score": -16.79399871826172
+  },
+  {
+    "type": "PLACE",
+    "category": "place_capital_8",
+    "tokens": [
+      [
+        0,
+        5
+      ]
+    ],
+    "name": "Paris",
+    "id": "node/153981397",
+    "lat": 38.2132087,
+    "lon": -84.2492072,
+    "country": "US",
+    "tz": "America/New_York",
+    "areas": [
+      {
+        "name": "United States",
+        "adminLevel": 2,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Kentucky",
+        "adminLevel": 4,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Bourbon County",
+        "adminLevel": 6,
+        "matched": false,
+        "unique": false,
+        "default": false
+      },
+      {
+        "name": "Paris",
+        "adminLevel": 8,
+        "matched": false,
+        "unique": true,
+        "default": true
+      }
+    ],
+    "score": -16.79199981689453
+  }
+]
