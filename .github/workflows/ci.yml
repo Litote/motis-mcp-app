@@ -44,12 +44,6 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
 
-      - name: Set up JDK 25
-        uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
-        with:
-          java-version: '25'
-          distribution: 'temurin'
-
       # views (ui/) bundled by the Gradle build, web chat tests
       - name: Set up Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
@@ -60,38 +54,14 @@ jobs:
             ui/package-lock.json
             web/package-lock.json
 
-      # cache-cleanup: never prevents eviction of dependency metadata files
-      # (.module files) that the configuration cache fingerprints. When the configuration
-      # cache is reused, dependency resolution is skipped and those files are not "accessed",
-      # so the default on-success cleanup would remove them, invalidating the cache on the
-      # next run with "file has been removed".
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+      - uses: Litote/ci/.github/actions/setup-gradle@fbeb51096c741360965275ed62a9011598259013 # v0.2.0
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
-          dependency-graph: disabled
-          build-scan-publish: false
-          cache-cleanup: never
 
-      - name: Detect code changes
+      - uses: Litote/ci/.github/actions/detect-changes@fbeb51096c741360965275ed62a9011598259013 # v0.2.0
         id: detect-changes
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          BASE_REF: ${{ github.base_ref }}
-        run: |
-          if [[ "$EVENT_NAME" == "pull_request" ]]; then
-            CHANGED=$(git diff --name-only "origin/$BASE_REF...HEAD")
-          elif git rev-parse --verify --quiet HEAD~1 > /dev/null; then
-            CHANGED=$(git diff --name-only HEAD~1..HEAD)
-          else
-            # first commit: no parent, every file is new
-            CHANGED=$(git ls-files)
-          fi
-          if echo "$CHANGED" | grep -qE '\.(kt|kts|gradle|yml|yaml|toml|ts|tsx|mjs|cjs|html|css|tf)$'; then
-            echo "has_code_changes=true" >> $GITHUB_OUTPUT
-          else
-            echo "has_code_changes=false" >> $GITHUB_OUTPUT
-          fi
+        with:
+          pattern: '\.(kt|kts|gradle|yml|yaml|toml|ts|tsx|mjs|cjs|html|css|tf)$'
 
       - name: Build & test
         run: ./gradlew check
@@ -109,27 +79,10 @@ jobs:
           npm run typecheck
           npm run coverage
 
-      - name: Jacoco aggregated report
-        if: steps.detect-changes.outputs.has_code_changes == 'true'
-        run: ./gradlew jacocoAggregatedReport --no-configuration-cache
-
-      - name: SonarCloud analysis
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          PR_BRANCH: ${{ github.head_ref }}
-          PR_BASE: ${{ github.base_ref }}
-          EVENT_NAME: ${{ github.event_name }}
-        if: env.SONAR_TOKEN != '' && steps.detect-changes.outputs.has_code_changes == 'true'
-        run: |
-          if [[ "$EVENT_NAME" == "pull_request" ]]; then
-            ./gradlew sonar --no-configuration-cache \
-              -Dsonar.pullrequest.key="$PR_NUMBER" \
-              -Dsonar.pullrequest.branch="$PR_BRANCH" \
-              -Dsonar.pullrequest.base="$PR_BASE"
-          else
-            ./gradlew sonar --no-configuration-cache
-          fi
+      - uses: Litote/ci/.github/actions/sonar-gradle@fbeb51096c741360965275ed62a9011598259013 # v0.2.0
+        if: steps.detect-changes.outputs.has-code-changes == 'true'
+        with:
+          sonar-token: ${{ secrets.SONAR_TOKEN }}
 
   docker:
     name: Docker image (build only)
