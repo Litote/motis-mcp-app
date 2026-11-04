@@ -3,7 +3,7 @@ name: Dependabot auto-merge
 on:
   # pull_request_target gives access to the GitHub App secrets, which pull_request
   # events from Dependabot do not. No PR code is checked out or executed here.
-  pull_request_target:
+  pull_request_target: # zizmor: ignore[dangerous-triggers] checks out nothing
     branches: [ main ]
     types: [ opened, reopened ]
 
