@@ -96,10 +96,10 @@ The CI (`ci.yml`) analyses the project with [SonarCloud](https://sonarcloud.io/s
 Terraform (`infra/`). To run the analysis locally, set `systemProp.sonar.token=<token>` in `~/.gradle/gradle.properties`:
 
 ```bash
-./gradlew check jacocoAggregatedReport sonar sonarCheck
+./gradlew check jacocoAggregatedReport sonar
 ```
 
-`sonarCheck` fails if the quality gate is not OK, or if any issue or security hotspot remains.
+`sonar` waits for the quality gate and fails if it is not OK.
 
 The GitHub workflows are audited by [zizmor](https://docs.zizmor.sh) (`zizmor.yml`), and the dependencies (Gradle, npm,
 GitHub Actions, Terraform providers, Docker base images) are updated by Dependabot.
@@ -108,10 +108,10 @@ GitHub Actions, Terraform providers, Docker base images) are updated by Dependab
 
 ```bash
 (cd ui && npm run coverage) && (cd web && npm run coverage)
-./gradlew check jacocoAggregatedReport sonar sonarCheck
+./gradlew check jacocoAggregatedReport sonar
 ```
 
-`sonarCheck` must pass (gate OK, 0 issues, 0 hotspots). It requires `systemProp.sonar.token` in
+`sonar` must pass: it fails if the quality gate is not OK. It requires `systemProp.sonar.token` in
 `~/.gradle/gradle.properties`; without a token, let the CI run the analysis.
 
 After a change of the tools or a dependency upgrade, re-record the native-image metadata and commit
