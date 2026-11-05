@@ -76,7 +76,7 @@ jobs:
             ui/package-lock.json
             web/package-lock.json
 
-      - uses: Litote/ci/.github/actions/setup-gradle@fbeb51096c741360965275ed62a9011598259013 # v0.2.0
+      - uses: Litote/ci/.github/actions/setup-gradle@731f25b65744afb6ed50783472a6746193353272 # v0.6.0
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
@@ -97,7 +97,7 @@ jobs:
           npm run coverage
 
       # Fails if the quality gate is not OK, so nothing is published
-      - uses: Litote/ci/.github/actions/sonar-gradle@fbeb51096c741360965275ed62a9011598259013 # v0.2.0
+      - uses: Litote/ci/.github/actions/sonar-gradle@731f25b65744afb6ed50783472a6746193353272 # v0.6.0
         with:
           sonar-token: ${{ secrets.SONAR_TOKEN }}
 
