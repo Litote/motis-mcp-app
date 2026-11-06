@@ -4,7 +4,7 @@
 # from web/sandbox-csp.cjs. The files are built once on the build platform: the target images only copy them.
 
 # ─── Build ────────────────────────────────────────────────────────────────────
-FROM --platform=$BUILDPLATFORM node:26-bookworm-slim AS build
+FROM --platform=$BUILDPLATFORM node:26-bookworm-slim@sha256:add5c17c14752c54d2f3d519ec46a3815684d41c33f198bcb09fb998f7dcbf68 AS build
 WORKDIR /build
 COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
@@ -15,7 +15,7 @@ RUN npm run build \
     && cat sandbox-csp.cjs nginx/sandbox-csp.njs.js > sandbox-csp.js
 
 # ─── Runtime ──────────────────────────────────────────────────────────────────
-FROM nginx:1.31.7-alpine
+FROM nginx:1.31.7-alpine@sha256:892bb2152464f0c5d8972593a5f5afaf8054552580b699d95f8ff4af08c2d33d
 ARG VERSION_NAME=main-SNAPSHOT
 LABEL org.opencontainers.image.title="motis-mcp-app-web" \
       org.opencontainers.image.description="Web chat (OpenRouter) of motis-mcp-app, with the MCP App views" \
