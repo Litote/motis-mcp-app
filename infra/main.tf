@@ -31,6 +31,8 @@ data "aws_iam_policy_document" "assume_role" {
 resource "aws_iam_role" "lambda" {
   name               = "${var.name}-lambda"
   assume_role_policy = data.aws_iam_policy_document.assume_role.json
+  # Created by bootstrap/: the deploy role can only create this role with it
+  permissions_boundary = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/${var.name}-lambda-boundary"
 }
 
 # Logs
