@@ -96,7 +96,7 @@ The CI (`ci.yml`) analyses the project with [SonarCloud](https://sonarcloud.io/s
 Terraform (`infra/`). To run the analysis locally, set `systemProp.sonar.token=<token>` in `~/.gradle/gradle.properties`:
 
 ```bash
-./gradlew check jacocoAggregatedReport sonar
+./gradlew check jacocoAggregatedReport sonar -Dsonar.branch.name=$(git branch --show-current)
 ```
 
 `sonar` waits for the quality gate and fails if it is not OK.
@@ -116,7 +116,7 @@ Gradle checks the dependencies against `gradle/verification-metadata.xml`. `depe
 
 ```bash
 (cd ui && npm run coverage) && (cd web && npm run coverage)
-./gradlew check jacocoAggregatedReport sonar
+./gradlew check jacocoAggregatedReport sonar -Dsonar.branch.name=$(git branch --show-current)
 ```
 
 `sonar` must pass: it fails if the quality gate is not OK. It requires `systemProp.sonar.token` in
