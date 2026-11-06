@@ -115,3 +115,7 @@ permissions of `bootstrap/` (`make bootstrap` again on an account bootstrapped b
 The stations of the journeys between cities are kept in the DynamoDB table `<name>-city-stations` (on demand, TTL of
 30 days, read and written by the Lambda): the deploy and plan roles need its permissions in `bootstrap/` (`make bootstrap`
 again on an account bootstrapped before).
+
+The Lambda role has a permissions boundary, `<name>-lambda-boundary`, created by `bootstrap/`: it is the most this role can
+do, whatever the deploy role attaches to it. A Lambda that uses a new AWS service needs that service in this boundary. On an
+account bootstrapped before, run `make bootstrap` before the next deploy: the deploy fails with `AccessDenied` until then.

@@ -169,6 +169,32 @@ resource "aws_iam_role" "deploy" {
   assume_role_policy = data.aws_iam_policy_document.deploy_assume_role.json
 }
 
+# The most the Lambda role can do, whatever the deploy role attaches to it. The deploy role can change the policies of
+# this role and the code of the function: without this boundary, it could give itself any permission through them.
+# Add here any AWS service that the Lambda starts to use.
+data "aws_iam_policy_document" "lambda_boundary" {
+  statement {
+    sid     = "Logs"
+    actions = ["logs:CreateLogGroup", "logs:CreateLogStream", "logs:PutLogEvents"]
+    resources = [
+      "arn:aws:logs:${var.aws_region}:${local.account_id}:log-group:/aws/lambda/${var.name}",
+      "arn:aws:logs:${var.aws_region}:${local.account_id}:log-group:/aws/lambda/${var.name}:*",
+    ]
+  }
+
+  statement {
+    sid       = "CityStations"
+    actions   = ["dynamodb:GetItem", "dynamodb:PutItem"]
+    resources = ["arn:aws:dynamodb:${var.aws_region}:${local.account_id}:table/${var.name}-city-stations"]
+  }
+}
+
+resource "aws_iam_policy" "lambda_boundary" {
+  name        = "${var.name}-lambda-boundary"
+  description = "Permissions boundary of the ${var.name} Lambda role"
+  policy      = data.aws_iam_policy_document.lambda_boundary.json
+}
+
 # Permissions of the Terraform of infra/, limited to the resources named after var.name
 data "aws_iam_policy_document" "deploy" {
   statement {
@@ -192,7 +218,6 @@ data "aws_iam_policy_document" "deploy" {
   statement {
     sid = "LambdaRole"
     actions = [
-      "iam:CreateRole",
       "iam:DeleteRole",
       "iam:GetRole",
       "iam:TagRole",
@@ -208,6 +233,19 @@ data "aws_iam_policy_document" "deploy" {
       "iam:DeleteRolePolicy",
     ]
     resources = ["arn:aws:iam::${local.account_id}:role/${var.name}-lambda"]
+  }
+
+  # The role can only be created with its boundary, and the boundary cannot be replaced or removed
+  statement {
+    sid       = "LambdaRoleBoundary"
+    actions   = ["iam:CreateRole", "iam:PutRolePermissionsBoundary"]
+    resources = ["arn:aws:iam::${local.account_id}:role/${var.name}-lambda"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "iam:PermissionsBoundary"
+      values   = [aws_iam_policy.lambda_boundary.arn]
+    }
   }
 
   # Stations of the journeys between cities
