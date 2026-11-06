@@ -18,7 +18,7 @@ jobs:
     uses: Litote/ci/.github/workflows/gradle-verification.yml@5f7a96295fbcd88179faba3ac78685a78b7b6c84 # v0.8.1
     with:
       # no test run: the shared workflow has neither DynamoDB Local nor GraalVM, and the views are built by npm
-      gradle-tasks: resolveAllDependencies :server:compileTestKotlin :lambda:compileTestKotlin -x :server:npmInstall -x :server:buildUi
+      gradle-tasks: resolveAllDependencies :lambda:collectReachabilityMetadata :server:compileTestKotlin :lambda:compileTestKotlin -x :server:npmInstall -x :server:buildUi
     secrets:
       RELEASE_PLEASE_APP_ID: ${{ secrets.RELEASE_PLEASE_APP_ID }}
       RELEASE_PLEASE_APP_PRIVATE_KEY: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}

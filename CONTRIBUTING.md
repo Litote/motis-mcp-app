@@ -109,7 +109,7 @@ GitHub Actions, Terraform providers, Docker base images) are updated by Dependab
 Gradle checks the dependencies against `gradle/verification-metadata.xml`. `dependabot-gradle-verification.yml` updates it on the Dependabot pull requests. After another dependency change:
 
 ```bash
-./gradlew --write-verification-metadata sha256 --no-configuration-cache resolveAllDependencies :server:compileTestKotlin :lambda:compileTestKotlin -x :server:npmInstall -x :server:buildUi
+./gradlew --write-verification-metadata sha256 --no-configuration-cache resolveAllDependencies :lambda:collectReachabilityMetadata :server:compileTestKotlin :lambda:compileTestKotlin -x :server:npmInstall -x :server:buildUi
 ```
 
 ## Before opening a PR
