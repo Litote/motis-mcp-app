@@ -28,7 +28,8 @@ make logs
 `bootstrap/` keeps a local state (gitignored): keep `infra/bootstrap/terraform.tfstate`. It reuses the GitHub OIDC
 identity provider of the account; on an account without one, run it with `-var create_github_oidc_provider=true`, and
 keep that variable on every later apply: without it, Terraform would delete the provider it created (`prevent_destroy`
-makes that apply fail instead).
+makes that apply fail instead). To keep it, put `create_github_oidc_provider = true` in `infra/bootstrap/terraform.tfvars`
+(gitignored).
 The roles trust the `sub` claim of the GitHub OIDC tokens: `github_sub_prefix` is the immutable prefix of this
 repository (`gh api repos/<owner>/<name>/actions/oidc/customization/sub`); for a fork, set your own (or `null` with
 legacy claims).
