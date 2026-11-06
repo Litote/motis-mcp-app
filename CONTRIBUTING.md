@@ -104,6 +104,14 @@ Terraform (`infra/`). To run the analysis locally, set `systemProp.sonar.token=<
 The GitHub workflows are audited by [zizmor](https://docs.zizmor.sh) (`zizmor.yml`), and the dependencies (Gradle, npm,
 GitHub Actions, Terraform providers, Docker base images) are updated by Dependabot.
 
+## Dependency verification
+
+Gradle checks the dependencies against `gradle/verification-metadata.xml`. `dependabot-gradle-verification.yml` updates it on the Dependabot pull requests. After another dependency change:
+
+```bash
+./gradlew --write-verification-metadata sha256 --no-configuration-cache resolveAllDependencies :server:compileTestKotlin :lambda:compileTestKotlin -x :server:npmInstall -x :server:buildUi
+```
+
 ## Before opening a PR
 
 ```bash

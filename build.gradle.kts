@@ -69,3 +69,15 @@ sonar {
         property("sonar.issue.ignore.multicriteria.logs.resourceKey", "infra/**/*.tf")
     }
 }
+
+// Used by dependabot-gradle-verification.yml: resolves what the native build needs without GraalVM
+allprojects {
+    tasks.register("resolveAllDependencies") {
+        notCompatibleWithConfigurationCache("resolves every configuration")
+        doLast {
+            (buildscript.configurations + configurations)
+                .filter { it.isCanBeResolved }
+                .forEach { it.resolve() }
+        }
+    }
+}

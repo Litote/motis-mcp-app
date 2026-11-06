@@ -18,7 +18,7 @@ jobs:
     if: github.event_name == 'pull_request'
     permissions:
       pull-requests: read
-    uses: Litote/ci/.github/workflows/pr-title.yml@731f25b65744afb6ed50783472a6746193353272 # v0.6.0
+    uses: Litote/ci/.github/workflows/pr-title.yml@5f7a96295fbcd88179faba3ac78685a78b7b6c84 # v0.8.1
 
   check:
     name: Check (tests, coverage, SonarCloud)
@@ -54,11 +54,11 @@ jobs:
             ui/package-lock.json
             web/package-lock.json
 
-      - uses: Litote/ci/.github/actions/setup-gradle@731f25b65744afb6ed50783472a6746193353272 # v0.6.0
+      - uses: Litote/ci/.github/actions/setup-gradle@5f7a96295fbcd88179faba3ac78685a78b7b6c84 # v0.8.1
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
-      - uses: Litote/ci/.github/actions/detect-changes@731f25b65744afb6ed50783472a6746193353272 # v0.6.0
+      - uses: Litote/ci/.github/actions/detect-changes@5f7a96295fbcd88179faba3ac78685a78b7b6c84 # v0.8.1
         id: detect-changes
         with:
           pattern: '\.(kt|kts|gradle|yml|yaml|toml|ts|tsx|mjs|cjs|html|css|tf)$'
@@ -79,7 +79,7 @@ jobs:
           npm run typecheck
           npm run coverage
 
-      - uses: Litote/ci/.github/actions/sonar-gradle@731f25b65744afb6ed50783472a6746193353272 # v0.6.0
+      - uses: Litote/ci/.github/actions/sonar-gradle@5f7a96295fbcd88179faba3ac78685a78b7b6c84 # v0.8.1
         if: steps.detect-changes.outputs.has-code-changes == 'true'
         with:
           sonar-token: ${{ secrets.SONAR_TOKEN }}

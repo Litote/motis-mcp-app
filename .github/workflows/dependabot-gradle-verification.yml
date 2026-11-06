@@ -1,0 +1,24 @@
+name: Update Gradle verification metadata
+
+on:
+  # pull_request_target gives access to the GitHub App secrets, which pull_request events from Dependabot do not.
+  # A version bump changes the code that the build runs: the reusable workflow runs it in a job with no secret and no
+  # write access, and the job that holds the App token runs no build.
+  pull_request_target: # zizmor: ignore[dangerous-triggers] see above
+    branches: [ main ]
+    paths:
+      - 'gradle/libs.versions.toml'
+      - 'gradle/wrapper/gradle-wrapper.properties'
+
+jobs:
+  update-verification-metadata:
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.repository
+    permissions:
+      contents: read
+    uses: Litote/ci/.github/workflows/gradle-verification.yml@5f7a96295fbcd88179faba3ac78685a78b7b6c84 # v0.8.1
+    with:
+      # no test run: the shared workflow has neither DynamoDB Local nor GraalVM, and the views are built by npm
+      gradle-tasks: resolveAllDependencies :server:compileTestKotlin :lambda:compileTestKotlin -x :server:npmInstall -x :server:buildUi
+    secrets:
+      RELEASE_PLEASE_APP_ID: ${{ secrets.RELEASE_PLEASE_APP_ID }}
+      RELEASE_PLEASE_APP_PRIVATE_KEY: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}
