@@ -56,6 +56,9 @@ data "aws_caller_identity" "current" {}
 locals {
   account_id = data.aws_caller_identity.current.account_id
   github_sub = coalesce(var.github_sub_prefix, "repo:${var.github_repo}")
+  # Kill switch of the budget (infra/budget.tf): Lambda, role and log group
+  kill_switch     = "${var.name}-kill-switch"
+  kill_switch_log = "arn:aws:logs:${var.aws_region}:${local.account_id}:log-group:/aws/lambda/${local.kill_switch}"
   github_oidc_provider_arn = (
     var.create_github_oidc_provider
     ? aws_iam_openid_connect_provider.github[0].arn
@@ -195,6 +198,27 @@ resource "aws_iam_policy" "lambda_boundary" {
   policy      = data.aws_iam_policy_document.lambda_boundary.json
 }
 
+# The most the role of the kill switch can do: throttle the MCP function, and write its logs
+data "aws_iam_policy_document" "kill_switch_boundary" {
+  statement {
+    sid       = "ThrottleMcpFunction"
+    actions   = ["lambda:PutFunctionConcurrency"]
+    resources = ["arn:aws:lambda:${var.aws_region}:${local.account_id}:function:${var.name}"]
+  }
+
+  statement {
+    sid       = "Logs"
+    actions   = ["logs:CreateLogStream", "logs:PutLogEvents"]
+    resources = ["${local.kill_switch_log}:*"]
+  }
+}
+
+resource "aws_iam_policy" "kill_switch_boundary" {
+  name        = "${local.kill_switch}-boundary"
+  description = "Permissions boundary of the ${var.name} kill switch role"
+  policy      = data.aws_iam_policy_document.kill_switch_boundary.json
+}
+
 # Permissions of the Terraform of infra/, limited to the resources named after var.name
 data "aws_iam_policy_document" "deploy" {
   statement {
@@ -210,9 +234,12 @@ data "aws_iam_policy_document" "deploy" {
   }
 
   statement {
-    sid       = "Lambda"
-    actions   = ["lambda:*"]
-    resources = ["arn:aws:lambda:${var.aws_region}:${local.account_id}:function:${var.name}"]
+    sid     = "Lambda"
+    actions = ["lambda:*"]
+    resources = [
+      "arn:aws:lambda:${var.aws_region}:${local.account_id}:function:${var.name}",
+      "arn:aws:lambda:${var.aws_region}:${local.account_id}:function:${local.kill_switch}",
+    ]
   }
 
   statement {
@@ -232,7 +259,10 @@ data "aws_iam_policy_document" "deploy" {
       "iam:GetRolePolicy",
       "iam:DeleteRolePolicy",
     ]
-    resources = ["arn:aws:iam::${local.account_id}:role/${var.name}-lambda"]
+    resources = [
+      "arn:aws:iam::${local.account_id}:role/${var.name}-lambda",
+      "arn:aws:iam::${local.account_id}:role/${local.kill_switch}",
+    ]
   }
 
   # The role can only be created with its boundary, and the boundary cannot be replaced or removed
@@ -245,6 +275,18 @@ data "aws_iam_policy_document" "deploy" {
       test     = "StringEquals"
       variable = "iam:PermissionsBoundary"
       values   = [aws_iam_policy.lambda_boundary.arn]
+    }
+  }
+
+  statement {
+    sid       = "KillSwitchRoleBoundary"
+    actions   = ["iam:CreateRole", "iam:PutRolePermissionsBoundary"]
+    resources = ["arn:aws:iam::${local.account_id}:role/${local.kill_switch}"]
+
+    condition {
+      test     = "StringEquals"
+      variable = "iam:PermissionsBoundary"
+      values   = [aws_iam_policy.kill_switch_boundary.arn]
     }
   }
 
@@ -267,9 +309,12 @@ data "aws_iam_policy_document" "deploy" {
   }
 
   statement {
-    sid       = "PassLambdaRole"
-    actions   = ["iam:PassRole"]
-    resources = ["arn:aws:iam::${local.account_id}:role/${var.name}-lambda"]
+    sid     = "PassLambdaRole"
+    actions = ["iam:PassRole"]
+    resources = [
+      "arn:aws:iam::${local.account_id}:role/${var.name}-lambda",
+      "arn:aws:iam::${local.account_id}:role/${local.kill_switch}",
+    ]
     condition {
       test     = "StringEquals"
       variable = "iam:PassedToService"
@@ -291,6 +336,8 @@ data "aws_iam_policy_document" "deploy" {
     resources = [
       "arn:aws:logs:${var.aws_region}:${local.account_id}:log-group:/aws/lambda/${var.name}",
       "arn:aws:logs:${var.aws_region}:${local.account_id}:log-group:/aws/lambda/${var.name}:*",
+      local.kill_switch_log,
+      "${local.kill_switch_log}:*",
     ]
   }
 
@@ -299,6 +346,41 @@ data "aws_iam_policy_document" "deploy" {
     sid       = "LogsDescribe"
     actions   = ["logs:DescribeLogGroups"]
     resources = ["*"]
+  }
+
+  # Budget and its SNS topic (kill switch). Subscription ARNs: <topic ARN>:<id>
+  statement {
+    sid = "BudgetTopic"
+    actions = [
+      "sns:CreateTopic",
+      "sns:DeleteTopic",
+      "sns:GetTopicAttributes",
+      "sns:SetTopicAttributes",
+      "sns:Subscribe",
+      "sns:Unsubscribe",
+      "sns:GetSubscriptionAttributes",
+      "sns:SetSubscriptionAttributes",
+      "sns:ListSubscriptionsByTopic",
+      "sns:TagResource",
+      "sns:UntagResource",
+      "sns:ListTagsForResource",
+    ]
+    resources = [
+      "arn:aws:sns:${var.aws_region}:${local.account_id}:${var.name}-budget",
+      "arn:aws:sns:${var.aws_region}:${local.account_id}:${var.name}-budget:*",
+    ]
+  }
+
+  statement {
+    sid = "Budget"
+    actions = [
+      "budgets:ViewBudget",
+      "budgets:ModifyBudget",
+      "budgets:TagResource",
+      "budgets:UntagResource",
+      "budgets:ListTagsForResource",
+    ]
+    resources = ["arn:aws:budgets::${local.account_id}:budget/${var.name}"]
   }
 
   # Web chat: bucket (Terraform, and the file upload of the workflow)
@@ -380,9 +462,12 @@ data "aws_iam_policy_document" "plan" {
   }
 
   statement {
-    sid       = "Lambda"
-    actions   = ["lambda:Get*", "lambda:List*"]
-    resources = ["arn:aws:lambda:${var.aws_region}:${local.account_id}:function:${var.name}"]
+    sid     = "Lambda"
+    actions = ["lambda:Get*", "lambda:List*"]
+    resources = [
+      "arn:aws:lambda:${var.aws_region}:${local.account_id}:function:${var.name}",
+      "arn:aws:lambda:${var.aws_region}:${local.account_id}:function:${local.kill_switch}",
+    ]
   }
 
   statement {
@@ -393,7 +478,30 @@ data "aws_iam_policy_document" "plan" {
       "iam:ListAttachedRolePolicies",
       "iam:ListRolePolicies",
     ]
-    resources = ["arn:aws:iam::${local.account_id}:role/${var.name}-lambda"]
+    resources = [
+      "arn:aws:iam::${local.account_id}:role/${var.name}-lambda",
+      "arn:aws:iam::${local.account_id}:role/${local.kill_switch}",
+    ]
+  }
+
+  statement {
+    sid = "BudgetTopic"
+    actions = [
+      "sns:GetTopicAttributes",
+      "sns:GetSubscriptionAttributes",
+      "sns:ListSubscriptionsByTopic",
+      "sns:ListTagsForResource",
+    ]
+    resources = [
+      "arn:aws:sns:${var.aws_region}:${local.account_id}:${var.name}-budget",
+      "arn:aws:sns:${var.aws_region}:${local.account_id}:${var.name}-budget:*",
+    ]
+  }
+
+  statement {
+    sid       = "Budget"
+    actions   = ["budgets:ViewBudget", "budgets:ListTagsForResource"]
+    resources = ["arn:aws:budgets::${local.account_id}:budget/${var.name}"]
   }
 
   statement {
@@ -413,6 +521,8 @@ data "aws_iam_policy_document" "plan" {
     resources = [
       "arn:aws:logs:${var.aws_region}:${local.account_id}:log-group:/aws/lambda/${var.name}",
       "arn:aws:logs:${var.aws_region}:${local.account_id}:log-group:/aws/lambda/${var.name}:*",
+      local.kill_switch_log,
+      "${local.kill_switch_log}:*",
     ]
   }
 

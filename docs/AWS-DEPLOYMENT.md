@@ -73,6 +73,8 @@ GitHub configuration:
 | variable (optional)          | `MOTIS_VIEW_DOMAINS`                            | dedicated origin of the views per host, JSON: `{"chatgpt":"https://…"}` |
 | variable (optional)          | `WEB_DOMAIN`                                    | custom domain of the chat and of the MCP endpoint, see [Custom domain](#custom-domain) |
 | variable (optional)          | `RESERVED_CONCURRENCY`                          | default 10; `-1` while the account concurrency quota is below 20 (new accounts: 10) |
+| variable (optional)          | `MONTHLY_BUDGET_USD`                            | monthly budget of the kill switch, default 20, see [Budget and kill switch](#budget-and-kill-switch) |
+| variable (optional)          | `BUDGET_ALERT_EMAIL`                            | e-mail address of the budget alerts                  |
 | environment                  | `production`                                    | deployment branch policy: `main` only                |
 
 The endpoint uses the **stateless** Streamable HTTP mode: successive requests of a client may reach different Lambda
@@ -83,8 +85,8 @@ The native image needs reflection/resources metadata, recorded by replaying MCP 
 native-image agent: run `make trace` after changing the tools or upgrading the dependencies, and commit
 `lambda/src/main/resources/META-INF/native-image`.
 
-The endpoint has no authentication: bound the load on MOTIS and the cost with `reserved_concurrency`, and configure a
-tile provider (`tile_url`) for a public use.
+The endpoint has no authentication: bound the load on MOTIS and the cost with `reserved_concurrency` and the
+[kill switch](#budget-and-kill-switch), and configure a tile provider (`tile_url`) for a public use.
 
 ## Web chat
 
@@ -120,3 +122,23 @@ again on an account bootstrapped before).
 The Lambda role has a permissions boundary, `<name>-lambda-boundary`, created by `bootstrap/`: it is the most this role can
 do, whatever the deploy role attaches to it. A Lambda that uses a new AWS service needs that service in this boundary. On an
 account bootstrapped before, run `make bootstrap` before the next deploy: the deploy fails with `AccessDenied` until then.
+
+## Budget and kill switch
+
+`infra/budget.tf` creates a monthly cost budget of the account (`monthly_budget_usd`, GitHub variable
+`MONTHLY_BUDGET_USD`, default 20 USD). With `budget_alert_email` (GitHub variable `BUDGET_ALERT_EMAIL`), it sends an
+e-mail at 50 % and 80 % of the actual cost and at 100 % of the forecast. At 100 % of the actual cost, it notifies the SNS
+topic `<name>-budget`, whose Lambda `<name>-kill-switch` sets the reserved concurrency of the MCP function to 0: every
+request then gets HTTP 429.
+
+A budget action applying an SCP would not stop the cost: the function URL is invoked by anonymous callers, outside the
+reach of the SCPs. Budgets refreshes the cost a few times a day, so the cost can go over the budget by a few hours of
+traffic.
+
+The next deploy (`terraform apply`, so any push to `main`) restores the concurrency: check the cost, or raise the budget,
+before. To restore it without a deploy: `aws lambda put-function-concurrency --function-name <name>
+--reserved-concurrent-executions 10` (or `delete-function-concurrency` with `RESERVED_CONCURRENCY=-1`).
+
+The role of the kill switch has its own permissions boundary, `<name>-kill-switch-boundary`, created by `bootstrap/`
+with the SNS and Budgets permissions of the deploy and plan roles: on an account bootstrapped before, run
+`make bootstrap` before the next deploy.

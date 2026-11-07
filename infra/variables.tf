@@ -124,3 +124,20 @@ variable "sandbox_domain_name" {
   type        = string
   default     = ""
 }
+
+variable "monthly_budget_usd" {
+  description = "Monthly budget of the account (USD): when the actual cost reaches it, the kill switch sets the reserved concurrency of the MCP function to 0 (budget.tf)."
+  type        = number
+  default     = 20
+
+  validation {
+    condition     = var.monthly_budget_usd > 0
+    error_message = "monthly_budget_usd must be positive."
+  }
+}
+
+variable "budget_alert_email" {
+  description = "E-mail address of the budget alerts (50 % and 80 % of the actual cost, 100 % of the forecast, kill switch). Empty: no e-mail, the kill switch only."
+  type        = string
+  default     = ""
+}

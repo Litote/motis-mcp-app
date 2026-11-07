@@ -45,3 +45,8 @@ output "dns_records" {
     (local.sandbox_domain) = aws_cloudfront_distribution.sandbox.domain_name
   } : {}
 }
+
+output "kill_switch_function" {
+  description = "Lambda setting the reserved concurrency of the MCP function to 0 when the budget is exceeded."
+  value       = aws_lambda_function.kill_switch.function_name
+}
