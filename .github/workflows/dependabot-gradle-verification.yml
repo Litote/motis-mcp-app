@@ -15,7 +15,7 @@ jobs:
     if: github.event.pull_request.user.login == 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.repository
     permissions:
       contents: read
-    uses: Litote/ci/.github/workflows/gradle-verification.yml@c111317515db0963d8dfebb7821cefbc92d34897 # v0.9.0
+    uses: Litote/ci/.github/workflows/gradle-verification.yml@510461dc1f569a7c12735a6cad12e88a6cb533ad # v0.10.0
     with:
       # no test run: the shared workflow has neither DynamoDB Local nor GraalVM, and the views are built by npm
       gradle-tasks: resolveAllDependencies :lambda:collectReachabilityMetadata :server:compileTestKotlin :lambda:compileTestKotlin -x :server:npmInstall -x :server:buildUi
