@@ -10,7 +10,7 @@ describe("rentals view", () => {
     await app.toolResult({}, fixture("rentals"));
 
     expect($("#title").textContent).toBe("Shared mobility · 48.8586,2.3470 (1.5 km)");
-    expect($("#subtitle").textContent).toBe("2 provider(s) · 2 station(s) or parking spot(s) · 1 free-floating vehicle(s)");
+    expect($("#subtitle").textContent).toBe("2 providers · 2 stations or parking spots · 1 free-floating vehicle");
     expect(providers()).toEqual([
       "Lime Paris Proper bike · 0 st. · 1 veh. · 5556 in its whole area",
       "Paris bike · 2 st. · 0 veh.",

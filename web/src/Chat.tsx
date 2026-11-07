@@ -215,7 +215,7 @@ export default function Chat({ apiKey }: Readonly<{ apiKey: string }>) {
           <LocationButton />
           {quota && (
             <span className="quota" title={t("quota.title")}>
-              {t("quota.left", { remaining: quota.remaining, limit: quota.limit })}
+              {t("quota.left", { count: quota.remaining, limit: quota.limit })}
             </span>
           )}
           <button

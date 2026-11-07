@@ -1,4 +1,4 @@
-import { hostLocale, tOptional } from "./i18n";
+import { hostLocale, t, tOptional } from "./i18n";
 import { sncfBadge } from "./sncf";
 
 /** Escapes text inserted in HTML. */
@@ -37,15 +37,18 @@ export function delayMinutes(actual?: string | null, scheduled?: string | null):
   return Math.round((Date.parse(actual) - Date.parse(scheduled)) / 60000);
 }
 
+/** Duration, e.g. "8 min" or "1 h 05". */
 export function duration(seconds: number): string {
   const minutes = Math.round(seconds / 60);
-  if (minutes < 60) return `${minutes} min`;
-  return `${Math.floor(minutes / 60)} h ${String(minutes % 60).padStart(2, "0")}`;
+  if (minutes < 60) return t("duration.minutes", { minutes });
+  return t("duration.hours", { hours: Math.floor(minutes / 60), minutes: String(minutes % 60).padStart(2, "0") });
 }
 
+/** Distance in the units and number format of the locale, e.g. "562 m" or "1.2 km". */
 export function distance(meters?: number | null): string {
   if (meters == null) return "";
-  return meters < 1000 ? `${Math.round(meters)} m` : `${(meters / 1000).toFixed(1)} km`;
+  const [value, unit] = meters < 1000 ? [Math.round(meters), "meter"] : [meters / 1000, "kilometer"];
+  return new Intl.NumberFormat(hostLocale(), { style: "unit", unit, maximumFractionDigits: 1 }).format(value);
 }
 
 export function modeLabel(mode: string): string {

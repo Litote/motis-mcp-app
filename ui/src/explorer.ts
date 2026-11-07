@@ -54,7 +54,7 @@ back.addEventListener("click", () => {
 function renderArea(data: AreaResult): void {
   title.textContent = data.title;
   subtitle.textContent =
-    t("explorer.summary", { stops: data.totalStops, routes: data.totalRoutes }) +
+    `${t("explorer.stops", { count: data.totalStops })} · ${t("explorer.routes", { count: data.totalRoutes })}` +
     (data.stops.length < data.totalStops ? ` ${t("explorer.stopsShown", { count: data.stops.length })}` : "") +
     (data.zoomFiltered ? ` · ${t("explorer.zoomFiltered")}` : "");
 
@@ -173,6 +173,6 @@ function renderReachability(data: ReachabilityResult): void {
     .bindTooltip(esc(data.origin.name), { permanent: true, direction: "top", offset: [0, -8] })
     .addTo(layer);
   const steps = [0, 0.25, 0.5, 0.75, 1].map((r) => Math.round(r * max));
-  legend.innerHTML = steps.map((m) => `<span><i style="background:${durationColor(m, max)}"></i>${m} min</span>`).join("");
+  legend.innerHTML = steps.map((m) => `<span><i style="background:${durationColor(m, max)}"></i>${esc(t("duration.minutes", { minutes: m }))}</span>`).join("");
   fit(themedMap, layer);
 }

@@ -1,23 +1,84 @@
+import { readdirSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { language, locale, suggestions, t } from "./i18n";
+import { language, locale, resolveLanguage, suggestions, t } from "./i18n";
 
-const setLanguage = (value: string) => Object.defineProperty(globalThis.navigator, "language", { value, configurable: true });
+// relative to web/, the root of the tests
+const LOCALES = "src/locales";
+const read = (file: string): Record<string, string> => JSON.parse(readFileSync(join(LOCALES, file), "utf8"));
+
+const setLanguages = (...values: string[]) => {
+  Object.defineProperty(globalThis.navigator, "language", { value: values[0], configurable: true });
+  Object.defineProperty(globalThis.navigator, "languages", { value: values, configurable: true });
+};
+
+const PLURAL = /_(zero|one|two|few|many|other)$/;
+const placeholders = (text: string) => [...text.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
+
+/**
+ * Problems of the translation [messages] of [lang] against English: missing or unknown keys, placeholders not those
+ * of English (a plural form other than "other" may leave out {count}), plural forms of the integers missing.
+ */
+function checkLocale(lang: string, messages: Record<string, string>, en: Record<string, string>): string[] {
+  const problems: string[] = [];
+  const rules = new Intl.PluralRules(lang);
+  const categories = new Set(Array.from({ length: 200 }, (_, n) => rules.select(n)));
+  const bases = new Set(Object.keys(en).map((k) => k.replace(PLURAL, "")));
+  for (const base of bases) {
+    const keys = `${base}_other` in en ? [...categories].map((c) => `${base}_${c}`) : [base];
+    for (const key of keys) if (!(key in messages)) problems.push(`missing ${key}`);
+  }
+  for (const [key, text] of Object.entries(messages)) {
+    const base = key.replace(PLURAL, "");
+    const reference = en[key] ?? en[`${base}_other`];
+    if (reference === undefined || (key !== base && !(`${base}_other` in en))) {
+      problems.push(`unknown ${key}`);
+      continue;
+    }
+    const expected = placeholders(reference);
+    const actual = placeholders(text);
+    const optionalCount = key !== base && !key.endsWith("_other");
+    const ok =
+      actual.every((p) => expected.includes(p)) &&
+      expected.every((p) => actual.includes(p) || (optionalCount && p === "count"));
+    if (!ok) problems.push(`placeholders of ${key}: ${actual.join(",")} instead of ${expected.join(",")}`);
+  }
+  return problems;
+}
 
 describe("i18n", () => {
-  afterEach(() => setLanguage("en-US"));
+  afterEach(() => setLanguages("en-US", "en"));
 
   it("follows the language of the browser", () => {
-    setLanguage("fr-FR");
+    setLanguages("fr-FR");
     expect(locale()).toBe("fr-FR");
     expect(language()).toBe("fr");
-    expect(t("quota.left", { remaining: 3, limit: 50 })).toBe("3/50 requêtes gratuites restantes");
+    expect(t("quota.left", { count: 3, limit: 50 })).toBe("3/50 requêtes gratuites restantes");
+    expect(t("quota.left", { count: 1, limit: 50 })).toBe("1/50 requête gratuite restante");
     expect(suggestions()[0]).toBe("Prochains départs à Lyon Part-Dieu");
   });
 
+  it("takes the first translated language of the browser", () => {
+    setLanguages("tlh", "fr-CH", "en");
+    expect(locale()).toBe("fr-CH");
+    expect(language()).toBe("fr");
+    expect(resolveLanguage("tlh")).toBeUndefined();
+  });
+
   it("falls back on English for the other languages", () => {
-    setLanguage("de-DE");
+    setLanguages("tlh");
+    expect(locale()).toBe("tlh");
     expect(language()).toBe("en");
     expect(t("error.openRouter", { status: 500 })).toBe("OpenRouter error (HTTP 500): {detail}");
+    expect(t("quota.left", { count: 1, limit: 50 })).toBe("1/50 free request left");
+    expect(suggestions()).toHaveLength(7);
     expect(suggestions()[0]).toBe("Next departures at Lyon Part-Dieu");
   });
+
+  const en = read("en.json");
+  for (const file of readdirSync(LOCALES).filter((f) => f.endsWith(".json") && f !== "en.json")) {
+    it(`has a complete and consistent translation in ${file}`, () => {
+      expect(checkLocale(file.slice(0, -".json".length), read(file), en)).toEqual([]);
+    });
+  }
 });
