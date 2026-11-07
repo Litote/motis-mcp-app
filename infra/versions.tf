@@ -5,6 +5,11 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 6.0"
     }
+    # zip of the kill switch Lambda (budget.tf)
+    archive = {
+      source  = "hashicorp/archive"
+      version = "~> 2.7"
+    }
   }
 }
 

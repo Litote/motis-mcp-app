@@ -201,6 +201,9 @@ jobs:
           TF_VAR_domain_name: ${{ vars.WEB_DOMAIN }}
           # -1 while the account concurrency quota is below 20 (10 executions must stay unreserved)
           TF_VAR_reserved_concurrency: ${{ vars.RESERVED_CONCURRENCY || 10 }}
+          # monthly budget (USD) of the kill switch, and e-mail of the budget alerts (infra/budget.tf)
+          TF_VAR_monthly_budget_usd: ${{ vars.MONTHLY_BUDGET_USD || 20 }}
+          TF_VAR_budget_alert_email: ${{ vars.BUDGET_ALERT_EMAIL }}
         # read-only role: no state lock
         run: terraform plan -input=false -no-color -lock=false
 
@@ -260,6 +263,9 @@ jobs:
           TF_VAR_domain_name: ${{ vars.WEB_DOMAIN }}
           # -1 while the account concurrency quota is below 20 (10 executions must stay unreserved)
           TF_VAR_reserved_concurrency: ${{ vars.RESERVED_CONCURRENCY || 10 }}
+          # monthly budget (USD) of the kill switch, and e-mail of the budget alerts (infra/budget.tf)
+          TF_VAR_monthly_budget_usd: ${{ vars.MONTHLY_BUDGET_USD || 20 }}
+          TF_VAR_budget_alert_email: ${{ vars.BUDGET_ALERT_EMAIL }}
         run: terraform apply -input=false -auto-approve -no-color
 
       - name: Smoke test of the endpoint
