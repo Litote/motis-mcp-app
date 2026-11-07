@@ -108,6 +108,7 @@ data class MotisMcpConfig(
                     MapTiles(
                         url = env["MOTIS_TILE_URL"]?.takeIf { it.isNotBlank() } ?: MapTiles.OSM_URL,
                         attribution = env["MOTIS_TILE_ATTRIBUTION"]?.takeIf { it.isNotBlank() } ?: MapTiles.OSM_ATTRIBUTION,
+                        railOverlays = env["MOTIS_RAIL_OVERLAY"]?.let(::parseRailOverlays).orEmpty(),
                     ),
                 viewDomains =
                     McpHost.entries
@@ -128,6 +129,17 @@ data class MotisMcpConfig(
         private fun parseBoolean(value: String): Boolean =
             requireNotNull(value.trim().lowercase().toBooleanStrictOrNull()) { "MOTIS_SNCF_REALTIME must be true or false: \"$value\"" }
 
+        private fun parseRailOverlays(value: String): List<RailOverlay> =
+            value
+                .split(',')
+                .map { it.trim() }
+                .filter { it.isNotEmpty() }
+                .map { id ->
+                    requireNotNull(RailOverlay.entries.firstOrNull { it.id == id.lowercase() }) {
+                        "MOTIS_RAIL_OVERLAY must be a comma-separated list of ${RailOverlay.entries.joinToString { it.id }}: \"$value\""
+                    }
+                }.distinct()
+
         private fun parseLogLevel(value: String): LogLevel =
             requireNotNull(LogLevel.entries.firstOrNull { it.name.equals(value.trim(), ignoreCase = true) }) {
                 "MOTIS_LOG_LEVEL must be one of ${LogLevel.entries.joinToString()}: \"$value\""
@@ -136,19 +148,68 @@ data class MotisMcpConfig(
 }
 
 /**
- * Raster tiles of the maps of the views (Leaflet URL template, e.g. `https://{s}.tile.example.org/{z}/{x}/{y}.png`).
+ * Raster tiles of the maps of the views (Leaflet URL template, e.g. `https://{s}.tile.example.org/{z}/{x}/{y}.png`),
+ * and the [railOverlays] drawn over them.
  * The default OpenStreetMap tiles are subject to the [tile usage policy](https://operations.osmfoundation.org/policies/tiles/).
  */
-data class MapTiles(val url: String = OSM_URL, val attribution: String = OSM_ATTRIBUTION) {
-    /** Origin of the tiles, for the CSP of the views (`{s}` subdomains become a wildcard). */
-    val origin: String
-        get() {
-            val match = Regex("""^(https?://[^/]+)""").find(url) ?: error("Invalid tile URL: $url")
-            return match.value.replace(Regex("""\{[a-z]}"""), "*")
-        }
+data class MapTiles(
+    val url: String = OSM_URL,
+    val attribution: String = OSM_ATTRIBUTION,
+    val railOverlays: List<RailOverlay> = emptyList(),
+) {
+    /** Origins of the tiles and of the overlays, for the CSP of the views (`{s}` subdomains become a wildcard). */
+    val origins: List<String>
+        get() = (listOf(url) + railOverlays.map { it.url }).map(::origin).distinct()
 
     companion object {
         const val OSM_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
         const val OSM_ATTRIBUTION = "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors"
+
+        private fun origin(url: String): String {
+            val match = Regex("""^(https?://[^/?]+)""").find(url) ?: error("Invalid tile URL: $url")
+            return match.value.replace(Regex("""\{[a-z]}"""), "*")
+        }
     }
+}
+
+/** Area covered by a [RailOverlay]: the views use the French one in France, the world one elsewhere. */
+enum class OverlayArea(val id: String) { FRANCE("france"), WORLD("world") }
+
+/**
+ * Transparent raster tiles of the railways, drawn over the map (`MOTIS_RAIL_OVERLAY`), from [minZoom] to
+ * [maxNativeZoom] (zoomed in beyond).
+ */
+enum class RailOverlay(
+    val id: String,
+    val url: String,
+    val attribution: String,
+    val area: OverlayArea,
+    val minZoom: Int,
+    val maxNativeZoom: Int,
+) {
+    /** Railways of the BD TOPO, open data of the IGN (Géoplateforme, no key): France only, zoom 6 to 18. */
+    IGN(
+        "ign",
+        "https://data.geopf.fr/wmts?SERVICE=WMTS&VERSION=1.0.0&REQUEST=GetTile&STYLE=normal&TILEMATRIXSET=PM" +
+            "&FORMAT=image/png&LAYER=TRANSPORTNETWORKS.RAILWAYS&TILEMATRIX={z}&TILEROW={y}&TILECOL={x}",
+        "&copy; <a href=\"https://www.ign.fr/\">IGN</a>",
+        OverlayArea.FRANCE,
+        minZoom = 6,
+        maxNativeZoom = 18,
+    ),
+
+    /**
+     * OpenRailwayMap (volunteer servers, [usage policy](https://wiki.openstreetmap.org/wiki/OpenRailwayMap/API): light
+     * use by public free applications): the world.
+     */
+    OPENRAILWAYMAP(
+        "openrailwaymap",
+        "https://tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png",
+        "Data &copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors, " +
+            "Style: <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA 2.0</a> " +
+            "<a href=\"https://www.openrailwaymap.org/\">OpenRailwayMap</a>",
+        OverlayArea.WORLD,
+        minZoom = 0,
+        maxNativeZoom = 19,
+    ),
 }

@@ -113,6 +113,7 @@ MOTIS_APP_CONTACT=you@example.org server/build/install/server/bin/server --http 
 | `MOTIS_LOG_LEVEL`        | `NONE`                                           | Ktor client logs (`INFO`, `HEADERS`, `ALL`…) |
 | `MOTIS_TILE_URL`         | `https://tile.openstreetmap.org/{z}/{x}/{y}.png` | raster tiles of the maps                     |
 | `MOTIS_TILE_ATTRIBUTION` | OpenStreetMap contributors                       | attribution of the tiles (HTML)              |
+| `MOTIS_RAIL_OVERLAY`     | none                                             | railways drawn over the maps: `ign`, `openrailwaymap` (see below) |
 | `MOTIS_VIEW_DOMAIN_<HOST>` | default sandbox origin of the host             | dedicated origin of the views (see below)    |
 | `MCP_ALLOWED_HOSTS`      | localhost only                                   | host names accepted in HTTP mode             |
 | `MOTIS_SNCF_REALTIME`    | `true`                                           | SNCF real time overlay (see below)           |
@@ -127,7 +128,17 @@ when a departures board has such trains. They cover the trains of the next hour 
 shortly before the departure. `MOTIS_SNCF_REALTIME=false` disables it.
 
 The default OpenStreetMap tiles are subject to the [tile usage policy](https://operations.osmfoundation.org/policies/tiles/):
-for an intensive use, configure another tile provider. The tile origin is declared in the CSP of the views.
+for an intensive use, configure another tile provider. The tile origins are declared in the CSP of the views.
+
+`MOTIS_RAIL_OVERLAY` draws the railways over the maps (transparent raster tiles, comma-separated list):
+
+| Value            | Source                                                                                              | Coverage                     |
+|------------------|-----------------------------------------------------------------------------------------------------|------------------------------|
+| `ign`            | railways of the BD TOPO, [IGN](https://geoservices.ign.fr/) Géoplateforme (open data, no key)       | France, zoom 6 and more      |
+| `openrailwaymap` | [OpenRailwayMap](https://www.openrailwaymap.org/), volunteer servers: light use by public free applications only, see its [usage policy](https://wiki.openstreetmap.org/wiki/OpenRailwayMap/API) | the world |
+
+With both (`ign,openrailwaymap`), a map tile entirely in metropolitan France or in Corsica takes the IGN one, the others
+the OpenRailwayMap one. In dark theme, the IGN tiles are inverted like the map.
 
 The views run in a sandbox iframe of the host, on an origin of the host (e.g. `web-sandbox.oaiusercontent.com`), shared
 by every app by default: a tile provider cannot tell your requests from the others' (`Referer`). The views can request a
