@@ -7,6 +7,7 @@ import io.modelcontextprotocol.kotlin.sdk.types.Resource
 import io.modelcontextprotocol.kotlin.sdk.types.TextResourceContents
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.add
+import kotlinx.serialization.json.addJsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
@@ -46,29 +47,48 @@ enum class UiView(val file: String, val title: String, val description: String) 
 }
 
 /**
- * `_meta` of the view resources: CSP allowing the map tiles (the only external origin), a host border, and the
+ * `_meta` of the view resources: CSP allowing the map tiles and overlays (the only external origins), a host border, and the
  * dedicated origin of the views ([domain], format defined by each host) if any.
  */
 internal fun resourceMeta(tiles: MapTiles, domain: String? = null): JsonObject =
     buildJsonObject {
         putJsonObject("ui") {
             putJsonObject("csp") {
-                putJsonArray("resourceDomains") { add(tiles.origin) }
-                putJsonArray("connectDomains") { add(tiles.origin) }
+                putJsonArray("resourceDomains") { tiles.origins.forEach { add(it) } }
+                putJsonArray("connectDomains") { tiles.origins.forEach { add(it) } }
             }
             put("prefersBorder", true)
             domain?.let { put("domain", it) }
         }
     }
 
-private fun String.escapeAttribute(): String =
-    replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;").replace(">", "&gt;")
+/** Configuration of the maps of the views, read by `ui/src/shared/map.ts`. */
+internal fun mapConfig(tiles: MapTiles): JsonObject =
+    buildJsonObject {
+        putJsonObject("tiles") {
+            put("url", tiles.url)
+            put("attribution", tiles.attribution)
+        }
+        putJsonArray("railOverlays") {
+            tiles.railOverlays.forEach { overlay ->
+                addJsonObject {
+                    put("url", overlay.url)
+                    put("attribution", overlay.attribution)
+                    put("area", overlay.area.id)
+                    put("minZoom", overlay.minZoom)
+                    put("maxNativeZoom", overlay.maxNativeZoom)
+                }
+            }
+        }
+    }
 
-/** Adds the tile configuration to the view, read by `ui/src/shared/map.ts`. */
+/**
+ * Adds the map configuration to the view, as a JSON data block (`<` escaped: the JSON cannot close the script element).
+ */
 internal fun injectTiles(html: String, tiles: MapTiles): String =
     html.replaceFirst(
         "<head>",
-        """<head><meta name="motis-tiles" content="${tiles.url.escapeAttribute()}" data-attribution="${tiles.attribution.escapeAttribute()}" />""",
+        """<head><script type="application/json" id="motis-map">${mapConfig(tiles).toString().replace("<", "\\u003c")}</script>""",
     )
 
 /** Reads the bundled HTML of [view] from the classpath. */

@@ -58,6 +58,19 @@ class MotisMcpConfigTest {
     }
 
     @Test
+    fun `rail overlays are off by default, a comma-separated list otherwise`() {
+        val contact = "MOTIS_APP_CONTACT" to "you@example.org"
+        assertEquals(emptyList(), MotisMcpConfig.fromEnv(mapOf(contact)).tiles.railOverlays)
+        assertEquals(emptyList(), MotisMcpConfig.fromEnv(mapOf(contact, "MOTIS_RAIL_OVERLAY" to " , ")).tiles.railOverlays)
+        assertEquals(
+            listOf(RailOverlay.IGN, RailOverlay.OPENRAILWAYMAP),
+            MotisMcpConfig.fromEnv(mapOf(contact, "MOTIS_RAIL_OVERLAY" to "IGN, openrailwaymap,ign")).tiles.railOverlays,
+        )
+        val error = assertFailsWith<IllegalArgumentException> { MotisMcpConfig.fromEnv(mapOf(contact, "MOTIS_RAIL_OVERLAY" to "ign,osm")) }
+        assertEquals("MOTIS_RAIL_OVERLAY must be a comma-separated list of ign, openrailwaymap: \"ign,osm\"", error.message)
+    }
+
+    @Test
     fun `allowed hosts are a comma-separated list`() {
         val contact = "MOTIS_APP_CONTACT" to "you@example.org"
         assertNull(MotisMcpConfig.fromEnv(mapOf(contact)).allowedHosts)

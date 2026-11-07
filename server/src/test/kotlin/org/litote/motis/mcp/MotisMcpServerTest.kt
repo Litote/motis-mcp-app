@@ -66,7 +66,7 @@ class MotisMcpServerTest {
                 client.readResource(ReadResourceRequest(ReadResourceRequestParams(UiView.EXPLORER.uri))).contents.single()
                     as TextResourceContents
             assertEquals(MCP_APP_MIME_TYPE, content.mimeType)
-            assertTrue(content.text.contains("""<meta name="motis-tiles" content="https://tile.openstreetmap.org/{z}/{x}/{y}.png""""))
+            assertTrue(content.text.contains("""<script type="application/json" id="motis-map">{"tiles":{"url":"https://tile.openstreetmap.org/{z}/{x}/{y}.png""""))
             assertTrue(content.text.contains("EXPLORER"))
         }
     }
