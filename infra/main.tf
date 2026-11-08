@@ -5,6 +5,7 @@ locals {
     var.tile_url != "" ? { MOTIS_TILE_URL = var.tile_url } : {},
     var.tile_attribution != "" ? { MOTIS_TILE_ATTRIBUTION = var.tile_attribution } : {},
     var.rail_overlay != "" ? { MOTIS_RAIL_OVERLAY = var.rail_overlay } : {},
+    var.vector_tile_url != "" ? { MOTIS_VECTOR_TILE_URL = var.vector_tile_url } : {},
     { for host, domain in var.view_domains : "MOTIS_VIEW_DOMAIN_${upper(host)}" => domain if domain != "" },
   )
 }

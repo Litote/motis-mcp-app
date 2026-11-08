@@ -65,6 +65,7 @@ GitHub configuration:
 | secret                       | `AWS_PLAN_ROLE_ARN`                             | `plan_role_arn` output of `make bootstrap` (read-only, pull requests) |
 | secret (optional)            | `GRADLE_ENCRYPTION_KEY`                         | Gradle configuration cache encryption key            |
 | secret (optional)            | `SONAR_TOKEN`                                   | SonarCloud analysis of `ci.yml`                      |
+| secret (optional)            | `MOTIS_VECTOR_TILE_URL`                         | vector tiles, e.g. Protomaps hosted API with its key, see [Map tiles](#map-tiles) |
 | secret                       | `RELEASE_PLEASE_APP_ID`, `RELEASE_PLEASE_APP_PRIVATE_KEY` | GitHub App of `release-please.yml`      |
 | variable                     | `AWS_REGION`                                    | e.g. `eu-west-3`                                     |
 | variable                     | `TF_STATE_BUCKET`                               | `state_bucket` output of `make bootstrap`            |
@@ -89,6 +90,23 @@ The endpoint has no authentication: bound the load on MOTIS and the cost with `r
 [kill switch](#budget-and-kill-switch), and configure a tile provider (`tile_url`) for a public use. The railway overlay
 of the raster maps (`rail_overlay`: IGN in France and OpenRailwayMap elsewhere, none by default, the vector tiles
 drawing the railways) is described in the [MCP server reference](MCP-SERVER.md#usage).
+
+### Map tiles
+
+Without configuration, the maps use the OpenStreetMap raster tiles, whose usage policy forbids an intensive use. The
+vector tiles of the [Protomaps hosted API](https://protomaps.com/api) are free for non-commercial use:
+
+1. Create an API key on protomaps.com, and allow the origins of the views (CORS), on which the tiles are requested:
+   - the web chat: its **sandbox** origin, `https://sandbox.<domain_name>` (the views run there, not on the origin of
+     the chat);
+   - Claude, on `/mcp/claude`: `https://<hash>.claudemcpcontent.com`, the first 32 hexadecimal characters of the
+     SHA-256 of the endpoint URL (see [MCP server reference](MCP-SERVER.md#usage));
+   - ChatGPT: its origin dedicated to the app (`MOTIS_VIEW_DOMAINS`), as served by ChatGPT.
+2. Store the URL with its key as the secret `MOTIS_VECTOR_TILE_URL` (sensitive Terraform variable `vector_tile_url`):
+   `https://api.protomaps.com/tiles/v4/{z}/{x}/{y}.mvt?key=<key>`.
+
+The key is visible in the views (it is in their HTML): the allowed origins limit its use. The hosted API has a soft
+limit of 1,000,000 tiles a month: its usage is on the account page of protomaps.com.
 
 ## Web chat
 
