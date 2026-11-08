@@ -113,6 +113,8 @@ MOTIS_APP_CONTACT=you@example.org server/build/install/server/bin/server --http 
 | `MOTIS_LOG_LEVEL`        | `NONE`                                           | Ktor client logs (`INFO`, `HEADERS`, `ALL`…) |
 | `MOTIS_TILE_URL`         | `https://tile.openstreetmap.org/{z}/{x}/{y}.png` | raster tiles of the maps                     |
 | `MOTIS_TILE_ATTRIBUTION` | OpenStreetMap contributors                       | attribution of the tiles (HTML)              |
+| `MOTIS_VECTOR_TILE_URL`  | none                                             | vector tiles of the Protomaps basemap, replacing the raster tiles (see below) |
+| `MOTIS_VECTOR_TILE_ATTRIBUTION` | Protomaps, OpenStreetMap                  | attribution of the vector tiles (HTML)       |
 | `MOTIS_RAIL_OVERLAY`     | none                                             | railways drawn over the maps: `ign`, `openrailwaymap` (see below) |
 | `MOTIS_VIEW_DOMAIN_<HOST>` | default sandbox origin of the host             | dedicated origin of the views (see below)    |
 | `MCP_ALLOWED_HOSTS`      | localhost only                                   | host names accepted in HTTP mode             |
@@ -129,6 +131,15 @@ shortly before the departure. `MOTIS_SNCF_REALTIME=false` disables it.
 
 The default OpenStreetMap tiles are subject to the [tile usage policy](https://operations.osmfoundation.org/policies/tiles/):
 for an intensive use, configure another tile provider. The tile origins are declared in the CSP of the views.
+
+`MOTIS_VECTOR_TILE_URL` replaces the raster tiles by vector tiles of the
+[Protomaps basemap](https://docs.protomaps.com/basemaps/layers) (`…/{z}/{x}/{y}.mvt`, up to zoom 15, zoomed in beyond),
+drawn on canvas by [protomaps-leaflet](https://github.com/protomaps/protomaps-leaflet) in the theme (light or dark
+flavor) and the language of the host:
+
+- the [Protomaps hosted API](https://protomaps.com/api): `https://api.protomaps.com/tiles/v4/{z}/{x}/{y}.mvt?key=<key>`,
+  free for non-commercial use, with a key whose allowed origins (CORS) are the ones of the views (see below);
+- or your own deployment of a [Protomaps daily build](https://docs.protomaps.com/basemaps/downloads) (PMTiles).
 
 `MOTIS_RAIL_OVERLAY` draws the railways over the maps (transparent raster tiles, comma-separated list):
 

@@ -144,8 +144,9 @@ button[aria-pressed="true"] {
   z-index: 0;
 }
 
-/* rail overlay (own pane): the French tiles have dark lines, inverted like the map; the world ones stay readable as is */
-.map.dark-tiles .leaflet-tile-pane,
+/* raster tiles inverted in dark theme (the vector tiles have a dark flavor); rail overlay (own pane): the French tiles
+   have dark lines, inverted like the map; the world ones stay readable as is */
+.map.dark-tiles:not(.vector-tiles) .leaflet-tile-pane,
 .map.dark-tiles .rail-france {
   filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9);
 }

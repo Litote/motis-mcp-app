@@ -69,6 +69,12 @@ internal fun mapConfig(tiles: MapTiles): JsonObject =
             put("url", tiles.url)
             put("attribution", tiles.attribution)
         }
+        tiles.vectorUrl?.let { url ->
+            putJsonObject("vectorTiles") {
+                put("url", url)
+                put("attribution", tiles.vectorAttribution)
+            }
+        }
         putJsonArray("railOverlays") {
             tiles.railOverlays.forEach { overlay ->
                 addJsonObject {

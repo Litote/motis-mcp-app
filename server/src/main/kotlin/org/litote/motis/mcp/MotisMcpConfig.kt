@@ -108,6 +108,9 @@ data class MotisMcpConfig(
                     MapTiles(
                         url = env["MOTIS_TILE_URL"]?.takeIf { it.isNotBlank() } ?: MapTiles.OSM_URL,
                         attribution = env["MOTIS_TILE_ATTRIBUTION"]?.takeIf { it.isNotBlank() } ?: MapTiles.OSM_ATTRIBUTION,
+                        vectorUrl = env["MOTIS_VECTOR_TILE_URL"]?.takeIf { it.isNotBlank() },
+                        vectorAttribution =
+                            env["MOTIS_VECTOR_TILE_ATTRIBUTION"]?.takeIf { it.isNotBlank() } ?: MapTiles.PROTOMAPS_ATTRIBUTION,
                         railOverlays = env["MOTIS_RAIL_OVERLAY"]?.let(::parseRailOverlays).orEmpty(),
                     ),
                 viewDomains =
@@ -148,22 +151,30 @@ data class MotisMcpConfig(
 }
 
 /**
- * Raster tiles of the maps of the views (Leaflet URL template, e.g. `https://{s}.tile.example.org/{z}/{x}/{y}.png`),
- * and the [railOverlays] drawn over them.
+ * Tiles of the maps of the views, and the [railOverlays] drawn over them.
+ *
+ * The raster tiles ([url], Leaflet URL template, e.g. `https://{s}.tile.example.org/{z}/{x}/{y}.png`) are replaced by
+ * the vector tiles of [vectorUrl] when set: Protomaps basemap schema, `…/{z}/{x}/{y}.mvt` (e.g. the Protomaps hosted
+ * API, `https://api.protomaps.com/tiles/v4/{z}/{x}/{y}.mvt?key=…`, or a PMTiles deployment), drawn in the theme of the
+ * host.
  * The default OpenStreetMap tiles are subject to the [tile usage policy](https://operations.osmfoundation.org/policies/tiles/).
  */
 data class MapTiles(
     val url: String = OSM_URL,
     val attribution: String = OSM_ATTRIBUTION,
     val railOverlays: List<RailOverlay> = emptyList(),
+    val vectorUrl: String? = null,
+    val vectorAttribution: String = PROTOMAPS_ATTRIBUTION,
 ) {
-    /** Origins of the tiles and of the overlays, for the CSP of the views (`{s}` subdomains become a wildcard). */
+    /** Origins of the tiles used and of the overlays, for the CSP of the views (`{s}` subdomains become a wildcard). */
     val origins: List<String>
-        get() = (listOf(url) + railOverlays.map { it.url }).map(::origin).distinct()
+        get() = (listOf(vectorUrl ?: url) + railOverlays.map { it.url }).map(::origin).distinct()
 
     companion object {
         const val OSM_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
         const val OSM_ATTRIBUTION = "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a> contributors"
+        const val PROTOMAPS_ATTRIBUTION =
+            "<a href=\"https://protomaps.com\">Protomaps</a> &copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap</a>"
 
         private fun origin(url: String): String {
             val match = Regex("""^(https?://[^/?]+)""").find(url) ?: error("Invalid tile URL: $url")

@@ -35,6 +35,8 @@ Environment:
   MOTIS_LOG_LEVEL      Ktor client log level: NONE (default), INFO, HEADERS, BODY, ALL
   MOTIS_TILE_URL       raster tiles of the maps (default https://tile.openstreetmap.org/{z}/{x}/{y}.png)
   MOTIS_TILE_ATTRIBUTION  attribution of the tiles (HTML)
+  MOTIS_VECTOR_TILE_URL  vector tiles of the Protomaps basemap (.../{z}/{x}/{y}.mvt), replacing the raster tiles
+  MOTIS_VECTOR_TILE_ATTRIBUTION  attribution of the vector tiles (HTML, default Protomaps and OpenStreetMap)
   MOTIS_RAIL_OVERLAY   railways drawn over the maps, comma-separated (default: none): ign (France),
                        openrailwaymap (the world; elsewhere than France with ign)
   MOTIS_VIEW_DOMAIN_<HOST>  dedicated origin of the views (_meta.ui.domain) on the endpoint /mcp/<host> of a host:

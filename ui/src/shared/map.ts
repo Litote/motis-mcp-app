@@ -1,9 +1,15 @@
-// Leaflet map with raster tiles: no web worker nor WebGL, which keeps it working in the host sandbox.
+// Leaflet map, with raster tiles or vector tiles drawn on canvas (protomaps-leaflet): no web worker nor WebGL, which
+// keeps it working in the host sandbox.
 import polyline from "@mapbox/polyline";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { leafletLayer } from "protomaps-leaflet";
 import { currentTheme } from "./app";
 import { FRANCE_BOUNDS, tileInsideFrance } from "./france";
+import { hostLocale } from "./i18n";
+
+// protomaps-leaflet extends the global L when its layer is created
+(globalThis as { L?: typeof L }).L ??= L;
 
 export interface Polyline {
   points: string;
@@ -28,8 +34,16 @@ export interface RailOverlay {
   maxNativeZoom: number;
 }
 
+export interface TileSource {
+  url: string;
+  attribution: string;
+}
+
 export interface MapConfig {
-  tiles: { url: string; attribution: string };
+  /** Raster tiles, used without vector tiles. */
+  tiles: TileSource;
+  /** Vector tiles of the Protomaps basemap schema (`…/{z}/{x}/{y}.mvt`), drawn in the theme of the host. */
+  vectorTiles?: TileSource | null;
   railOverlays: RailOverlay[];
 }
 
@@ -38,8 +52,12 @@ const DEFAULT_CONFIG: MapConfig = {
     url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   },
+  vectorTiles: null,
   railOverlays: [],
 };
+
+/** Last zoom of the Protomaps basemap tiles: zoomed in beyond. */
+const VECTOR_MAX_DATA_ZOOM = 15;
 
 /** Map configuration of the server (`<script type="application/json" id="motis-map">`), OpenStreetMap by default. */
 function mapConfig(): MapConfig {
@@ -47,7 +65,11 @@ function mapConfig(): MapConfig {
   if (!json) return DEFAULT_CONFIG;
   try {
     const config = JSON.parse(json) as Partial<MapConfig>;
-    return { tiles: config.tiles ?? DEFAULT_CONFIG.tiles, railOverlays: config.railOverlays ?? [] };
+    return {
+      tiles: config.tiles ?? DEFAULT_CONFIG.tiles,
+      vectorTiles: config.vectorTiles ?? null,
+      railOverlays: config.railOverlays ?? [],
+    };
   } catch {
     return DEFAULT_CONFIG;
   }
@@ -118,11 +140,31 @@ export interface ThemedMap {
   show(bounds: L.LatLngBounds): void;
 }
 
-/** Creates a map; in dark theme, the raster tiles (not the rail overlay) are inverted with a CSS filter. */
+/** Layer of the vector tiles, in the [theme] (Protomaps flavor) and the language of the host. */
+export function vectorLayer(source: TileSource, theme: "light" | "dark"): L.GridLayer {
+  return leafletLayer({
+    url: source.url,
+    flavor: theme,
+    lang: hostLocale()?.split("-")[0] ?? "en",
+    maxDataZoom: VECTOR_MAX_DATA_ZOOM,
+    maxZoom: 19,
+    attribution: `${source.attribution} · ${DATA_ATTRIBUTION}`,
+  }) as unknown as L.GridLayer;
+}
+
+/**
+ * Creates a map. In dark theme, the vector tiles are drawn in their dark flavor, the raster tiles inverted with a CSS
+ * filter; the French rail overlay is inverted in both cases.
+ */
 export function createMap(element: HTMLElement): ThemedMap {
   const map = L.map(element, { zoomControl: true, preferCanvas: true }).setView([46.5, 2.5], 5);
-  const { tiles, railOverlays } = mapConfig();
-  L.tileLayer(tiles.url, { attribution: `${tiles.attribution} · ${DATA_ATTRIBUTION}`, maxZoom: 19 }).addTo(map);
+  const { tiles, vectorTiles, railOverlays } = mapConfig();
+  let vector: { layer: L.GridLayer; theme: "light" | "dark" } | null = null;
+  if (vectorTiles) {
+    element.classList.add("vector-tiles");
+  } else {
+    L.tileLayer(tiles.url, { attribution: `${tiles.attribution} · ${DATA_ATTRIBUTION}`, maxZoom: 19 }).addTo(map);
+  }
   const rails = railLayer(railOverlays);
   if (rails) {
     const pane = map.createPane(RAIL_PANE);
@@ -130,7 +172,13 @@ export function createMap(element: HTMLElement): ThemedMap {
     pane.style.pointerEvents = "none";
     rails.addTo(map);
   }
-  const setTheme = (theme: "light" | "dark") => element.classList.toggle("dark-tiles", theme === "dark");
+  const setTheme = (theme: "light" | "dark") => {
+    element.classList.toggle("dark-tiles", theme === "dark");
+    if (vectorTiles && vector?.theme !== theme) {
+      vector?.layer.remove();
+      vector = { layer: vectorLayer(vectorTiles, theme).addTo(map), theme };
+    }
+  };
   setTheme(currentTheme());
   let shown: L.LatLngBounds | null = null;
   const show = (b: L.LatLngBounds) => {
