@@ -221,18 +221,14 @@ export interface ChatRequest {
   /** Models tried by OpenRouter when [model] fails (rate limited provider…). */
   fallbackModels: string[];
   messages: ChatMessage[];
+  /** Empty: no tool calls possible (not sent: some providers refuse an empty list). */
   tools: ChatTool[];
-  /**
-   * "none": an answer without tool calls is asked (the tools are still sent: some providers refuse tool calls in the
-   * history without them). Default "auto".
-   */
-  toolChoice?: "auto" | "none";
 }
 
 /** Streams the chat completion of [request]; [onDelta] receives the cumulative text and tool calls. */
 export async function streamChat(
   key: string,
-  { model, fallbackModels, messages, tools, toolChoice = "auto" }: ChatRequest,
+  { model, fallbackModels, messages, tools }: ChatRequest,
   signal: AbortSignal,
   onDelta: (delta: ChatDelta) => void,
 ): Promise<ChatDelta> {
@@ -249,8 +245,7 @@ export async function streamChat(
       model,
       ...(fallbackModels.length ? { models: [model, ...fallbackModels] } : {}),
       messages,
-      tools,
-      ...(toolChoice === "none" ? { tool_choice: "none" } : {}),
+      ...(tools.length ? { tools } : {}),
       stream: true,
     }),
   });
