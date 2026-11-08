@@ -5,6 +5,8 @@
   "login.button": "Conectează-te cu OpenRouter",
   "login.keyPlaceholder": "sau lipește o cheie OpenRouter (sk-or-…)",
   "login.useKey": "Folosește cheia",
+  "legal.privacy": "Confidențialitate",
+  "legal.terms": "Condiții de utilizare",
   "loading": "Se încarcă…",
   "welcome.title": "Explorează transportul public",
   "welcome.text": "Orare, călătorii, hărți și mobilitate partajată de la Transitous (MOTIS).",

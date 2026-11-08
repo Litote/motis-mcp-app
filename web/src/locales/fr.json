@@ -5,6 +5,8 @@
   "login.button": "Se connecter avec OpenRouter",
   "login.keyPlaceholder": "ou collez une clé OpenRouter (sk-or-…)",
   "login.useKey": "Utiliser la clé",
+  "legal.privacy": "Confidentialité",
+  "legal.terms": "Conditions d'utilisation",
   "loading": "Chargement…",
   "welcome.title": "Explorez les transports en commun",
   "welcome.text": "Horaires, itinéraires, cartes et mobilité partagée, avec Transitous (MOTIS).",

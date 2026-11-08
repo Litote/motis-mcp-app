@@ -96,6 +96,7 @@ a { color: var(--accent); }
 .login p { color: var(--muted); line-height: 1.5; }
 .login .login-error { color: var(--error); }
 .login-key { display: flex; gap: 8px; }
+.login .login-legal { font-size: 13px; text-align: center; }
 .login-key input { flex: 1; border: 1px solid var(--border); border-radius: 8px; padding: 6px 10px; background: var(--bg); }
 .model-picker { display: flex; align-items: center; gap: 8px; }
 .model-all { color: var(--muted); font-size: 0.85rem; white-space: nowrap; }

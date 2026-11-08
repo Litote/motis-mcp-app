@@ -5,6 +5,8 @@
   "login.button": "Увійти через OpenRouter",
   "login.keyPlaceholder": "або вставте ключ OpenRouter (sk-or-…)",
   "login.useKey": "Використати ключ",
+  "legal.privacy": "Конфіденційність",
+  "legal.terms": "Умови використання",
   "loading": "Завантаження…",
   "welcome.title": "Досліджуйте громадський транспорт",
   "welcome.text": "Розклади, маршрути, мапи та спільна мобільність від Transitous (MOTIS).",
