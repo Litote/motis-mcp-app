@@ -86,7 +86,10 @@ const pluralRules = new Map<string, Intl.PluralRules>();
 
 function pluralCategory(lang: string, count: number): Intl.LDMLPluralRule {
   let rules = pluralRules.get(lang);
-  if (!rules) pluralRules.set(lang, (rules = new Intl.PluralRules(lang)));
+  if (!rules) {
+    rules = new Intl.PluralRules(lang);
+    pluralRules.set(lang, rules);
+  }
   return rules.select(count);
 }
 
