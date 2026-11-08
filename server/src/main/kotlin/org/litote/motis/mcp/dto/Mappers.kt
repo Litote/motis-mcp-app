@@ -429,3 +429,22 @@ fun MapClient.RentalsResponseBody.toDto(title: String, bbox: BoundingBox?, dropE
         totalVehicles = vehicles.size,
     )
 }
+
+/** Legs in a vehicle (with a trip), not walked or ridden. */
+fun ItineraryDto.transitLegs(): List<LegDto> = legs.filter { it.tripId != null }
+
+/** Fills the stops of the itinerary from its legs: boarding, transfers, alighting (null without transit). */
+fun ItineraryDto.withStops(): ItineraryDto {
+    val transit = transitLegs()
+    if (transit.isEmpty()) return copy(departure = null, arrival = null, transferStops = null)
+    val first = transit.first()
+    val last = transit.last()
+    return copy(
+        departure = ItineraryStop(first.from.name, first.from.stopId, first.startTime, first.from.track),
+        arrival = ItineraryStop(last.to.name, last.to.stopId, last.endTime, last.to.track),
+        transferStops = transit.dropLast(1).map { it.to.name }.ifEmpty { null },
+    )
+}
+
+/** Fills the stops of the itineraries (see [ItineraryDto.withStops]). */
+fun JourneyResult.withStops(): JourneyResult = copy(itineraries = itineraries.map { it.withStops() }, direct = direct.map { it.withStops() })

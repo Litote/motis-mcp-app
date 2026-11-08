@@ -197,7 +197,19 @@ data class ItineraryDto(
     val durationSeconds: Long,
     val transfers: Long,
     val legs: List<LegDto>,
+    /**
+     * Stop where the first vehicle is boarded, [arrival] where the last one is left, [transferStops] where the vehicles
+     * are changed (see [withStops]): the itineraries between two cities do not all leave from the same station. Null
+     * without transit.
+     */
+    val departure: ItineraryStop? = null,
+    val arrival: ItineraryStop? = null,
+    val transferStops: List<String>? = null,
 )
+
+/** Stop where an itinerary boards its first vehicle, or leaves its last one, at [time] (real time when known). */
+@Serializable
+data class ItineraryStop(val name: String, val stopId: String? = null, val time: String, val track: String? = null)
 
 @Serializable
 data class TripResult(val kind: String = "trip", val tripId: String, val itinerary: ItineraryDto)

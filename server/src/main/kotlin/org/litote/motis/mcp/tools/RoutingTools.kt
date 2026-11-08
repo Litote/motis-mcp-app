@@ -11,11 +11,13 @@ import org.litote.motis.mcp.WalkingSpeed
 import org.litote.motis.mcp.apps.UiView
 import org.litote.motis.mcp.cities.CityJourneys
 import org.litote.motis.mcp.dto.Coordinates
+import org.litote.motis.mcp.dto.ItineraryDto
 import org.litote.motis.mcp.dto.JourneyResult
 import org.litote.motis.mcp.dto.fromMainLineStations
 import org.litote.motis.mcp.dto.hasMainLineLegs
 import org.litote.motis.mcp.dto.toDto
 import org.litote.motis.mcp.dto.withEndNames
+import org.litote.motis.mcp.dto.withStops
 
 fun Server.addRoutingTools(gateway: MotisGateway, cityJourneys: CityJourneys) {
     motisTool(
@@ -28,6 +30,8 @@ fun Server.addRoutingTools(gateway: MotisGateway, cityJourneys: CityJourneys) {
             Fails listing the candidates when a name is ambiguous: call it again with the value given for the right one.
             Between city names (e.g. 'Paris' to 'Nantes'), the long-distance itineraries start and end at the stations,
             without the local legs to/from the city center; give an address for door-to-door itineraries.
+            The itineraries do not all leave from (or arrive at) the same station: give the user the station of each one
+            (departure, arrival: name, time and track of the boarding in the first vehicle and of the leaving of the last one).
             """.trimIndent(),
         view = UiView.ITINERARY,
         schema = {
@@ -111,13 +115,17 @@ fun Server.addRoutingTools(gateway: MotisGateway, cityJourneys: CityJourneys) {
             } else {
                 gateway.plan(query).toDto().fromMainLineStations(from.center().takeIf { from.isCity }, to.center().takeIf { to.isCity })
             }
-        val result = journeys.withEndNames(from.askedName(), to.askedName(), from.area, to.area)
+        val result = journeys.withEndNames(from.askedName(), to.askedName(), from.area, to.area).withStops()
         val summary =
             buildString {
                 appendLine("From ${from.label} to ${to.label}: ${result.itineraries.size} itinerary(ies).")
                 listOfNotNull(from.label.takeIf { from.isCity }, to.label.takeIf { to.isCity })
                     .takeIf { it.isNotEmpty() && result.hasMainLineLegs() }
                     ?.let { appendLine("Long-distance trains from/to the stations of ${it.joinToString(" and ")}, without the local legs to/from the city center.") }
+                // from/to a city, the model takes the station of the first itinerary for all of them (from/to an address, the
+                // stops differ anyway, and the legs say it)
+                if (from.isCity) result.itineraries.differingStops("Departure stations") { it.departure?.name }?.let { appendLine(it) }
+                if (to.isCity) result.itineraries.differingStops("Arrival stations") { it.arrival?.name }?.let { appendLine(it) }
                 listOfNotNull(
                     walkingSpeed.takeIf { it != WalkingSpeed.NORMAL }?.let { "walking speed ${it.name}" },
                     "wheelchair".takeIf { wheelchair },
@@ -132,6 +140,16 @@ fun Server.addRoutingTools(gateway: MotisGateway, cityJourneys: CityJourneys) {
 }
 
 private fun ResolvedPlace.coordinates(): String = "$lat,$lon"
+
+/**
+ * Warning listing the stops of the [itineraries] (with their numbers) when they differ, e.g. "Departure stations differ:
+ * Paris Montparnasse (1, 2), Massy TGV (3)": else the model takes the station of the first one for all of them.
+ */
+private fun List<ItineraryDto>.differingStops(label: String, stop: (ItineraryDto) -> String?): String? {
+    val numbers = withIndex().mapNotNull { (i, it) -> stop(it)?.let { name -> name to i + 1 } }.groupBy({ it.first }, { it.second })
+    if (numbers.size < 2) return null
+    return "$label differ: ${numbers.entries.joinToString { (name, n) -> "$name (${n.joinToString()})" }}: give the station of each itinerary."
+}
 
 private fun ResolvedPlace.center(): Coordinates = Coordinates(lat, lon)
 
