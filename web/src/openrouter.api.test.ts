@@ -169,6 +169,15 @@ describe("streamChat", () => {
     expect(JSON.parse(fetchMock.mock.calls[0][1]?.body as string).models).toBeUndefined();
   });
 
+  it("asks for no tool call with tool choice none only", async () => {
+    fetchMock.mockResolvedValue(sse(["data: [DONE]"]));
+    await streamChat(KEY, "m1", [], messages, [], signal, () => undefined);
+    expect(JSON.parse(fetchMock.mock.calls[0][1]?.body as string).tool_choice).toBeUndefined();
+    fetchMock.mockResolvedValue(sse(["data: [DONE]"]));
+    await streamChat(KEY, "m1", [], messages, [], signal, () => undefined, "none");
+    expect(JSON.parse(fetchMock.mock.calls[1][1]?.body as string).tool_choice).toBe("none");
+  });
+
   it.each([
     [401, "{}", "OpenRouter key invalid or revoked: log in again."],
     [402, "{}", "No OpenRouter credits left for this model: choose a free model."],

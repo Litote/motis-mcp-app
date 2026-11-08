@@ -30,6 +30,7 @@
   "location.denied": "Prohlížeč odmítl polohu: povolte ji v nastavení webu a klikněte znovu",
   "location.unavailable": "Poloha není k dispozici",
   "thinking": "Přemýšlím…",
+  "agent.tooManySteps": "Zastaveno: příliš mnoho kroků pro jednu otázku.",
   "tool.running": "probíhá…",
   "tool.arguments": "Argumenty",
   "tool.result": "Výsledek",

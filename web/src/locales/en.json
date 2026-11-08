@@ -29,6 +29,7 @@
   "location.denied": "Location refused by the browser: allow it in the site settings, then click again",
   "location.unavailable": "Location unavailable",
   "thinking": "Thinking…",
+  "agent.tooManySteps": "Stopped: too many steps for one question.",
   "tool.running": "running…",
   "tool.arguments": "Arguments",
   "tool.result": "Result",

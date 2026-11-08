@@ -118,9 +118,34 @@ describe("createAgent", () => {
     const results = await run(settings());
 
     expect(openrouter.streamChat).toHaveBeenCalledTimes(6);
-    expect(results.at(-1)?.status).toEqual({ type: "incomplete", reason: "other" });
+    // the last call asks for an answer without tool calls; asked for anyway, they are neither shown nor run
+    expect(mcp.callTool).toHaveBeenCalledTimes(5);
+    expect(openrouter.streamChat.mock.calls[4][7]).toBe("auto");
+    expect(openrouter.streamChat.mock.calls[5][7]).toBe("none");
     const chat = openrouter.streamChat.mock.calls[5][3];
+    expect(chat[0].content).toContain("No more tool calls are possible");
+    expect(openrouter.streamChat.mock.calls[4][3][0].content).not.toContain("No more tool calls are possible");
     expect(chat.at(-1).content).toMatch(/\[truncated]$/);
+    const last = results.at(-1)!;
+    expect(last.status).toEqual({ type: "incomplete", reason: "other" });
+    expect(last.content!.filter((part) => part.type === "tool-call")).toHaveLength(5);
+    expect(last.content!.at(-1)).toEqual({ type: "text", text: "\n\n_Stopped: too many steps for one question._" });
+  });
+
+  it("answers with the results already there at the last step", async () => {
+    mcp.connectMcp.mockResolvedValue(server);
+    mcp.callTool.mockResolvedValue({ content: [{ type: "text", text: "\"Versailles\" is ambiguous" }] });
+    const toolCall = answer({ text: "", toolCalls: [{ id: "c", type: "function", function: { name: "departures", arguments: "" } }] });
+    openrouter.streamChat.mockImplementation((...args: unknown[]) =>
+      args[7] === "none" ? answer({ text: "Which Versailles?", toolCalls: [] })(...args) : toolCall(...args),
+    );
+
+    const results = await run(settings());
+
+    expect(openrouter.streamChat).toHaveBeenCalledTimes(6);
+    const last = results.at(-1)!;
+    expect(last.status).toEqual({ type: "complete", reason: "stop" });
+    expect(last.content!.at(-1)).toEqual({ type: "text", text: "Which Versailles?" });
   });
 
   it("reports the model errors", async () => {

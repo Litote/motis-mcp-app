@@ -29,6 +29,7 @@
   "location.denied": "Standort vom Browser verweigert: In den Website-Einstellungen erlauben und erneut klicken",
   "location.unavailable": "Standort nicht verfügbar",
   "thinking": "Denkt nach…",
+  "agent.tooManySteps": "Abgebrochen: zu viele Schritte für eine Frage.",
   "tool.running": "läuft…",
   "tool.arguments": "Argumente",
   "tool.result": "Ergebnis",

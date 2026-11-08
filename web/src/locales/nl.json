@@ -29,6 +29,7 @@
   "location.denied": "Locatie geweigerd door de browser: sta het toe in de site-instellingen en klik opnieuw",
   "location.unavailable": "Locatie niet beschikbaar",
   "thinking": "Aan het nadenken…",
+  "agent.tooManySteps": "Gestopt: te veel stappen voor één vraag.",
   "tool.running": "bezig…",
   "tool.arguments": "Argumenten",
   "tool.result": "Resultaat",

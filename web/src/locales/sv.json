@@ -29,6 +29,7 @@
   "location.denied": "Webbläsaren nekade platsen: tillåt den i webbplatsinställningarna och klicka igen",
   "location.unavailable": "Platsen är inte tillgänglig",
   "thinking": "Tänker…",
+  "agent.tooManySteps": "Avbrutet: för många steg för en fråga.",
   "tool.running": "körs…",
   "tool.arguments": "Argument",
   "tool.result": "Resultat",

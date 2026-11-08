@@ -217,7 +217,8 @@ export interface ChatDelta {
 
 /**
  * Streams a chat completion; [onDelta] receives the cumulative text and tool calls. [fallbackModels] are tried by
- * OpenRouter when [model] fails (rate limited provider…).
+ * OpenRouter when [model] fails (rate limited provider…). [toolChoice] "none" asks for an answer without tool calls
+ * (the tools are still sent: some providers refuse tool calls in the history without them).
  */
 export async function streamChat(
   key: string,
@@ -227,6 +228,7 @@ export async function streamChat(
   tools: ChatTool[],
   signal: AbortSignal,
   onDelta: (delta: ChatDelta) => void,
+  toolChoice: "auto" | "none" = "auto",
 ): Promise<ChatDelta> {
   const response = await fetch(`${API}/chat/completions`, {
     method: "POST",
@@ -242,6 +244,7 @@ export async function streamChat(
       ...(fallbackModels.length ? { models: [model, ...fallbackModels] } : {}),
       messages,
       tools,
+      ...(toolChoice === "none" ? { tool_choice: "none" } : {}),
       stream: true,
     }),
   });

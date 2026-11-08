@@ -29,6 +29,7 @@
   "location.denied": "Tarayıcı konumu reddetti: site ayarlarından izin verin, sonra tekrar tıklayın",
   "location.unavailable": "Konum kullanılamıyor",
   "thinking": "Düşünüyor…",
+  "agent.tooManySteps": "Durduruldu: tek bir soru için çok fazla adım.",
   "tool.running": "çalışıyor…",
   "tool.arguments": "Argümanlar",
   "tool.result": "Sonuç",

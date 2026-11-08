@@ -29,6 +29,7 @@
   "location.denied": "Localização recusada pelo navegador: permita-a nas definições do site e clique novamente",
   "location.unavailable": "Localização indisponível",
   "thinking": "A pensar…",
+  "agent.tooManySteps": "Interrompido: demasiados passos para uma única pergunta.",
   "tool.running": "em execução…",
   "tool.arguments": "Argumentos",
   "tool.result": "Resultado",

@@ -29,6 +29,7 @@
   "location.denied": "Browseren afviste placeringen: tillad den i webstedets indstillinger, og klik igen",
   "location.unavailable": "Placering ikke tilgængelig",
   "thinking": "Tænker…",
+  "agent.tooManySteps": "Stoppet: for mange trin til ét spørgsmål.",
   "tool.running": "kører…",
   "tool.arguments": "Argumenter",
   "tool.result": "Resultat",

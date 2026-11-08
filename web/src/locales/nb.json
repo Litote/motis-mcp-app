@@ -29,6 +29,7 @@
   "location.denied": "Nettleseren avviste posisjonen: tillat den i nettstedsinnstillingene og klikk igjen",
   "location.unavailable": "Posisjon utilgjengelig",
   "thinking": "Tenker…",
+  "agent.tooManySteps": "Stoppet: for mange trinn for ett spørsmål.",
   "tool.running": "kjører…",
   "tool.arguments": "Argumenter",
   "tool.result": "Resultat",
