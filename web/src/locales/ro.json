@@ -30,6 +30,7 @@
   "location.denied": "Locație refuzată de browser: permite-o în setările site-ului, apoi dă clic din nou",
   "location.unavailable": "Locație indisponibilă",
   "thinking": "Mă gândesc…",
+  "agent.tooManySteps": "Oprit: prea mulți pași pentru o singură întrebare.",
   "tool.running": "în curs…",
   "tool.arguments": "Argumente",
   "tool.result": "Rezultat",

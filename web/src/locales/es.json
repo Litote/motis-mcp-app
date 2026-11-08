@@ -29,6 +29,7 @@
   "location.denied": "El navegador ha denegado la ubicación: permítela en la configuración del sitio y vuelve a hacer clic",
   "location.unavailable": "Ubicación no disponible",
   "thinking": "Pensando…",
+  "agent.tooManySteps": "Detenido: demasiados pasos para una sola pregunta.",
   "tool.running": "en curso…",
   "tool.arguments": "Argumentos",
   "tool.result": "Resultado",

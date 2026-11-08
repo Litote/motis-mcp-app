@@ -25,7 +25,7 @@ fun Server.addRoutingTools(gateway: MotisGateway, cityJourneys: CityJourneys) {
             """
             Computes public transport itineraries between two places (names, stop ids or 'lat,lon'),
             with walking legs, transfers and real-time data. Shows them as a list and on a map.
-            Fails listing the candidates when a name is ambiguous: retry with the right id.
+            Fails listing the candidates when a name is ambiguous: call it again with the value given for the right one.
             Between city names (e.g. 'Paris' to 'Nantes'), the long-distance itineraries start and end at the stations,
             without the local legs to/from the city center; give an address for door-to-door itineraries.
             """.trimIndent(),
@@ -79,10 +79,11 @@ fun Server.addRoutingTools(gateway: MotisGateway, cityJourneys: CityJourneys) {
         val from =
             gateway.resolvePlace(
                 args.string("from") ?: position ?: throw MotisToolException("Invalid argument: 'from' or 'position' is required"),
+                argument = if (args.string("from") != null) "from" else "position",
                 near = position,
                 language = language,
             )
-        val to = gateway.resolvePlace(args.requireString("to"), near = from.coordinates(), language = language)
+        val to = gateway.resolvePlace(args.requireString("to"), "to", near = from.coordinates(), language = language)
         // MOTIS rides a bike only from/to coordinates, not from/to stops
         val fromPlace = if (bike != BikeOption.NONE) from.coordinates() else from.id
         val toPlace = if (bike == BikeOption.ON_BOARD) to.coordinates() else to.id

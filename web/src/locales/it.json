@@ -29,6 +29,7 @@
   "location.denied": "Posizione rifiutata dal browser: consentila nelle impostazioni del sito, poi clicca di nuovo",
   "location.unavailable": "Posizione non disponibile",
   "thinking": "Sto pensando…",
+  "agent.tooManySteps": "Interrotto: troppi passaggi per una sola domanda.",
   "tool.running": "in corso…",
   "tool.arguments": "Argomenti",
   "tool.result": "Risultato",

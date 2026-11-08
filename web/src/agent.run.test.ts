@@ -31,7 +31,7 @@ const userMessage = { role: "user", content: [{ type: "text", text: "Next train?
 /** streamChat answering [delta] after streaming it. */
 function answer(delta: ChatDelta) {
   return async (...args: unknown[]) => {
-    const onDelta = args[6] as (delta: ChatDelta) => void;
+    const onDelta = args[3] as (delta: ChatDelta) => void;
     onDelta({ text: delta.text, toolCalls: [] });
     onDelta(delta);
     return delta;
@@ -101,10 +101,10 @@ describe("createAgent", () => {
       { type: "text", text: "Next train at 12:04." },
     ]);
     // the second model call gets the tool result
-    const chat = openrouter.streamChat.mock.calls[1][3];
+    const chat = openrouter.streamChat.mock.calls[1][1].messages;
     expect(chat.at(-1)).toEqual({ role: "tool", tool_call_id: "call-0-0", content: "12:04 TER" });
     expect(chat[0].content).toContain("MOTIS server.");
-    expect(openrouter.streamChat.mock.calls[0].slice(1, 3)).toEqual(["model", ["fallback"]]);
+    expect(openrouter.streamChat.mock.calls[0][1]).toMatchObject({ model: "model", fallbackModels: ["fallback"] });
     expect(onRunEnd).toHaveBeenCalledOnce();
   });
 
@@ -118,9 +118,34 @@ describe("createAgent", () => {
     const results = await run(settings());
 
     expect(openrouter.streamChat).toHaveBeenCalledTimes(6);
-    expect(results.at(-1)?.status).toEqual({ type: "incomplete", reason: "other" });
-    const chat = openrouter.streamChat.mock.calls[5][3];
+    // the last call asks for an answer without tool calls; asked for anyway, they are neither shown nor run
+    expect(mcp.callTool).toHaveBeenCalledTimes(5);
+    expect(openrouter.streamChat.mock.calls[4][1].toolChoice).toBe("auto");
+    expect(openrouter.streamChat.mock.calls[5][1].toolChoice).toBe("none");
+    const chat = openrouter.streamChat.mock.calls[5][1].messages;
+    expect(chat[0].content).toContain("No more tool calls are possible");
+    expect(openrouter.streamChat.mock.calls[4][1].messages[0].content).not.toContain("No more tool calls are possible");
     expect(chat.at(-1).content).toMatch(/\[truncated]$/);
+    const last = results.at(-1)!;
+    expect(last.status).toEqual({ type: "incomplete", reason: "other" });
+    expect(last.content!.filter((part) => part.type === "tool-call")).toHaveLength(5);
+    expect(last.content!.at(-1)).toEqual({ type: "text", text: "\n\n_Stopped: too many steps for one question._" });
+  });
+
+  it("answers with the results already there at the last step", async () => {
+    mcp.connectMcp.mockResolvedValue(server);
+    mcp.callTool.mockResolvedValue({ content: [{ type: "text", text: "\"Versailles\" is ambiguous" }] });
+    const toolCall = answer({ text: "", toolCalls: [{ id: "c", type: "function", function: { name: "departures", arguments: "" } }] });
+    openrouter.streamChat.mockImplementation((...args: unknown[]) =>
+      (args[1] as { toolChoice?: string }).toolChoice === "none" ? answer({ text: "Which Versailles?", toolCalls: [] })(...args) : toolCall(...args),
+    );
+
+    const results = await run(settings());
+
+    expect(openrouter.streamChat).toHaveBeenCalledTimes(6);
+    const last = results.at(-1)!;
+    expect(last.status).toEqual({ type: "complete", reason: "stop" });
+    expect(last.content!.at(-1)).toEqual({ type: "text", text: "Which Versailles?" });
   });
 
   it("reports the model errors", async () => {

@@ -29,6 +29,7 @@
   "location.denied": "Selain esti sijainnin: salli se sivuston asetuksissa ja napsauta uudelleen",
   "location.unavailable": "Sijainti ei ole käytettävissä",
   "thinking": "Mietitään…",
+  "agent.tooManySteps": "Keskeytetty: liian monta vaihetta yhteen kysymykseen.",
   "tool.running": "käynnissä…",
   "tool.arguments": "Argumentit",
   "tool.result": "Tulos",

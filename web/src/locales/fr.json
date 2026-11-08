@@ -29,6 +29,7 @@
   "location.denied": "Position refusée par le navigateur : autorisez-la dans les paramètres du site, puis cliquez à nouveau",
   "location.unavailable": "Position indisponible",
   "thinking": "Réflexion en cours…",
+  "agent.tooManySteps": "Arrêté : trop d’étapes pour une seule question.",
   "tool.running": "en cours…",
   "tool.arguments": "Arguments",
   "tool.result": "Réponse",

@@ -29,6 +29,7 @@
   "location.denied": "A böngésző elutasította a helyzetet: engedélyezze a webhely beállításaiban, majd kattintson újra",
   "location.unavailable": "A helyzet nem érhető el",
   "thinking": "Gondolkodik…",
+  "agent.tooManySteps": "Leállítva: túl sok lépés egyetlen kérdéshez.",
   "tool.running": "fut…",
   "tool.arguments": "Argumentumok",
   "tool.result": "Eredmény",

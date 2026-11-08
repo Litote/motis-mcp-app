@@ -13,10 +13,17 @@ import type { CallToolResult } from "@modelcontextprotocol/client";
 import { callTool, connectMcp, modelTools, resultText } from "./mcp";
 import { t } from "./i18n";
 import { currentPosition, formatPosition, type UserPosition } from "./location";
-import { streamChat, type ChatMessage, type ChatToolCall } from "./openrouter";
+import { streamChat, type ChatDelta, type ChatMessage, type ChatToolCall } from "./openrouter";
 
-/** Model calls per user message: bounds the loop, and the consumption of the free quota (2 to 3 calls usually). */
+/**
+ * Model calls per user message: bounds the loop, and the consumption of the free quota (2 to 3 calls usually). The last
+ * one is made without tool calls, for an answer with the results already there.
+ */
 const MAX_STEPS = 6;
+/** Added to the system prompt of the last model call. */
+const LAST_STEP_INSTRUCTION =
+  "No more tool calls are possible for this question: answer now with the results above. If they are not enough, " +
+  "say briefly what is missing or ask the user to be more precise.";
 /** Tool result size given back to the model. */
 const MAX_RESULT_CHARS = 12_000;
 
@@ -163,10 +170,20 @@ export function createAgent(settings: AgentSettings): ChatModelAdapter {
           const updates: ThreadAssistantMessagePart[][] = [];
           let wake: (() => void) | undefined;
           let finished = false;
-          const completion = streamChat(key, settings.model(), settings.fallbackModels(), chat, tools, abortSignal, (delta) => {
-            updates.push(parts(delta.text, delta.toolCalls));
+          const last = step === MAX_STEPS - 1;
+          const stepChat = last ? [{ ...chat[0], content: `${chat[0].content}\n\n${LAST_STEP_INSTRUCTION}` }, ...chat.slice(1)] : chat;
+          const onDelta = (delta: ChatDelta) => {
+            updates.push(parts(delta.text, last ? [] : delta.toolCalls));
             wake?.();
-          }).finally(() => {
+          };
+          const request = {
+            model: settings.model(),
+            fallbackModels: settings.fallbackModels(),
+            messages: stepChat,
+            tools,
+            toolChoice: last ? ("none" as const) : ("auto" as const),
+          };
+          const completion = streamChat(key, request, abortSignal, onDelta).finally(() => {
             finished = true;
             wake?.();
           });
@@ -187,6 +204,12 @@ export function createAgent(settings: AgentSettings): ChatModelAdapter {
           if (!calls.length) {
             done.push(...parts(result.text, []));
             yield { content: done, status: { type: "complete", reason: "stop" } };
+            return;
+          }
+          if (last) {
+            // tool calls asked for anyway
+            done.push(...parts(result.text, []), { type: "text", text: `\n\n_${t("agent.tooManySteps")}_` });
+            yield { content: done, status: { type: "incomplete", reason: "other" } };
             return;
           }
           // Executes the tool calls, then gives their results back to the model
@@ -211,8 +234,6 @@ export function createAgent(settings: AgentSettings): ChatModelAdapter {
           // stopped by the user during the tool calls: no model call with their (cancelled) results
           abortSignal.throwIfAborted();
         }
-        done.push({ type: "text", text: "\n\n_Stopped: too many steps for one question._" });
-        yield { content: done, status: { type: "incomplete", reason: "other" } };
       } finally {
         settings.onRunEnd?.();
       }
