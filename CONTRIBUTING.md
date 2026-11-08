@@ -39,7 +39,8 @@ fallback. Adding a language is adding its two files, picked up by the build.
   `transfers_other`…, the categories of `Intl.PluralRules`), chosen by its `count` placeholder.
 
 The `i18n` tests of `ui/` and `web/` check each file against English: missing or unknown keys, placeholders, plural
-forms.
+forms, HTML characters (the texts are inserted unescaped). Vitest caches the list of the files: after adding one,
+delete `node_modules/.vitest-cache` if the tests do not see it.
 
 ## Commit signing
 

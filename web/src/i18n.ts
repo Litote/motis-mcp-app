@@ -2,16 +2,27 @@
 // One flat JSON file per language in locales/ (i18next JSON v4 format: `key_one`, `key_other`… for the plural
 // forms of Intl.PluralRules, chosen by the `count` value). A text missing in a language falls back on English.
 // Adding a language is adding its file, named by its BCP 47 tag (`pt.json`, `zh-Hans.json`…).
-// Same mechanism as the views (ui/src/shared/i18n.ts), which are built apart.
+// Same mechanism as the views (ui/src/shared/i18n.ts), which are built apart. Unlike the views (single files), the
+// chat loads only the language of the browser (loadLanguage, before the first render): one chunk per language,
+// English in the main bundle as the fallback.
 import en from "./locales/en.json";
 
 type Messages = Record<string, string>;
 
-const MESSAGES: Record<string, Messages> = Object.fromEntries(
-  Object.entries(import.meta.glob<Messages>("./locales/*.json", { eager: true, import: "default" })).map(
-    ([path, messages]) => [path.slice("./locales/".length, -".json".length), messages],
+const tagOf = (path: string): string => path.slice("./locales/".length, -".json".length);
+
+/** Loaders of the translations other than English, by language tag. */
+const LOADERS: Record<string, () => Promise<Messages>> = Object.fromEntries(
+  Object.entries(import.meta.glob<Messages>(["./locales/*.json", "!./locales/en.json"], { import: "default" })).map(
+    ([path, load]) => [tagOf(path), load],
   ),
 );
+
+/** Translated languages. */
+const LANGUAGES = ["en", ...Object.keys(LOADERS)];
+
+/** Loaded translations, by language tag. */
+const MESSAGES: Record<string, Messages> = { en };
 
 type PluralSuffix = "_zero" | "_one" | "_two" | "_few" | "_many" | "_other";
 type BaseKey<K> = K extends `${infer B}${PluralSuffix}` ? B : K;
@@ -19,6 +30,9 @@ export type MessageKey = BaseKey<keyof typeof en>;
 
 /** Suggestions of the empty thread: one per tool rendered by a view (see docs/MCP-SERVER.md). */
 const SUGGESTIONS = ["departures", "itinerary", "lines", "rentals", "route", "reachable", "trip"] as const;
+
+/** Languages translated under another tag: Norwegian (`no`) is translated in Bokmål (`nb`). */
+const LANGUAGE_ALIASES: Record<string, string> = { no: "nb" };
 
 /**
  * Supported language of the locale [tag]: the locale itself, else its language and script (zh-TW → zh-Hant), else
@@ -30,13 +44,13 @@ export function resolveLanguage(tag: string | undefined): string | undefined {
   try {
     const parsed = new Intl.Locale(tag);
     const { script } = parsed.maximize();
-    candidates = [parsed.baseName, `${parsed.language}-${script}`, parsed.language];
+    candidates = [parsed.baseName, `${parsed.language}-${script}`, parsed.language, LANGUAGE_ALIASES[parsed.language]];
   } catch {
     return undefined;
   }
-  const languages = Object.keys(MESSAGES);
   for (const candidate of candidates) {
-    const found = languages.find((l) => l.toLowerCase() === candidate.toLowerCase());
+    if (!candidate) continue;
+    const found = LANGUAGES.find((l) => l.toLowerCase() === candidate.toLowerCase());
     if (found) return found;
   }
   return undefined;
@@ -54,6 +68,20 @@ export function locale(): string {
 
 export const language = (): string => resolveLanguage(locale()) ?? "en";
 
+/**
+ * Loads the translation of the language of the browser, before the first render. Until then, and if it fails, the
+ * texts are in English.
+ */
+export async function loadLanguage(): Promise<void> {
+  const lang = language();
+  if (lang in MESSAGES) return;
+  try {
+    MESSAGES[lang] = await LOADERS[lang]();
+  } catch (error) {
+    console.warn(`Translation ${lang} unavailable, texts in English`, error);
+  }
+}
+
 const pluralRules = new Map<string, Intl.PluralRules>();
 
 function pluralCategory(lang: string, count: number): Intl.LDMLPluralRule {
@@ -65,6 +93,7 @@ function pluralCategory(lang: string, count: number): Intl.LDMLPluralRule {
 /** Text of [key] in [lang], in the plural form of [count] when the text has plural forms. */
 function message(lang: string, key: string, count: unknown): string | undefined {
   const messages = MESSAGES[lang];
+  if (!messages) return undefined;
   const plural = typeof count === "number" ? messages[`${key}_${pluralCategory(lang, count)}`] : undefined;
   return plural ?? messages[`${key}_other`] ?? messages[key];
 }

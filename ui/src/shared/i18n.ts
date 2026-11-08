@@ -31,6 +31,9 @@ export function setLocale(value: string | undefined): void {
   if (language() !== previous) translateDocument();
 }
 
+/** Languages translated under another tag: Norwegian (`no`) is translated in Bokmål (`nb`). */
+const LANGUAGE_ALIASES: Record<string, string> = { no: "nb" };
+
 /**
  * Supported language of the locale [tag]: the locale itself, else its language and script (zh-TW → zh-Hant), else
  * its language (pt-BR → pt); undefined if none is translated.
@@ -41,12 +44,13 @@ export function resolveLanguage(tag: string | undefined): string | undefined {
   try {
     const parsed = new Intl.Locale(tag);
     const { script } = parsed.maximize();
-    candidates = [parsed.baseName, `${parsed.language}-${script}`, parsed.language];
+    candidates = [parsed.baseName, `${parsed.language}-${script}`, parsed.language, LANGUAGE_ALIASES[parsed.language]];
   } catch {
     return undefined;
   }
   const languages = Object.keys(MESSAGES);
   for (const candidate of candidates) {
+    if (!candidate) continue;
     const found = languages.find((l) => l.toLowerCase() === candidate.toLowerCase());
     if (found) return found;
   }

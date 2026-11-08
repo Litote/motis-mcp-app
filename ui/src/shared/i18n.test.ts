@@ -12,7 +12,8 @@ const placeholders = (text: string) => [...text.matchAll(/\{(\w+)\}/g)].map((m) 
 
 /**
  * Problems of the translation [messages] of [lang] against English: missing or unknown keys, placeholders not those
- * of English (a plural form other than "other" may leave out {count}), plural forms of the integers missing.
+ * of English (a plural form other than "other" may leave out {count}), plural forms of the integers missing, HTML
+ * characters (the texts are inserted unescaped, also in attributes).
  */
 function checkLocale(lang: string, messages: Record<string, string>, en: Record<string, string>): string[] {
   const problems: string[] = [];
@@ -30,6 +31,7 @@ function checkLocale(lang: string, messages: Record<string, string>, en: Record<
       problems.push(`unknown ${key}`);
       continue;
     }
+    if (/[<>&"]/.test(text)) problems.push(`HTML character in ${key}`);
     const expected = placeholders(reference);
     const actual = placeholders(text);
     const optionalCount = key !== base && !key.endsWith("_other");
@@ -61,6 +63,11 @@ describe("i18n", () => {
     expect(resolveLanguage("fr")).toBe("fr");
     expect(resolveLanguage("FR-be")).toBe("fr");
     expect(resolveLanguage("en-GB")).toBe("en");
+    expect(resolveLanguage("de-AT")).toBe("de");
+    expect(resolveLanguage("pt-BR")).toBe("pt");
+    expect(resolveLanguage("pt-PT")).toBe("pt-PT");
+    expect(resolveLanguage("no")).toBe("nb");
+    expect(resolveLanguage("nb-NO")).toBe("nb");
     expect(resolveLanguage("tlh")).toBeUndefined();
     expect(resolveLanguage("not a locale")).toBeUndefined();
     expect(resolveLanguage(undefined)).toBeUndefined();
@@ -75,10 +82,19 @@ describe("i18n", () => {
     expect(t("transfers", { count: 1 })).toBe("1 correspondance");
     // French "many" (millions) falls back on "other"
     expect(t("transfers", { count: 1_000_000 })).toBe("1000000 correspondances");
+    // Polish: one, few (2-4, 22-24…), many
+    setLocale("pl");
+    expect([1, 2, 5, 22, 25].map((count) => t("transfers", { count }))).toEqual([
+      "1 przesiadka",
+      "2 przesiadki",
+      "5 przesiadek",
+      "22 przesiadki",
+      "25 przesiadek",
+    ]);
   });
 
   it("falls back on English for the other languages, and keeps unknown placeholders", () => {
-    setLocale("de-DE");
+    setLocale("tlh");
     expect(language()).toBe("en");
     expect(t("track", {})).toBe("track {track}");
     expect(tOptional("mode.SUBWAY")).toBe("Metro");
@@ -89,7 +105,10 @@ describe("i18n", () => {
   const en = read("en.json");
   for (const file of readdirSync(LOCALES).filter((f) => f.endsWith(".json") && f !== "en.json")) {
     it(`has a complete and consistent translation in ${file}`, () => {
-      expect(checkLocale(file.slice(0, -".json".length), read(file), en)).toEqual([]);
+      const lang = file.slice(0, -".json".length);
+      // the file is loaded, under a BCP 47 tag (a stale Vitest cache misses a new file: delete node_modules/.vitest-cache)
+      expect(resolveLanguage(lang)).toBe(lang);
+      expect(checkLocale(lang, read(file), en)).toEqual([]);
     });
   }
 });
