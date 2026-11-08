@@ -182,6 +182,13 @@ class CityJourneysTest {
             assertEquals("Paris", journey.from.name)
             assertEquals("Nantes", journey.to.name)
             assertTrue(result.text().contains("stations of Paris and Nantes"), result.text())
+            // the stations differ between the itineraries: said in the text, and in the structured content
+            assertTrue(result.text().contains("Departure stations differ: Paris Montparnasse (1), Massy TGV (2): give the station of each itinerary."), result.text())
+            assertTrue(result.text().contains("\n1. Paris Montparnasse → Nantes: "), result.text())
+            assertTrue(!result.text().contains("Arrival stations differ"), result.text())
+            assertEquals(listOf("Paris Montparnasse", "Massy TGV"), journey.itineraries.map { it.departure?.name })
+            assertEquals(listOf(MONTPARNASSE, MASSY), journey.itineraries.map { it.departure?.stopId })
+            assertEquals(listOf("Nantes", "Nantes"), journey.itineraries.map { it.arrival?.name })
 
             // the next journeys of each pair of stations
             val next = assertNotNull(journey.nextPageCursor)

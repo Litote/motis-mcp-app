@@ -21,6 +21,7 @@ import org.litote.motis.mcp.dto.followedBy
 import org.litote.motis.mcp.dto.label
 import org.litote.motis.mcp.dto.onLines
 import org.litote.motis.mcp.dto.stationLines
+import org.litote.motis.mcp.dto.withStops
 import org.litote.motis.mcp.dto.toDto
 import org.litote.motis.mcp.dto.withNearbyTrains
 import kotlin.time.Instant
@@ -53,8 +54,12 @@ private fun DeparturesResult.summary(): String =
 internal fun ItineraryDto.describe(): String =
     buildString {
         val tz = legs.firstOrNull()?.from?.tz
+        // the stops first: the itineraries between two cities do not all leave from the same station
+        val stops = withStops()
+        val ends = stops.departure?.let { "${it.name} → ${stops.arrival?.name}: " } ?: ""
+        val at = stops.transferStops?.let { " at ${it.joinToString()}" } ?: ""
         appendLine(
-            "${hhmm(startTime, tz)} → ${hhmm(endTime, legs.lastOrNull()?.to?.tz)}, ${durationSeconds / 60} min, $transfers transfer(s)",
+            "$ends${hhmm(startTime, tz)} → ${hhmm(endTime, legs.lastOrNull()?.to?.tz)}, ${durationSeconds / 60} min, $transfers transfer(s)$at",
         )
         legs.forEach { leg ->
             val line = leg.line?.let { " $it" } ?: ""
@@ -236,7 +241,7 @@ fun Server.addTimetableTools(gateway: MotisGateway) {
         },
     ) { args ->
         val tripId = args.requireString("tripId")
-        val itinerary = gateway.trip(tripId, args.stringList("language")).toDto()
+        val itinerary = gateway.trip(tripId, args.stringList("language")).toDto().withStops()
         val result = TripResult(tripId = tripId, itinerary = itinerary)
         val summary =
             buildString {
