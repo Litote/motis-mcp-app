@@ -25,6 +25,7 @@ fun Server.addRoutingTools(gateway: MotisGateway, cityJourneys: CityJourneys) {
             """
             Computes public transport itineraries between two places (names, stop ids or 'lat,lon'),
             with walking legs, transfers and real-time data. Shows them as a list and on a map.
+            Give it the place names of the user as they are: no need to search them first.
             Fails listing the candidates when a name is ambiguous: call it again with the value given for the right one.
             Between city names (e.g. 'Paris' to 'Nantes'), the long-distance itineraries start and end at the stations,
             without the local legs to/from the city center; give an address for door-to-door itineraries.

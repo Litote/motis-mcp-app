@@ -24,7 +24,8 @@ private val INSTRUCTIONS =
     - plan_journey: itineraries between two places; reachability: isochrone from a place.
     - rentals: shared bikes, scooters and cars.
     - server_info: server version and capabilities.
-    Places can be given by name: they are geocoded, the best match is used.
+    Places can be given by name: they are geocoded, the best match is used. Call the tool answering the question
+    directly with the names of the user (e.g. plan_journey for a journey), without search_places or explore_area first.
     Dates are ISO-8601, with offset or in the local time of the place; default is now.
     """.trimIndent()
 

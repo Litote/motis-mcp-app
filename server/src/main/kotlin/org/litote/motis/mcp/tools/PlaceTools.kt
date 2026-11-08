@@ -20,6 +20,7 @@ fun Server.addPlaceTools(gateway: MotisGateway, baseUrl: String) {
             """
             Searches stops, addresses and points of interest by name (geocoding), or lists what is near coordinates
             (reverse geocoding when 'text' is 'lat,lon'). Returns stop ids usable by the other tools.
+            Not needed before the other tools, which take place names: use it when the user asks for places.
             """.trimIndent(),
         schema = {
             string("text", "Name to search (e.g. 'Lyon Part-Dieu'), or 'lat,lon' for reverse geocoding.", required = true)

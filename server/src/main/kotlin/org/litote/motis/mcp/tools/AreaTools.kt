@@ -65,7 +65,7 @@ fun Server.addAreaTools(gateway: MotisGateway) {
         description =
             """
             Shows on a map the public transport stops and routes (lines) of an area, given by a place and a radius
-            or by bounds. Use it to discover which transit data is available somewhere.
+            or by bounds. Use it to discover which transit data is available somewhere; not for a journey (plan_journey).
             The returned routeIdx values can be passed to route_details, the stopId values to departures.
             """.trimIndent(),
         view = UiView.EXPLORER,
