@@ -24,6 +24,8 @@
   "quota.left_one": "{count}/{limit} maksuton pyyntö jäljellä",
   "quota.left_other": "{count}/{limit} maksutonta pyyntöä jäljellä",
   "logout": "Kirjaudu ulos",
+  "language.label": "Kieli",
+  "language.browser": "Selaimen kieli",
   "location.button": "Sijaintini",
   "location.off": "Jaa sijaintini mallin kanssa, jotta voin suunnitella täältä",
   "location.locating": "Paikannetaan…",

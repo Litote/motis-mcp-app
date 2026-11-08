@@ -24,6 +24,8 @@
   "quota.left_one": "{count}/{limit} kostenlose Anfrage übrig",
   "quota.left_other": "{count}/{limit} kostenlose Anfragen übrig",
   "logout": "Abmelden",
+  "language.label": "Sprache",
+  "language.browser": "Sprache des Browsers",
   "location.button": "Mein Standort",
   "location.off": "Meinen Standort mit dem Modell teilen, um von hier aus zu planen",
   "location.locating": "Standort wird ermittelt…",

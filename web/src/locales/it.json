@@ -24,6 +24,8 @@
   "quota.left_one": "{count}/{limit} richiesta gratuita rimasta",
   "quota.left_other": "{count}/{limit} richieste gratuite rimaste",
   "logout": "Esci",
+  "language.label": "Lingua",
+  "language.browser": "Lingua del browser",
   "location.button": "La mia posizione",
   "location.off": "Condividi la mia posizione con il modello, per pianificare da qui",
   "location.locating": "Localizzazione…",

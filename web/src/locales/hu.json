@@ -24,6 +24,8 @@
   "quota.left_one": "{count}/{limit} ingyenes kérés maradt",
   "quota.left_other": "{count}/{limit} ingyenes kérés maradt",
   "logout": "Kijelentkezés",
+  "language.label": "Nyelv",
+  "language.browser": "A böngésző nyelve",
   "location.button": "Saját helyzet",
   "location.off": "Helyzetem megosztása a modellel, hogy innen tervezzen",
   "location.locating": "Helymeghatározás…",

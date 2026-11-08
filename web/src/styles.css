@@ -94,6 +94,7 @@ a { color: var(--accent); }
 .composer-button { align-self: flex-end; }
 
 .login { max-width: 520px; margin: 12vh auto; padding: 0 16px; display: flex; flex-direction: column; gap: 16px; }
+.login .language-picker { align-self: flex-end; }
 .login p { color: var(--muted); line-height: 1.5; }
 .login .login-error { color: var(--error); }
 .login-key { display: flex; gap: 8px; }

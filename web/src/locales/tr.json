@@ -24,6 +24,8 @@
   "quota.left_one": "{count}/{limit} ücretsiz istek kaldı",
   "quota.left_other": "{count}/{limit} ücretsiz istek kaldı",
   "logout": "Çıkış yap",
+  "language.label": "Dil",
+  "language.browser": "Tarayıcı dili",
   "location.button": "Konumum",
   "location.off": "Buradan planlamak için konumumu modelle paylaş",
   "location.locating": "Konum bulunuyor…",

@@ -24,6 +24,8 @@
   "quota.left_one": "{count}/{limit} solicitação gratuita restante",
   "quota.left_other": "{count}/{limit} solicitações gratuitas restantes",
   "logout": "Sair",
+  "language.label": "Idioma",
+  "language.browser": "Idioma do navegador",
   "location.button": "Minha localização",
   "location.off": "Compartilhar minha localização com o modelo, para planejar a partir daqui",
   "location.locating": "Localizando…",

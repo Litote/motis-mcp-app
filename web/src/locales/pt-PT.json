@@ -24,6 +24,8 @@
   "quota.left_one": "{count}/{limit} pedido gratuito restante",
   "quota.left_other": "{count}/{limit} pedidos gratuitos restantes",
   "logout": "Terminar sessão",
+  "language.label": "Idioma",
+  "language.browser": "Idioma do navegador",
   "location.button": "A minha localização",
   "location.off": "Partilhar a minha localização com o modelo, para planear a partir daqui",
   "location.locating": "A localizar…",

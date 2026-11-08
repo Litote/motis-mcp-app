@@ -47,6 +47,7 @@ vi.mock("./agent", () => ({ setViewContext: mocks.setViewContext }));
 vi.mock("./config", () => ({ loadConfig: async () => ({ sandboxUrl: "https://sandbox.example/sandbox.html" }) }));
 
 const { McpAppView } = await import("./McpAppView");
+const { chooseLanguage } = await import("./i18n");
 
 const RESULT = { content: [{ type: "text" as const, text: "12:04" }] };
 const server = { client: { getServerCapabilities: () => ({ tools: {}, resources: {} }) } };
@@ -152,6 +153,15 @@ describe("McpAppView", () => {
     fireEvent.keyDown(window, { key: "Escape" });
     expect(screen.queryByText("Close")).toBeNull();
     expect(document.body.style.overflow).toBe("");
+  });
+
+  it("sends the language chosen in the chat to the view", async () => {
+    const bridge = await renderView();
+
+    await act(() => chooseLanguage("de"));
+    expect(bridge.sendHostContextChange).toHaveBeenCalledWith({ locale: "de" });
+    await act(() => chooseLanguage(undefined));
+    expect(bridge.sendHostContextChange).toHaveBeenLastCalledWith({ locale: "en-US" });
   });
 
   it("closes the bridge when removed", async () => {

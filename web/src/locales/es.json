@@ -24,6 +24,8 @@
   "quota.left_one": "Queda {count}/{limit} solicitud gratuita",
   "quota.left_other": "Quedan {count}/{limit} solicitudes gratuitas",
   "logout": "Cerrar sesión",
+  "language.label": "Idioma",
+  "language.browser": "Idioma del navegador",
   "location.button": "Mi ubicación",
   "location.off": "Compartir mi ubicación con el modelo para planificar desde aquí",
   "location.locating": "Localizando…",

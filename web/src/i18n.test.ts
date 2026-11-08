@@ -1,7 +1,19 @@
+// @vitest-environment jsdom
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { language, loadLanguage, locale, resolveLanguage, suggestions, t } from "./i18n";
+import {
+  chooseLanguage,
+  chosenLanguage,
+  language,
+  languageName,
+  languages,
+  loadLanguage,
+  locale,
+  resolveLanguage,
+  suggestions,
+  t,
+} from "./i18n";
 
 // relative to web/, the root of the tests
 const LOCALES = "src/locales";
@@ -49,7 +61,10 @@ function checkLocale(lang: string, messages: Record<string, string>, en: Record<
 }
 
 describe("i18n", () => {
-  afterEach(() => setLanguages("en-US", "en"));
+  afterEach(async () => {
+    setLanguages("en-US", "en");
+    await chooseLanguage(undefined);
+  });
 
   it("shows English until the language of the browser is loaded", async () => {
     setLanguages("de-DE");
@@ -84,6 +99,44 @@ describe("i18n", () => {
     expect(t("quota.left", { count: 1, limit: 50 })).toBe("1/50 free request left");
     expect(suggestions()).toHaveLength(7);
     expect(suggestions()[0]).toBe("Next departures at Lyon Part-Dieu");
+  });
+
+  it("shows the language chosen by the user, whatever the language of the browser", async () => {
+    setLanguages("fr-FR");
+    await chooseLanguage("de");
+    expect(chosenLanguage()).toBe("de");
+    expect(language()).toBe("de");
+    expect(locale()).toBe("de");
+    expect(t("composer.send")).toBe("Senden");
+    expect(document.documentElement.lang).toBe("de");
+    expect(localStorage.getItem("language")).toBe("de");
+  });
+
+  it("keeps the region of the browser when the language chosen is the one of the browser", async () => {
+    setLanguages("fr-CH");
+    await chooseLanguage("fr");
+    expect(locale()).toBe("fr-CH");
+  });
+
+  it("follows the browser again when the choice is cleared", async () => {
+    setLanguages("fr-FR");
+    await chooseLanguage("de");
+    await chooseLanguage(undefined);
+    expect(chosenLanguage()).toBeUndefined();
+    expect(language()).toBe("fr");
+    expect(localStorage.getItem("language")).toBeNull();
+  });
+
+  it("ignores a language that is not translated", async () => {
+    await chooseLanguage("tlh");
+    expect(chosenLanguage()).toBeUndefined();
+    expect(language()).toBe("en");
+  });
+
+  it("names each language in this language", () => {
+    expect(languages()).toContain("en");
+    expect(languageName("de")).toBe("Deutsch");
+    expect(languageName("fr")).toBe("Français");
   });
 
   const en = read("en.json");

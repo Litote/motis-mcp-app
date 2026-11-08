@@ -2,7 +2,7 @@ import { Suspense, createContext, lazy, useContext, useEffect, useState } from "
 import type { ToolCallMessagePartProps } from "@assistant-ui/react";
 import type { CallToolResult } from "@modelcontextprotocol/client";
 import { connectMcp } from "./mcp";
-import { t } from "./i18n";
+import { t, useLanguage } from "./i18n";
 import { toolUiResourceUri } from "./mcp-apps";
 
 // AppBridge loaded with the first view
@@ -30,6 +30,7 @@ function useHasView(toolName: string): boolean {
 
 /** A tool call of the assistant: status line (arguments on demand), then the view of the result when the tool has one. */
 export function ToolCall({ toolCallId, toolName, args, argsText, result, isError, status }: ToolCallMessagePartProps) {
+  useLanguage();
   const append = useContext(AppendMessageContext);
   const hasView = useHasView(toolName);
   const mcpResult = result as CallToolResult | undefined;

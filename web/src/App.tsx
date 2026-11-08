@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect, useState, type SubmitEvent } from "react";
 import { completeLogin, getKey, setKey as storeKey, startLogin } from "./openrouter";
-import { t } from "./i18n";
+import { t, useLanguage } from "./i18n";
+import { LanguagePicker } from "./LanguagePicker";
 
 // The chat (assistant-ui, MCP client, markdown) is loaded after the login only
 const Chat = lazy(() => import("./Chat"));
@@ -21,6 +22,7 @@ function Login({ error }: Readonly<{ error: string | null }>) {
   const message = invalid ?? error;
   return (
     <div className="login">
+      <LanguagePicker />
       <h2>{t("login.title")}</h2>
       <p>
         {t("login.intro.before")}
@@ -49,6 +51,8 @@ function Login({ error }: Readonly<{ error: string | null }>) {
 }
 
 export function App() {
+  // the texts of the whole page follow the language chosen
+  useLanguage();
   const [key, setKey] = useState(getKey);
   const [error, setError] = useState<string | null>(null);
 

@@ -24,6 +24,8 @@
   "quota.left_one": "{count}/{limit} free request left",
   "quota.left_other": "{count}/{limit} free requests left",
   "logout": "Log out",
+  "language.label": "Language",
+  "language.browser": "Browser language",
   "location.button": "My location",
   "location.off": "Share my location with the model, to plan from here",
   "location.locating": "Locating…",
