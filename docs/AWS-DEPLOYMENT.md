@@ -88,8 +88,8 @@ native-image agent: run `make trace` after changing the tools or upgrading the d
 
 The endpoint has no authentication: bound the load on MOTIS and the cost with `reserved_concurrency` and the
 [kill switch](#budget-and-kill-switch), and configure a tile provider (`tile_url`) for a public use. The railway overlay
-of the raster maps (`rail_overlay`: IGN in France and OpenRailwayMap elsewhere, none by default, the vector tiles
-drawing the railways) is described in the [MCP server reference](MCP-SERVER.md#usage).
+(`rail_overlay`, default `ign`: the railways of France below zoom 12 over the vector maps) is described in the
+[MCP server reference](MCP-SERVER.md#usage).
 
 ### Map tiles
 

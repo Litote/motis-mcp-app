@@ -151,6 +151,16 @@ button[aria-pressed="true"] {
   filter: invert(1) hue-rotate(180deg) brightness(0.9) contrast(0.9);
 }
 
+/* rail overlay of the vector maps (below zoom 12): plain lines in the color of their railways (map.ts RAILWAY_COLORS):
+   #1f1f1f in light theme, #d4d4d4 in dark theme */
+.map .rail-mono {
+  filter: brightness(0) invert(0.12);
+}
+
+.map.dark-tiles .rail-mono {
+  filter: brightness(0) invert(0.83);
+}
+
 .badge {
   display: inline-block;
   min-width: 2.2em;

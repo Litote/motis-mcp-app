@@ -102,6 +102,18 @@ describe("railLayer", () => {
     expect((layer.options.bounds as L.LatLngBounds).contains(L.latLng(52.52, 13.405))).toBe(false);
   });
 
+  it("keeps only the French overlay over the vector maps, below their railways, as plain lines", () => {
+    const layer = railLayer([ORM, IGN], true)!;
+
+    expect(layer.options.minZoom).toBe(6);
+    expect(layer.options.maxZoom).toBe(11);
+    expect(layer.options.className).toBe("rail-mono");
+    expect(layer.options.opacity).toBe(0.7);
+    expect(layer.getAttribution?.()).toBe("IGN");
+    expect((layer.options.bounds as L.LatLngBounds).contains(L.latLng(48.8566, 2.3522))).toBe(true);
+    expect(railLayer([ORM], true)).toBeNull();
+  });
+
   it("draws a single world overlay everywhere", () => {
     const layer = railLayer([ORM])!;
 
@@ -187,6 +199,11 @@ describe("createMap", () => {
     // labels in the language of the host
     expect(labelRules).toHaveBeenLastCalledWith(expect.objectContaining({ background: "#cccccc" }), "fr");
     expect(map.getPane("rails")).toBeDefined();
+    const overlays: L.TileLayer[] = [];
+    map.eachLayer((layer) => {
+      if (layer instanceof L.TileLayer && layer.options.pane === "rails") overlays.push(layer);
+    });
+    expect(overlays.map((o) => [o.options.className, o.options.maxZoom])).toEqual([["rail-mono", 11]]);
 
     setTheme("dark");
     expect(vectorLayers()).toMatchObject([{ backgroundColor: "#34373d" }]);

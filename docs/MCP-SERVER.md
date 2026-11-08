@@ -143,6 +143,8 @@ flavor) and the language of the host:
 
 The vector maps draw the main railways in the open as a plain line (black in light theme, light grey in dark theme),
 without the subway, the tramways, the tunnels and the service tracks, from zoom 12 (no railway below in the tiles).
+Below, the `ign` rail overlay draws the railways of France in the same color; the `openrailwaymap` one (colors and
+labels) is not used over the vector maps.
 
 `MOTIS_RAIL_OVERLAY` draws the railways over the maps (transparent raster tiles, comma-separated list):
 
