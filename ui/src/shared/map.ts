@@ -108,8 +108,35 @@ class RailTileLayer extends L.TileLayer {
   }
 }
 
-/** Layer of the rail overlays (null without any): both areas combined per tile, or a single one. */
-export function railLayer(overlays: RailOverlay[]): L.TileLayer | null {
+/** Class of the overlay tiles drawn as a plain line, in the color of the railways of the vector maps. */
+const MONO_TILE_CLASS = "rail-mono";
+
+/** First zoom of the map with railways in the vector tiles (none below zoom 11 in the data, drawn one zoom below). */
+const VECTOR_RAILWAYS_MIN_ZOOM = 12;
+
+/**
+ * Layer of the rail overlays (null without any): both areas combined per tile, or a single one.
+ *
+ * Over the [vector] maps, which draw the railways from zoom 12, only the French overlay (plain lines) is kept, below:
+ * recolored like the railways of the vector maps (the world one has colors and labels).
+ */
+export function railLayer(overlays: RailOverlay[], vector = false): L.TileLayer | null {
+  if (vector) {
+    const overlay = overlays.find((o) => o.area === "france");
+    return overlay
+      ? L.tileLayer(overlay.url, {
+          pane: RAIL_PANE,
+          attribution: overlay.attribution,
+          minZoom: overlay.minZoom,
+          maxZoom: VECTOR_RAILWAYS_MIN_ZOOM - 1,
+          maxNativeZoom: overlay.maxNativeZoom,
+          bounds: L.latLngBounds(FRANCE_BOUNDS),
+          className: MONO_TILE_CLASS,
+          // the IGN lines are thicker than the ones of the vector maps
+          opacity: 0.7,
+        })
+      : null;
+  }
   const france = overlays.find((o) => o.area === "france");
   const world = overlays.find((o) => o.area === "world");
   if (!france && !world) return null;
@@ -141,7 +168,10 @@ export interface ThemedMap {
   show(bounds: L.LatLngBounds): void;
 }
 
-/** Color of the railways: like the roads, a plain line contrasting with the background (black in light theme). */
+/**
+ * Color of the railways: like the roads, a plain line contrasting with the background (black in light theme). Also the
+ * color of the `.rail-mono` overlay tiles below zoom 12 (style.css).
+ */
 const RAILWAY_COLORS = { light: "#1f1f1f", dark: "#d4d4d4" };
 
 /** Railways drawn by the basemap: the main lines in the open, not the subway, tramways, tunnels nor service tracks. */
@@ -166,12 +196,13 @@ export function basemapPaintRules(theme: "light" | "dark"): PaintRule[] {
     dataLayer: "roads",
     symbolizer: new LineSymbolizer({
       color: RAILWAY_COLORS[theme],
-      // thin: the tracks of the stations stay distinct at street level (no railway below zoom 11 in the tiles)
+      // thin enough for the tracks of the stations to stay distinct at street level (no railway below zoom 11 in the
+      // tiles: the French overlay draws them below, see railLayer)
       width: linear([
-        [11, 0.6],
-        [13, 0.8],
-        [15, 1],
-        [18, 1.6],
+        [11, 1],
+        [13, 1.2],
+        [15, 1.4],
+        [18, 2],
       ]),
     }),
     filter: (_, feature) => mainRailway(feature),
@@ -208,7 +239,7 @@ export function createMap(element: HTMLElement): ThemedMap {
   } else {
     L.tileLayer(tiles.url, { attribution: `${tiles.attribution} · ${DATA_ATTRIBUTION}`, maxZoom: 19 }).addTo(map);
   }
-  const rails = railLayer(railOverlays);
+  const rails = railLayer(railOverlays, vectorTiles != null);
   if (rails) {
     const pane = map.createPane(RAIL_PANE);
     pane.style.zIndex = "250";
