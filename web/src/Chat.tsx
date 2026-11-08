@@ -8,11 +8,12 @@ import {
   ThreadPrimitive,
   useAuiState,
   useLocalRuntime,
+  type ThreadMessage,
 } from "@assistant-ui/react";
 import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown";
 import remarkGfm from "remark-gfm";
 import { createAgent } from "./agent";
-import { suggestions, t } from "./i18n";
+import { locale, suggestions, t } from "./i18n";
 import { useLocation } from "./location";
 import {
   DEFAULT_MODEL,
@@ -28,6 +29,7 @@ import {
   type Model,
 } from "./openrouter";
 import { AppendMessageContext, ToolCall } from "./ToolCall";
+import { copyOrDownload, transcript } from "./transcript";
 
 function MarkdownText() {
   return <MarkdownTextPrimitive remarkPlugins={[remarkGfm]} className="markdown" />;
@@ -175,6 +177,32 @@ function LocationButton() {
   );
 }
 
+/** Copies the conversation in Markdown (context, messages, tool calls), to describe a bug. */
+function ExportButton({ messages, model }: Readonly<{ messages(): readonly ThreadMessage[]; model: string }>) {
+  const empty = useAuiState((s) => s.thread.isEmpty);
+  const [done, setDone] = useState<"copied" | "downloaded" | null>(null);
+  useEffect(() => {
+    if (!done) return;
+    const timer = setTimeout(() => setDone(null), 2000);
+    return () => clearTimeout(timer);
+  }, [done]);
+  const exportConversation = async () => {
+    const text = transcript(messages(), {
+      page: `${window.location.origin}${window.location.pathname}`,
+      model,
+      locale: locale(),
+      userAgent: navigator.userAgent,
+      date: new Date(),
+    });
+    setDone((await copyOrDownload(text)) ? "copied" : "downloaded");
+  };
+  return (
+    <button type="button" disabled={empty} title={t("export.title")} onClick={() => void exportConversation()}>
+      {done ? t(`export.${done}`) : t("export.button")}
+    </button>
+  );
+}
+
 /** Current model settings, read by the agent at each run. */
 const settingsRef: { model: string; models: Model[] } = { model: DEFAULT_MODEL, models: [] };
 
@@ -223,6 +251,7 @@ export default function Chat({ apiKey }: Readonly<{ apiKey: string }>) {
           <h1>MOTIS explorer</h1>
           <ModelPicker models={models} model={model} onSelect={selectModel} />
           <LocationButton />
+          <ExportButton messages={() => runtime.thread.getState().messages} model={model} />
           {quota && (
             <span className="quota" title={t("quota.title")}>
               {t("quota.left", { count: quota.remaining, limit: quota.limit })}

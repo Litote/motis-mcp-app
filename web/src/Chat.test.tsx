@@ -62,6 +62,7 @@ vi.mock("./agent", () => ({
 }));
 
 const { default: Chat } = await import("./Chat");
+const { DEFAULT_MODEL } = await import("./openrouter");
 
 const MODELS = [
   { id: "nvidia/nemotron-3.5-super-vl:free", name: "Nemotron", free: true, created: 1 },
@@ -187,6 +188,35 @@ describe("Chat", () => {
     fireEvent.click(screen.getByText("Next departures at Lyon Part-Dieu"));
 
     expect(await screen.findByText("a/first:free → b/fallback:free")).toBeDefined();
+  });
+
+  it("exports the conversation in Markdown, to the clipboard or else as a file", async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+    render(<Chat apiKey="sk-or-v1-key" />);
+    const button = screen.getByText("Export") as HTMLButtonElement;
+    expect(button.disabled).toBe(true);
+
+    fireEvent.click(screen.getByText("Next departures at Lyon Part-Dieu"));
+    expect(await screen.findByText("Next")).toBeDefined();
+    fireEvent.click(button);
+
+    expect(await screen.findByText("Copied ✓")).toBeDefined();
+    const markdown = writeText.mock.calls[0][0] as string;
+    expect(markdown).toContain(`- Model: \`${DEFAULT_MODEL}\``);
+    expect(markdown).toContain("### User\n\nNext departures at Lyon Part-Dieu");
+    expect(markdown).toContain("<details><summary>Tool <code>trip_details</code> (error)</summary>");
+
+    // clipboard refused: downloaded
+    writeText.mockRejectedValue(new Error("denied"));
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+    URL.createObjectURL = vi.fn(() => "blob:conversation");
+    URL.revokeObjectURL = vi.fn();
+    await waitFor(() => expect(screen.getByText("Export")).toBeDefined(), { timeout: 3000 });
+    fireEvent.click(screen.getByText("Export"));
+    expect(await screen.findByText("Downloaded ✓")).toBeDefined();
+    expect(click).toHaveBeenCalled();
+    click.mockRestore();
   });
 
   it("logs out", async () => {
