@@ -25,6 +25,8 @@ function codeBlock(text: string, language = ""): string {
   return `${fence}${language}\n${text}\n${fence}`;
 }
 
+const inlineCode = (text: string): string => `\`${text}\``;
+
 function truncate(text: string): string {
   if (text.length <= MAX_EXPORTED_RESULT_CHARS) return text;
   return `${text.slice(0, MAX_EXPORTED_RESULT_CHARS)}\n[… ${text.length - MAX_EXPORTED_RESULT_CHARS} characters truncated]`;
@@ -84,7 +86,9 @@ function status(message: ThreadMessage): string | null {
 /** Models that answered an assistant message (the selected one, or fallback ones). */
 function models(message: ThreadMessage): string | null {
   const value = message.role === "assistant" ? message.metadata?.custom?.models : undefined;
-  return Array.isArray(value) && value.length ? `_Models: ${value.map((model) => `\`${model}\``).join(" → ")}_` : null;
+  if (!Array.isArray(value) || !value.length) return null;
+  const names = value.map((model) => inlineCode(String(model))).join(" → ");
+  return `_Models: ${names}_`;
 }
 
 function message(message: ThreadMessage): string {
@@ -99,7 +103,7 @@ export function transcript(messages: readonly ThreadMessage[], context: Transcri
     "## Context",
     "",
     `- Page: ${context.page}`,
-    `- Model: \`${context.model}\``,
+    `- Model: ${inlineCode(context.model)}`,
     `- Locale: ${context.locale}`,
     `- Browser: ${context.userAgent}`,
     `- Exported: ${context.date.toISOString()}`,
