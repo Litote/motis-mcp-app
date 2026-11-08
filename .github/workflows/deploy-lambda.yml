@@ -190,6 +190,8 @@ jobs:
           TF_VAR_motis_app_contact: ${{ vars.MOTIS_APP_CONTACT }}
           TF_VAR_tile_url: ${{ vars.MOTIS_TILE_URL }}
           TF_VAR_tile_attribution: ${{ vars.MOTIS_TILE_ATTRIBUTION }}
+          # vector tiles, e.g. the Protomaps hosted API: the URL contains its key (docs/AWS-DEPLOYMENT.md)
+          TF_VAR_vector_tile_url: ${{ secrets.MOTIS_VECTOR_TILE_URL }}
           # JSON map, e.g. {"chatgpt":"https://motis.example.org"}
           TF_VAR_view_domains: ${{ vars.MOTIS_VIEW_DOMAINS || '{}' }}
           # custom domain of the chat and of the MCP endpoint, e.g. motis.example.org (docs/AWS-DEPLOYMENT.md)
@@ -245,6 +247,8 @@ jobs:
           TF_VAR_motis_app_contact: ${{ vars.MOTIS_APP_CONTACT }}
           TF_VAR_tile_url: ${{ vars.MOTIS_TILE_URL }}
           TF_VAR_tile_attribution: ${{ vars.MOTIS_TILE_ATTRIBUTION }}
+          # vector tiles, e.g. the Protomaps hosted API: the URL contains its key (docs/AWS-DEPLOYMENT.md)
+          TF_VAR_vector_tile_url: ${{ secrets.MOTIS_VECTOR_TILE_URL }}
           # JSON map, e.g. {"chatgpt":"https://motis.example.org"}
           TF_VAR_view_domains: ${{ vars.MOTIS_VIEW_DOMAINS || '{}' }}
           # custom domain of the chat and of the MCP endpoint, e.g. motis.example.org (docs/AWS-DEPLOYMENT.md)

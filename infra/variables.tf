@@ -50,6 +50,14 @@ variable "tile_attribution" {
   default     = ""
 }
 
+variable "vector_tile_url" {
+  description = "Vector tiles of the Protomaps basemap (MOTIS_VECTOR_TILE_URL), replacing the raster tiles, e.g. https://api.protomaps.com/tiles/v4/{z}/{x}/{y}.mvt?key=<key>. Empty: the raster tiles."
+  type        = string
+  default     = ""
+  # the URL of the hosted API contains its key
+  sensitive = true
+}
+
 variable "rail_overlay" {
   description = "Railways drawn over the maps (MOTIS_RAIL_OVERLAY), comma-separated: ign (France), openrailwaymap (the world, elsewhere than France with ign). Empty: none."
   type        = string
