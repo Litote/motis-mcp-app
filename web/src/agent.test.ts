@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ThreadAssistantMessagePart, ThreadMessage } from "@assistant-ui/react";
-import { assistantMessages, parseArguments, setViewContext, systemPrompt, toChatMessages } from "./agent";
+import { assistantMessages, parseArguments, setViewContext, systemPrompt, toChatMessages, withoutToolCalls } from "./agent";
+import type { ChatMessage } from "./openrouter";
 
 const result = (text: string) => ({ content: [{ type: "text", text }] });
 
@@ -55,6 +56,32 @@ describe("toChatMessages", () => {
       { role: "user", content: "Hi" },
       { role: "assistant", content: "Hello" },
     ]);
+  });
+});
+
+describe("withoutToolCalls", () => {
+  it("turns the tool calls and their results into text", () => {
+    const call = (id: string, name: string, args: string) => ({ id, type: "function" as const, function: { name, arguments: args } });
+    const chat: ChatMessage[] = [
+      { role: "system", content: "System." },
+      { role: "user", content: "Paris to Versailles?" },
+      { role: "assistant", content: "Let me search.", tool_calls: [call("a", "search_places", '{"text":"Versailles"}'), call("b", "explore_area", "")] },
+      { role: "tool", tool_call_id: "a", content: "Versailles (48.8,2.13)" },
+      { role: "tool", tool_call_id: "b", content: "12 stops" },
+      { role: "assistant", content: null, tool_calls: [call("c", "plan_journey", '{"to":"48.8,2.13"}')] },
+      { role: "tool", tool_call_id: "c", content: "3 itineraries" },
+    ];
+
+    expect(withoutToolCalls(chat)).toEqual([
+      { role: "system", content: "System." },
+      { role: "user", content: "Paris to Versailles?" },
+      { role: "assistant", content: 'Let me search.\n[tool call] search_places {"text":"Versailles"}\n[tool call] explore_area {}' },
+      { role: "user", content: "[tool result] search_places:\nVersailles (48.8,2.13)\n\n[tool result] explore_area:\n12 stops" },
+      { role: "assistant", content: '[tool call] plan_journey {"to":"48.8,2.13"}' },
+      { role: "user", content: "[tool result] plan_journey:\n3 itineraries" },
+    ]);
+    // the chat itself is unchanged
+    expect(chat[3]).toEqual({ role: "tool", tool_call_id: "a", content: "Versailles (48.8,2.13)" });
   });
 });
 

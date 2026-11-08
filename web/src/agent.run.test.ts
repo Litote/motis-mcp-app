@@ -85,9 +85,13 @@ describe("createAgent", () => {
     mcp.callTool.mockResolvedValue({ content: [{ type: "text", text: "12:04 TER" }] });
     openrouter.streamChat
       .mockImplementationOnce(
-        answer({ text: "Checking.", toolCalls: [{ id: "", type: "function", function: { name: "departures", arguments: '{"stop":"Lyon"}' } }] }),
+        answer({
+          text: "Checking.",
+          toolCalls: [{ id: "", type: "function", function: { name: "departures", arguments: '{"stop":"Lyon"}' } }],
+          model: "model",
+        }),
       )
-      .mockImplementationOnce(answer({ text: "Next train at 12:04.", toolCalls: [] }));
+      .mockImplementationOnce(answer({ text: "Next train at 12:04.", toolCalls: [], model: "fallback" }));
     const onRunEnd = vi.fn();
 
     const results = await run(settings(onRunEnd));
@@ -95,6 +99,8 @@ describe("createAgent", () => {
     expect(mcp.callTool).toHaveBeenCalledWith(server, "departures", { stop: "Lyon" }, expect.any(AbortSignal));
     const last = results.at(-1)!;
     expect(last.status).toEqual({ type: "complete", reason: "stop" });
+    // the models that answered, each once
+    expect(last.metadata).toEqual({ custom: { models: ["model", "fallback"] } });
     expect(last.content).toEqual([
       { type: "text", text: "Checking." },
       expect.objectContaining({ type: "tool-call", toolCallId: "call-0-0", toolName: "departures", isError: false }),
@@ -118,14 +124,15 @@ describe("createAgent", () => {
     const results = await run(settings());
 
     expect(openrouter.streamChat).toHaveBeenCalledTimes(6);
-    // the last call asks for an answer without tool calls; asked for anyway, they are neither shown nor run
+    // the last call is made without tools nor tool messages; tool calls asked for anyway are neither shown nor run
     expect(mcp.callTool).toHaveBeenCalledTimes(5);
-    expect(openrouter.streamChat.mock.calls[4][1].toolChoice).toBe("auto");
-    expect(openrouter.streamChat.mock.calls[5][1].toolChoice).toBe("none");
+    expect(openrouter.streamChat.mock.calls[4][1].tools).toHaveLength(1);
+    expect(openrouter.streamChat.mock.calls[5][1].tools).toEqual([]);
     const chat = openrouter.streamChat.mock.calls[5][1].messages;
     expect(chat[0].content).toContain("No more tool calls are possible");
     expect(openrouter.streamChat.mock.calls[4][1].messages[0].content).not.toContain("No more tool calls are possible");
-    expect(chat.at(-1).content).toMatch(/\[truncated]$/);
+    expect(chat.filter((m: { role: string }) => m.role === "tool")).toEqual([]);
+    expect(chat.at(-1)).toMatchObject({ role: "user", content: expect.stringMatching(/^\[tool result] departures:\n.*\[truncated]$/s) });
     const last = results.at(-1)!;
     expect(last.status).toEqual({ type: "incomplete", reason: "other" });
     expect(last.content!.filter((part) => part.type === "tool-call")).toHaveLength(5);
@@ -137,7 +144,7 @@ describe("createAgent", () => {
     mcp.callTool.mockResolvedValue({ content: [{ type: "text", text: "\"Versailles\" is ambiguous" }] });
     const toolCall = answer({ text: "", toolCalls: [{ id: "c", type: "function", function: { name: "departures", arguments: "" } }] });
     openrouter.streamChat.mockImplementation((...args: unknown[]) =>
-      (args[1] as { toolChoice?: string }).toolChoice === "none" ? answer({ text: "Which Versailles?", toolCalls: [] })(...args) : toolCall(...args),
+      (args[1] as { tools: unknown[] }).tools.length === 0 ? answer({ text: "Which Versailles?", toolCalls: [] })(...args) : toolCall(...args),
     );
 
     const results = await run(settings());

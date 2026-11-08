@@ -21,6 +21,8 @@ const delayMs = Number(env.EVAL_DELAY_MS ?? 0);
 vi.mock("../src/config", () => ({
   loadConfig: () => Promise.resolve({ mcpUrl: process.env.EVAL_MCP_URL ?? "http://localhost:3001/mcp", sandboxUrl: "", hostOrigins: [] }),
 }));
+// Node has no window: the chat completions send its origin as HTTP-Referer
+vi.stubGlobal("window", { location: new URL("http://localhost:5173/") });
 // counts the model calls of each run
 const streamChat = vi.hoisted(() => ({ calls: 0 }));
 vi.mock("../src/openrouter", async (importOriginal) => {

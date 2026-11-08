@@ -64,6 +64,7 @@ a { color: var(--accent); }
 .markdown th, .markdown td { border: 1px solid var(--border); padding: 4px 8px; text-align: left; }
 .markdown pre { background: var(--surface); padding: 8px; border-radius: 8px; overflow-x: auto; }
 .message-error { color: var(--error); margin-top: 8px; }
+.message-models { color: var(--muted); font-size: 0.75rem; margin-top: 6px; overflow-wrap: anywhere; }
 
 .tool-call { margin: 8px 0; }
 .tool-call-header summary { cursor: pointer; color: var(--muted); font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }

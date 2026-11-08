@@ -147,7 +147,7 @@ describe("streamChat", () => {
     fetchMock.mockResolvedValue(
       sse([
         ": OPENROUTER PROCESSING",
-        `data: ${JSON.stringify({ choices: [{ delta: { content: "Let me check." } }] })}`,
+        `data: ${JSON.stringify({ model: "m2", choices: [{ delta: { content: "Let me check." } }] })}`,
         `data: ${JSON.stringify({ choices: [{ delta: { tool_calls: [{ index: 0, id: "c1", function: { name: "departures", arguments: "{}" } }] } }] })}`,
         "data: [DONE]",
       ]),
@@ -158,9 +158,11 @@ describe("streamChat", () => {
 
     expect(result.text).toBe("Let me check.");
     expect(result.toolCalls).toEqual([{ id: "c1", type: "function", function: { name: "departures", arguments: "{}" } }]);
+    // the model that answered: the fallback one here
+    expect(result.model).toBe("m2");
     expect(deltas).toEqual(["Let me check.", "Let me check."]);
     const body = JSON.parse(fetchMock.mock.calls[0][1]?.body as string);
-    expect(body).toMatchObject({ model: "m1", models: ["m1", "m2"], messages, stream: true });
+    expect(body).toMatchObject({ model: "m1", models: ["m1", "m2"], messages, stream: true, provider: { require_parameters: true } });
   });
 
   it("sends no fallback list without fallback models", async () => {
@@ -169,13 +171,14 @@ describe("streamChat", () => {
     expect(JSON.parse(fetchMock.mock.calls[0][1]?.body as string).models).toBeUndefined();
   });
 
-  it("asks for no tool call with tool choice none only", async () => {
+  it("sends the tools only when there are some", async () => {
+    const tool = { type: "function" as const, function: { name: "departures", parameters: {} } };
+    fetchMock.mockResolvedValue(sse(["data: [DONE]"]));
+    await streamChat(KEY, { model: "m1", fallbackModels: [], messages, tools: [tool] }, signal, () => undefined);
+    expect(JSON.parse(fetchMock.mock.calls[0][1]?.body as string).tools).toEqual([tool]);
     fetchMock.mockResolvedValue(sse(["data: [DONE]"]));
     await streamChat(KEY, { model: "m1", fallbackModels: [], messages, tools: [] }, signal, () => undefined);
-    expect(JSON.parse(fetchMock.mock.calls[0][1]?.body as string).tool_choice).toBeUndefined();
-    fetchMock.mockResolvedValue(sse(["data: [DONE]"]));
-    await streamChat(KEY, { model: "m1", fallbackModels: [], messages, tools: [], toolChoice: "none" }, signal, () => undefined);
-    expect(JSON.parse(fetchMock.mock.calls[1][1]?.body as string).tool_choice).toBe("none");
+    expect(JSON.parse(fetchMock.mock.calls[1][1]?.body as string)).not.toHaveProperty("tools");
   });
 
   it.each([

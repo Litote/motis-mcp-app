@@ -51,8 +51,8 @@ without credits), and everything runs in the browser.
   `_meta.ui.csp` (`web/sandbox-csp.cjs`, shared by the Vite dev server and the CloudFront Function).
 - **Key**: kept in `sessionStorage`, only sent to openrouter.ai; the chat has a strict CSP (scripts of the app only).
 - **Models**: the free models able to call tools, and the recent models of the major providers ("All models" lists the
-  others). Default: `nvidia/nemotron-3-super-120b-a12b:free`; free models fall back on other free models when their
-  provider is rate limited.
+  others). Default: `nvidia/nemotron-3.5-super-vl:free`; free models fall back on the free models reliable with the tools
+  in the evaluation ([web/eval](web/eval/README.md)) when their provider is rate limited.
 - **Loading**: the login screen loads React only; the chat (assistant-ui, markdown, MCP client) is loaded once logged
   in, the AppBridge with the first view.
 - **Fullscreen**: requested by a view (⤢), left with Close or Escape (handled by the views as well, the keyboard focus

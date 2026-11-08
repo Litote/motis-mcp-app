@@ -9,8 +9,24 @@ const KEY_STORAGE = "openrouter-key";
 const VERIFIER_STORAGE = "openrouter-pkce-verifier";
 const MODEL_STORAGE = "openrouter-model";
 
-/** Free model selected by default: reliable tool calling in our tests (5/5 tools and arguments right). */
-export const DEFAULT_MODEL = "nvidia/nemotron-3-super-120b-a12b:free";
+/**
+ * Free model selected by default: reliable tool calling in the evaluation (eval/README.md), and the fastest of them
+ * (November 2026).
+ */
+export const DEFAULT_MODEL = "nvidia/nemotron-3.5-super-vl:free";
+
+/**
+ * Free models tried after the selected free one (rate limited provider…), in this order: those reliable in the
+ * evaluation only, not any free model (some are small, or for code).
+ */
+const FREE_FALLBACK_MODELS = [DEFAULT_MODEL, "nvidia/nemotron-3-ultra-550b-a55b:free"];
+
+/** Fallbacks of the free model [selected]: the [FREE_FALLBACK_MODELS] still free in [models], none for a paid model. */
+export function freeFallbackModels(selected: string, models: readonly Model[]): string[] {
+  if (!selected.endsWith(":free")) return [];
+  const free = new Set(models.filter((m) => m.free).map((m) => m.id));
+  return FREE_FALLBACK_MODELS.filter((id) => id !== selected && free.has(id));
+}
 
 // ─── Key ──────────────────────────────────────────────────────────────────────
 
@@ -213,6 +229,8 @@ export interface ChatDelta {
   text: string;
   /** Tool calls received so far (arguments possibly incomplete while streaming). */
   toolCalls: ChatToolCall[];
+  /** Model that answers (a fallback one maybe), once known. */
+  model?: string;
 }
 
 /** A chat completion request. */
@@ -221,18 +239,14 @@ export interface ChatRequest {
   /** Models tried by OpenRouter when [model] fails (rate limited provider…). */
   fallbackModels: string[];
   messages: ChatMessage[];
+  /** Empty: no tool calls possible (not sent: some providers refuse an empty list). */
   tools: ChatTool[];
-  /**
-   * "none": an answer without tool calls is asked (the tools are still sent: some providers refuse tool calls in the
-   * history without them). Default "auto".
-   */
-  toolChoice?: "auto" | "none";
 }
 
 /** Streams the chat completion of [request]; [onDelta] receives the cumulative text and tool calls. */
 export async function streamChat(
   key: string,
-  { model, fallbackModels, messages, tools, toolChoice = "auto" }: ChatRequest,
+  { model, fallbackModels, messages, tools }: ChatRequest,
   signal: AbortSignal,
   onDelta: (delta: ChatDelta) => void,
 ): Promise<ChatDelta> {
@@ -249,8 +263,9 @@ export async function streamChat(
       model,
       ...(fallbackModels.length ? { models: [model, ...fallbackModels] } : {}),
       messages,
-      tools,
-      ...(toolChoice === "none" ? { tool_choice: "none" } : {}),
+      ...(tools.length ? { tools } : {}),
+      // only the providers supporting every parameter (the tool calls): some others ignore them
+      provider: { require_parameters: true },
       stream: true,
     }),
   });
@@ -265,6 +280,7 @@ export async function streamChat(
     if (chunk.error) {
       throw new OpenRouterError(chunk.error.code ?? 500, errorMessage(chunk.error.code ?? 500, chunk.error.message ?? ""));
     }
+    if (typeof chunk.model === "string" && chunk.model) state.model = chunk.model;
     applyDelta(state, chunk.choices?.[0]?.delta);
     onDelta(state);
   }

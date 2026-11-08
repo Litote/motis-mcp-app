@@ -17,7 +17,7 @@ import { streamChat, type ChatDelta, type ChatMessage, type ChatToolCall } from 
 
 /**
  * Model calls per user message: bounds the loop, and the consumption of the free quota (2 to 3 calls usually). The last
- * one is made without tool calls, for an answer with the results already there.
+ * one is made without tools, for an answer with the results already there (see [withoutToolCalls]).
  */
 const MAX_STEPS = 6;
 /** Added to the system prompt of the last model call. */
@@ -67,6 +67,33 @@ export function systemPrompt(
   }
   if (viewContexts.size) parts.push("Context from the views the user interacted with:\n" + [...viewContexts.values()].join("\n"));
   return parts.join("\n\n");
+}
+
+/**
+ * [chat] without tool calls, for a model call without tools: the tool calls and their results become text (assistant
+ * and user messages), as the providers refuse tool messages without tools, and some ignore `tool_choice: "none"`.
+ */
+export function withoutToolCalls(chat: readonly ChatMessage[]): ChatMessage[] {
+  const result: ChatMessage[] = [];
+  const names = new Map<string, string>();
+  for (const message of chat) {
+    if (message.role === "assistant" && message.tool_calls?.length) {
+      const calls = message.tool_calls.map((call) => {
+        names.set(call.id, call.function.name);
+        return `[tool call] ${call.function.name} ${call.function.arguments || "{}"}`;
+      });
+      result.push({ role: "assistant", content: [message.content, ...calls].filter(Boolean).join("\n") });
+    } else if (message.role === "tool") {
+      const text = `[tool result] ${names.get(message.tool_call_id) ?? "tool"}:\n${message.content}`;
+      // the results of one step: a single user message
+      const previous = result.at(-1);
+      if (previous?.role === "user" && previous.content.startsWith("[tool result]")) previous.content += `\n\n${text}`;
+      else result.push({ role: "user", content: text });
+    } else {
+      result.push({ ...message });
+    }
+  }
+  return result;
 }
 
 /** Arguments of a tool call part (JSON object). */
@@ -152,6 +179,12 @@ export function createAgent(settings: AgentSettings): ChatModelAdapter {
       const chat: ChatMessage[] = [{ role: "system", content: systemPrompt(mcp.instructions) }, ...toChatMessages(messages)];
       // Parts of the answer: completed steps, then the step being streamed
       const done: ThreadAssistantMessagePart[] = [];
+      // models that answered (fallback ones included), shown with the message
+      const models: string[] = [];
+      const metadata = () => ({ custom: { models: [...models] } });
+      const addModel = (model: string | undefined) => {
+        if (model && !models.includes(model)) models.push(model);
+      };
       try {
         for (let step = 0; step < MAX_STEPS; step++) {
           let streamed: ThreadAssistantMessagePart[] = [];
@@ -171,8 +204,11 @@ export function createAgent(settings: AgentSettings): ChatModelAdapter {
           let wake: (() => void) | undefined;
           let finished = false;
           const last = step === MAX_STEPS - 1;
-          const stepChat = last ? [{ ...chat[0], content: `${chat[0].content}\n\n${LAST_STEP_INSTRUCTION}` }, ...chat.slice(1)] : chat;
+          const stepChat = last
+            ? withoutToolCalls([{ ...chat[0], content: `${chat[0].content}\n\n${LAST_STEP_INSTRUCTION}` }, ...chat.slice(1)])
+            : chat;
           const onDelta = (delta: ChatDelta) => {
+            addModel(delta.model);
             updates.push(parts(delta.text, last ? [] : delta.toolCalls));
             wake?.();
           };
@@ -180,8 +216,7 @@ export function createAgent(settings: AgentSettings): ChatModelAdapter {
             model: settings.model(),
             fallbackModels: settings.fallbackModels(),
             messages: stepChat,
-            tools,
-            toolChoice: last ? ("none" as const) : ("auto" as const),
+            tools: last ? [] : tools,
           };
           const completion = streamChat(key, request, abortSignal, onDelta).finally(() => {
             finished = true;
@@ -197,26 +232,27 @@ export function createAgent(settings: AgentSettings): ChatModelAdapter {
               continue;
             }
             streamed = updates.splice(0).at(-1)!;
-            yield { content: [...done, ...streamed] };
+            yield { content: [...done, ...streamed], metadata: metadata() };
           }
           const result = await completion;
+          addModel(result.model);
           const calls = result.toolCalls.filter((call) => call.function.name);
           if (!calls.length) {
             done.push(...parts(result.text, []));
-            yield { content: done, status: { type: "complete", reason: "stop" } };
+            yield { content: done, status: { type: "complete", reason: "stop" }, metadata: metadata() };
             return;
           }
           if (last) {
-            // tool calls asked for anyway
+            // tool calls asked for anyway (in a provider specific format…)
             done.push(...parts(result.text, []), { type: "text", text: `\n\n_${t("agent.tooManySteps")}_` });
-            yield { content: done, status: { type: "incomplete", reason: "other" } };
+            yield { content: done, status: { type: "incomplete", reason: "other" }, metadata: metadata() };
             return;
           }
           // Executes the tool calls, then gives their results back to the model
           const toolCalls = calls.map((call, i) => ({ ...call, id: call.id || `call-${step}-${i}` }));
           chat.push({ role: "assistant", content: result.text || null, tool_calls: toolCalls });
           const running = parts(result.text, toolCalls);
-          yield { content: [...done, ...running] };
+          yield { content: [...done, ...running], metadata: metadata() };
           const results = await Promise.all( // NOSONAR each step needs the tool results of the previous one
             toolCalls.map((call) => callTool(mcp, call.function.name, { ...parseArguments(call.function.arguments) }, abortSignal)),
           );
@@ -230,7 +266,7 @@ export function createAgent(settings: AgentSettings): ChatModelAdapter {
               return { ...part, result: results[i], isError: results[i]?.isError ?? false };
             }),
           );
-          yield { content: done };
+          yield { content: done, metadata: metadata() };
           // stopped by the user during the tool calls: no model call with their (cancelled) results
           abortSignal.throwIfAborted();
         }

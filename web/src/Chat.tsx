@@ -22,6 +22,7 @@ import {
   getSelectedModel,
   listModels,
   recommendedPaidModels,
+  freeFallbackModels,
   setSelectedModel,
   type FreeQuota,
   type Model,
@@ -62,6 +63,20 @@ function Thinking() {
   );
 }
 
+/** Models that answered the message (the selected one, or fallback ones). */
+function AnswerModels() {
+  const models = useAuiState((s) => {
+    const value = s.message.metadata?.custom?.models;
+    return Array.isArray(value) ? value.join(" → ") : "";
+  });
+  if (!models) return null;
+  return (
+    <div className="message-models" title={t("model.label")}>
+      {models}
+    </div>
+  );
+}
+
 function AssistantMessage() {
   return (
     <MessagePrimitive.Root className="message assistant">
@@ -72,6 +87,7 @@ function AssistantMessage() {
           <ErrorPrimitive.Message />
         </ErrorPrimitive.Root>
       </MessagePrimitive.Error>
+      <AnswerModels />
     </MessagePrimitive.Root>
   );
 }
@@ -184,13 +200,7 @@ export default function Chat({ apiKey }: Readonly<{ apiKey: string }>) {
         key: getKey,
         model: () => settingsRef.model,
         // free models fall back on other free models when their provider is rate limited
-        fallbackModels: () =>
-          settingsRef.model.endsWith(":free")
-            ? settingsRef.models
-                .filter((m) => m.free && m.id !== settingsRef.model && m.id !== "openrouter/free")
-                .slice(0, 2)
-                .map((m) => m.id)
-            : [],
+        fallbackModels: () => freeFallbackModels(settingsRef.model, settingsRef.models),
         onRunEnd: refreshQuota,
       }),
     [refreshQuota],
