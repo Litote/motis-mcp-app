@@ -207,9 +207,18 @@ data class ItineraryDto(
     val transferStops: List<String>? = null,
 )
 
-/** Stop where an itinerary boards its first vehicle, or leaves its last one, at [time] (real time when known). */
+/**
+ * Stop where an itinerary boards its first vehicle, or leaves its last one, at [time] (real time when known, UTC) and
+ * [localTime] (the same, ISO-8601 with the offset of the stop, e.g. `2026-11-09T06:32:00+01:00`; null without time zone).
+ */
 @Serializable
-data class ItineraryStop(val name: String, val stopId: String? = null, val time: String, val track: String? = null)
+data class ItineraryStop(
+    val name: String,
+    val stopId: String? = null,
+    val time: String,
+    val localTime: String? = null,
+    val track: String? = null,
+)
 
 @Serializable
 data class TripResult(val kind: String = "trip", val tripId: String, val itinerary: ItineraryDto)

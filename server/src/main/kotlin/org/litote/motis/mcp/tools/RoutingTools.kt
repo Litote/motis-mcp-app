@@ -31,7 +31,7 @@ fun Server.addRoutingTools(gateway: MotisGateway, cityJourneys: CityJourneys) {
             Between city names (e.g. 'Paris' to 'Nantes'), the long-distance itineraries start and end at the stations,
             without the local legs to/from the city center; give an address for door-to-door itineraries.
             The itineraries do not all leave from (or arrive at) the same station: give the user the station of each one
-            (departure, arrival: name, time and track of the boarding in the first vehicle and of the leaving of the last one).
+            (departure, arrival: name, time, local time and track of the boarding in the first vehicle and of the leaving of the last one).
             """.trimIndent(),
         view = UiView.ITINERARY,
         schema = {
@@ -116,30 +116,34 @@ fun Server.addRoutingTools(gateway: MotisGateway, cityJourneys: CityJourneys) {
                 gateway.plan(query).toDto().fromMainLineStations(from.center().takeIf { from.isCity }, to.center().takeIf { to.isCity })
             }
         val result = journeys.withEndNames(from.askedName(), to.askedName(), from.area, to.area).withStops()
-        val summary =
-            buildString {
-                appendLine("From ${from.label} to ${to.label}: ${result.itineraries.size} itinerary(ies).")
-                listOfNotNull(from.label.takeIf { from.isCity }, to.label.takeIf { to.isCity })
-                    .takeIf { it.isNotEmpty() && result.hasMainLineLegs() }
-                    ?.let { appendLine("Long-distance trains from/to the stations of ${it.joinToString(" and ")}, without the local legs to/from the city center.") }
-                // from/to a city, the model takes the station of the first itinerary for all of them (from/to an address, the
-                // stops differ anyway, and the legs say it)
-                if (from.isCity) result.itineraries.differingStops("Departure stations") { it.departure?.name }?.let { appendLine(it) }
-                if (to.isCity) result.itineraries.differingStops("Arrival stations") { it.arrival?.name }?.let { appendLine(it) }
-                listOfNotNull(
-                    walkingSpeed.takeIf { it != WalkingSpeed.NORMAL }?.let { "walking speed ${it.name}" },
-                    "wheelchair".takeIf { wheelchair },
-                    transferMargin.takeIf { it != TransferMargin.NORMAL }?.let { "transfer margin ${it.name}" },
-                    bike.takeIf { it != BikeOption.NONE }?.let { "bike ${it.name}" },
-                ).takeIf { it.isNotEmpty() }?.let { appendLine("Options: ${it.joinToString()}.") }
-                result.itineraries.forEachIndexed { i, it -> appendLine("${i + 1}. ${it.describe()}") }
-                result.direct.firstOrNull()?.let { appendLine("Direct (without transit): ${it.describe()}") }
-            }.trimEnd()
-        ToolOutput.of(summary, JourneyResult.serializer(), result)
+        val options =
+            listOfNotNull(
+                walkingSpeed.takeIf { it != WalkingSpeed.NORMAL }?.let { "walking speed ${it.name}" },
+                "wheelchair".takeIf { wheelchair },
+                transferMargin.takeIf { it != TransferMargin.NORMAL }?.let { "transfer margin ${it.name}" },
+                bike.takeIf { it != BikeOption.NONE }?.let { "bike ${it.name}" },
+            )
+        ToolOutput.of(journeySummary(from, to, result, options), JourneyResult.serializer(), result)
     }
 }
 
 private fun ResolvedPlace.coordinates(): String = "$lat,$lon"
+
+/** Text of the journeys [result] from [from] to [to], with the non-default [options] of the search. */
+private fun journeySummary(from: ResolvedPlace, to: ResolvedPlace, result: JourneyResult, options: List<String>): String =
+    buildString {
+        appendLine("From ${from.label} to ${to.label}: ${result.itineraries.size} itinerary(ies).")
+        listOfNotNull(from.label.takeIf { from.isCity }, to.label.takeIf { to.isCity })
+            .takeIf { it.isNotEmpty() && result.hasMainLineLegs() }
+            ?.let { appendLine("Long-distance trains from/to the stations of ${it.joinToString(" and ")}, without the local legs to/from the city center.") }
+        // from/to a city, the model takes the station of the first itinerary for all of them (from/to an address, the
+        // stops differ anyway, and the legs say it)
+        if (from.isCity) result.itineraries.differingStops("Departure stations") { it.departure?.name }?.let { appendLine(it) }
+        if (to.isCity) result.itineraries.differingStops("Arrival stations") { it.arrival?.name }?.let { appendLine(it) }
+        options.takeIf { it.isNotEmpty() }?.let { appendLine("Options: ${it.joinToString()}.") }
+        result.itineraries.forEachIndexed { i, it -> appendLine("${i + 1}. ${it.describe()}") }
+        result.direct.firstOrNull()?.let { appendLine("Direct (without transit): ${it.describe()}") }
+    }.trimEnd()
 
 /**
  * Warning listing the stops of the [itineraries] (with their numbers) when they differ, e.g. "Departure stations differ:

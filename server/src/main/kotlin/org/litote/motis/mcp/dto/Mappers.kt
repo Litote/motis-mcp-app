@@ -440,11 +440,19 @@ fun ItineraryDto.withStops(): ItineraryDto {
     val first = transit.first()
     val last = transit.last()
     return copy(
-        departure = ItineraryStop(first.from.name, first.from.stopId, first.startTime, first.from.track),
-        arrival = ItineraryStop(last.to.name, last.to.stopId, last.endTime, last.to.track),
+        departure = ItineraryStop(first.from.name, first.from.stopId, first.startTime, localTime(first.startTime, first.from.tz), first.from.track),
+        arrival = ItineraryStop(last.to.name, last.to.stopId, last.endTime, localTime(last.endTime, last.to.tz), last.to.track),
         transferStops = transit.dropLast(1).map { it.to.name }.ifEmpty { null },
     )
 }
 
 /** Fills the stops of the itineraries (see [ItineraryDto.withStops]). */
 fun JourneyResult.withStops(): JourneyResult = copy(itineraries = itineraries.map { it.withStops() }, direct = direct.map { it.withStops() })
+
+/** The ISO instant [iso] in the time zone [tz], ISO-8601 with its offset; null when [tz] is unknown or invalid. */
+fun localTime(iso: String, tz: String?): String? =
+    tz?.let {
+        runCatching {
+            java.time.Instant.parse(iso).atZone(java.time.ZoneId.of(it)).format(java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+        }.getOrNull()
+    }
