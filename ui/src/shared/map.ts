@@ -3,7 +3,8 @@
 import polyline from "@mapbox/polyline";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { leafletLayer } from "protomaps-leaflet";
+import { namedFlavor } from "@protomaps/basemaps";
+import { type Feature, labelRules, leafletLayer, LineSymbolizer, linear, type PaintRule, paintRules } from "protomaps-leaflet";
 import { currentTheme } from "./app";
 import { FRANCE_BOUNDS, tileInsideFrance } from "./france";
 import { hostLocale } from "./i18n";
@@ -140,12 +141,54 @@ export interface ThemedMap {
   show(bounds: L.LatLngBounds): void;
 }
 
+/** Color of the railways: like the roads, a plain line contrasting with the background (black in light theme). */
+const RAILWAY_COLORS = { light: "#1f1f1f", dark: "#d4d4d4" };
+
+/** Railways drawn by the basemap: the main lines in the open, not the subway, tramways, tunnels nor service tracks. */
+const MAIN_RAILWAYS = new Set(["rail", "light_rail", "narrow_gauge"]);
+
+function mainRailway(feature: Feature): boolean {
+  const { kind, kind_detail: detail, is_tunnel: tunnel, service } = feature.props;
+  return kind === "rail" && MAIN_RAILWAYS.has(String(detail)) && !tunnel && !service;
+}
+
+/** Railway rule of the Protomaps flavor: all the railways in faint dashes. */
+function protomapsRailway(rule: PaintRule): boolean {
+  return rule.dataLayer === "roads" && (rule.filter?.(15, { props: { kind: "rail" } } as unknown as Feature) ?? false);
+}
+
+/**
+ * Paint rules of the Protomaps flavor of the [theme], the railways being the main lines only, as a plain line (in place
+ * of the faint dashes of every railway).
+ */
+export function basemapPaintRules(theme: "light" | "dark"): PaintRule[] {
+  const railway: PaintRule = {
+    dataLayer: "roads",
+    symbolizer: new LineSymbolizer({
+      color: RAILWAY_COLORS[theme],
+      // thin: the tracks of the stations stay distinct at street level (no railway below zoom 11 in the tiles)
+      width: linear([
+        [11, 0.6],
+        [13, 0.8],
+        [15, 1],
+        [18, 1.6],
+      ]),
+    }),
+    filter: (_, feature) => mainRailway(feature),
+  };
+  const rules = paintRules(namedFlavor(theme));
+  const index = rules.findIndex(protomapsRailway);
+  return index < 0 ? [...rules, railway] : rules.map((rule) => (protomapsRailway(rule) ? railway : rule));
+}
+
 /** Layer of the vector tiles, in the [theme] (Protomaps flavor) and the language of the host. */
 export function vectorLayer(source: TileSource, theme: "light" | "dark"): L.GridLayer {
+  const flavor = namedFlavor(theme);
   return leafletLayer({
     url: source.url,
-    flavor: theme,
-    lang: hostLocale()?.split("-")[0] ?? "en",
+    paintRules: basemapPaintRules(theme),
+    labelRules: labelRules(flavor, hostLocale()?.split("-")[0] ?? "en"),
+    backgroundColor: flavor.background,
     maxDataZoom: VECTOR_MAX_DATA_ZOOM,
     maxZoom: 19,
     attribution: `${source.attribution} · ${DATA_ATTRIBUTION}`,
