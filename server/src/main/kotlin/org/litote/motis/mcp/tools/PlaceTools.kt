@@ -19,7 +19,8 @@ fun Server.addPlaceTools(gateway: MotisGateway, baseUrl: String) {
         description =
             """
             Searches stops, addresses and points of interest by name (geocoding), or lists what is near coordinates
-            (reverse geocoding when 'text' is 'lat,lon'). Returns stop ids usable by the other tools.
+            (reverse geocoding when 'text' is 'lat,lon'). Returns what to give to the other tools: the id of a stop, the
+            'lat,lon' of another place (address, point of interest, city).
             Not needed before the other tools, which take place names: use it when the user asks for places.
             """.trimIndent(),
         schema = {
@@ -58,7 +59,9 @@ fun Server.addPlaceTools(gateway: MotisGateway, baseUrl: String) {
             } else {
                 // ids quoted: some end with ":" (e.g. SNCF stops), taken for punctuation and dropped by the models when not quoted
                 result.matches.joinToString("\n", "${result.matches.size} result(s) for \"$text\":\n") { m ->
-                    "- ${m.name} [${m.type}] id=\"${m.id}\" (${m.lat},${m.lon})" +
+                    // only the stop ids are known by the other tools (MOTIS has no lookup of the geocoder ids, e.g. node/123)
+                    val use = if (m.type == "STOP") "id=\"${m.id}\" (${m.lat},${m.lon})" else "use \"${m.lat},${m.lon}\""
+                    "- ${m.name} [${m.type}] $use" +
                         (m.area?.let { " — $it" } ?: "") +
                         when {
                             m.modes != null -> " modes=${m.modes.joinToString(",")}"

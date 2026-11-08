@@ -36,11 +36,14 @@
         </p>
         <ul>
           <li>
-            The arguments are processed in memory for the duration of the request and are <strong>not stored</strong>.
+            The arguments are processed in memory for the duration of the request and are <strong>not stored</strong>,
+            except in the logs below.
           </li>
           <li>
-            <strong>Error logs</strong>: when a request fails, an error message is written to the logs; it may contain the places of the request. The logs contain no IP address and no identifier of
-            the user, and are deleted after <strong>14 days</strong>.
+            <strong>Logs</strong>: each request writes one line to the logs, with the tool called, its arguments (e.g.
+            the places and times of a journey; the coordinates rounded to about 1 km), its duration and the first line
+            of its result or its error message. The logs contain no IP address and no identifier of the user, and are
+            deleted after <strong>14 days</strong>.
           </li>
           <li>
             <strong>Station cache</strong>: for journeys between two cities, the stations found (e.g. “Paris – Nantes:
@@ -155,12 +158,14 @@
         </p>
         <ul>
           <li>
-            Les arguments sont traités en mémoire le temps de la requête et ne sont <strong>pas conservés</strong>.
+            Les arguments sont traités en mémoire le temps de la requête et ne sont <strong>pas conservés</strong>,
+            sauf dans les journaux ci-dessous.
           </li>
           <li>
-            <strong>Journaux d'erreurs</strong> : quand une requête échoue, un message d'erreur est écrit dans les
-            journaux ; il peut contenir les lieux de la requête. Les journaux ne contiennent ni
-            adresse IP ni identifiant de l'utilisateur, et sont supprimés au bout de <strong>14 jours</strong>.
+            <strong>Journaux</strong> : chaque requête écrit une ligne dans les journaux, avec l'outil appelé, ses
+            arguments (par exemple les lieux et horaires d'un trajet ; les coordonnées arrondies à environ 1 km), sa
+            durée et la première ligne de son résultat ou son message d'erreur. Les journaux ne contiennent ni adresse
+            IP ni identifiant de l'utilisateur, et sont supprimés au bout de <strong>14 jours</strong>.
           </li>
           <li>
             <strong>Cache des gares</strong> : pour les trajets entre deux villes, les gares trouvées (par exemple
