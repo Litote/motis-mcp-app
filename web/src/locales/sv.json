@@ -24,6 +24,8 @@
   "quota.left_one": "{count}/{limit} gratis förfrågan kvar",
   "quota.left_other": "{count}/{limit} gratis förfrågningar kvar",
   "logout": "Logga ut",
+  "language.label": "Språk",
+  "language.browser": "Webbläsarens språk",
   "location.button": "Min plats",
   "location.off": "Dela min plats med modellen för att planera härifrån",
   "location.locating": "Hämtar plats…",

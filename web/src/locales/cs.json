@@ -25,6 +25,8 @@
   "quota.left_few": "Zbývají {count}/{limit} bezplatné požadavky",
   "quota.left_other": "Zbývá {count}/{limit} bezplatných požadavků",
   "logout": "Odhlásit se",
+  "language.label": "Jazyk",
+  "language.browser": "Jazyk prohlížeče",
   "location.button": "Moje poloha",
   "location.off": "Sdílet mou polohu s modelem a plánovat odsud",
   "location.locating": "Zjišťování polohy…",

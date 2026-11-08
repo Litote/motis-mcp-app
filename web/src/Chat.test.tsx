@@ -63,6 +63,7 @@ vi.mock("./agent", () => ({
 
 const { default: Chat } = await import("./Chat");
 const { DEFAULT_MODEL } = await import("./openrouter");
+const { chooseLanguage } = await import("./i18n");
 
 const MODELS = [
   { id: "nvidia/nemotron-3.5-super-vl:free", name: "Nemotron", free: true, created: 1 },
@@ -92,8 +93,9 @@ beforeEach(() => {
   localStorage.clear();
 });
 
-afterEach(() => {
+afterEach(async () => {
   cleanup();
+  await chooseLanguage(undefined);
   vi.clearAllMocks();
   vi.unstubAllGlobals();
   mocks.agentSettings.length = 0;
@@ -217,6 +219,23 @@ describe("Chat", () => {
     expect(await screen.findByText("Downloaded ✓")).toBeDefined();
     expect(click).toHaveBeenCalled();
     click.mockRestore();
+  });
+
+  it("changes the language of the texts, the conversation kept", async () => {
+    render(<Chat apiKey="sk-or-v1-key" />);
+    fireEvent.click(screen.getByText("Next departures at Lyon Part-Dieu"));
+    expect(await screen.findByText("Next")).toBeDefined();
+    await waitFor(() => expect(screen.getByText("Send")).toBeDefined());
+
+    const picker = screen.getByLabelText("Language") as HTMLSelectElement;
+    expect(picker.value).toBe("");
+    expect([...picker.options].find((o) => o.value === "de")?.textContent).toBe("Deutsch");
+    fireEvent.change(picker, { target: { value: "fr" } });
+
+    expect(await screen.findByText("Envoyer")).toBeDefined();
+    expect(screen.getByText("Se déconnecter")).toBeDefined();
+    expect(screen.getByText("Next")).toBeDefined();
+    expect(localStorage.getItem("language")).toBe("fr");
   });
 
   it("logs out", async () => {

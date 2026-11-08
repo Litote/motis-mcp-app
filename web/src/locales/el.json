@@ -24,6 +24,8 @@
   "quota.left_one": "Απομένει {count}/{limit} δωρεάν αίτημα",
   "quota.left_other": "Απομένουν {count}/{limit} δωρεάν αιτήματα",
   "logout": "Αποσύνδεση",
+  "language.label": "Γλώσσα",
+  "language.browser": "Γλώσσα του προγράμματος περιήγησης",
   "location.button": "Η τοποθεσία μου",
   "location.off": "Κοινοποίηση της τοποθεσίας μου στο μοντέλο, για σχεδιασμό από εδώ",
   "location.locating": "Εντοπισμός…",

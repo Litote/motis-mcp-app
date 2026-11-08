@@ -12,7 +12,7 @@ import {
 } from "@modelcontextprotocol/ext-apps/app-bridge";
 import type { CallToolResult } from "@modelcontextprotocol/client";
 import { loadConfig } from "./config";
-import { locale, t } from "./i18n";
+import { locale, t, useLanguage } from "./i18n";
 import { IMPLEMENTATION, connectMcp, toolView, type McpServer, type ViewResource } from "./mcp";
 import { setViewContext } from "./agent";
 
@@ -143,6 +143,7 @@ export function McpAppView(props: Readonly<McpAppViewProps>) {
   // The view is set up once per tool call: the props of a completed call do not change
   const propsRef = useRef(props);
   propsRef.current = props;
+  const language = useLanguage();
 
   /** Single path for every display mode change: the view is told the mode, then its new dimensions. */
   const setDisplayMode = useCallback((value: boolean) => {
@@ -201,6 +202,11 @@ export function McpAppView(props: Readonly<McpAppViewProps>) {
       void bridge?.close();
     };
   }, [props.toolCallId, props.toolName, setDisplayMode]);
+
+  // the language chosen in the chat, also in the views already shown (no change sent before the bridge is set up)
+  useEffect(() => {
+    void bridgeRef.current?.sendHostContextChange({ locale: locale() });
+  }, [language]);
 
   if (error) return <div className="view-error">{t("view.unavailable", { error })}</div>;
   return (

@@ -25,6 +25,8 @@
   "quota.left_few": "{count}/{limit} cereri gratuite rămase",
   "quota.left_other": "{count}/{limit} de cereri gratuite rămase",
   "logout": "Deconectare",
+  "language.label": "Limbă",
+  "language.browser": "Limba browserului",
   "location.button": "Locația mea",
   "location.off": "Partajează locația mea cu modelul, pentru a planifica de aici",
   "location.locating": "Se localizează…",

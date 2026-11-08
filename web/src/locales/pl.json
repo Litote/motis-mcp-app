@@ -26,6 +26,8 @@
   "quota.left_many": "Pozostało {count}/{limit} darmowych zapytań",
   "quota.left_other": "Pozostało {count}/{limit} darmowego zapytania",
   "logout": "Wyloguj się",
+  "language.label": "Język",
+  "language.browser": "Język przeglądarki",
   "location.button": "Moja lokalizacja",
   "location.off": "Udostępnij modelowi moją lokalizację, aby planować stąd",
   "location.locating": "Ustalanie lokalizacji…",

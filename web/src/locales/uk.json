@@ -26,6 +26,8 @@
   "quota.left_many": "Залишилося {count}/{limit} безкоштовних запитів",
   "quota.left_other": "Залишилося {count}/{limit} безкоштовного запиту",
   "logout": "Вийти",
+  "language.label": "Мова",
+  "language.browser": "Мова браузера",
   "location.button": "Моє місцезнаходження",
   "location.off": "Поділитися моїм місцезнаходженням із моделлю, щоб планувати звідси",
   "location.locating": "Визначення місцезнаходження…",

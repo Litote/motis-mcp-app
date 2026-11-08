@@ -24,6 +24,8 @@
   "quota.left_one": "{count}/{limit} gratis forespørsel igjen",
   "quota.left_other": "{count}/{limit} gratis forespørsler igjen",
   "logout": "Logg ut",
+  "language.label": "Språk",
+  "language.browser": "Nettleserens språk",
   "location.button": "Min posisjon",
   "location.off": "Del posisjonen min med modellen for å planlegge herfra",
   "location.locating": "Finner posisjon…",

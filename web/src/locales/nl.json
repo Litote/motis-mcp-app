@@ -24,6 +24,8 @@
   "quota.left_one": "{count}/{limit} gratis verzoek over",
   "quota.left_other": "{count}/{limit} gratis verzoeken over",
   "logout": "Uitloggen",
+  "language.label": "Taal",
+  "language.browser": "Taal van de browser",
   "location.button": "Mijn locatie",
   "location.off": "Mijn locatie delen met het model, om vanaf hier te plannen",
   "location.locating": "Locatie bepalen…",

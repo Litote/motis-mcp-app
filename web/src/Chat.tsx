@@ -13,7 +13,8 @@ import {
 import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown";
 import remarkGfm from "remark-gfm";
 import { createAgent } from "./agent";
-import { locale, suggestions, t } from "./i18n";
+import { locale, suggestions, t, useLanguage } from "./i18n";
+import { LanguagePicker } from "./LanguagePicker";
 import { useLocation } from "./location";
 import {
   DEFAULT_MODEL,
@@ -48,6 +49,7 @@ function UserMessage() {
  * the tool results (a running tool call has its own status, streamed text is visible).
  */
 function Thinking() {
+  useLanguage();
   const waiting = useAuiState((s) => {
     if (s.message.status?.type !== "running") return false;
     const last = s.message.content.at(-1);
@@ -67,6 +69,7 @@ function Thinking() {
 
 /** Models that answered the message (the selected one, or fallback ones). */
 function AnswerModels() {
+  useLanguage();
   const models = useAuiState((s) => {
     const value = s.message.metadata?.custom?.models;
     return Array.isArray(value) ? value.join(" → ") : "";
@@ -207,6 +210,8 @@ function ExportButton({ messages, model }: Readonly<{ messages(): readonly Threa
 const settingsRef: { model: string; models: Model[] } = { model: DEFAULT_MODEL, models: [] };
 
 export default function Chat({ apiKey }: Readonly<{ apiKey: string }>) {
+  // the header and the thread (not memoized) follow the language chosen; the messages subscribe themselves
+  useLanguage();
   const [models, setModels] = useState<Model[]>([]);
   const [model, setModel] = useState(getSelectedModel);
   const [quota, setQuota] = useState<FreeQuota | null>(null);
@@ -257,6 +262,7 @@ export default function Chat({ apiKey }: Readonly<{ apiKey: string }>) {
               {t("quota.left", { count: quota.remaining, limit: quota.limit })}
             </span>
           )}
+          <LanguagePicker />
           <button
             type="button"
             onClick={() => {
