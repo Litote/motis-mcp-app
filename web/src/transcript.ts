@@ -74,7 +74,9 @@ function status(message: ThreadMessage): string | null {
   if (status.type === "running") return "_(still running at the export)_";
   if (status.type !== "incomplete") return null;
   if (status.reason === "cancelled") return "_(stopped by the user)_";
-  const error = status.error === undefined ? "" : `: ${typeof status.error === "string" ? status.error : jsonText(status.error)}`;
+  let error = "";
+  if (typeof status.error === "string") error = `: ${status.error}`;
+  else if (status.error !== undefined) error = `: ${jsonText(status.error)}`;
   return `> **Incomplete (${status.reason})**${error.replaceAll("\n", "\n> ")}`;
 }
 
