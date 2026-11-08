@@ -215,20 +215,26 @@ export interface ChatDelta {
   toolCalls: ChatToolCall[];
 }
 
-/**
- * Streams a chat completion; [onDelta] receives the cumulative text and tool calls. [fallbackModels] are tried by
- * OpenRouter when [model] fails (rate limited provider…). [toolChoice] "none" asks for an answer without tool calls
- * (the tools are still sent: some providers refuse tool calls in the history without them).
- */
+/** A chat completion request. */
+export interface ChatRequest {
+  model: string;
+  /** Models tried by OpenRouter when [model] fails (rate limited provider…). */
+  fallbackModels: string[];
+  messages: ChatMessage[];
+  tools: ChatTool[];
+  /**
+   * "none": an answer without tool calls is asked (the tools are still sent: some providers refuse tool calls in the
+   * history without them). Default "auto".
+   */
+  toolChoice?: "auto" | "none";
+}
+
+/** Streams the chat completion of [request]; [onDelta] receives the cumulative text and tool calls. */
 export async function streamChat(
   key: string,
-  model: string,
-  fallbackModels: string[],
-  messages: ChatMessage[],
-  tools: ChatTool[],
+  { model, fallbackModels, messages, tools, toolChoice = "auto" }: ChatRequest,
   signal: AbortSignal,
   onDelta: (delta: ChatDelta) => void,
-  toolChoice: "auto" | "none" = "auto",
 ): Promise<ChatDelta> {
   const response = await fetch(`${API}/chat/completions`, {
     method: "POST",

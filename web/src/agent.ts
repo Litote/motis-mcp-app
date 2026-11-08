@@ -176,16 +176,14 @@ export function createAgent(settings: AgentSettings): ChatModelAdapter {
             updates.push(parts(delta.text, last ? [] : delta.toolCalls));
             wake?.();
           };
-          const completion = streamChat(
-            key,
-            settings.model(),
-            settings.fallbackModels(),
-            stepChat,
+          const request = {
+            model: settings.model(),
+            fallbackModels: settings.fallbackModels(),
+            messages: stepChat,
             tools,
-            abortSignal,
-            onDelta,
-            last ? "none" : "auto",
-          ).finally(() => {
+            toolChoice: last ? ("none" as const) : ("auto" as const),
+          };
+          const completion = streamChat(key, request, abortSignal, onDelta).finally(() => {
             finished = true;
             wake?.();
           });

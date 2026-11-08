@@ -154,7 +154,7 @@ describe("streamChat", () => {
     );
     const deltas: string[] = [];
 
-    const result = await streamChat(KEY, "m1", ["m2"], messages, [], signal, (delta: ChatDelta) => deltas.push(delta.text));
+    const result = await streamChat(KEY, { model: "m1", fallbackModels: ["m2"], messages, tools: [] }, signal, (delta: ChatDelta) => deltas.push(delta.text));
 
     expect(result.text).toBe("Let me check.");
     expect(result.toolCalls).toEqual([{ id: "c1", type: "function", function: { name: "departures", arguments: "{}" } }]);
@@ -165,16 +165,16 @@ describe("streamChat", () => {
 
   it("sends no fallback list without fallback models", async () => {
     fetchMock.mockResolvedValue(sse(["data: [DONE]"]));
-    await streamChat(KEY, "m1", [], messages, [], signal, () => undefined);
+    await streamChat(KEY, { model: "m1", fallbackModels: [], messages, tools: [] }, signal, () => undefined);
     expect(JSON.parse(fetchMock.mock.calls[0][1]?.body as string).models).toBeUndefined();
   });
 
   it("asks for no tool call with tool choice none only", async () => {
     fetchMock.mockResolvedValue(sse(["data: [DONE]"]));
-    await streamChat(KEY, "m1", [], messages, [], signal, () => undefined);
+    await streamChat(KEY, { model: "m1", fallbackModels: [], messages, tools: [] }, signal, () => undefined);
     expect(JSON.parse(fetchMock.mock.calls[0][1]?.body as string).tool_choice).toBeUndefined();
     fetchMock.mockResolvedValue(sse(["data: [DONE]"]));
-    await streamChat(KEY, "m1", [], messages, [], signal, () => undefined, "none");
+    await streamChat(KEY, { model: "m1", fallbackModels: [], messages, tools: [], toolChoice: "none" }, signal, () => undefined);
     expect(JSON.parse(fetchMock.mock.calls[1][1]?.body as string).tool_choice).toBe("none");
   });
 
@@ -186,7 +186,7 @@ describe("streamChat", () => {
     [502, "not json", "OpenRouter error (HTTP 502): not json"],
   ])("explains the HTTP error %i", async (status, body, message) => {
     fetchMock.mockResolvedValue(new Response(body, { status }));
-    const error = await streamChat(KEY, "m1", [], messages, [], signal, () => undefined).catch((e: unknown) => e);
+    const error = await streamChat(KEY, { model: "m1", fallbackModels: [], messages, tools: [] }, signal, () => undefined).catch((e: unknown) => e);
     expect(error).toBeInstanceOf(OpenRouterError);
     expect((error as OpenRouterError).status).toBe(status);
     expect((error as Error).message).toBe(message);
@@ -194,6 +194,6 @@ describe("streamChat", () => {
 
   it("fails on an error in the stream", async () => {
     fetchMock.mockResolvedValue(sse([`data: ${JSON.stringify({ error: { code: 429, message: "quota" } })}`]));
-    await expect(streamChat(KEY, "m1", [], messages, [], signal, () => undefined)).rejects.toThrow("Rate limited by OpenRouter");
+    await expect(streamChat(KEY, { model: "m1", fallbackModels: [], messages, tools: [] }, signal, () => undefined)).rejects.toThrow("Rate limited by OpenRouter");
   });
 });
