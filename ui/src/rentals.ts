@@ -43,7 +43,11 @@ function render(refit: boolean): void {
   const providerColors = colors(data);
   title.textContent = `${t("rentals.title")} · ${data.title}`;
   subtitle.textContent =
-    t("rentals.summary", { providers: data.providers.length, stations: data.totalStations, vehicles: data.totalVehicles }) +
+    [
+      t("rentals.providers", { count: data.providers.length }),
+      t("rentals.stations", { count: data.totalStations }),
+      t("rentals.freeFloating", { count: data.totalVehicles }),
+    ].join(" · ") +
     (data.stations.length < data.totalStations || data.vehicles.length < data.totalVehicles ? ` ${t("rentals.closestShown")}` : "");
 
   providersEl.innerHTML = data.providers.length

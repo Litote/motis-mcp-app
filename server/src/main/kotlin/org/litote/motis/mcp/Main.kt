@@ -6,6 +6,9 @@ import io.ktor.http.HttpMethod
 import io.ktor.server.application.install
 import io.ktor.server.cio.CIO
 import io.ktor.server.engine.embeddedServer
+import io.ktor.server.plugins.compression.Compression
+import io.ktor.server.plugins.compression.gzip
+import io.ktor.server.plugins.compression.minimumSize
 import io.ktor.server.plugins.cors.routing.CORS
 import io.modelcontextprotocol.kotlin.sdk.server.StdioServerTransport
 import io.modelcontextprotocol.kotlin.sdk.server.mcpStatelessStreamableHttp
@@ -99,6 +102,12 @@ fun main(args: Array<String>) {
                 allowHeader(HttpHeaders.ContentType)
                 allowHeader(HttpHeaders.Authorization)
                 allowHeader("Mcp-Protocol-Version")
+            }
+            // the views (ui:// resources: ~500 kB of HTML, with the texts of every language) shrink by 3 to 4 on the wire;
+            // text/event-stream is not compressed by default, the SSE responses stay streamed. The Lambda is behind
+            // CloudFront, which compresses
+            install(Compression) {
+                gzip { minimumSize(1024) }
             }
             rejectUnknownMcpHosts()
             // stateless, as the Lambda: the tools keep no state, and the SDK never expires the idle sessions of the

@@ -11,6 +11,7 @@ dependencies {
     implementation(libs.motis.client)
     implementation(libs.ktor.server.cio)
     implementation(libs.ktor.server.cors)
+    implementation(libs.ktor.server.compression)
     implementation(libs.ktor.client.okhttp)
     implementation(libs.serialization.json)
     implementation(libs.serialization.protobuf)

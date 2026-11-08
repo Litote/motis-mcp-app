@@ -28,6 +28,20 @@ compose.yaml          MCP server and web chat on localhost
 
 Follow the [official Kotlin conventions](https://kotlinlang.org/docs/coding-conventions.html).
 
+## Translations
+
+The texts of the views and of the web chat are in `ui/src/shared/locales/` and `web/src/locales/`: one flat JSON
+file per language, named by its BCP 47 tag (`de.json`, `pt.json`, `zh-Hans.json`…), English being the reference and the
+fallback. Adding a language is adding its two files, picked up by the build.
+
+- Placeholders are written `{name}`, and must be those of the English text.
+- A text that depends on a number has one key per plural form of the language (`transfers_one`, `transfers_few`,
+  `transfers_other`…, the categories of `Intl.PluralRules`), chosen by its `count` placeholder.
+
+The `i18n` tests of `ui/` and `web/` check each file against English: missing or unknown keys, placeholders, plural
+forms, HTML characters (the texts are inserted unescaped). Vitest caches the list of the files: after adding one,
+delete `node_modules/.vitest-cache` if the tests do not see it.
+
 ## Commit signing
 
 All commits merged into `main` **must be signed**.

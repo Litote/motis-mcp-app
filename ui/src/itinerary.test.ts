@@ -22,15 +22,15 @@ describe("itinerary view", () => {
     expect($("#title").textContent).toBe("Start → Destination");
     expect($("#subtitle").textContent).toBe("Mon 12 Oct");
     expect(items("#itineraries li")).toEqual([
-      "23:10 → 23:32 22 min · 0 transfer(s) C23",
-      "23:14 → 23:38 24 min · 0 transfer(s) TB11",
-      "23:18 → 23:40 22 min · 0 transfer(s) C13",
-      "23:10 → 23:32 22 min · 0 transfer(s) · direct Walk",
+      "23:10 → 23:32 22 min · 0 transfers C23",
+      "23:14 → 23:38 24 min · 0 transfers TB11",
+      "23:18 → 23:40 22 min · 0 transfers C13",
+      "23:10 → 23:32 22 min · 0 transfers · direct Walk",
     ]);
     expect($("#itineraries li.selected").dataset.index).toBe("0");
     const legs = items("#legs > li");
     expect(legs[0]).toBe("23:10 Start Walk 562 m (8 min)");
-    expect(legs[1]).toBe("23:18 Part-Dieu Jules Favre C23 → Cité Internationale4 stop(s) · TCL");
+    expect(legs[1]).toBe("23:18 Part-Dieu Jules Favre C23 → Cité Internationale4 stops · TCL");
     expect(legs.at(-1)).toBe("23:32 Destination");
     expect($<HTMLButtonElement>("#earlier").disabled).toBe(false);
   });
