@@ -5,6 +5,7 @@ motis_app_contact = "you@example.org"
 # reserved_concurrency = 10   # default; -1: no reservation
 # tile_url             = "https://tiles.example.org/{z}/{x}/{y}.png"
 # tile_attribution     = "&copy; Example tiles"
+# vector_tile_url      = "https://api.protomaps.com/tiles/v4/{z}/{x}/{y}.mvt?key=<key>"   # secret: see docs/AWS-DEPLOYMENT.md
 # rail_overlay         = "ign,openrailwaymap"   # default; "": no railway overlay, see docs/MCP-SERVER.md
 # domain_name          = "motis.example.org"   # chat and MCP endpoint (/mcp); DNS: see docs/AWS-DEPLOYMENT.md
 # sandbox_domain_name  = "sandbox.motis.example.org"   # default
