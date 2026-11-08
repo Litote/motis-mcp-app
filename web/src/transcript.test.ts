@@ -120,6 +120,14 @@ Arguments:
     expect(markdown).toContain("[… 3 characters truncated]\n````");
   });
 
+  it("gives the models that answered", () => {
+    const answer = { ...assistant([{ type: "text", text: "Done" }]), metadata: { custom: { models: ["a/first:free", "b/fallback:free"] } } };
+
+    expect(transcript([answer as unknown as ThreadMessage], CONTEXT)).toContain(
+      "### Assistant\n\nDone\n\n_Models: `a/first:free` → `b/fallback:free`_\n",
+    );
+  });
+
   it("says why an answer is incomplete", () => {
     const markdown = transcript(
       [

@@ -1,6 +1,7 @@
 /**
  * Export of the conversation as Markdown, to paste in the description of a bug: the context (page, model, locale,
- * browser), then the messages, with the tool calls (arguments and result) folded in `<details>` (GitHub).
+ * browser), then the messages, with the tool calls (arguments and result) folded in `<details>` (GitHub) and the
+ * models that answered.
  */
 import type { ThreadMessage } from "@assistant-ui/react";
 import type { CallToolResult } from "@modelcontextprotocol/client";
@@ -80,9 +81,15 @@ function status(message: ThreadMessage): string | null {
   return `> **Incomplete (${status.reason})**${error.replaceAll("\n", "\n> ")}`;
 }
 
+/** Models that answered an assistant message (the selected one, or fallback ones). */
+function models(message: ThreadMessage): string | null {
+  const value = message.role === "assistant" ? message.metadata?.custom?.models : undefined;
+  return Array.isArray(value) && value.length ? `_Models: ${value.map((model) => `\`${model}\``).join(" → ")}_` : null;
+}
+
 function message(message: ThreadMessage): string {
   const title = message.role === "user" ? "User" : "Assistant";
-  const body = [...message.content.map(part), status(message)].filter((text): text is string => text !== null);
+  const body = [...message.content.map(part), status(message), models(message)].filter((text): text is string => text !== null);
   return [`### ${title}`, "", body.join("\n\n") || "_(empty)_"].join("\n");
 }
 
