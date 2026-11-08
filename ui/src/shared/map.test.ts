@@ -1,14 +1,50 @@
 import L from "leaflet";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { setLocale } from "./i18n";
-import { createMap, railLayer, type RailOverlay } from "./map";
+import { type Feature, type LineSymbolizer, type PaintRule, labelRules } from "protomaps-leaflet";
+import { basemapPaintRules, createMap, railLayer, type RailOverlay } from "./map";
 
 // vector tiles: an empty grid layer keeping the options of protomaps-leaflet (no tile download nor drawing)
-vi.mock("protomaps-leaflet", async () => {
+vi.mock("protomaps-leaflet", async (importOriginal) => {
   const { default: Leaflet } = await import("leaflet");
+  const original = await importOriginal<typeof import("protomaps-leaflet")>();
   return {
+    ...original,
+    labelRules: vi.fn(original.labelRules),
     leafletLayer: (options: Record<string, unknown>) => Object.assign(Leaflet.gridLayer(), { protomaps: options }),
   };
+});
+
+const railway = (props: Record<string, unknown>) => ({ props: { kind: "rail", ...props } }) as unknown as Feature;
+const railwayRules = (rules: PaintRule[]) =>
+  rules.filter((rule) => rule.dataLayer === "roads" && rule.filter?.(15, railway({ kind_detail: "rail" })));
+
+describe("basemapPaintRules", () => {
+  it("draws the main railways in the open as a plain line, instead of every railway in faint dashes", () => {
+    const [rule, ...others] = railwayRules(basemapPaintRules("light"));
+
+    expect(others).toEqual([]);
+    const symbolizer = rule.symbolizer as LineSymbolizer;
+    expect(symbolizer.dash).toBeNull();
+    expect(symbolizer.color.get(15)).toBe("#1f1f1f");
+    expect(symbolizer.width.get(11)).toBeLessThan(symbolizer.width.get(18));
+    expect(rule.filter!(15, railway({ kind_detail: "light_rail", is_bridge: true }))).toBe(true);
+    for (const props of [
+      { kind_detail: "subway" },
+      { kind_detail: "tram" },
+      { kind_detail: "rail", is_tunnel: true },
+      { kind_detail: "rail", service: "siding" },
+      { kind: "highway", kind_detail: "motorway" },
+    ]) {
+      expect(rule.filter!(15, railway(props))).toBe(false);
+    }
+  });
+
+  it("draws the railways in a light color in dark theme", () => {
+    const [rule] = railwayRules(basemapPaintRules("dark"));
+
+    expect((rule.symbolizer as LineSymbolizer).color.get(15)).toBe("#d4d4d4");
+  });
 });
 
 const IGN: RailOverlay = {
@@ -146,12 +182,14 @@ describe("createMap", () => {
     expect(element.classList.contains("vector-tiles")).toBe(true);
     expect(rasterLayers()).toBe(0);
     expect(vectorLayers()).toMatchObject([
-      { url: config.vectorTiles.url, flavor: "light", lang: "fr", maxDataZoom: 15, attribution: expect.stringMatching(/^Protomaps · /) },
+      { url: config.vectorTiles.url, backgroundColor: "#cccccc", maxDataZoom: 15, attribution: expect.stringMatching(/^Protomaps · /) },
     ]);
+    // labels in the language of the host
+    expect(labelRules).toHaveBeenLastCalledWith(expect.objectContaining({ background: "#cccccc" }), "fr");
     expect(map.getPane("rails")).toBeDefined();
 
     setTheme("dark");
-    expect(vectorLayers()).toMatchObject([{ flavor: "dark" }]);
+    expect(vectorLayers()).toMatchObject([{ backgroundColor: "#34373d" }]);
     expect(element.classList.contains("dark-tiles")).toBe(true);
     setTheme("dark");
     expect(vectorLayers()).toHaveLength(1);

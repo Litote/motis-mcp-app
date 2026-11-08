@@ -59,9 +59,9 @@ variable "vector_tile_url" {
 }
 
 variable "rail_overlay" {
-  description = "Railways drawn over the maps (MOTIS_RAIL_OVERLAY), comma-separated: ign (France), openrailwaymap (the world, elsewhere than France with ign). Empty: none."
+  description = "Railways drawn over the raster maps (MOTIS_RAIL_OVERLAY), comma-separated: ign (France), openrailwaymap (the world, elsewhere than France with ign). Empty: none (the vector tiles draw the railways)."
   type        = string
-  default     = "ign,openrailwaymap"
+  default     = ""
 }
 
 variable "view_domains" {

@@ -141,6 +141,9 @@ flavor) and the language of the host:
   free for non-commercial use, with a key whose allowed origins (CORS) are the ones of the views (see below);
 - or your own deployment of a [Protomaps daily build](https://docs.protomaps.com/basemaps/downloads) (PMTiles).
 
+The vector maps draw the main railways in the open as a plain line (black in light theme, light grey in dark theme),
+without the subway, the tramways, the tunnels and the service tracks, from zoom 12 (no railway below in the tiles).
+
 `MOTIS_RAIL_OVERLAY` draws the railways over the maps (transparent raster tiles, comma-separated list):
 
 | Value            | Source                                                                                              | Coverage                     |
