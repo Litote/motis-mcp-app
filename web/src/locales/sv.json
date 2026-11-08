@@ -5,6 +5,8 @@
   "login.button": "Logga in med OpenRouter",
   "login.keyPlaceholder": "eller klistra in en OpenRouter-nyckel (sk-or-…)",
   "login.useKey": "Använd nyckel",
+  "legal.privacy": "Integritet",
+  "legal.terms": "Användarvillkor",
   "loading": "Laddar…",
   "welcome.title": "Utforska kollektivtrafiken",
   "welcome.text": "Tidtabeller, resor, kartor och delad mobilitet från Transitous (MOTIS).",
