@@ -50,6 +50,12 @@ variable "tile_attribution" {
   default     = ""
 }
 
+variable "rail_overlay" {
+  description = "Railways drawn over the maps (MOTIS_RAIL_OVERLAY), comma-separated: ign (France), openrailwaymap (the world, elsewhere than France with ign). Empty: none."
+  type        = string
+  default     = "ign,openrailwaymap"
+}
+
 variable "view_domains" {
   description = "Dedicated origin of the views (_meta.ui.domain, format defined by each host) on the endpoint /mcp/<host> of a host: chatgpt, claude (default: computed from the endpoint URL), mistral, cherry. E.g. to allowlist it at the tile provider."
   type        = map(string)

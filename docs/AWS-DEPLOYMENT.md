@@ -86,7 +86,9 @@ native-image agent: run `make trace` after changing the tools or upgrading the d
 `lambda/src/main/resources/META-INF/native-image`.
 
 The endpoint has no authentication: bound the load on MOTIS and the cost with `reserved_concurrency` and the
-[kill switch](#budget-and-kill-switch), and configure a tile provider (`tile_url`) for a public use.
+[kill switch](#budget-and-kill-switch), and configure a tile provider (`tile_url`) for a public use. The railway overlay
+(`rail_overlay`, IGN in France and OpenRailwayMap elsewhere by default) is described in the
+[MCP server reference](MCP-SERVER.md#usage).
 
 ## Web chat
 
