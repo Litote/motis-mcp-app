@@ -5,6 +5,8 @@
   "login.button": "Kirjaudu OpenRouterilla",
   "login.keyPlaceholder": "tai liitä OpenRouter-avain (sk-or-…)",
   "login.useKey": "Käytä avainta",
+  "legal.privacy": "Tietosuoja",
+  "legal.terms": "Käyttöehdot",
   "loading": "Ladataan…",
   "welcome.title": "Tutustu joukkoliikenteeseen",
   "welcome.text": "Aikataulut, reitit, kartat ja jaettu liikkuminen Transitousista (MOTIS).",

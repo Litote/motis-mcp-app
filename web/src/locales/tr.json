@@ -5,6 +5,8 @@
   "login.button": "OpenRouter ile giriş yap",
   "login.keyPlaceholder": "veya bir OpenRouter anahtarı yapıştırın (sk-or-…)",
   "login.useKey": "Anahtarı kullan",
+  "legal.privacy": "Gizlilik",
+  "legal.terms": "Kullanım koşulları",
   "loading": "Yükleniyor…",
   "welcome.title": "Toplu taşımayı keşfedin",
   "welcome.text": "Transitous (MOTIS) verileriyle tarifeler, yolculuklar, haritalar ve paylaşımlı mobilite.",

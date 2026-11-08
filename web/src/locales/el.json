@@ -5,6 +5,8 @@
   "login.button": "Σύνδεση με OpenRouter",
   "login.keyPlaceholder": "ή επικολλήστε ένα κλειδί OpenRouter (sk-or-…)",
   "login.useKey": "Χρήση κλειδιού",
+  "legal.privacy": "Απόρρητο",
+  "legal.terms": "Όροι χρήσης",
   "loading": "Φόρτωση…",
   "welcome.title": "Εξερευνήστε τις δημόσιες συγκοινωνίες",
   "welcome.text": "Δρομολόγια, διαδρομές, χάρτες και κοινόχρηστη κινητικότητα από το Transitous (MOTIS).",

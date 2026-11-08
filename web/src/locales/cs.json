@@ -5,6 +5,8 @@
   "login.button": "Přihlásit se přes OpenRouter",
   "login.keyPlaceholder": "nebo vložte klíč OpenRouter (sk-or-…)",
   "login.useKey": "Použít klíč",
+  "legal.privacy": "Ochrana soukromí",
+  "legal.terms": "Podmínky použití",
   "loading": "Načítání…",
   "welcome.title": "Prozkoumejte veřejnou dopravu",
   "welcome.text": "Jízdní řády, spojení, mapy a sdílená mobilita z Transitous (MOTIS).",

@@ -5,6 +5,8 @@
   "login.button": "Logg inn med OpenRouter",
   "login.keyPlaceholder": "eller lim inn en OpenRouter-nøkkel (sk-or-…)",
   "login.useKey": "Bruk nøkkel",
+  "legal.privacy": "Personvern",
+  "legal.terms": "Vilkår for bruk",
   "loading": "Laster inn…",
   "welcome.title": "Utforsk kollektivtransporten",
   "welcome.text": "Rutetider, reiser, kart og delt mobilitet fra Transitous (MOTIS).",

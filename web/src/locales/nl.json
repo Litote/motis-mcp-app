@@ -5,6 +5,8 @@
   "login.button": "Inloggen met OpenRouter",
   "login.keyPlaceholder": "of plak een OpenRouter-sleutel (sk-or-…)",
   "login.useKey": "Sleutel gebruiken",
+  "legal.privacy": "Privacy",
+  "legal.terms": "Gebruiksvoorwaarden",
   "loading": "Laden…",
   "welcome.title": "Verken het openbaar vervoer",
   "welcome.text": "Dienstregelingen, reizen, kaarten en deelmobiliteit van Transitous (MOTIS).",
