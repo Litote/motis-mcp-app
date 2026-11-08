@@ -22,6 +22,7 @@ import {
   getSelectedModel,
   listModels,
   recommendedPaidModels,
+  freeFallbackModels,
   setSelectedModel,
   type FreeQuota,
   type Model,
@@ -184,13 +185,7 @@ export default function Chat({ apiKey }: Readonly<{ apiKey: string }>) {
         key: getKey,
         model: () => settingsRef.model,
         // free models fall back on other free models when their provider is rate limited
-        fallbackModels: () =>
-          settingsRef.model.endsWith(":free")
-            ? settingsRef.models
-                .filter((m) => m.free && m.id !== settingsRef.model && m.id !== "openrouter/free")
-                .slice(0, 2)
-                .map((m) => m.id)
-            : [],
+        fallbackModels: () => freeFallbackModels(settingsRef.model, settingsRef.models),
         onRunEnd: refreshQuota,
       }),
     [refreshQuota],

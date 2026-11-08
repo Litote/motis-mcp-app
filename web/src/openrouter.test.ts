@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { applyDelta, recommendedPaidModels, sseData, type ChatDelta } from "./openrouter";
+import { applyDelta, DEFAULT_MODEL, freeFallbackModels, recommendedPaidModels, sseData, type ChatDelta } from "./openrouter";
 
 function stream(chunks: string[]): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder();
@@ -67,5 +67,22 @@ describe("recommendedPaidModels", () => {
       "openai/gpt-6.3",
       "openai/gpt-6.4",
     ]);
+  });
+});
+
+describe("freeFallbackModels", () => {
+  const free = (id: string) => ({ id, name: id, free: true, created: 1 });
+  const ULTRA = "nvidia/nemotron-3-ultra-550b-a55b:free";
+
+  it("gives the reliable free models still listed, not the selected one", () => {
+    const models = [free("a/small:free"), free(DEFAULT_MODEL), free(ULTRA)];
+    expect(freeFallbackModels(DEFAULT_MODEL, models)).toEqual([ULTRA]);
+    expect(freeFallbackModels("a/small:free", models)).toEqual([DEFAULT_MODEL, ULTRA]);
+    // no more free, or not listed
+    expect(freeFallbackModels("a/small:free", [free("a/small:free"), { ...free(ULTRA), free: false }])).toEqual([]);
+  });
+
+  it("gives none for a paid model", () => {
+    expect(freeFallbackModels("openai/gpt-5", [free(DEFAULT_MODEL)])).toEqual([]);
   });
 });

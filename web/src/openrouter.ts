@@ -9,8 +9,24 @@ const KEY_STORAGE = "openrouter-key";
 const VERIFIER_STORAGE = "openrouter-pkce-verifier";
 const MODEL_STORAGE = "openrouter-model";
 
-/** Free model selected by default: reliable tool calling in our tests (5/5 tools and arguments right). */
-export const DEFAULT_MODEL = "nvidia/nemotron-3-super-120b-a12b:free";
+/**
+ * Free model selected by default: reliable tool calling in the evaluation (eval/README.md), and the fastest of them
+ * (November 2026).
+ */
+export const DEFAULT_MODEL = "nvidia/nemotron-3.5-super-vl:free";
+
+/**
+ * Free models tried after the selected free one (rate limited provider…), in this order: those reliable in the
+ * evaluation only, not any free model (some are small, or for code).
+ */
+const FREE_FALLBACK_MODELS = [DEFAULT_MODEL, "nvidia/nemotron-3-ultra-550b-a55b:free"];
+
+/** Fallbacks of the free model [selected]: the [FREE_FALLBACK_MODELS] still free in [models], none for a paid model. */
+export function freeFallbackModels(selected: string, models: readonly Model[]): string[] {
+  if (!selected.endsWith(":free")) return [];
+  const free = new Set(models.filter((m) => m.free).map((m) => m.id));
+  return FREE_FALLBACK_MODELS.filter((id) => id !== selected && free.has(id));
+}
 
 // ─── Key ──────────────────────────────────────────────────────────────────────
 

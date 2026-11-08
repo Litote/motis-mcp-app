@@ -64,7 +64,8 @@ vi.mock("./agent", () => ({
 const { default: Chat } = await import("./Chat");
 
 const MODELS = [
-  { id: "nvidia/nemotron-3-super-120b-a12b:free", name: "Nemotron", free: true, created: 1 },
+  { id: "nvidia/nemotron-3.5-super-vl:free", name: "Nemotron", free: true, created: 1 },
+  { id: "nvidia/nemotron-3-ultra-550b-a55b:free", name: "Nemotron Ultra", free: true, created: 1 },
   { id: "meta/llama:free", name: "Llama", free: true, created: 1 },
   { id: "openrouter/free", name: "Router", free: true, created: 1 },
   { id: "openai/gpt-5", name: "GPT-5", free: false, created: 2_000_000_000 },
@@ -104,25 +105,31 @@ describe("Chat", () => {
 
     expect(await screen.findByText("47/50 free requests left")).toBeDefined();
     const picker = screen.getByLabelText("Model") as HTMLSelectElement;
-    await waitFor(() => expect(picker.options.length).toBe(4));
-    expect([...picker.options].map((o) => o.textContent)).toEqual(["Nemotron (recommended)", "Llama", "Router", "GPT-5"]);
+    await waitFor(() => expect(picker.options.length).toBe(5));
+    expect([...picker.options].map((o) => o.textContent)).toEqual(["Nemotron (recommended)", "Nemotron Ultra", "Llama", "Router", "GPT-5"]);
     expect(screen.getByText("Next departures at Lyon Part-Dieu")).toBeDefined();
-    // free models fall back on other free models
-    expect(mocks.agentSettings[0].fallbackModels()).toEqual(["meta/llama:free"]);
+    // free models fall back on the free models reliable with the tools
+    expect(mocks.agentSettings[0].fallbackModels()).toEqual(["nvidia/nemotron-3-ultra-550b-a55b:free"]);
   });
 
   it("selects a model, all models included", async () => {
     render(<Chat apiKey="sk-or-v1-key" />);
     const picker = screen.getByLabelText("Model") as HTMLSelectElement;
-    await waitFor(() => expect(picker.options.length).toBe(4));
+    await waitFor(() => expect(picker.options.length).toBe(5));
 
     fireEvent.click(screen.getByLabelText(/All models/));
-    expect(picker.options.length).toBe(5);
+    expect(picker.options.length).toBe(6);
     fireEvent.change(picker, { target: { value: "openai/gpt-5" } });
 
     expect(localStorage.getItem("openrouter-model")).toBe("openai/gpt-5");
     expect(mocks.agentSettings[0].model()).toBe("openai/gpt-5");
     expect(mocks.agentSettings[0].fallbackModels()).toEqual([]);
+    // another free model falls back on the default one first
+    fireEvent.change(picker, { target: { value: "meta/llama:free" } });
+    expect(mocks.agentSettings[0].fallbackModels()).toEqual([
+      "nvidia/nemotron-3.5-super-vl:free",
+      "nvidia/nemotron-3-ultra-550b-a55b:free",
+    ]);
   });
 
   it("keeps a selected model missing from the list", async () => {
@@ -130,7 +137,7 @@ describe("Chat", () => {
     render(<Chat apiKey="sk-or-v1-key" />);
     const picker = screen.getByLabelText("Model") as HTMLSelectElement;
 
-    await waitFor(() => expect(picker.options.length).toBe(5));
+    await waitFor(() => expect(picker.options.length).toBe(6));
     expect(picker.options[0].textContent).toBe("gone/model");
   });
 
