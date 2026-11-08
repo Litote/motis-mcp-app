@@ -1,6 +1,15 @@
 import L from "leaflet";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { setLocale } from "./i18n";
 import { createMap, railLayer, type RailOverlay } from "./map";
+
+// vector tiles: an empty grid layer keeping the options of protomaps-leaflet (no tile download nor drawing)
+vi.mock("protomaps-leaflet", async () => {
+  const { default: Leaflet } = await import("leaflet");
+  return {
+    leafletLayer: (options: Record<string, unknown>) => Object.assign(Leaflet.gridLayer(), { protomaps: options }),
+  };
+});
 
 const IGN: RailOverlay = {
   url: "https://data.geopf.fr/wmts?TILEMATRIX={z}&TILEROW={y}&TILECOL={x}",
@@ -106,5 +115,46 @@ describe("createMap", () => {
       expect(urls).toEqual(["https://tile.openstreetmap.org/5/2074/1409.png"]);
       expect(map.getPane("rails")).toBeUndefined();
     }
+  });
+
+  it("draws the vector tiles in the theme and the language of the host, instead of the raster tiles", () => {
+    const config = {
+      tiles: { url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png", attribution: "OSM" },
+      vectorTiles: { url: "https://api.protomaps.com/tiles/v4/{z}/{x}/{y}.mvt?key=abc", attribution: "Protomaps" },
+      railOverlays: [IGN],
+    };
+    document.head.innerHTML = `<script type="application/json" id="motis-map">${JSON.stringify(config)}</script>`;
+    setLocale("fr-FR");
+    const element = mapElement();
+
+    const { map, setTheme } = createMap(element);
+    const vectorLayers = () => {
+      const layers: Array<Record<string, unknown>> = [];
+      map.eachLayer((layer) => {
+        if ("protomaps" in layer) layers.push(layer.protomaps as Record<string, unknown>);
+      });
+      return layers;
+    };
+    const rasterLayers = () => {
+      let count = 0;
+      map.eachLayer((layer) => {
+        if (layer instanceof L.TileLayer && layer.options.pane === "tilePane") count++;
+      });
+      return count;
+    };
+
+    expect(element.classList.contains("vector-tiles")).toBe(true);
+    expect(rasterLayers()).toBe(0);
+    expect(vectorLayers()).toMatchObject([
+      { url: config.vectorTiles.url, flavor: "light", lang: "fr", maxDataZoom: 15, attribution: expect.stringMatching(/^Protomaps · /) },
+    ]);
+    expect(map.getPane("rails")).toBeDefined();
+
+    setTheme("dark");
+    expect(vectorLayers()).toMatchObject([{ flavor: "dark" }]);
+    expect(element.classList.contains("dark-tiles")).toBe(true);
+    setTheme("dark");
+    expect(vectorLayers()).toHaveLength(1);
+    setLocale(undefined);
   });
 });

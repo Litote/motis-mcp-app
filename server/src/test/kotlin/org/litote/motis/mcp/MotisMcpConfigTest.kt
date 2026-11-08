@@ -71,6 +71,27 @@ class MotisMcpConfigTest {
     }
 
     @Test
+    fun `vector tiles are optional`() {
+        val contact = "MOTIS_APP_CONTACT" to "you@example.org"
+        assertNull(MotisMcpConfig.fromEnv(mapOf(contact, "MOTIS_VECTOR_TILE_URL" to " ")).tiles.vectorUrl)
+        val tiles =
+            MotisMcpConfig
+                .fromEnv(
+                    mapOf(
+                        contact,
+                        "MOTIS_VECTOR_TILE_URL" to "https://tiles.example.org/planet/{z}/{x}/{y}.mvt",
+                        "MOTIS_VECTOR_TILE_ATTRIBUTION" to "Example",
+                    ),
+                ).tiles
+        assertEquals("https://tiles.example.org/planet/{z}/{x}/{y}.mvt", tiles.vectorUrl)
+        assertEquals("Example", tiles.vectorAttribution)
+        assertEquals(
+            MapTiles.PROTOMAPS_ATTRIBUTION,
+            MotisMcpConfig.fromEnv(mapOf(contact, "MOTIS_VECTOR_TILE_URL" to "https://tiles.example.org/{z}/{x}/{y}.mvt")).tiles.vectorAttribution,
+        )
+    }
+
+    @Test
     fun `allowed hosts are a comma-separated list`() {
         val contact = "MOTIS_APP_CONTACT" to "you@example.org"
         assertNull(MotisMcpConfig.fromEnv(mapOf(contact)).allowedHosts)

@@ -63,6 +63,21 @@ class AppResourcesTest {
     }
 
     @Test
+    fun `the vector tiles replace the raster ones, in the configuration and the CSP`() {
+        val tiles =
+            MapTiles(
+                vectorUrl = "https://api.protomaps.com/tiles/v4/{z}/{x}/{y}.mvt?key=abc",
+                railOverlays = listOf(RailOverlay.IGN),
+            )
+
+        val vector = mapConfig(tiles).getValue("vectorTiles").jsonObject
+        assertEquals("https://api.protomaps.com/tiles/v4/{z}/{x}/{y}.mvt?key=abc", vector.getValue("url").jsonPrimitive.content)
+        assertEquals(MapTiles.PROTOMAPS_ATTRIBUTION, vector.getValue("attribution").jsonPrimitive.content)
+        assertEquals(listOf("https://api.protomaps.com", "https://data.geopf.fr"), tiles.origins)
+        assertNull(mapConfig(MapTiles())["vectorTiles"])
+    }
+
+    @Test
     fun `the origins of the tiles are deduplicated, subdomains as a wildcard`() {
         val tiles = MapTiles(url = "https://{s}.tiles.example.org/{z}/{x}/{y}.png")
         assertEquals(listOf("https://*.tiles.example.org"), tiles.origins)
