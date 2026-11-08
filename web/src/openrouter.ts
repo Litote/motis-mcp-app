@@ -229,6 +229,8 @@ export interface ChatDelta {
   text: string;
   /** Tool calls received so far (arguments possibly incomplete while streaming). */
   toolCalls: ChatToolCall[];
+  /** Model that answers (a fallback one maybe), once known. */
+  model?: string;
 }
 
 /** A chat completion request. */
@@ -262,6 +264,8 @@ export async function streamChat(
       ...(fallbackModels.length ? { models: [model, ...fallbackModels] } : {}),
       messages,
       ...(tools.length ? { tools } : {}),
+      // only the providers supporting every parameter (the tool calls): some others ignore them
+      provider: { require_parameters: true },
       stream: true,
     }),
   });
@@ -276,6 +280,7 @@ export async function streamChat(
     if (chunk.error) {
       throw new OpenRouterError(chunk.error.code ?? 500, errorMessage(chunk.error.code ?? 500, chunk.error.message ?? ""));
     }
+    if (typeof chunk.model === "string" && chunk.model) state.model = chunk.model;
     applyDelta(state, chunk.choices?.[0]?.delta);
     onDelta(state);
   }

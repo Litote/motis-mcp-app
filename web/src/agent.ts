@@ -179,6 +179,12 @@ export function createAgent(settings: AgentSettings): ChatModelAdapter {
       const chat: ChatMessage[] = [{ role: "system", content: systemPrompt(mcp.instructions) }, ...toChatMessages(messages)];
       // Parts of the answer: completed steps, then the step being streamed
       const done: ThreadAssistantMessagePart[] = [];
+      // models that answered (fallback ones included), shown with the message
+      const models: string[] = [];
+      const metadata = () => ({ custom: { models: [...models] } });
+      const addModel = (model: string | undefined) => {
+        if (model && !models.includes(model)) models.push(model);
+      };
       try {
         for (let step = 0; step < MAX_STEPS; step++) {
           let streamed: ThreadAssistantMessagePart[] = [];
@@ -202,6 +208,7 @@ export function createAgent(settings: AgentSettings): ChatModelAdapter {
             ? withoutToolCalls([{ ...chat[0], content: `${chat[0].content}\n\n${LAST_STEP_INSTRUCTION}` }, ...chat.slice(1)])
             : chat;
           const onDelta = (delta: ChatDelta) => {
+            addModel(delta.model);
             updates.push(parts(delta.text, last ? [] : delta.toolCalls));
             wake?.();
           };
@@ -225,26 +232,27 @@ export function createAgent(settings: AgentSettings): ChatModelAdapter {
               continue;
             }
             streamed = updates.splice(0).at(-1)!;
-            yield { content: [...done, ...streamed] };
+            yield { content: [...done, ...streamed], metadata: metadata() };
           }
           const result = await completion;
+          addModel(result.model);
           const calls = result.toolCalls.filter((call) => call.function.name);
           if (!calls.length) {
             done.push(...parts(result.text, []));
-            yield { content: done, status: { type: "complete", reason: "stop" } };
+            yield { content: done, status: { type: "complete", reason: "stop" }, metadata: metadata() };
             return;
           }
           if (last) {
             // tool calls asked for anyway (in a provider specific format…)
             done.push(...parts(result.text, []), { type: "text", text: `\n\n_${t("agent.tooManySteps")}_` });
-            yield { content: done, status: { type: "incomplete", reason: "other" } };
+            yield { content: done, status: { type: "incomplete", reason: "other" }, metadata: metadata() };
             return;
           }
           // Executes the tool calls, then gives their results back to the model
           const toolCalls = calls.map((call, i) => ({ ...call, id: call.id || `call-${step}-${i}` }));
           chat.push({ role: "assistant", content: result.text || null, tool_calls: toolCalls });
           const running = parts(result.text, toolCalls);
-          yield { content: [...done, ...running] };
+          yield { content: [...done, ...running], metadata: metadata() };
           const results = await Promise.all( // NOSONAR each step needs the tool results of the previous one
             toolCalls.map((call) => callTool(mcp, call.function.name, { ...parseArguments(call.function.arguments) }, abortSignal)),
           );
@@ -258,7 +266,7 @@ export function createAgent(settings: AgentSettings): ChatModelAdapter {
               return { ...part, result: results[i], isError: results[i]?.isError ?? false };
             }),
           );
-          yield { content: done };
+          yield { content: done, metadata: metadata() };
           // stopped by the user during the tool calls: no model call with their (cancelled) results
           abortSignal.throwIfAborted();
         }

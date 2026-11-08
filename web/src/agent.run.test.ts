@@ -85,9 +85,13 @@ describe("createAgent", () => {
     mcp.callTool.mockResolvedValue({ content: [{ type: "text", text: "12:04 TER" }] });
     openrouter.streamChat
       .mockImplementationOnce(
-        answer({ text: "Checking.", toolCalls: [{ id: "", type: "function", function: { name: "departures", arguments: '{"stop":"Lyon"}' } }] }),
+        answer({
+          text: "Checking.",
+          toolCalls: [{ id: "", type: "function", function: { name: "departures", arguments: '{"stop":"Lyon"}' } }],
+          model: "model",
+        }),
       )
-      .mockImplementationOnce(answer({ text: "Next train at 12:04.", toolCalls: [] }));
+      .mockImplementationOnce(answer({ text: "Next train at 12:04.", toolCalls: [], model: "fallback" }));
     const onRunEnd = vi.fn();
 
     const results = await run(settings(onRunEnd));
@@ -95,6 +99,8 @@ describe("createAgent", () => {
     expect(mcp.callTool).toHaveBeenCalledWith(server, "departures", { stop: "Lyon" }, expect.any(AbortSignal));
     const last = results.at(-1)!;
     expect(last.status).toEqual({ type: "complete", reason: "stop" });
+    // the models that answered, each once
+    expect(last.metadata).toEqual({ custom: { models: ["model", "fallback"] } });
     expect(last.content).toEqual([
       { type: "text", text: "Checking." },
       expect.objectContaining({ type: "tool-call", toolCallId: "call-0-0", toolName: "departures", isError: false }),

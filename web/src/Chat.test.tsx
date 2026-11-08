@@ -174,6 +174,21 @@ describe("Chat", () => {
     expect(screen.queryByRole("status", { name: "Thinking…" })).toBeNull();
   });
 
+  it("shows the models that answered", async () => {
+    mocks.run = async function* () {
+      yield {
+        content: [{ type: "text", text: "Done" }],
+        status: { type: "complete", reason: "stop" },
+        metadata: { custom: { models: ["a/first:free", "b/fallback:free"] } },
+      } as ChatModelRunResult;
+    };
+    render(<Chat apiKey="sk-or-v1-key" />);
+
+    fireEvent.click(screen.getByText("Next departures at Lyon Part-Dieu"));
+
+    expect(await screen.findByText("a/first:free → b/fallback:free")).toBeDefined();
+  });
+
   it("logs out", async () => {
     mocks.getFreeQuota.mockRejectedValue(new Error("offline"));
     mocks.listModels.mockRejectedValue(new Error("offline"));
