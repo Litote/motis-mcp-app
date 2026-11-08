@@ -149,7 +149,7 @@ const MAIN_RAILWAYS = new Set(["rail", "light_rail", "narrow_gauge"]);
 
 function mainRailway(feature: Feature): boolean {
   const { kind, kind_detail: detail, is_tunnel: tunnel, service } = feature.props;
-  return kind === "rail" && MAIN_RAILWAYS.has(String(detail)) && !tunnel && !service;
+  return kind === "rail" && typeof detail === "string" && MAIN_RAILWAYS.has(detail) && !tunnel && !service;
 }
 
 /** Railway rule of the Protomaps flavor: all the railways in faint dashes. */
