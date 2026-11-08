@@ -29,7 +29,7 @@ internal suspend fun Args.area(gateway: MotisGateway): Pair<String, BoundingBox>
     }
     val place = string("place") ?: throw MotisToolException("Invalid argument: 'place' or the four bounds are required")
     val radius = (double("radiusKm") ?: DEFAULT_RADIUS_KM).coerceIn(0.1, MAX_RADIUS_KM)
-    val resolved = gateway.resolvePlace(place, language = stringList("language"))
+    val resolved = gateway.resolvePlace(place, "place", language = stringList("language"))
     return "${resolved.name} (${(radius * 10).roundToInt() / 10.0} km)" to BoundingBox.around(resolved.lat, resolved.lon, radius)
 }
 
@@ -127,7 +127,7 @@ fun Server.addAreaTools(gateway: MotisGateway) {
             string("language", "Preferred language of the origin name, as ISO 639-1 code (e.g. fr, de).")
         },
     ) { args ->
-        val origin = gateway.resolvePlace(args.requireString("place"), language = args.stringList("language"))
+        val origin = gateway.resolvePlace(args.requireString("place"), "place", language = args.stringList("language"))
         val maxTravelTime = args.int("maxTravelTimeMinutes") ?: 30
         val reachable =
             gateway.oneToAll(

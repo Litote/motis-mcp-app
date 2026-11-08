@@ -16,6 +16,8 @@ import org.litote.motis.mcp.dto.StopCallDto
 import org.litote.motis.mcp.dto.TripResult
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
@@ -914,10 +916,10 @@ class MotisToolsTest {
             assertEquals(true, result.isError)
             assertEquals(
                 """
-                "Saint-Michel" is ambiguous, candidates:
-                - Saint Michel — Bordeaux id="bordeaux" (44.834,-0.563)
-                - Saint Michel — Bourges id="bourges" (47.105,2.424)
-                Retry with one of these stop ids or coordinates, or a more precise name (e.g. with the city).
+                "Saint-Michel" ('stop') is ambiguous, candidates:
+                - Saint Michel — Bordeaux (44.834,-0.563): stopId="bordeaux"
+                - Saint Michel — Bourges (47.105,2.424): stopId="bourges"
+                Call this tool again with the argument of the intended candidate (no other tool is needed), or ask the user which one they mean when the conversation does not tell.
                 """.trimIndent(),
                 result.text(),
             )
@@ -938,7 +940,50 @@ class MotisToolsTest {
             val result = client.callTool("departures", mapOf("stop" to "Gare"))
 
             assertEquals(true, result.isError)
-            assertTrue(result.text().contains("- Gare id=\"lyon\" (45.76,4.86)\n- Gare id=\"paris\" (48.84,2.37)\n"), result.text())
+            assertTrue(result.text().contains("- Gare (45.76,4.86): stopId=\"lyon\"\n- Gare (48.84,2.37): stopId=\"paris\"\n"), result.text())
+        }
+    }
+
+    /** Geocoding of `Versailles`: [matches] as `name lat,lon` places of equal score, the plan otherwise. */
+    private fun versaillesMotis(vararg matches: Pair<String, String>) =
+        MockMotis { request ->
+            when (request.url.encodedPath) {
+                "/api/v1/geocode" ->
+                    respondJson(
+                        matches.joinToString(",", "[", "]") { (area, coordinates) ->
+                            val (lat, lon) = coordinates.split(",")
+                            """{"type":"PLACE","name":"Versailles","id":"$area","lat":$lat,"lon":$lon,"score":-10.0,""" +
+                                """"tokens":[],"areas":[{"name":"$area","adminLevel":8,"matched":false,"default":true}]}"""
+                        },
+                    )
+                "/api/v6/plan" -> respondJson(fixture("plan"))
+                else -> error("unexpected ${request.url}")
+            }
+        }
+
+    @Test
+    fun `plan_journey ignores the homonyms far from the other end of the journey`() {
+        // the closest one wins even when not the best match of the geocoder
+        val motis = versaillesMotis("Kentucky" to "38.05,-84.73", "Yvelines" to "48.80,2.13", "Missouri" to "38.43,-92.84")
+        withMcpClient(motis) { client ->
+            val result = client.callTool("plan_journey", mapOf("from" to "48.844,2.374", "to" to "Versailles"))
+
+            assertNotEquals(true, result.isError, result.text())
+            assertEquals("48.8,2.13", motis.request("/api/v6/plan").url.parameters["toPlace"])
+        }
+    }
+
+    @Test
+    fun `plan_journey lists the homonyms close to the other end of the journey`() {
+        val motis = versaillesMotis("Yvelines" to "48.80,2.13", "Eure" to "49.10,1.15", "Kentucky" to "38.05,-84.73")
+        withMcpClient(motis) { client ->
+            val result = client.callTool("plan_journey", mapOf("from" to "48.844,2.374", "to" to "Versailles"))
+
+            assertEquals(true, result.isError)
+            assertTrue(result.text().startsWith("\"Versailles\" ('to') is ambiguous, candidates:\n"), result.text())
+            assertTrue(result.text().contains("- Versailles — Yvelines (48.8,2.13): to=\"48.8,2.13\"\n"), result.text())
+            assertTrue(result.text().contains("- Versailles — Eure (49.1,1.15): to=\"49.1,1.15\"\n"), result.text())
+            assertFalse(result.text().contains("Kentucky"), result.text())
         }
     }
 

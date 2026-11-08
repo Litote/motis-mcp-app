@@ -113,7 +113,8 @@ private class DeparturesRequest(private val gateway: MotisGateway, private val a
         }
     }
 
-    private suspend fun resolveStop(): ResolvedPlace? = args.string("stop")?.let { gateway.resolvePlace(it, stopsOnly = true, language = language) }
+    private suspend fun resolveStop(): ResolvedPlace? =
+        args.string("stop")?.let { gateway.resolvePlace(it, "stop", stopArgument = "stopId", stopsOnly = true, language = language) }
 
     private suspend fun departures(stop: ResolvedPlace): DeparturesResult {
         // a time without offset is in the time zone of the stop

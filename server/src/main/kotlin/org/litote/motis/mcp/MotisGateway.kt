@@ -176,12 +176,16 @@ class MotisGateway(
         }
 
     /**
-     * Resolves [input]: `lat,lon` coordinates are used as is, other text is geocoded
-     * (stops only when [stopsOnly] is true, favoring places near the `lat,lon` [near] position) and the best match
-     * is returned. Fails listing the candidates when another place, far from the best match, matches almost as well.
+     * Resolves [input], the value of the tool argument [argument] ([stopArgument]: the argument taking a stop id
+     * instead, to retry with a candidate stop): `lat,lon` coordinates are used as is, other text is
+     * geocoded (stops only when [stopsOnly] is true, favoring places near the `lat,lon` [near] position) and the best
+     * match is returned. Fails listing the candidates when another place, far from the best match, matches almost as
+     * well; with [near], the candidates much farther from it than the closest one are not considered.
      */
     suspend fun resolvePlace(
         input: String,
+        argument: String,
+        stopArgument: String = argument,
         stopsOnly: Boolean = false,
         near: String? = null,
         language: List<String>? = null,
@@ -196,21 +200,23 @@ class MotisGateway(
                 language = language,
             )
         // not a name: a stop id maybe (the geocoder does not search ids)
-        val match = matches.firstOrNull() ?: return stop(input) ?: throw MotisToolException("No place found for \"$input\"")
-        val rivals = matches.drop(1).filter { it.isRivalOf(match) }
-        if (rivals.isNotEmpty()) {
+        val best = matches.firstOrNull() ?: return stop(input) ?: throw MotisToolException("No place found for \"$input\"")
+        val candidates = (listOf(best) + matches.drop(1).filter { it.isRivalOf(best) }).closeTo(near)
+        if (candidates.size > 1) {
             throw MotisToolException(
-                (listOf(match) + rivals).joinToString(
+                candidates.joinToString(
                     "\n",
-                    "\"$input\" is ambiguous, candidates:\n",
-                    "\nRetry with one of these stop ids or coordinates, or a more precise name (e.g. with the city).",
+                    "\"$input\" ('$argument') is ambiguous, candidates:\n",
+                    "\nCall this tool again with the argument of the intended candidate (no other tool is needed), or " +
+                        "ask the user which one they mean when the conversation does not tell.",
                 ) { m ->
-                    val stopId = if (m.type == LocationType.STOP) " id=\"${m.id}\"" else ""
                     val dto = m.toDto()
-                    "- ${dto.name}${dto.area?.let { " — $it" } ?: ""}$stopId (${m.lat},${m.lon})"
+                    val retry = if (m.type == LocationType.STOP) "$stopArgument=\"${m.id}\"" else "$argument=\"${m.lat},${m.lon}\""
+                    "- ${dto.name}${dto.area?.let { " — $it" } ?: ""} (${m.lat},${m.lon}): $retry"
                 },
             )
         }
+        val match = candidates.single()
         val isStop = match.type == LocationType.STOP
         val dto = match.toDto()
         return ResolvedPlace(
@@ -455,6 +461,22 @@ class MotisGateway(
 
         private fun Match.isRivalOf(best: Match): Boolean =
             abs(score - best.score) < AMBIGUOUS_SCORE_GAP && distanceKm(lat, lon, best.lat, best.lon) > DISTINCT_PLACES_KM
+
+        /**
+         * Distance from a candidate to the [near] position beyond which, compared to the closest candidate, it is not
+         * the intended place (e.g. Versailles, Kentucky for a journey from Paris): [NEAR_FACTOR] times the distance of
+         * the closest candidate, at least [NEAR_MIN_KM].
+         */
+        private const val NEAR_FACTOR = 5.0
+        private const val NEAR_MIN_KM = 50.0
+
+        /** The candidates not much farther from [near] than the closest one, all of them without [near]. */
+        private fun List<Match>.closeTo(near: String?): List<Match> {
+            val (lat, lon) = near?.let { parseCoordinates(it) } ?: return this
+            val distances = associateWith { distanceKm(it.lat, it.lon, lat, lon) }
+            val limit = NEAR_FACTOR * maxOf(distances.values.min(), NEAR_MIN_KM)
+            return filter { distances.getValue(it) <= limit }
+        }
 
         /**
          * Geocoding categories of the cities, towns and villages (Transitous: `place_6`, `place_capital_8`, `town`,
