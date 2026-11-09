@@ -57,6 +57,9 @@ const DEFAULT_CONFIG: MapConfig = {
   railOverlays: [],
 };
 
+/** Last zoom of the maps. */
+const MAX_ZOOM = 19;
+
 /** Last zoom of the Protomaps basemap tiles: zoomed in beyond. */
 const VECTOR_MAX_DATA_ZOOM = 15;
 
@@ -143,7 +146,7 @@ export function railLayer(overlays: RailOverlay[], vector = false): L.TileLayer 
   const options: L.TileLayerOptions = {
     pane: RAIL_PANE,
     attribution: [france, world].flatMap((o) => (o ? [o.attribution] : [])).join(" · "),
-    maxZoom: 19,
+    maxZoom: MAX_ZOOM,
     opacity: 0.85,
   };
   if (france && world) {
@@ -221,7 +224,7 @@ export function vectorLayer(source: TileSource, theme: "light" | "dark"): L.Grid
     labelRules: labelRules(flavor, hostLocale()?.split("-")[0] ?? "en"),
     backgroundColor: flavor.background,
     maxDataZoom: VECTOR_MAX_DATA_ZOOM,
-    maxZoom: 19,
+    maxZoom: MAX_ZOOM,
     attribution: `${source.attribution} · ${DATA_ATTRIBUTION}`,
   }) as unknown as L.GridLayer;
 }
@@ -231,13 +234,15 @@ export function vectorLayer(source: TileSource, theme: "light" | "dark"): L.Grid
  * filter; the French rail overlay is inverted in both cases.
  */
 export function createMap(element: HTMLElement): ThemedMap {
-  const map = L.map(element, { zoomControl: true, preferCanvas: true }).setView([46.5, 2.5], 5);
+  // zoom range of the map itself: else Leaflet takes it from the layers, and the rail overlay (from zoom 6, or below
+  // zoom 12 over the vector maps) would clamp the map with an animated zoom, during which fitBounds is ignored
+  const map = L.map(element, { zoomControl: true, preferCanvas: true, minZoom: 0, maxZoom: MAX_ZOOM }).setView([46.5, 2.5], 5);
   const { tiles, vectorTiles, railOverlays } = mapConfig();
   let vector: { layer: L.GridLayer; theme: "light" | "dark" } | null = null;
   if (vectorTiles) {
     element.classList.add("vector-tiles");
   } else {
-    L.tileLayer(tiles.url, { attribution: `${tiles.attribution} · ${DATA_ATTRIBUTION}`, maxZoom: 19 }).addTo(map);
+    L.tileLayer(tiles.url, { attribution: `${tiles.attribution} · ${DATA_ATTRIBUTION}`, maxZoom: MAX_ZOOM }).addTo(map);
   }
   const rails = railLayer(railOverlays, vectorTiles != null);
   if (rails) {
