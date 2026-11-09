@@ -133,7 +133,9 @@ shortly before the departure. `MOTIS_SNCF_REALTIME=false` disables it.
 The shapes of the transit legs (from the `shapes.txt` of the feeds, or matched by MOTIS on the OpenStreetMap rails) are
 sometimes wrong: e.g. the RER A drawn around Paris through Saint-Denis. A part of a shape between two stops that passes
 more than 500 m from them, or is longer than 3 times their distance plus 1.5 km, is replaced by a straight line between
-them. `MOTIS_REPAIR_SHAPES=false` keeps the shapes of MOTIS as they are.
+them. Each repaired part is logged as a warning, once a day per line and stops, e.g.
+`Shape repaired: A (…_IDFM:C01742) Châtelet - Les Halles -> Auber: 14.2 km drawn for 1.7 km, trip …`: a burst of these
+warnings signals a regression of a feed. `MOTIS_REPAIR_SHAPES=false` keeps the shapes of MOTIS as they are.
 
 The default OpenStreetMap tiles are subject to the [tile usage policy](https://operations.osmfoundation.org/policies/tiles/):
 for an intensive use, configure another tile provider. The tile origins are declared in the CSP of the views.

@@ -19,8 +19,11 @@ class LegGeometryTest {
     fun `replaces a detour between two stops by a straight line`() {
         // second part goes 10 km north before reaching the last stop
         val points = listOf(48.80 to 2.30, 48.81 to 2.32, 48.90 to 2.33, 48.82 to 2.34)
-        val repaired = assertNotNull(LegGeometry.repair(points, listOf(48.80 to 2.30, 48.81 to 2.32, 48.82 to 2.34)))
-        assertEquals(listOf(48.80 to 2.30, 48.81 to 2.32, 48.82 to 2.34), repaired)
+        val repair = assertNotNull(LegGeometry.repair(points, listOf(48.80 to 2.30, 48.81 to 2.32, 48.82 to 2.34)))
+        assertEquals(listOf(48.80 to 2.30, 48.81 to 2.32, 48.82 to 2.34), repair.points)
+        val part = repair.parts.single()
+        assertEquals(1 to 2, part.from to part.to)
+        assertTrue(part.drawnKm > 18 && part.directKm < 2 && !part.offStop, "$part")
     }
 
     @Test
@@ -46,9 +49,13 @@ class LegGeometryTest {
             )
         assertTrue(length(points) > 20)
 
-        val repaired = assertNotNull(LegGeometry.repair(points, stops))
+        val repair = assertNotNull(LegGeometry.repair(points, stops))
 
-        assertTrue(length(repaired) < 14, "${length(repaired)} km")
-        assertTrue(repaired.all { it.first < 48.895 }, "still goes north of La Défense")
+        assertTrue(length(repair.points) < 14, "${length(repair.points)} km")
+        assertTrue(repair.points.all { it.first < 48.895 }, "still goes north of La Défense")
+        // Châtelet -> Auber, through Gare du Nord and La Plaine
+        val part = repair.parts.single()
+        assertEquals(1 to 2, part.from to part.to)
+        assertTrue(part.drawnKm > 14 && part.directKm < 2, "$part")
     }
 }

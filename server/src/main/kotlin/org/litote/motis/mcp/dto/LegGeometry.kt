@@ -4,32 +4,54 @@ import org.litote.motis.client.client.RoutingClient
 import org.litote.motis.client.model.Itinerary
 import org.litote.motis.client.model.Leg
 
-/** Journeys with the shapes of their transit legs repaired, see [LegGeometry]. */
-fun RoutingClient.PlanResponseBody.withRepairedShapes(): RoutingClient.PlanResponseBody =
-    copy(itineraries = itineraries.map { it.withRepairedShapes() })
+/**
+ * Part of the shape of a transit leg replaced by a straight line (see [LegGeometry]): the part from the stop [from] to
+ * the stop [to] of the trip [tripId] of the line [line] ([routeId]) was [drawnKm] long for [directKm] between the stops,
+ * [offStop] when it did not pass near one of them.
+ */
+data class ShapeRepair(
+    val line: String?,
+    val routeId: String?,
+    val tripId: String,
+    val from: String,
+    val to: String,
+    val drawnKm: Double,
+    val directKm: Double,
+    val offStop: Boolean,
+)
 
-/** Itinerary with the shapes of its transit legs repaired, see [LegGeometry]. */
-fun Itinerary.withRepairedShapes(): Itinerary = copy(legs = legs.map { it.withRepairedShape() })
+/** Journeys with the shapes of their transit legs repaired, see [LegGeometry]: [report] receives each repaired part. */
+fun RoutingClient.PlanResponseBody.withRepairedShapes(report: (ShapeRepair) -> Unit = {}): RoutingClient.PlanResponseBody =
+    copy(itineraries = itineraries.map { it.withRepairedShapes(report) })
 
-/** Transit leg with its shape repaired, see [LegGeometry]: the other legs (walk, bike...) are kept as is. */
-fun Leg.withRepairedShape(): Leg {
-    if (tripId == null) return this
+/** Itinerary with the shapes of its transit legs repaired, see [LegGeometry]: [report] receives each repaired part. */
+fun Itinerary.withRepairedShapes(report: (ShapeRepair) -> Unit = {}): Itinerary = copy(legs = legs.map { it.withRepairedShape(report) })
+
+/**
+ * Transit leg with its shape repaired, see [LegGeometry]: the other legs (walk, bike...) are kept as is. [report]
+ * receives each repaired part.
+ */
+fun Leg.withRepairedShape(report: (ShapeRepair) -> Unit = {}): Leg {
+    val trip = tripId ?: return this
     val precision = legGeometry.precision.toInt()
-    val stops = (listOf(from) + intermediateStops.orEmpty() + to).map { it.lat to it.lon }
-    val repaired = LegGeometry.repair(PolylineCodec.decode(legGeometry.points, precision), stops) ?: return this
+    val stops = listOf(from) + intermediateStops.orEmpty() + to
+    val repair = LegGeometry.repair(PolylineCodec.decode(legGeometry.points, precision), stops.map { it.lat to it.lon }) ?: return this
+    val line = listOf(displayName, routeShortName).firstOrNull { !it.isNullOrBlank() }
+    repair.parts.forEach {
+        report(ShapeRepair(line, routeId, trip, stops[it.from].name, stops[it.to].name, it.drawnKm, it.directKm, it.offStop))
+    }
     return copy(
-        legGeometry = legGeometry.copy(points = PolylineCodec.encode(repaired, precision), length = repaired.size.toLong()),
+        legGeometry = legGeometry.copy(points = PolylineCodec.encode(repair.points, precision), length = repair.points.size.toLong()),
     )
 }
 
 /**
- * Repairs the shape of a transit leg computed by MOTIS: without shapes in the GTFS, MOTIS matches the trips on the
- * OpenStreetMap rails, and the matching sometimes misses a track (e.g. the central tunnel of the RER A in Paris) and
- * takes a long detour (Gare de Lyon -> La Défense drawn via Saint-Denis, 25 km for 12 km).
+ * Repairs the shape of a transit leg: the shapes of the feeds (`shapes.txt`) or matched by MOTIS on the OpenStreetMap
+ * rails are sometimes wrong, e.g. the RER A from Gare de Lyon to La Défense drawn via Saint-Denis (25 km for 12 km) in
+ * the IDFM feed of November 2026.
  *
- * The geometry is cut at the [stops] of the leg (its ends and intermediate stops, in order): a part between two stops
+ * The geometry is cut at the stops of the leg (its ends and intermediate stops, in order): a part between two stops
  * is replaced by a straight line between them when it does not pass near them or is much longer than their distance.
- * Returns null when the geometry is kept as is.
  */
 internal object LegGeometry {
     /** A stop farther than this from the geometry is not served by it. */
@@ -42,7 +64,14 @@ internal object LegGeometry {
     private const val DETOUR_RATIO = 3.0
     private const val DETOUR_SLACK_KM = 1.5
 
-    fun repair(points: List<Pair<Double, Double>>, stops: List<Pair<Double, Double>>): List<Pair<Double, Double>>? {
+    /** Part replaced between the stops of indexes [from] and [to], see [ShapeRepair]. */
+    data class Part(val from: Int, val to: Int, val drawnKm: Double, val directKm: Double, val offStop: Boolean)
+
+    /** Repaired geometry: its [points], and the [parts] replaced. */
+    class Repair(val points: List<Pair<Double, Double>>, val parts: List<Part>)
+
+    /** Repair of the geometry of the [points] serving the [stops], null when the geometry is kept as is. */
+    fun repair(points: List<Pair<Double, Double>>, stops: List<Pair<Double, Double>>): Repair? {
         if (points.size < 2 || stops.size < 2) return null
         // index of the closest point of each stop, in the order of the stops
         val indexes = IntArray(stops.size)
@@ -60,20 +89,22 @@ internal object LegGeometry {
             far[s] = bestDistance > MAX_STOP_DISTANCE_KM
             start = indexes[s]
         }
-        var repaired = false
+        val parts = mutableListOf<Part>()
         val result = mutableListOf<Pair<Double, Double>>()
         for (s in 0 until stops.lastIndex) {
             val part = points.subList(indexes[s], indexes[s + 1] + 1)
             val direct = distance(stops[s], stops[s + 1])
-            val bad = far[s] || far[s + 1] || length(part) > direct * DETOUR_RATIO + DETOUR_SLACK_KM
+            val drawn = length(part)
+            val offStop = far[s] || far[s + 1]
+            val bad = offStop || drawn > direct * DETOUR_RATIO + DETOUR_SLACK_KM
+            if (bad) parts += Part(s, s + 1, drawn, direct, offStop)
             val segment = if (bad) listOf(stops[s], stops[s + 1]) else part
-            repaired = repaired || bad
             // the first point of a part is the last one of the previous part
             result += if (result.isEmpty()) segment else segment.drop(1)
         }
-        if (!repaired) return null
+        if (parts.isEmpty()) return null
         // keeps the walk from/to the platform drawn before the first and after the last stop
-        return points.subList(0, indexes.first()) + result + points.subList(indexes.last() + 1, points.size)
+        return Repair(points.subList(0, indexes.first()) + result + points.subList(indexes.last() + 1, points.size), parts)
     }
 
     private fun distance(a: Pair<Double, Double>, b: Pair<Double, Double>) = distanceKm(a.first, a.second, b.first, b.second)
