@@ -134,7 +134,8 @@ The shapes of the transit legs (from the `shapes.txt` of the feeds, or matched b
 sometimes wrong: e.g. the RER A drawn around Paris through Saint-Denis. A part of a shape between two stops that passes
 more than 500 m from them, or is longer than 3 times their distance plus 1.5 km, is replaced by a straight line between
 them. Each repaired part is logged as a warning, once a day per line and stops, e.g.
-`Shape repaired: A (…_IDFM:C01742) Châtelet - Les Halles -> Auber: 14.2 km drawn for 1.7 km, trip …`: a burst of these
+`Shape repaired: A (…_IDFM:C01742) Châtelet - Les Halles -> Auber: 14.2 km drawn for 1.7 km` (without the trip, which
+would tell the time of a journey searched): a burst of these
 warnings signals a regression of a feed. `MOTIS_REPAIR_SHAPES=false` keeps the shapes of MOTIS as they are.
 
 The default OpenStreetMap tiles are subject to the [tile usage policy](https://operations.osmfoundation.org/policies/tiles/):

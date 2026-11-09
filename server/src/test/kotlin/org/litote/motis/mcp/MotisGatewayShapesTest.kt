@@ -36,8 +36,7 @@ class MotisGatewayShapesTest {
         val log = logs.single()
         assertEquals(
             "Shape repaired: A (fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:C01742) " +
-                "Châtelet - Les Halles -> Auber: 14.2 km drawn for 1.7 km, " +
-                "trip 20261109_19:21_fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:TN:SNCF:1e082ea3-ac84-45a8-9632-f365bbce22e3",
+                "Châtelet - Les Halles -> Auber: 14.2 km drawn for 1.7 km",
             log,
         )
     }

@@ -6,13 +6,12 @@ import org.litote.motis.client.model.Leg
 
 /**
  * Part of the shape of a transit leg replaced by a straight line (see [LegGeometry]): the part from the stop [from] to
- * the stop [to] of the trip [tripId] of the line [line] ([routeId]) was [drawnKm] long for [directKm] between the stops,
- * [offStop] when it did not pass near one of them.
+ * the stop [to] of the line [line] ([routeId]) was [drawnKm] long for [directKm] between the stops, [offStop] when it did
+ * not pass near one of them. The trip is left out: logged, it would tell the time of a journey searched.
  */
 data class ShapeRepair(
     val line: String?,
     val routeId: String?,
-    val tripId: String,
     val from: String,
     val to: String,
     val drawnKm: Double,
@@ -32,13 +31,13 @@ fun Itinerary.withRepairedShapes(report: (ShapeRepair) -> Unit = {}): Itinerary 
  * receives each repaired part.
  */
 fun Leg.withRepairedShape(report: (ShapeRepair) -> Unit = {}): Leg {
-    val trip = tripId ?: return this
+    if (tripId == null) return this
     val precision = legGeometry.precision.toInt()
     val stops = listOf(from) + intermediateStops.orEmpty() + to
     val repair = LegGeometry.repair(PolylineCodec.decode(legGeometry.points, precision), stops.map { it.lat to it.lon }) ?: return this
     val line = listOf(displayName, routeShortName).firstOrNull { !it.isNullOrBlank() }
     repair.parts.forEach {
-        report(ShapeRepair(line, routeId, trip, stops[it.from].name, stops[it.to].name, it.drawnKm, it.directKm, it.offStop))
+        report(ShapeRepair(line, routeId, stops[it.from].name, stops[it.to].name, it.drawnKm, it.directKm, it.offStop))
     }
     return copy(
         legGeometry = legGeometry.copy(points = PolylineCodec.encode(repair.points, precision), length = repair.points.size.toLong()),

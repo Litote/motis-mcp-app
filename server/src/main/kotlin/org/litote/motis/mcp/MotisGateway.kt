@@ -384,7 +384,7 @@ class MotisGateway(
                 logShapeRepair(
                     "Shape repaired: ${r.line} (${r.routeId}) ${r.from} -> ${r.to}: " +
                         "%.1f km drawn for %.1f km".format(Locale.ROOT, r.drawnKm, r.directKm) +
-                        (if (r.offStop) ", off a stop" else "") + ", trip ${r.tripId}",
+                        (if (r.offStop) ", off a stop" else ""),
                 )
             }
         }
