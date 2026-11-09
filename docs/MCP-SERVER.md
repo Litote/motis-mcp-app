@@ -119,6 +119,7 @@ MOTIS_APP_CONTACT=you@example.org server/build/install/server/bin/server --http 
 | `MOTIS_VIEW_DOMAIN_<HOST>` | default sandbox origin of the host             | dedicated origin of the views (see below)    |
 | `MCP_ALLOWED_HOSTS`      | localhost only                                   | host names accepted in HTTP mode             |
 | `MOTIS_SNCF_REALTIME`    | `true`                                           | SNCF real time overlay (see below)           |
+| `MOTIS_REPAIR_SHAPES`    | `true`                                           | repair of the detours of the shapes of the journeys (see below) |
 | `MOTIS_CITY_STATIONS_TABLE` | in memory                                     | DynamoDB table of the stations of the journeys between cities (partition key `pair`, string; TTL attribute `expiresAt`), in `AWS_REGION` (or at `AWS_ENDPOINT_URL_DYNAMODB`, e.g. DynamoDB Local), with the default AWS credentials |
 
 When MOTIS has no real time for the SNCF trains (feed `fr-horaires-sncf` of Transitous, or regional feeds of TER such
@@ -128,6 +129,11 @@ from the SIRI Lite estimated timetable of the SNCF, matched by train number and 
 stop times). The feeds are downloaded at most once a minute (GTFS-RT, ~1 MB) and every 3 minutes (SIRI, ~16 MB), only
 when a departures board has such trains. They cover the trains of the next hour or so, and the tracks are only known
 shortly before the departure. `MOTIS_SNCF_REALTIME=false` disables it.
+
+The shapes of the transit legs (from the `shapes.txt` of the feeds, or matched by MOTIS on the OpenStreetMap rails) are
+sometimes wrong: e.g. the RER A drawn around Paris through Saint-Denis. A part of a shape between two stops that passes
+more than 500 m from them, or is longer than 3 times their distance plus 1.5 km, is replaced by a straight line between
+them. `MOTIS_REPAIR_SHAPES=false` keeps the shapes of MOTIS as they are.
 
 The default OpenStreetMap tiles are subject to the [tile usage policy](https://operations.osmfoundation.org/policies/tiles/):
 for an intensive use, configure another tile provider. The tile origins are declared in the CSP of the views.

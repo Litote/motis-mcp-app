@@ -20,6 +20,7 @@ import org.litote.motis.mcp.dto.StationLineDto
 import org.litote.motis.mcp.dto.displayName
 import org.litote.motis.mcp.dto.distanceKm
 import org.litote.motis.mcp.dto.toDto
+import org.litote.motis.mcp.dto.withRepairedShapes
 import org.litote.motis.mcp.realtime.RealtimeOverlay
 import kotlin.math.abs
 import kotlin.math.cos
@@ -103,11 +104,15 @@ data class ResolvedPlace(
  * [TtlCache]: one gateway is shared by the requests of a process or of a Lambda instance.
  *
  * The [overlays] add the real time of other sources to the stop times of the feeds without real time in MOTIS.
+ *
+ * With [repairShapes], the detours of the shapes of the transit legs of the journeys and trips are replaced by straight
+ * lines between their stops, see [org.litote.motis.mcp.dto.LegGeometry].
  */
 class MotisGateway(
     configuration: ClientConfiguration,
     timeSource: TimeSource = TimeSource.Monotonic,
     private val overlays: List<RealtimeOverlay> = emptyList(),
+    private val repairShapes: Boolean = true,
 ) {
     private val client = Client(configuration)
     private val geocodeClient = GeocodeClient(configuration)
@@ -361,7 +366,7 @@ class MotisGateway(
 
     suspend fun trip(tripId: String, language: List<String>? = null): Itinerary =
         when (val r = timetableClient.trip(tripId = tripId, language = language)) {
-            is TimetableClient.TripResponseSuccess -> r.body
+            is TimetableClient.TripResponseSuccess -> if (repairShapes) r.body.withRepairedShapes() else r.body
             is TimetableClient.TripResponseFailure -> fail(r.body.error)
             is TimetableClient.TripResponseUnknownFailure -> failStatus(r.statusCode)
         }
@@ -398,7 +403,7 @@ class MotisGateway(
                     language = query.language,
                 )
         ) {
-            is RoutingClient.PlanResponseSuccess -> r.body
+            is RoutingClient.PlanResponseSuccess -> if (repairShapes) r.body.withRepairedShapes() else r.body
             is RoutingClient.PlanResponseFailure -> fail(r.body.error)
             is RoutingClient.PlanResponseUnknownFailure -> failStatus(r.statusCode)
         }

@@ -299,16 +299,7 @@ fun Leg.toDto(): LegDto =
         agency = agencyName,
         tripId = tripId,
         intermediateStops = intermediateStops?.map { it.toDto() },
-        polyline = legGeometry.toDto().let { polyline ->
-            val stops = (listOf(from) + intermediateStops.orEmpty() + to).map { it.lat to it.lon }
-            if (tripId == null) {
-                polyline
-            } else {
-                LegGeometry.repair(PolylineCodec.decode(polyline.points, polyline.precision), stops)
-                    ?.let { Polyline(PolylineCodec.encode(it, polyline.precision), polyline.precision) }
-                    ?: polyline
-            }
-        },
+        polyline = legGeometry.toDto(),
     )
 
 fun Itinerary.toDto(): ItineraryDto =

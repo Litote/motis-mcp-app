@@ -1,0 +1,1615 @@
+{
+ "requestParameters": {},
+ "debugOutput": {
+  "algorithm": 1,
+  "direct": 3,
+  "execute_time": 23,
+  "fares": 0,
+  "fastest_direct": 0,
+  "fp_update_prevented_by_lower_bound": 0,
+  "gpu_supported": 1,
+  "gpu_used": 1,
+  "interval_extensions": 0,
+  "lb_time": 0,
+  "n_dest_offsets": 76,
+  "n_earliest_arrival_updated_by_footpath": 0,
+  "n_earliest_arrival_updated_by_route": 0,
+  "n_earliest_trip_calls": 0,
+  "n_events_skipped_by_early_termination": 0,
+  "n_execute_bwd": 5,
+  "n_execute_fwd": 4,
+  "n_footpaths_visited": 0,
+  "n_routes_visited": 0,
+  "n_routing_time": 0,
+  "n_start_offsets": 114,
+  "n_td_dest_offsets": 0,
+  "n_td_start_offsets": 0,
+  "prepare": 35,
+  "prepare_backward_WALK": 13,
+  "prepare_forward_WALK": 22,
+  "route_update_prevented_by_lower_bound": 0,
+  "search_interval_reduction_by_early_termination": 0
+ },
+ "from": {
+  "name": "START",
+  "lat": 48.8443,
+  "lon": 2.3744,
+  "level": 0.0,
+  "vertexType": "NORMAL"
+ },
+ "to": {
+  "name": "END",
+  "lat": 48.8924,
+  "lon": 2.2378,
+  "level": 0.0,
+  "vertexType": "NORMAL"
+ },
+ "direct": [],
+ "itineraries": [
+  {
+   "duration": 1440,
+   "startTime": "2026-11-09T18:46:00Z",
+   "endTime": "2026-11-09T19:10:00Z",
+   "transfers": 0,
+   "id": "CpoBIaMBvAUSbEhAKa36XG3F/gJAMldmci1yZXNlYXUtdXJiYWluLWV0LWludGVydXJiYWluLWRpbGUtZGUtZnJhbmNlLW1vYmlsaXRlc19JREZNOm1vbm9tb2RhbFN0b3BQbGFjZTo0NzAxOTU5lCwnofRrSEBBbbAmBcwCA0BI6KnI1wZQnKvI1wZaBFdBTEtgAXEAAAAAAADwPwrwAgoBQRJ5MjAyNjExMDlfMTk6MjFfZnItcmVzZWF1LXVyYmFpbi1ldC1pbnRlcnVyYmFpbi1kaWxlLWRlLWZyYW5jZS1tb2JpbGl0ZXNfSURGTTpUTjpTTkNGOjFlMDgyZWEzLWFjODQtNDVhOC05NjMyLWYzNjViYmNlMjJlMxpXZnItcmVzZWF1LXVyYmFpbi1ldC1pbnRlcnVyYmFpbi1kaWxlLWRlLWZyYW5jZS1tb2JpbGl0ZXNfSURGTTptb25vbW9kYWxTdG9wUGxhY2U6NDcwMTk1IZQsJ6H0a0hAKW2wJgXMAgNAMkRmci1yZXNlYXUtdXJiYWluLWV0LWludGVydXJiYWluLWRpbGUtZGUtZnJhbmNlLW1vYmlsaXRlc19JREZNOjQ3MzkzNjn8NVmjHnJIQEGv3ME+8OcBQEicq8jXBlCoscjXBloNUkVHSU9OQUxfUkFJTGABaQAAAAAAAPA/cQAAAAAAAAjACocBGkRmci1yZXNlYXUtdXJiYWluLWV0LWludGVydXJiYWluLWRpbGUtZGUtZnJhbmNlLW1vYmlsaXRlc19JREZNOjQ3MzkzNiH8NVmjHnJIQCmv3ME+8OcBQDmneccpOnJIQEEQ6bevA+cBQEiYs8jXBlCItcjXBloEV0FMS2ABaQAAAAAAAAjA",
+   "legs": [
+    {
+     "mode": "WALK",
+     "from": {
+      "name": "START",
+      "lat": 48.8443,
+      "lon": 2.3744,
+      "level": 0.0,
+      "tz": "Europe/Paris",
+      "departure": "2026-11-09T18:46:00Z",
+      "scheduledDeparture": "2026-11-09T18:46:00Z",
+      "vertexType": "NORMAL"
+     },
+     "to": {
+      "name": "Gare de Lyon",
+      "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:monomodalStopPlace:470195",
+      "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:73626",
+      "importance": 0.005244110245257616,
+      "lat": 48.843402999999995,
+      "lon": 2.3763656999999996,
+      "level": 1.0,
+      "tz": "Europe/Paris",
+      "arrival": "2026-11-09T18:49:00Z",
+      "scheduledArrival": "2026-11-09T18:49:00Z",
+      "vertexType": "TRANSIT",
+      "modes": [
+       "REGIONAL_RAIL",
+       "SUBWAY",
+       "BUS"
+      ]
+     },
+     "duration": 180,
+     "startTime": "2026-11-09T18:46:00Z",
+     "endTime": "2026-11-09T18:49:00Z",
+     "scheduledStartTime": "2026-11-09T18:46:00Z",
+     "scheduledEndTime": "2026-11-09T18:49:00Z",
+     "realTime": false,
+     "scheduled": false,
+     "distance": 215.0,
+     "legGeometry": {
+      "points": "a`fd|Ako|oCbSkc@??\\}@??vBwE??dAuAd@aA??gFmH??u@eA??@{H??hFxE??fFiL??m@y@??hAoBtAyC??HsA??vCoG??LUX`@??lD}H???gAtEgK",
+      "precision": 6,
+      "length": 36
+     },
+     "steps": [
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 55.0,
+       "fromLevel": 0.0,
+       "toLevel": 0.0,
+       "toOsmNode": 10768798865,
+       "polyline": {
+        "points": "a`fd|Ako|oCbSkc@",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 3.0,
+       "fromLevel": 1.0,
+       "toLevel": 1.0,
+       "osmWay": 1157935333,
+       "fromOsmNode": 10768798865,
+       "toOsmNode": 1631589208,
+       "polyline": {
+        "points": "}ked|Aws}oC\\}@",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "STAIRS",
+       "distance": 10.0,
+       "fromLevel": 1.0,
+       "toLevel": 0.0,
+       "osmWay": 150234221,
+       "fromOsmNode": 1631589208,
+       "toOsmNode": 1631589206,
+       "polyline": {
+        "points": "_ked|Auu}oCvBwE",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 8.0,
+       "fromLevel": 0.0,
+       "toLevel": 0.0,
+       "osmWay": 1157948700,
+       "fromOsmNode": 1631589206,
+       "toOsmNode": 3671693260,
+       "polyline": {
+        "points": "gged|Am|}oCdAuAd@aA",
+        "precision": 6,
+        "length": 3
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 17.0,
+       "fromLevel": 0.0,
+       "toLevel": 0.0,
+       "osmWay": 362968771,
+       "fromOsmNode": 3671693260,
+       "toOsmNode": 3671693261,
+       "polyline": {
+        "points": "{ced|Aea~oCgFmH",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 4.0,
+       "fromLevel": 0.0,
+       "toLevel": 0.0,
+       "osmWay": 363395081,
+       "fromOsmNode": 3671693261,
+       "toOsmNode": 3675645726,
+       "polyline": {
+        "points": "cked|Asj~oCu@eA",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 12.0,
+       "fromLevel": 0.0,
+       "toLevel": 0.0,
+       "osmWay": 319735586,
+       "fromOsmNode": 3675645726,
+       "toOsmNode": 3609767914,
+       "polyline": {
+        "points": "yled|Ayl~oC@{H",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 15.0,
+       "fromLevel": 0.0,
+       "toLevel": 0.0,
+       "osmWay": 1157948699,
+       "fromOsmNode": 3609767914,
+       "toOsmNode": 10768914906,
+       "polyline": {
+        "points": "wled|Auv~oChFxE",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 20.0,
+       "fromLevel": 0.0,
+       "toLevel": 0.0,
+       "osmWay": 1157948694,
+       "fromOsmNode": 10768914906,
+       "toOsmNode": 10768914905,
+       "polyline": {
+        "points": "meed|A{o~oCfFiL",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 3.0,
+       "fromLevel": 0.0,
+       "toLevel": 0.0,
+       "osmWay": 1157948695,
+       "fromOsmNode": 10768914905,
+       "toOsmNode": 10768876598,
+       "polyline": {
+        "points": "e~dd|Ae}~oCm@y@",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 13.0,
+       "fromLevel": 0.0,
+       "toLevel": 0.0,
+       "osmWay": 1157948690,
+       "fromOsmNode": 10768876598,
+       "toOsmNode": 10768876595,
+       "polyline": {
+        "points": "s_ed|A___pChAoBtAyC",
+        "precision": 6,
+        "length": 3
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 3.0,
+       "fromLevel": 0.0,
+       "toLevel": 0.0,
+       "osmWay": 1157948689,
+       "fromOsmNode": 10768876595,
+       "toOsmNode": 3609767903,
+       "polyline": {
+        "points": "szdd|Aig_pCHsA",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "STAIRS",
+       "distance": 13.0,
+       "fromLevel": 0.0,
+       "toLevel": 1.0,
+       "osmWay": 362936604,
+       "fromOsmNode": 3609767903,
+       "toOsmNode": 3700702837,
+       "polyline": {
+        "points": "izdd|A}i_pCvCoG",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 3.0,
+       "fromLevel": 1.0,
+       "toLevel": 1.0,
+       "osmWay": 1157935339,
+       "fromOsmNode": 3700702837,
+       "toOsmNode": 10768798874,
+       "polyline": {
+        "points": "qudd|Amr_pCLUX`@",
+        "precision": 6,
+        "length": 3
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 15.0,
+       "fromLevel": 1.0,
+       "toLevel": 1.0,
+       "osmWay": 1157935351,
+       "fromOsmNode": 10768798874,
+       "toOsmNode": 10768798873,
+       "polyline": {
+        "points": "itdd|Aar_pClD}H",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 21.0,
+       "fromLevel": 1.0,
+       "toLevel": 1.0,
+       "fromOsmNode": 10768798873,
+       "polyline": {
+        "points": "{ndd|A_|_pC?gAtEgK",
+        "precision": 6,
+        "length": 3
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      }
+     ]
+    },
+    {
+     "mode": "REGIONAL_RAIL",
+     "from": {
+      "name": "Gare de Lyon",
+      "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:monomodalStopPlace:470195",
+      "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:73626",
+      "importance": 0.005244110245257616,
+      "lat": 48.843402999999995,
+      "lon": 2.3763656999999996,
+      "level": 1.0,
+      "tz": "Europe/Paris",
+      "departure": "2026-11-09T18:49:00Z",
+      "scheduledDeparture": "2026-11-09T18:49:00Z",
+      "vertexType": "TRANSIT",
+      "pickupType": "NORMAL",
+      "dropoffType": "NORMAL",
+      "cancelled": false,
+      "arrivalTimestampReason": "NO_RT_DATA",
+      "departureTimestampReason": "NO_RT_DATA",
+      "alerts": [
+       {
+        "communicationPeriod": [
+         {
+          "start": "2026-11-09T18:57:00Z",
+          "end": "1970-01-01T00:00:00Z"
+         }
+        ],
+        "impactPeriod": [
+         {
+          "start": "2026-11-09T18:57:00Z",
+          "end": "1970-01-01T00:00:00Z"
+         }
+        ],
+        "cause": "TECHNICAL_PROBLEM",
+        "effect": "ACCESSIBILITY_ISSUE",
+        "headerText": "1 ascenseur hors service — Gare de Lyon",
+        "descriptionText": "1 ascenseur sur 18 est actuellement hors service dans cette station."
+       }
+      ],
+      "modes": [
+       "REGIONAL_RAIL",
+       "SUBWAY",
+       "BUS"
+      ]
+     },
+     "to": {
+      "name": "La Défense",
+      "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:473936",
+      "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:71517",
+      "importance": 0.004718204494565725,
+      "lat": 48.89156,
+      "lon": 2.2382512,
+      "level": -3.0,
+      "tz": "Europe/Paris",
+      "arrival": "2026-11-09T19:06:00Z",
+      "scheduledArrival": "2026-11-09T19:02:00Z",
+      "track": "2",
+      "vertexType": "TRANSIT",
+      "pickupType": "NORMAL",
+      "dropoffType": "NORMAL",
+      "cancelled": false,
+      "arrivalTimestampReason": "PREDICTED",
+      "departureTimestampReason": "PREDICTED",
+      "alerts": [
+       {
+        "communicationPeriod": [
+         {
+          "start": "2026-11-09T18:57:00Z",
+          "end": "1970-01-01T00:00:00Z"
+         }
+        ],
+        "impactPeriod": [
+         {
+          "start": "2026-11-09T18:57:00Z",
+          "end": "1970-01-01T00:00:00Z"
+         }
+        ],
+        "cause": "TECHNICAL_PROBLEM",
+        "effect": "ACCESSIBILITY_ISSUE",
+        "headerText": "1 ascenseur hors service — La Défense",
+        "descriptionText": "1 ascenseur sur 8 est actuellement hors service dans cette station."
+       }
+      ],
+      "modes": [
+       "REGIONAL_RAIL",
+       "SUBWAY",
+       "TRAM",
+       "BUS"
+      ]
+     },
+     "duration": 1020,
+     "startTime": "2026-11-09T18:49:00Z",
+     "endTime": "2026-11-09T19:06:00Z",
+     "scheduledStartTime": "2026-11-09T18:49:00Z",
+     "scheduledEndTime": "2026-11-09T19:02:00Z",
+     "realTime": true,
+     "scheduled": true,
+     "interlineWithPreviousLeg": false,
+     "headsign": "UZEL",
+     "tripFrom": {
+      "name": "Boissy-Saint-Léger",
+      "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:monomodalStopPlace:43094",
+      "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:72881",
+      "importance": 0.000612673640716821,
+      "lat": 48.752266,
+      "lon": 2.5044982,
+      "level": 0.0,
+      "tz": "Europe/Paris",
+      "departure": "2026-11-09T18:21:00Z",
+      "scheduledDeparture": "2026-11-09T18:21:00Z",
+      "vertexType": "TRANSIT",
+      "pickupType": "NORMAL",
+      "dropoffType": "NOT_ALLOWED",
+      "cancelled": false,
+      "departureTimestampReason": "NO_RT_DATA",
+      "modes": [
+       "REGIONAL_RAIL",
+       "BUS"
+      ]
+     },
+     "tripTo": {
+      "name": "Cergy le Haut",
+      "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:472468",
+      "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:66834",
+      "importance": 0.0004753250104840845,
+      "lat": 49.048300000000005,
+      "lon": 2.0114615,
+      "level": -1.0,
+      "tz": "Europe/Paris",
+      "arrival": "2026-11-09T19:44:00Z",
+      "scheduledArrival": "2026-11-09T19:39:00Z",
+      "track": "4",
+      "vertexType": "TRANSIT",
+      "pickupType": "NOT_ALLOWED",
+      "dropoffType": "NORMAL",
+      "cancelled": false,
+      "arrivalTimestampReason": "PREDICTED",
+      "modes": [
+       "REGIONAL_RAIL",
+       "BUS"
+      ]
+     },
+     "routeId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:C01742",
+     "routeUrl": "",
+     "directionId": "0",
+     "routeColor": "eb2132",
+     "routeTextColor": "ffffff",
+     "routeType": 2,
+     "agencyName": "RER",
+     "agencyUrl": "https://www.iledefrance-mobilites.fr",
+     "agencyFareUrl": "https://app.idf-mobilites.fr/gtfs",
+     "agencyId": "IDFM:71",
+     "tripId": "20261109_19:21_fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:TN:SNCF:1e082ea3-ac84-45a8-9632-f365bbce22e3",
+     "routeShortName": "A",
+     "routeLongName": "",
+     "tripShortName": "UZEL65",
+     "displayName": "A",
+     "cancelled": false,
+     "source": "fr_reseau-urbain-et-interurbain-dile-de-france-mobilites.gtfs.zip/stop_times.txt:1810101:1810126",
+     "intermediateStops": [
+      {
+       "name": "Châtelet - Les Halles",
+       "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:monomodalStopPlace:45102",
+       "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:474151",
+       "importance": 0.003111757803708315,
+       "lat": 48.861743999999995,
+       "lon": 2.3469765,
+       "level": -5.0,
+       "tz": "Europe/Paris",
+       "arrival": "2026-11-09T18:51:00Z",
+       "departure": "2026-11-09T18:52:00Z",
+       "scheduledArrival": "2026-11-09T18:51:00Z",
+       "scheduledDeparture": "2026-11-09T18:52:00Z",
+       "vertexType": "TRANSIT",
+       "pickupType": "NORMAL",
+       "dropoffType": "NORMAL",
+       "cancelled": false,
+       "arrivalTimestampReason": "NO_RT_DATA",
+       "departureTimestampReason": "NO_RT_DATA",
+       "modes": [
+        "REGIONAL_RAIL"
+       ]
+      },
+      {
+       "name": "Auber",
+       "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:473924",
+       "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:478926",
+       "importance": 0.0013963786186650395,
+       "lat": 48.872276,
+       "lon": 2.329645899999999,
+       "level": -5.0,
+       "tz": "Europe/Paris",
+       "arrival": "2026-11-09T18:59:00Z",
+       "departure": "2026-11-09T19:00:00Z",
+       "scheduledArrival": "2026-11-09T18:54:00Z",
+       "scheduledDeparture": "2026-11-09T18:55:00Z",
+       "vertexType": "TRANSIT",
+       "pickupType": "NORMAL",
+       "dropoffType": "NORMAL",
+       "cancelled": false,
+       "arrivalTimestampReason": "PREDICTED",
+       "departureTimestampReason": "PREDICTED",
+       "modes": [
+        "REGIONAL_RAIL",
+        "BUS"
+       ]
+      },
+      {
+       "name": "Charles de Gaulle - Étoile",
+       "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:473923",
+       "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:71347",
+       "importance": 0.00531724700704217,
+       "lat": 48.874145999999996,
+       "lon": 2.2951688999999997,
+       "level": -5.0,
+       "tz": "Europe/Paris",
+       "arrival": "2026-11-09T19:02:00Z",
+       "departure": "2026-11-09T19:03:00Z",
+       "scheduledArrival": "2026-11-09T18:57:00Z",
+       "scheduledDeparture": "2026-11-09T18:58:00Z",
+       "vertexType": "TRANSIT",
+       "pickupType": "NORMAL",
+       "dropoffType": "NORMAL",
+       "cancelled": false,
+       "arrivalTimestampReason": "PREDICTED",
+       "departureTimestampReason": "PREDICTED",
+       "modes": [
+        "REGIONAL_RAIL",
+        "SUBWAY",
+        "BUS"
+       ]
+      }
+     ],
+     "legGeometry": {
+      "points": "ugdd|A{i`pCxl@zC|Xah@|Tuf@jBuFlDiMhM}j@wC~TwHl]oEbPqB`F}Sjd@aSri@{j@fnA{Or^egAz`C_IrN_P|\\ww@dmAs`AztAkz@diAgr@rgAo|C`hEyg@jx@a{@j`Bo[`q@kWrx@gUnw@wx@~}C_{@diEoZjsAoUrp@oPl\\_S`Z{VjZce@~b@{HjFka@zUkf@hSgYvF_}Avf@s_AhZw_Bne@ck@fJi{@tJk\\jC}[jAu\\o@oSwAi_@sEeWeFeS}F{ToIoVuL_cIwcF_TcPsRcSgOoTaPaZiuAwvCwXye@_\\ya@stAywAqR}T{LwK}SiN{FwC{KsEu_@eNwb@}NuOaEoNmCcOmB{Js@gJa@_[_@seBAoiAXceAtC_r@pCg{A~LoSlCoStDuPlE_XrIabEf|Ac`@hL{~Al_@af@bJmZzDoHn@_WjAsoAhBoYbAuKt@mO~A{hArO{e@fJehA`Wm`@dH_RzBo_C`R}mAhH}OtAuZrDi`@~GafAxU}LhBgOtA{Sv@gSUePoA_NoBkGuA_NcEaMsEwNsH_OuJ_RsOmEkEmJgK_OmScLaR}EaJc[_o@um@mtAvFhOnErMlKt\\hGvT|Jbb@hMbn@|EtSlD|JhHlOdEzGfIrJxCnC|FnEvGtDlEfBtIzB~N|AbGPrEOfIaAtEmA~HyCrLiGlQoKdIqG~HqH`ReWzFeH|O_ZtI_MzImKzI}HhLgHlJ_F~I}DjKuDbHaBzDk@bGUpH@hHh@b`@`HvNxA`Hb@tlAfC~g@GjVs@zUmBvIwA|^{HhH{@~MgAlJwAhe@_KbSyEnX}IrIkDzN{Jv]aZ~Q}T~NwU~G}Lbe@eaAz]ou@x[mp@hMiYhMyZhPcd@nFsRvCqLnDgTbCyTjCca@tA_\\dHaqCRqR_@{]mDm{AGcOFePvCaqAdCkm@|BcXbU}rB|@uJj@qM^sUUeQeAqPwCeXnG`_@xIlc@bLne@rK`_@pMx^vDlJth@fmAhQn_@rGnKvX`a@~]nc@~GvHbVpV|FtEjFdDrFnCtFxBxF`BxFjAbGr@bGZpM`B|FlA~HdCbLnFbLfGfYhQnj@|XvK`Gz]rUlKbGfS`KdOtGhWbKhg@fTvGbDjWvOzp@pe@nq@vj@`]|_@|[ff@nx@nrA~MbQ~KtLzLxJjcAjm@rYvRfaCzzAvRtOvIpI~h@je@rPzPzUzXnTx[vRl^~Pz`@zN`c@bM~d@rJtf@rH~g@`Fbi@rAjTxgAv|Tf@jVn@b^Gd]sIzvFoEfoHiCzjDoCfoCsFznHaAzm@cB`i@cM`iCmA|i@]va@Nfg@bSnxK~Arh@hRvpE`AvZf@`[Fv\\e@`_@yAva@m[niGeAz]k@j`@?vm@GfhDe@rf@yBjf@{Dte@mGrd@uIdc@{_Dj`OmL`l@ui@vxCoR``Ai}D~aRoNxk@}Pzi@uRrg@wTfe@qVvb@kQfWy{DlcFc`@dn@i_C|fE{QzWczBbiC_K|LoNhUaMxWeKzY_Ir[{Ff]{Dl^kB`_@g@p_@f@l_@jB~^rDl^bGf]~Ht[jnA~eEvB`KlBlKxAvKdA~Kp@dLXjLLjLElL]hLk@fL{@`LuAxKcBnKyBdKu_@teB|}@bbA",
+      "precision": 6,
+      "length": 358
+     },
+     "alerts": [
+      {
+       "communicationPeriod": [
+        {
+         "start": "2026-11-30T21:00:00Z",
+         "end": "2026-12-01T02:00:00Z"
+        },
+        {
+         "start": "2026-12-01T21:00:00Z",
+         "end": "2026-12-02T02:00:00Z"
+        },
+        {
+         "start": "2026-12-02T21:00:00Z",
+         "end": "2026-12-03T02:00:00Z"
+        },
+        {
+         "start": "2026-12-03T21:00:00Z",
+         "end": "2026-12-04T02:00:00Z"
+        },
+        {
+         "start": "2026-12-04T21:00:00Z",
+         "end": "2026-12-05T02:00:00Z"
+        },
+        {
+         "start": "2026-12-07T21:00:00Z",
+         "end": "2026-12-08T02:00:00Z"
+        },
+        {
+         "start": "2026-12-08T21:00:00Z",
+         "end": "2026-12-09T02:00:00Z"
+        },
+        {
+         "start": "2026-12-09T21:00:00Z",
+         "end": "2026-12-10T02:00:00Z"
+        },
+        {
+         "start": "2026-12-10T21:00:00Z",
+         "end": "2026-12-11T02:00:00Z"
+        },
+        {
+         "start": "2026-12-11T21:00:00Z",
+         "end": "2026-12-12T02:00:00Z"
+        }
+       ],
+       "impactPeriod": [
+        {
+         "start": "2026-11-30T21:00:00Z",
+         "end": "2026-12-01T02:00:00Z"
+        },
+        {
+         "start": "2026-12-01T21:00:00Z",
+         "end": "2026-12-02T02:00:00Z"
+        },
+        {
+         "start": "2026-12-02T21:00:00Z",
+         "end": "2026-12-03T02:00:00Z"
+        },
+        {
+         "start": "2026-12-03T21:00:00Z",
+         "end": "2026-12-04T02:00:00Z"
+        },
+        {
+         "start": "2026-12-04T21:00:00Z",
+         "end": "2026-12-05T02:00:00Z"
+        },
+        {
+         "start": "2026-12-07T21:00:00Z",
+         "end": "2026-12-08T02:00:00Z"
+        },
+        {
+         "start": "2026-12-08T21:00:00Z",
+         "end": "2026-12-09T02:00:00Z"
+        },
+        {
+         "start": "2026-12-09T21:00:00Z",
+         "end": "2026-12-10T02:00:00Z"
+        },
+        {
+         "start": "2026-12-10T21:00:00Z",
+         "end": "2026-12-11T02:00:00Z"
+        },
+        {
+         "start": "2026-12-11T21:00:00Z",
+         "end": "2026-12-12T02:00:00Z"
+        }
+       ],
+       "cause": "CONSTRUCTION",
+       "effect": "REDUCED_SERVICE",
+       "headerText": "RER A: Nanterre-Préfecture-Cergy le Haut/Poissy du 30/11 au 11/12",
+       "descriptionText": "<p>P&#233;riode : en soir&#233;e &#224; partir de 22h00.<br><br>Dates : du lundi 30 novembre au vendredi 11 d&#233;cembre.<br><br>Le trafic est interrompu entre Nanterre&#8211;Pr&#233;fecture et Cergy le Haut / Poissy.<br><br>Un service de bus de remplacement est mis en place &#224; Nanterre&#8211;Universit&#233;, avec desserte des gares interm&#233;diaires.<br><br>Pour rejoindre la gare de Nanterre&#8211;Universit&#233;, les voyageurs peuvent emprunter le RER A branche Saint-Germain en Laye. <br><br>Les horaires du calculateur d'itin&#233;raire tiennent compte des travaux.<br><br>Motif : travaux.</p>"
+      },
+      {
+       "communicationPeriod": [
+        {
+         "start": "2026-11-09T21:30:00Z",
+         "end": "2026-11-10T02:00:00Z"
+        },
+        {
+         "start": "2026-11-10T21:30:00Z",
+         "end": "2026-11-11T02:00:00Z"
+        },
+        {
+         "start": "2026-11-11T21:30:00Z",
+         "end": "2026-11-12T02:00:00Z"
+        },
+        {
+         "start": "2026-11-12T21:30:00Z",
+         "end": "2026-11-13T02:00:00Z"
+        },
+        {
+         "start": "2026-11-13T21:30:00Z",
+         "end": "2026-11-14T02:00:00Z"
+        }
+       ],
+       "impactPeriod": [
+        {
+         "start": "2026-11-09T21:30:00Z",
+         "end": "2026-11-10T02:00:00Z"
+        },
+        {
+         "start": "2026-11-10T21:30:00Z",
+         "end": "2026-11-11T02:00:00Z"
+        },
+        {
+         "start": "2026-11-11T21:30:00Z",
+         "end": "2026-11-12T02:00:00Z"
+        },
+        {
+         "start": "2026-11-12T21:30:00Z",
+         "end": "2026-11-13T02:00:00Z"
+        },
+        {
+         "start": "2026-11-13T21:30:00Z",
+         "end": "2026-11-14T02:00:00Z"
+        }
+       ],
+       "cause": "CONSTRUCTION",
+       "effect": "REDUCED_SERVICE",
+       "headerText": "RER A : Nanterre-Préfecture - Cergy le Haut/Poissy du 09 au 13/11",
+       "descriptionText": "<p>P&#233;riode : en soir&#233;e &#224; partir de 22h00.<br><br>Dates : du lundi 09 au vendredi 13 novembre.<br><br>Le trafic est interrompu entre Nanterre&#8211;Pr&#233;fecture et Cergy le Haut / Poissy.<br><br>Un service de bus de remplacement est mis en place &#224; Nanterre&#8211;Universit&#233;, avec desserte des gares interm&#233;diaires.</p><p>Pour rejoindre la gare de Nanterre&#8211;Universit&#233;, les voyageurs peuvent emprunter le RER A branche Saint-Germain en Laye.&nbsp;<br><br>Les horaires du calculateur d'itin&#233;raire tiennent compte des travaux.<br><br>Motif : travaux.</p>"
+      },
+      {
+       "communicationPeriod": [
+        {
+         "start": "2026-11-16T20:50:00Z",
+         "end": "2026-11-17T02:00:00Z"
+        },
+        {
+         "start": "2026-11-17T20:50:00Z",
+         "end": "2026-11-18T02:00:00Z"
+        },
+        {
+         "start": "2026-11-18T20:50:00Z",
+         "end": "2026-11-19T02:00:00Z"
+        },
+        {
+         "start": "2026-11-19T20:50:00Z",
+         "end": "2026-11-20T02:00:00Z"
+        },
+        {
+         "start": "2026-11-20T20:50:00Z",
+         "end": "2026-11-21T02:00:00Z"
+        },
+        {
+         "start": "2026-11-23T20:50:00Z",
+         "end": "2026-11-24T02:00:00Z"
+        },
+        {
+         "start": "2026-11-24T20:50:00Z",
+         "end": "2026-11-25T02:00:00Z"
+        },
+        {
+         "start": "2026-11-25T20:50:00Z",
+         "end": "2026-11-26T02:00:00Z"
+        },
+        {
+         "start": "2026-11-26T20:50:00Z",
+         "end": "2026-11-27T02:00:00Z"
+        },
+        {
+         "start": "2026-11-27T20:50:00Z",
+         "end": "2026-11-28T02:00:00Z"
+        }
+       ],
+       "impactPeriod": [
+        {
+         "start": "2026-11-16T20:50:00Z",
+         "end": "2026-11-17T02:00:00Z"
+        },
+        {
+         "start": "2026-11-17T20:50:00Z",
+         "end": "2026-11-18T02:00:00Z"
+        },
+        {
+         "start": "2026-11-18T20:50:00Z",
+         "end": "2026-11-19T02:00:00Z"
+        },
+        {
+         "start": "2026-11-19T20:50:00Z",
+         "end": "2026-11-20T02:00:00Z"
+        },
+        {
+         "start": "2026-11-20T20:50:00Z",
+         "end": "2026-11-21T02:00:00Z"
+        },
+        {
+         "start": "2026-11-23T20:50:00Z",
+         "end": "2026-11-24T02:00:00Z"
+        },
+        {
+         "start": "2026-11-24T20:50:00Z",
+         "end": "2026-11-25T02:00:00Z"
+        },
+        {
+         "start": "2026-11-25T20:50:00Z",
+         "end": "2026-11-26T02:00:00Z"
+        },
+        {
+         "start": "2026-11-26T20:50:00Z",
+         "end": "2026-11-27T02:00:00Z"
+        },
+        {
+         "start": "2026-11-27T20:50:00Z",
+         "end": "2026-11-28T02:00:00Z"
+        }
+       ],
+       "cause": "CONSTRUCTION",
+       "effect": "REDUCED_SERVICE",
+       "headerText": "RER A : Maisons-Laffitte - Cergy le Haut du 16 au 27/11",
+       "descriptionText": "<p>P&#233;riode : en semaine &#224; partir de 21h50.<br><br>Dates : du lundi 16 au vendredi 27 novembre.<br><br>Le trafic est interrompu entre Maisons-Laffitte et Cergy le Haut.<br><br>Un service de bus de remplacement est mis en place &#224; Sartrouville, avec desserte des gares interm&#233;diaires.</p><p>Les horaires du calculateur d'itin&#233;raire tiennent compte des travaux.<br><br>Motif : travaux.</p>"
+      },
+      {
+       "communicationPeriod": [
+        {
+         "start": "2026-11-09T16:47:00Z",
+         "end": "2026-11-09T20:00:00Z"
+        }
+       ],
+       "impactPeriod": [
+        {
+         "start": "2026-11-09T16:47:00Z",
+         "end": "2026-11-09T20:00:00Z"
+        }
+       ],
+       "cause": "TECHNICAL_PROBLEM",
+       "effect": "REDUCED_SERVICE",
+       "headerText": "RER A : trafic perturbé sur toute la ligne",
+       "descriptionText": "<p>Le trafic est perturb&#233; sur l'ensemble de la ligne.<br><br>Pour plus d'informations sur cette perturbation, consultez le <a href=\"https://twitter.com/RER_A\">fil X du RER A</a>.<br><br>Motif : cons&#233;quence du malaise d'un voyageur survenu plus t&#244;t &#224; bord d'un train en gare de Nation. </p>"
+      }
+     ],
+     "bikesAllowed": false,
+     "wheelchairAccessible": "ACCESSIBLE",
+     "reservation": "NONE",
+     "ticketUrls": {
+      "web": "https://app.idf-mobilites.fr/gtfs?service_date=%5B%2220261109%22%5D&ticketing_trip_id=%5B%22IDFM:TN:SNCF:1e082ea3-ac84-45a8-9632-f365bbce22e3%22%5D&from_ticketing_stop_time_id=%5B%2212%22%5D&to_ticketing_stop_time_id=%5B%2216%22%5D&boarding_time=%5B%222026-11-09T18:49:00%2B00:00%22%5D&arrival_time=%5B%222026-11-09T19:02:00%2B00:00%22%5D",
+      "android": "https://app.idf-mobilites.fr/gtfs?service_date=%5B%2220261109%22%5D&ticketing_trip_id=%5B%22IDFM:TN:SNCF:1e082ea3-ac84-45a8-9632-f365bbce22e3%22%5D&from_ticketing_stop_time_id=%5B%2212%22%5D&to_ticketing_stop_time_id=%5B%2216%22%5D&boarding_time=%5B%222026-11-09T18:49:00%2B00:00%22%5D&arrival_time=%5B%222026-11-09T19:02:00%2B00:00%22%5D",
+      "ios": "https://app.idf-mobilites.fr/gtfs?service_date=%5B%2220261109%22%5D&ticketing_trip_id=%5B%22IDFM:TN:SNCF:1e082ea3-ac84-45a8-9632-f365bbce22e3%22%5D&from_ticketing_stop_time_id=%5B%2212%22%5D&to_ticketing_stop_time_id=%5B%2216%22%5D&boarding_time=%5B%222026-11-09T18:49:00%2B00:00%22%5D&arrival_time=%5B%222026-11-09T19:02:00%2B00:00%22%5D"
+     },
+     "alternatives": []
+    },
+    {
+     "mode": "WALK",
+     "from": {
+      "name": "La Défense",
+      "stopId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:473936",
+      "parentId": "fr-reseau-urbain-et-interurbain-dile-de-france-mobilites_IDFM:71517",
+      "importance": 0.004718204494565725,
+      "lat": 48.89156,
+      "lon": 2.2382512,
+      "level": -3.0,
+      "tz": "Europe/Paris",
+      "arrival": "2026-11-09T19:06:00Z",
+      "departure": "2026-11-09T19:06:00Z",
+      "scheduledArrival": "2026-11-09T19:02:00Z",
+      "scheduledDeparture": "2026-11-09T19:06:00Z",
+      "track": "2",
+      "vertexType": "TRANSIT",
+      "cancelled": false,
+      "arrivalTimestampReason": "PREDICTED",
+      "departureTimestampReason": "PREDICTED",
+      "alerts": [
+       {
+        "communicationPeriod": [
+         {
+          "start": "2026-11-09T18:57:00Z",
+          "end": "1970-01-01T00:00:00Z"
+         }
+        ],
+        "impactPeriod": [
+         {
+          "start": "2026-11-09T18:57:00Z",
+          "end": "1970-01-01T00:00:00Z"
+         }
+        ],
+        "cause": "TECHNICAL_PROBLEM",
+        "effect": "ACCESSIBILITY_ISSUE",
+        "headerText": "1 ascenseur hors service — La Défense",
+        "descriptionText": "1 ascenseur sur 8 est actuellement hors service dans cette station."
+       }
+      ],
+      "modes": [
+       "REGIONAL_RAIL",
+       "SUBWAY",
+       "TRAM",
+       "BUS"
+      ]
+     },
+     "to": {
+      "name": "END",
+      "lat": 48.8924,
+      "lon": 2.2378,
+      "level": 0.0,
+      "tz": "Europe/Paris",
+      "arrival": "2026-11-09T19:10:00Z",
+      "scheduledArrival": "2026-11-09T19:10:00Z",
+      "vertexType": "NORMAL"
+     },
+     "duration": 240,
+     "startTime": "2026-11-09T19:06:00Z",
+     "endTime": "2026-11-09T19:10:00Z",
+     "scheduledStartTime": "2026-11-09T19:06:00Z",
+     "scheduledEndTime": "2026-11-09T19:10:00Z",
+     "realTime": false,
+     "scheduled": false,
+     "distance": 247.0,
+     "legGeometry": {
+      "points": "_kbg|AyrrgCiGlY??s@c@??q@a@??w@e@??sEuCS~@??c@nB??aBpH??WnA??]|A??i@|B??{EaD??TaA??^iB??x@sD??nBaJ??wA_A??YS??sCkB??w@i@iDvO??WlA??s@t@??cBvH??[U??q@vC??s@dDu@hD]ASH??m@qD??e@kA??n@}B??tCoL",
+      "precision": 6,
+      "length": 63
+     },
+     "steps": [
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 34.0,
+       "fromLevel": -3.0,
+       "toLevel": -3.0,
+       "toOsmNode": 12057451459,
+       "polyline": {
+        "points": "_kbg|AyrrgCiGlY",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 3.0,
+       "fromLevel": -3.0,
+       "toLevel": -3.0,
+       "osmWay": 1301782571,
+       "fromOsmNode": 12057451459,
+       "toOsmNode": 12057451460,
+       "polyline": {
+        "points": "isbg|AkxqgCs@c@",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "STAIRS",
+       "distance": 3.0,
+       "fromLevel": -3.0,
+       "toLevel": -3.0,
+       "osmWay": 1301782572,
+       "fromOsmNode": 12057451460,
+       "toOsmNode": 12057451461,
+       "polyline": {
+        "points": "}tbg|AoyqgCq@a@",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 3.0,
+       "fromLevel": -3.0,
+       "toLevel": -3.0,
+       "osmWay": 1301782573,
+       "fromOsmNode": 12057451461,
+       "toOsmNode": 12057480669,
+       "polyline": {
+        "points": "ovbg|AqzqgCw@e@",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 16.0,
+       "fromLevel": -3.0,
+       "toLevel": -3.0,
+       "osmWay": 1301782583,
+       "fromOsmNode": 12057480669,
+       "toOsmNode": 12057480671,
+       "polyline": {
+        "points": "gxbg|Aw{qgCsEuCS~@",
+        "precision": 6,
+        "length": 3
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 5.0,
+       "fromLevel": -3.0,
+       "toLevel": -3.0,
+       "osmWay": 1301782584,
+       "fromOsmNode": 12057480671,
+       "toOsmNode": 5993425069,
+       "polyline": {
+        "points": "o_cg|Am~qgCc@nB",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "STAIRS",
+       "distance": 12.0,
+       "fromLevel": -3.0,
+       "toLevel": -2.0,
+       "osmWay": 635340463,
+       "fromOsmNode": 5993425069,
+       "toOsmNode": 5993425072,
+       "polyline": {
+        "points": "s`cg|A}zqgCaBpH",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 3.0,
+       "fromLevel": -2.0,
+       "toLevel": -2.0,
+       "osmWay": 1301782617,
+       "fromOsmNode": 5993425072,
+       "toOsmNode": 12057480718,
+       "polyline": {
+        "points": "uccg|AkqqgCWnA",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 4.0,
+       "fromLevel": -2.0,
+       "toLevel": -2.0,
+       "osmWay": 1301782618,
+       "fromOsmNode": 12057480718,
+       "toOsmNode": 9466686302,
+       "polyline": {
+        "points": "mdcg|A{nqgC]|A",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 5.0,
+       "fromLevel": -2.0,
+       "toLevel": -2.0,
+       "osmWay": 1301782618,
+       "fromOsmNode": 9466686302,
+       "toOsmNode": 12057480719,
+       "polyline": {
+        "points": "kecg|A}kqgCi@|B",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 14.0,
+       "fromLevel": -2.0,
+       "toLevel": -2.0,
+       "osmWay": 1182017655,
+       "fromOsmNode": 12057480719,
+       "toOsmNode": 10976825179,
+       "polyline": {
+        "points": "ufcg|A_hqgC{EaD",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 3.0,
+       "fromLevel": -2.0,
+       "toLevel": -2.0,
+       "osmWay": 1182017672,
+       "fromOsmNode": 10976825179,
+       "toOsmNode": 10976825181,
+       "polyline": {
+        "points": "qmcg|AamqgCTaA",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 4.0,
+       "fromLevel": -2.0,
+       "toLevel": -2.0,
+       "osmWay": 1182017672,
+       "fromOsmNode": 10976825181,
+       "toOsmNode": 10976825182,
+       "polyline": {
+        "points": "{lcg|AcoqgC^iB",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 7.0,
+       "fromLevel": -2.0,
+       "toLevel": -2.0,
+       "osmWay": 1182017672,
+       "fromOsmNode": 10976825182,
+       "toOsmNode": 12057480711,
+       "polyline": {
+        "points": "{kcg|AmrqgCx@sD",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 14.0,
+       "fromLevel": -2.0,
+       "toLevel": -2.0,
+       "osmWay": 1182017672,
+       "fromOsmNode": 12057480711,
+       "toOsmNode": 10976825183,
+       "polyline": {
+        "points": "ajcg|AaxqgCnBaJ",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 5.0,
+       "fromLevel": -2.0,
+       "toLevel": -2.0,
+       "osmWay": 1182017659,
+       "fromOsmNode": 10976825183,
+       "toOsmNode": 12057480681,
+       "polyline": {
+        "points": "qfcg|AccrgCwA_A",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 2.0,
+       "fromLevel": -2.0,
+       "toLevel": -2.0,
+       "osmWay": 1182017659,
+       "fromOsmNode": 12057480681,
+       "toOsmNode": 9469285550,
+       "polyline": {
+        "points": "iicg|AcergCYS",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "STAIRS",
+       "distance": 9.0,
+       "fromLevel": -2.0,
+       "toLevel": -1.0,
+       "osmWay": 631932959,
+       "fromOsmNode": 9469285550,
+       "toOsmNode": 5967072530,
+       "polyline": {
+        "points": "cjcg|AwergCsCkB",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 25.0,
+       "fromLevel": -1.0,
+       "toLevel": -1.0,
+       "osmWay": 1182017626,
+       "fromOsmNode": 5967072530,
+       "toOsmNode": 10976825144,
+       "polyline": {
+        "points": "wncg|AcirgCw@i@iDvO",
+        "precision": 6,
+        "length": 3
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 3.0,
+       "fromLevel": -1.0,
+       "toLevel": -1.0,
+       "osmWay": 1182017626,
+       "fromOsmNode": 10976825144,
+       "toOsmNode": 10976825146,
+       "polyline": {
+        "points": "yucg|AuyqgCWlA",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 4.0,
+       "fromLevel": -1.0,
+       "toLevel": -1.0,
+       "osmWay": 1182017628,
+       "fromOsmNode": 10976825146,
+       "toOsmNode": 5967072525,
+       "polyline": {
+        "points": "qvcg|AgwqgCs@t@",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "STAIRS",
+       "distance": 13.0,
+       "fromLevel": -1.0,
+       "toLevel": 0.0,
+       "osmWay": 631932962,
+       "fromOsmNode": 5967072525,
+       "toOsmNode": 5967072524,
+       "polyline": {
+        "points": "excg|AquqgCcBvH",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 2.0,
+       "fromLevel": 0.0,
+       "toLevel": 0.0,
+       "osmWay": 631648702,
+       "fromOsmNode": 5967072524,
+       "toOsmNode": 1709060081,
+       "polyline": {
+        "points": "i{cg|AykqgC[U",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 6.0,
+       "fromLevel": 0.0,
+       "toLevel": 0.0,
+       "osmWay": 1027093955,
+       "fromOsmNode": 1709060081,
+       "toOsmNode": 9469285518,
+       "polyline": {
+        "points": "e|cg|AolqgCq@vC",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 16.0,
+       "fromLevel": 0.0,
+       "toLevel": 0.0,
+       "osmWay": 631648702,
+       "fromOsmNode": 9469285518,
+       "toOsmNode": 821156886,
+       "polyline": {
+        "points": "w}cg|AwgqgCs@dDu@hD]ASH",
+        "precision": 6,
+        "length": 5
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "STAIRS",
+       "distance": 7.0,
+       "fromLevel": 0.0,
+       "toLevel": 0.0,
+       "osmWay": 68127543,
+       "fromOsmNode": 821156886,
+       "toOsmNode": 821157056,
+       "polyline": {
+        "points": "sbdg|A_}pgCm@qD",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 3.0,
+       "fromLevel": 0.0,
+       "toLevel": 0.0,
+       "osmWay": 1294748530,
+       "fromOsmNode": 821157056,
+       "toOsmNode": 5307963829,
+       "polyline": {
+        "points": "addg|AqbqgCe@kA",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 5.0,
+       "fromLevel": 0.0,
+       "toLevel": 0.0,
+       "osmWay": 699236521,
+       "fromOsmNode": 5307963829,
+       "toOsmNode": 12222390131,
+       "polyline": {
+        "points": "gedg|A}dqgCn@}B",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      },
+      {
+       "relativeDirection": "CONTINUE",
+       "distance": 17.0,
+       "fromLevel": 0.0,
+       "toLevel": 0.0,
+       "fromOsmNode": 12222390131,
+       "polyline": {
+        "points": "wcdg|A{hqgCtCoL",
+        "precision": 6,
+        "length": 2
+       },
+       "streetName": "",
+       "exit": "",
+       "stayOn": false,
+       "area": false,
+       "toll": false,
+       "elevationUp": 0,
+       "elevationDown": 0
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "previousPageCursor": "EARLIER|1794249900",
+ "nextPageCursor": "LATER|1794250800"
+}

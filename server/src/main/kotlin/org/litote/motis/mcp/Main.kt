@@ -85,7 +85,7 @@ fun main(args: Array<String>) {
             usageError(e.message ?: "invalid arguments")
         }
     val motis = config.clientConfiguration()
-    val gateway = MotisGateway(motis, overlays = config.realtimeOverlays(motis.userAgent))
+    val gateway = MotisGateway(motis, overlays = config.realtimeOverlays(motis.userAgent), repairShapes = config.repairShapes)
     val views = loadViews(config.tiles)
     val cityStations = config.cityStationsStore()
     val create = { viewDomain: String? -> createMotisMcpServer(gateway, config.baseUrl, config.tiles, views, cityStations, viewDomain) }

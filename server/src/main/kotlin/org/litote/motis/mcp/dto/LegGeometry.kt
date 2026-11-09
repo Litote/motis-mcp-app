@@ -1,5 +1,27 @@
 package org.litote.motis.mcp.dto
 
+import org.litote.motis.client.client.RoutingClient
+import org.litote.motis.client.model.Itinerary
+import org.litote.motis.client.model.Leg
+
+/** Journeys with the shapes of their transit legs repaired, see [LegGeometry]. */
+fun RoutingClient.PlanResponseBody.withRepairedShapes(): RoutingClient.PlanResponseBody =
+    copy(itineraries = itineraries.map { it.withRepairedShapes() })
+
+/** Itinerary with the shapes of its transit legs repaired, see [LegGeometry]. */
+fun Itinerary.withRepairedShapes(): Itinerary = copy(legs = legs.map { it.withRepairedShape() })
+
+/** Transit leg with its shape repaired, see [LegGeometry]: the other legs (walk, bike...) are kept as is. */
+fun Leg.withRepairedShape(): Leg {
+    if (tripId == null) return this
+    val precision = legGeometry.precision.toInt()
+    val stops = (listOf(from) + intermediateStops.orEmpty() + to).map { it.lat to it.lon }
+    val repaired = LegGeometry.repair(PolylineCodec.decode(legGeometry.points, precision), stops) ?: return this
+    return copy(
+        legGeometry = legGeometry.copy(points = PolylineCodec.encode(repaired, precision), length = repaired.size.toLong()),
+    )
+}
+
 /**
  * Repairs the shape of a transit leg computed by MOTIS: without shapes in the GTFS, MOTIS matches the trips on the
  * OpenStreetMap rails, and the matching sometimes misses a track (e.g. the central tunnel of the RER A in Paris) and
