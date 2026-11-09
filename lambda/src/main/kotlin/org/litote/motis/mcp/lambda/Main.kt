@@ -16,7 +16,27 @@ import org.litote.motis.mcp.apps.loadViews
 import org.litote.motis.mcp.rejectUnknownMcpHosts
 import org.litote.motis.mcp.viewDomain
 
-private val logger = KotlinLogging.logger {}
+// lazy: created after the level of the logs is set (applyLogLevel)
+private val logger by lazy { KotlinLogging.logger("org.litote.motis.mcp.lambda.Main") }
+
+/** Level of the logs of the application (slf4j-simple), e.g. `info` to log each tool call. */
+internal const val LOG_LEVEL_ENV = "MOTIS_APP_LOG_LEVEL"
+
+private val LOG_LEVELS = listOf("trace", "debug", "info", "warn", "error", "off")
+
+/**
+ * The level of the `org.litote` logs given by [LOG_LEVEL_ENV] (`warn` in simplelogger.properties when not set), or null.
+ * Set by the workflow `lambda-log-level.yml`, without deploy.
+ */
+internal fun logLevel(env: Map<String, String>): String? =
+    env[LOG_LEVEL_ENV]?.trim()?.lowercase()?.takeIf { it.isNotEmpty() }?.also {
+        require(it in LOG_LEVELS) { "$LOG_LEVEL_ENV must be one of ${LOG_LEVELS.joinToString()}: \"$it\"" }
+    }
+
+/** Before the first logger: slf4j-simple reads the level of a logger when it is created (system properties first). */
+private fun applyLogLevel() {
+    logLevel(System.getenv())?.let { System.setProperty("org.slf4j.simpleLogger.log.org.litote", it) }
+}
 
 /**
  * MCP endpoints `/mcp` and `/mcp/<host>` of the Lambda, in stateless Streamable HTTP mode: successive requests of a client may reach
@@ -59,6 +79,7 @@ fun createMcpLambda(): McpLambda {
 
 fun main() {
     System.setProperty("kotlin-logging.logStartupMessage", "false")
+    applyLogLevel()
     val lambda = createMcpLambda()
     logger.info { "MCP Lambda started" }
     runLambda { event, _ -> lambda.handle(event) }

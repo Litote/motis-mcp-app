@@ -101,6 +101,10 @@ class MotisToolsTest {
             val search = result.data(SearchResult.serializer())
             assertEquals(3, search.matches.size)
             assertTrue(search.matches.all { it.type == "PLACE" })
+            // the coordinates of the places to give to the other tools, not their geocoder ids (unknown to them)
+            val first = search.matches.first()
+            assertTrue(result.text().lines()[1].contains("[PLACE] use \"${first.lat},${first.lon}\""), result.text())
+            assertTrue(!result.text().contains("id=\""), result.text())
             assertEquals("45.7605,4.8597", motis.request("/api/v1/reverse-geocode").url.parameters["place"])
             assertTrue(motis.requests.none { it.url.encodedPath == "/api/v1/geocode" })
         }
@@ -817,6 +821,18 @@ class MotisToolsTest {
 
             val invalid = client.callTool("plan_journey", mapOf("position" to "Lyon", "to" to "Grenoble"))
             assertEquals("Invalid argument: 'position' must be 'lat,lon'", invalid.text())
+        }
+    }
+
+    @Test
+    fun `plan_journey explains that a geocoder id is not usable`() {
+        withMcpClient(MockMotis { error("no MOTIS call expected") }) { client ->
+            val result = client.callTool("plan_journey", mapOf("from" to "node/26692491", "to" to "Grenoble"))
+            assertEquals(
+                "\"node/26692491\" ('from') is the id of an address or point of interest, unknown to this tool: " +
+                    "give its 'lat,lon' (given by search_places) or its name instead.",
+                result.text(),
+            )
         }
     }
 

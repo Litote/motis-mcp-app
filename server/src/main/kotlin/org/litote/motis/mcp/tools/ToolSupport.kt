@@ -11,6 +11,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.JsonPrimitive
@@ -29,6 +30,7 @@ import org.litote.motis.mcp.MotisToolException
 import org.litote.motis.mcp.apps.ToolVisibility
 import org.litote.motis.mcp.apps.UiView
 import kotlin.time.Instant
+import kotlin.time.TimeSource
 
 private val logger = KotlinLogging.logger {}
 
@@ -209,11 +211,15 @@ fun Server.motisTool(
             meta = view?.toolMeta(visibility),
         ),
     ) { request ->
+        val arguments = request.arguments ?: JsonObject(emptyMap())
+        val start = TimeSource.Monotonic.markNow()
         try {
-            val output = handler(Args(request.arguments ?: JsonObject(emptyMap()), schemaBuilder.bounds))
+            val output = handler(Args(arguments, schemaBuilder.bounds))
+            // one line per call, to see what the models ask (e.g. the arguments they make up)
+            logger.info { "Tool $name(${arguments.forLog()}) in ${start.elapsedNow().inWholeMilliseconds} ms: ${output.text.lineSequence().first().take(LOGGED_LENGTH)}" }
             CallToolResult(content = listOf(TextContent(output.text)), structuredContent = output.structured)
         } catch (e: MotisToolException) {
-            logger.info { "Tool $name failed: ${e.message}" }
+            logger.info { "Tool $name(${arguments.forLog()}) failed in ${start.elapsedNow().inWholeMilliseconds} ms: ${e.message}" }
             CallToolResult(content = listOf(TextContent(e.message ?: "error")), isError = true)
         } catch (e: CancellationException) {
             throw e
@@ -224,6 +230,32 @@ fun Server.motisTool(
         }
     }
 }
+
+/** Longest argument value, or first line of a result, in the logs. */
+private const val LOGGED_LENGTH = 100
+
+/** Coordinates in a text (`lat,lon`), rounded in the logs. */
+private val COORDINATES_IN_TEXT = Regex("""(-?\d{1,3}\.\d+)\s*,\s*(-?\d{1,3}\.\d+)""")
+
+/**
+ * The arguments of a tool call for the logs: the coordinates rounded to 2 decimals (about 1 km, the position of the user
+ * is personal data), the values truncated.
+ */
+internal fun JsonObject.forLog(): String = entries.joinToString { (key, value) -> "$key=${value.forLog()}" }
+
+private fun JsonElement.forLog(): String =
+    when (this) {
+        is JsonPrimitive -> if (isString) "\"${roundCoordinates(content).take(LOGGED_LENGTH)}\"" else content
+        is JsonArray -> joinToString(",", "[", "]") { it.forLog() }
+        is JsonObject -> "{…}"
+    }
+
+/** [text] with its `lat,lon` coordinates rounded to 2 decimals. */
+internal fun roundCoordinates(text: String): String =
+    COORDINATES_IN_TEXT.replace(text) { m ->
+        val (lat, lon) = m.destructured
+        "%.2f,%.2f".format(java.util.Locale.ROOT, lat.toDouble(), lon.toDouble())
+    }
 
 private val TIME_FORMAT = java.time.format.DateTimeFormatter.ofPattern("HH:mm")
 

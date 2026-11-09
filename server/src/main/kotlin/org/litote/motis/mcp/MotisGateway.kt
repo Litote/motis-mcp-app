@@ -32,6 +32,9 @@ import kotlin.time.TimeSource
 /** Error reported by the MOTIS API, or invalid user input: returned to the caller as a tool error. */
 open class MotisToolException(message: String) : RuntimeException(message)
 
+/** Id of an address or point of interest of the geocoder (OpenStreetMap), e.g. `node/26692491`: no lookup in MOTIS. */
+private val GEOCODER_ID = Regex("""(node|way|relation)/\d+""")
+
 /** [stopId] has a known feed prefix but MOTIS does not know the stop (an id made up or out of date). */
 class UnknownStopException(val stopId: String) :
     MotisToolException(
@@ -191,6 +194,12 @@ class MotisGateway(
         language: List<String>? = null,
     ): ResolvedPlace {
         parseCoordinates(input)?.let { (lat, lon) -> return ResolvedPlace("$lat,$lon", input, lat, lon, isStop = false) }
+        if (GEOCODER_ID.matches(input)) {
+            throw MotisToolException(
+                "\"$input\" ('$argument') is the id of an address or point of interest, unknown to this tool: " +
+                    "give its 'lat,lon' (given by search_places) or its name instead.",
+            )
+        }
         val matches =
             geocode(
                 input,

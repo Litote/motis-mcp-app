@@ -105,6 +105,12 @@ resource "aws_lambda_function" "mcp" {
     }, local.optional_env)
   }
 
+  # MOTIS_APP_LOG_LEVEL (level of the logs, warn when not set) is set by the workflow lambda-log-level.yml, without
+  # deploy: kept by the deploys
+  lifecycle {
+    ignore_changes = [environment[0].variables["MOTIS_APP_LOG_LEVEL"]]
+  }
+
   depends_on = [
     aws_cloudwatch_log_group.lambda,
     aws_iam_role_policy_attachment.basic_execution,

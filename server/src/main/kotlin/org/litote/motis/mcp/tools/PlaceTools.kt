@@ -4,6 +4,7 @@ import io.modelcontextprotocol.kotlin.sdk.server.Server
 import org.litote.motis.client.model.LocationType
 import org.litote.motis.mcp.MotisGateway
 import org.litote.motis.mcp.dto.Coordinates
+import org.litote.motis.mcp.dto.PlaceMatchDto
 import org.litote.motis.mcp.dto.SearchResult
 import org.litote.motis.mcp.dto.ServerInfoResult
 import org.litote.motis.mcp.dto.toDto
@@ -12,6 +13,20 @@ private val LOCATION_TYPES = listOf("STOP", "ADDRESS", "PLACE")
 
 internal const val LANGUAGE_DESCRIPTION = "Preferred language of the names, as ISO 639-1 code (e.g. fr, de)."
 
+/** Line of a place found by search_places, with what to give to the other tools. */
+private fun PlaceMatchDto.summaryLine(): String {
+    // ids quoted: some end with ":" (e.g. SNCF stops), taken for punctuation and dropped by the models when not quoted;
+    // only the stop ids are known by the other tools (MOTIS has no lookup of the geocoder ids, e.g. node/123)
+    val use = if (type == "STOP") "id=\"$id\" ($lat,$lon)" else "use \"$lat,$lon\""
+    val lines =
+        when {
+            modes != null -> " modes=${modes.joinToString(",")}"
+            type == "STOP" -> " no lines"
+            else -> ""
+        }
+    return "- $name [$type] $use" + (area?.let { " — $it" } ?: "") + lines
+}
+
 fun Server.addPlaceTools(gateway: MotisGateway, baseUrl: String) {
     motisTool(
         name = "search_places",
@@ -19,7 +34,8 @@ fun Server.addPlaceTools(gateway: MotisGateway, baseUrl: String) {
         description =
             """
             Searches stops, addresses and points of interest by name (geocoding), or lists what is near coordinates
-            (reverse geocoding when 'text' is 'lat,lon'). Returns stop ids usable by the other tools.
+            (reverse geocoding when 'text' is 'lat,lon'). Returns what to give to the other tools: the id of a stop, the
+            'lat,lon' of another place (address, point of interest, city).
             Not needed before the other tools, which take place names: use it when the user asks for places.
             """.trimIndent(),
         schema = {
@@ -56,16 +72,7 @@ fun Server.addPlaceTools(gateway: MotisGateway, baseUrl: String) {
             if (result.matches.isEmpty()) {
                 "No place found for \"$text\"."
             } else {
-                // ids quoted: some end with ":" (e.g. SNCF stops), taken for punctuation and dropped by the models when not quoted
-                result.matches.joinToString("\n", "${result.matches.size} result(s) for \"$text\":\n") { m ->
-                    "- ${m.name} [${m.type}] id=\"${m.id}\" (${m.lat},${m.lon})" +
-                        (m.area?.let { " — $it" } ?: "") +
-                        when {
-                            m.modes != null -> " modes=${m.modes.joinToString(",")}"
-                            m.type == "STOP" -> " no lines"
-                            else -> ""
-                        }
-                }
+                result.matches.joinToString("\n", "${result.matches.size} result(s) for \"$text\":\n") { it.summaryLine() }
             }
         ToolOutput.of(summary, SearchResult.serializer(), result)
     }
