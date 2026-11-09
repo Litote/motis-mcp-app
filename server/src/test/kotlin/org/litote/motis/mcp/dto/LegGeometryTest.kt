@@ -24,6 +24,14 @@ class LegGeometryTest {
     }
 
     @Test
+    fun `keeps a loop of a mountain railway`() {
+        // 5 km between the stops, 12 km by the track (like the spirals of Bergün -> Preda)
+        val points = listOf(48.0 to 2.0, 48.025 to 2.017, 48.05 to 2.0337, 48.025 to 2.05, 48.0 to 2.0674)
+        assertTrue(length(points) > 2 * distanceKm(48.0, 2.0, 48.0, 2.0674))
+        assertNull(LegGeometry.repair(points, listOf(48.0 to 2.0, 48.0 to 2.0674)))
+    }
+
+    @Test
     fun `repairs the RER A going around Paris by the north`() {
         // geometry of MOTIS (Transitous, November 2026) for a RER A from Gare de Lyon to La Défense
         val encoded = javaClass.getResource("/motis/rer-a-detour-polyline.txt")!!.readText().trim()

@@ -13,8 +13,11 @@ internal object LegGeometry {
     /** A stop farther than this from the geometry is not served by it. */
     private const val MAX_STOP_DISTANCE_KM = 0.5
 
-    /** A part is a detour when longer than [DETOUR_RATIO] times the distance of its stops plus [DETOUR_SLACK_KM]. */
-    private const val DETOUR_RATIO = 1.8
+    /**
+     * A part is a detour when longer than [DETOUR_RATIO] times the distance of its stops plus [DETOUR_SLACK_KM]: high
+     * enough to keep the real loops of mountain railways (e.g. Bergün -> Preda, about 2.5 times the distance).
+     */
+    private const val DETOUR_RATIO = 3.0
     private const val DETOUR_SLACK_KM = 1.5
 
     fun repair(points: List<Pair<Double, Double>>, stops: List<Pair<Double, Double>>): List<Pair<Double, Double>>? {
