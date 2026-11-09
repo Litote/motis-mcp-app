@@ -72,22 +72,9 @@ internal object LegGeometry {
     /** Repair of the geometry of the [points] serving the [stops], null when the geometry is kept as is. */
     fun repair(points: List<Pair<Double, Double>>, stops: List<Pair<Double, Double>>): Repair? {
         if (points.size < 2 || stops.size < 2) return null
-        // index of the closest point of each stop, in the order of the stops
-        val indexes = IntArray(stops.size)
-        val far = BooleanArray(stops.size)
-        var start = 0
-        stops.forEachIndexed { s, stop ->
-            var bestDistance = Double.MAX_VALUE
-            for (i in start..points.lastIndex) {
-                val d = distance(points[i], stop)
-                if (d < bestDistance) {
-                    bestDistance = d
-                    indexes[s] = i
-                }
-            }
-            far[s] = bestDistance > MAX_STOP_DISTANCE_KM
-            start = indexes[s]
-        }
+        val matches = matchStops(points, stops)
+        val indexes = matches.map { it.index }
+        val far = matches.map { it.distanceKm > MAX_STOP_DISTANCE_KM }
         val parts = mutableListOf<Part>()
         val result = mutableListOf<Pair<Double, Double>>()
         for (s in 0 until stops.lastIndex) {
@@ -104,6 +91,19 @@ internal object LegGeometry {
         if (parts.isEmpty()) return null
         // keeps the walk from/to the platform drawn before the first and after the last stop
         return Repair(points.subList(0, indexes.first()) + result + points.subList(indexes.last() + 1, points.size), parts)
+    }
+
+    /** Closest point of a stop: its [index] in the points, at [distanceKm]. */
+    private class StopMatch(val index: Int, val distanceKm: Double)
+
+    /** Closest point of each of the [stops], in their order: a stop is searched from the point of the previous one. */
+    private fun matchStops(points: List<Pair<Double, Double>>, stops: List<Pair<Double, Double>>): List<StopMatch> {
+        var start = 0
+        return stops.map { stop ->
+            val index = (start..points.lastIndex).minBy { distance(points[it], stop) }
+            start = index
+            StopMatch(index, distance(points[index], stop))
+        }
     }
 
     private fun distance(a: Pair<Double, Double>, b: Pair<Double, Double>) = distanceKm(a.first, a.second, b.first, b.second)
