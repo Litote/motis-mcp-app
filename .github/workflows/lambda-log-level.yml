@@ -1,7 +1,7 @@
 name: Lambda log level
 
-# Sets the level of the logs of the MCP Lambda (MOTIS_APP_LOG_LEVEL), without deploy: `warn` stops logging each tool
-# call, `info` logs them again. Kept by the deploys (ignore_changes in infra/main.tf). The new level applies to the new
+# Sets the level of the logs of the MCP Lambda (MOTIS_APP_LOG_LEVEL), without deploy: `info` logs each tool call, to
+# investigate a problem; `warn` (default, normal operation) stops logging them. Kept by the deploys (ignore_changes in infra/main.tf). The new level applies to the new
 # execution environments of the function, started by the update of its configuration.
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ on:
         description: 'Level of the logs (info: one line per tool call; warn: the errors only)'
         type: choice
         options: [info, warn]
-        default: warn
+        default: info
 
 concurrency:
   # not during a deploy (the configuration is updated by both)

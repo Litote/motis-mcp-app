@@ -145,10 +145,10 @@ account bootstrapped before, run `make bootstrap` before the next deploy: the de
 
 ## Log level
 
-The Lambda logs one line per tool call (level `info`). The workflow **Lambda log level** (Actions → Lambda log level →
-Run workflow) sets the level of the logs, without deploy: `warn` keeps the errors only, `info` logs the tool calls
-again. It sets the variable `MOTIS_APP_LOG_LEVEL` of the function (`trace`, `debug`, `info`, `warn`, `error`, `off`;
-`info` when not set), kept by the deploys (`ignore_changes` in `infra/main.tf`). The new level applies within seconds:
+In normal operation, the Lambda logs the technical errors only (level `warn`): the tool calls are not logged (privacy
+policy). To investigate a problem, the workflow **Lambda log level** (Actions → Lambda log level → Run workflow) sets
+the level of the logs, without deploy: `info` logs one line per tool call, `warn` stops it. It sets the variable
+`MOTIS_APP_LOG_LEVEL` of the function (`trace`, `debug`, `info`, `warn`, `error`, `off`; `warn` when not set), kept by the deploys (`ignore_changes` in `infra/main.tf`). The new level applies within seconds:
 the update of the configuration starts new execution environments.
 
 ## Budget and kill switch

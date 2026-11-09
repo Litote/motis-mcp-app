@@ -19,13 +19,13 @@ import org.litote.motis.mcp.viewDomain
 // lazy: created after the level of the logs is set (applyLogLevel)
 private val logger by lazy { KotlinLogging.logger("org.litote.motis.mcp.lambda.Main") }
 
-/** Level of the logs of the application (slf4j-simple), e.g. `warn` to stop logging each tool call. */
+/** Level of the logs of the application (slf4j-simple), e.g. `info` to log each tool call. */
 internal const val LOG_LEVEL_ENV = "MOTIS_APP_LOG_LEVEL"
 
 private val LOG_LEVELS = listOf("trace", "debug", "info", "warn", "error", "off")
 
 /**
- * The level of the `org.litote` logs given by [LOG_LEVEL_ENV] (`info` in simplelogger.properties when not set), or null.
+ * The level of the `org.litote` logs given by [LOG_LEVEL_ENV] (`warn` in simplelogger.properties when not set), or null.
  * Set by the workflow `lambda-log-level.yml`, without deploy.
  */
 internal fun logLevel(env: Map<String, String>): String? =
