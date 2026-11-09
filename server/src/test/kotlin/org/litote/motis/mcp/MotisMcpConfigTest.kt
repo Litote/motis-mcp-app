@@ -113,6 +113,16 @@ class MotisMcpConfigTest {
     }
 
     @Test
+    fun `the shapes are repaired by default`() {
+        val contact = "MOTIS_APP_CONTACT" to "you@example.org"
+        assertTrue(MotisMcpConfig.fromEnv(mapOf(contact)).repairShapes)
+        assertTrue(MotisMcpConfig.fromEnv(mapOf(contact, "MOTIS_REPAIR_SHAPES" to " ")).repairShapes)
+        assertFalse(MotisMcpConfig.fromEnv(mapOf(contact, "MOTIS_REPAIR_SHAPES" to "False")).repairShapes)
+        val error = assertFailsWith<IllegalArgumentException> { MotisMcpConfig.fromEnv(mapOf(contact, "MOTIS_REPAIR_SHAPES" to "no")) }
+        assertEquals("MOTIS_REPAIR_SHAPES must be true or false: \"no\"", error.message)
+    }
+
+    @Test
     fun `the stations of the journeys between cities are in memory, or in DynamoDB with a table`() {
         val contact = "MOTIS_APP_CONTACT" to "you@example.org"
         assertTrue(MotisMcpConfig.fromEnv(mapOf(contact)).cityStationsStore() is InMemoryCityStationsStore)

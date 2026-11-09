@@ -1,5 +1,6 @@
 package org.litote.motis.mcp
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import org.litote.motis.client.client.Client
@@ -16,11 +17,14 @@ import org.litote.motis.client.model.Mode
 import org.litote.motis.client.model.PedestrianProfile
 import org.litote.motis.client.model.Place
 import org.litote.motis.client.model.Reachable
+import org.litote.motis.mcp.dto.ShapeRepair
 import org.litote.motis.mcp.dto.StationLineDto
 import org.litote.motis.mcp.dto.displayName
 import org.litote.motis.mcp.dto.distanceKm
 import org.litote.motis.mcp.dto.toDto
+import org.litote.motis.mcp.dto.withRepairedShapes
 import org.litote.motis.mcp.realtime.RealtimeOverlay
+import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.log2
@@ -28,6 +32,8 @@ import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Instant
 import kotlin.time.TimeSource
+
+private val logger = KotlinLogging.logger {}
 
 /** Error reported by the MOTIS API, or invalid user input: returned to the caller as a tool error. */
 open class MotisToolException(message: String) : RuntimeException(message)
@@ -103,11 +109,17 @@ data class ResolvedPlace(
  * [TtlCache]: one gateway is shared by the requests of a process or of a Lambda instance.
  *
  * The [overlays] add the real time of other sources to the stop times of the feeds without real time in MOTIS.
+ *
+ * With [repairShapes], the detours of the shapes of the transit legs of the journeys and trips are replaced by straight
+ * lines between their stops, see [org.litote.motis.mcp.dto.LegGeometry]: each part repaired is logged by [logShapeRepair]
+ * (a warning by default), once a day per line and stops.
  */
 class MotisGateway(
     configuration: ClientConfiguration,
     timeSource: TimeSource = TimeSource.Monotonic,
     private val overlays: List<RealtimeOverlay> = emptyList(),
+    private val repairShapes: Boolean = true,
+    private val logShapeRepair: (String) -> Unit = { message -> logger.warn { message } },
 ) {
     private val client = Client(configuration)
     private val geocodeClient = GeocodeClient(configuration)
@@ -126,6 +138,9 @@ class MotisGateway(
     private val geocodeCache = TtlCache<GeocodeKey, List<Match>>(maxSize = 1000, ttl = 1.hours, timeSource)
     private val healthCache = TtlCache<Unit, HealthResponse>(maxSize = 1, ttl = 1.minutes, timeSource)
     private val initialCache = TtlCache<Unit, MapClient.InitialResponseBody>(maxSize = 1, ttl = 1.hours, timeSource)
+
+    // parts of shapes repaired already logged, by line and stops
+    private val shapeRepairsLogged = TtlCache<Triple<String?, String, String>, Unit>(maxSize = 1000, ttl = 24.hours, timeSource)
 
     // route indexes are those of the timetable loaded by MOTIS: kept a short time, as they change when it is reloaded
     private val routeDetailsCache =
@@ -359,9 +374,26 @@ class MotisGateway(
             is TimetableClient.StoptimesResponseUnknownFailure -> failStatus(r.statusCode)
         }
 
+    /** [body] with its shapes repaired by [repair] when enabled, logging the parts repaired not logged yet. */
+    private suspend fun <T> repairShapes(body: T, repair: T.((ShapeRepair) -> Unit) -> T): T {
+        if (!repairShapes) return body
+        val repairs = mutableListOf<ShapeRepair>()
+        val repaired = body.repair { repairs += it }
+        repairs.forEach { r ->
+            shapeRepairsLogged.getOrPut(Triple(r.routeId ?: r.line, r.from, r.to)) {
+                logShapeRepair(
+                    "Shape repaired: ${r.line} (${r.routeId}) ${r.from} -> ${r.to}: " +
+                        "%.1f km drawn for %.1f km".format(Locale.ROOT, r.drawnKm, r.directKm) +
+                        (if (r.offStop) ", off a stop" else ""),
+                )
+            }
+        }
+        return repaired
+    }
+
     suspend fun trip(tripId: String, language: List<String>? = null): Itinerary =
         when (val r = timetableClient.trip(tripId = tripId, language = language)) {
-            is TimetableClient.TripResponseSuccess -> r.body
+            is TimetableClient.TripResponseSuccess -> repairShapes(r.body) { withRepairedShapes(it) }
             is TimetableClient.TripResponseFailure -> fail(r.body.error)
             is TimetableClient.TripResponseUnknownFailure -> failStatus(r.statusCode)
         }
@@ -398,7 +430,7 @@ class MotisGateway(
                     language = query.language,
                 )
         ) {
-            is RoutingClient.PlanResponseSuccess -> r.body
+            is RoutingClient.PlanResponseSuccess -> repairShapes(r.body) { withRepairedShapes(it) }
             is RoutingClient.PlanResponseFailure -> fail(r.body.error)
             is RoutingClient.PlanResponseUnknownFailure -> failStatus(r.statusCode)
         }

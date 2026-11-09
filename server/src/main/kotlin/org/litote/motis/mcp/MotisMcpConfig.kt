@@ -33,6 +33,9 @@ private val logger = KotlinLogging.logger {}
  *
  * [sncfRealtime] adds the real time of the SNCF to its trains without real time in MOTIS, see [SncfRealtimeOverlay].
  *
+ * [repairShapes] replaces the detours of the shapes of the transit legs by straight lines between their stops, see
+ * [org.litote.motis.mcp.dto.LegGeometry].
+ *
  * [cityStationsTable] is the DynamoDB table of the stations of the journeys between cities (in [awsRegion]), null to
  * keep them in memory, see [CityJourneys]. [dynamoDbEndpoint] replaces the endpoint of the region, e.g. DynamoDB Local.
  */
@@ -44,6 +47,7 @@ data class MotisMcpConfig(
     val viewDomains: Map<McpHost, String> = emptyMap(),
     val allowedHosts: List<String>? = null,
     val sncfRealtime: Boolean = true,
+    val repairShapes: Boolean = true,
     val cityStationsTable: String? = null,
     val awsRegion: String? = null,
     val dynamoDbEndpoint: String? = null,
@@ -123,14 +127,17 @@ data class MotisMcpConfig(
                         ?.map { it.trim() }
                         ?.filter { it.isNotEmpty() }
                         ?.ifEmpty { null },
-                sncfRealtime = env["MOTIS_SNCF_REALTIME"]?.takeIf { it.isNotBlank() }?.let(::parseBoolean) ?: true,
+                sncfRealtime = env.boolean("MOTIS_SNCF_REALTIME") ?: true,
+                repairShapes = env.boolean("MOTIS_REPAIR_SHAPES") ?: true,
                 cityStationsTable = env["MOTIS_CITY_STATIONS_TABLE"]?.takeIf { it.isNotBlank() },
                 awsRegion = (env["AWS_REGION"] ?: env["AWS_DEFAULT_REGION"])?.takeIf { it.isNotBlank() },
                 dynamoDbEndpoint = env["AWS_ENDPOINT_URL_DYNAMODB"]?.takeIf { it.isNotBlank() },
             )
 
-        private fun parseBoolean(value: String): Boolean =
-            requireNotNull(value.trim().lowercase().toBooleanStrictOrNull()) { "MOTIS_SNCF_REALTIME must be true or false: \"$value\"" }
+        private fun Map<String, String>.boolean(name: String): Boolean? =
+            this[name]?.takeIf { it.isNotBlank() }?.let { value ->
+                requireNotNull(value.trim().lowercase().toBooleanStrictOrNull()) { "$name must be true or false: \"$value\"" }
+            }
 
         private fun parseRailOverlays(value: String): List<RailOverlay> =
             value
