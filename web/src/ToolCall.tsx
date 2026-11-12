@@ -28,14 +28,13 @@ function useHasView(toolName: string): boolean {
   return hasView;
 }
 
-/** A tool call of the assistant: status line (arguments on demand), then the view of the result when the tool has one. */
+/** A tool call of the assistant: status line (arguments and result, errors included, on demand), then the view of the result when the tool has one. */
 export function ToolCall({ toolCallId, toolName, args, argsText, result, isError, status }: ToolCallMessagePartProps) {
   useLanguage();
   const append = useContext(AppendMessageContext);
   const hasView = useHasView(toolName);
   const mcpResult = result as CallToolResult | undefined;
   const running = status.type === "running" || mcpResult === undefined;
-  const errorText = isError ? mcpResult?.content.map((part) => (part.type === "text" ? part.text : "")).join(" ") : null;
 
   let toolStatus = "done";
   if (running) toolStatus = "running";
@@ -58,7 +57,6 @@ export function ToolCall({ toolCallId, toolName, args, argsText, result, isError
           </>
         )}
       </details>
-      {errorText && <div className="tool-error">{errorText}</div>}
       {hasView && mcpResult && !isError && (
         <Suspense fallback={<div className="view view-loading" />}>
           <McpAppView

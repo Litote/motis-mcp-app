@@ -152,7 +152,9 @@ describe("Chat", () => {
     expect(await screen.findByText("Next")).toBeDefined();
     expect(screen.getByText("departures")).toBeDefined();
     expect(screen.getByText('{"stop":"Lyon"}')).toBeDefined();
-    expect(screen.getByText("unknown trip")).toBeDefined();
+    // a tool error stays in the collapsed details instead of being shown in red
+    expect(document.querySelector(".tool-error")).toBeNull();
+    expect(document.body.textContent).toContain("unknown trip");
     // the view sends a message to the thread
     fireEvent.click(await screen.findByText("view of departures"));
     expect(await screen.findByText("More departures")).toBeDefined();
