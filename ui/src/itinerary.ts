@@ -219,7 +219,7 @@ function select(index: number, refit = true): void {
   legLines = it.legs.map(drawLeg);
   drawEnds(it.legs, colors.backgroundColor, colors.color);
   const last = it.legs.at(-1);
-  legsList.innerHTML = it.legs.map(legDescription).join("") + (last ? legRow(last.endTime, last.to, "end") : "");
+  legsList.innerHTML = it.legs.map((leg, i) => legDescription(leg, i)).join("") + (last ? legRow(last.endTime, last.to, "end") : "");
   if (refit) fit(themedMap, layer);
 }
 

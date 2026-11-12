@@ -213,7 +213,8 @@ function renderBoard(data: DeparturesResult): void {
   const first = data.stopTimes[0]?.time;
   const firstDay = first ? ` · ${day(first, tz)}` : "";
   const boards = sideBySide(data);
-  const directions = boards.map((b) => t(b.arriveBy ? "departures.arrivals" : "departures.departures")).join(" · ");
+  const direction = (b: DeparturesResult) => t(b.arriveBy ? "departures.arrivals" : "departures.departures");
+  const directions = boards.map(direction).join(" · ");
   subtitle.textContent = `${directions}${firstDay}`;
   if (!isFullscreen()) {
     renderToolbarAnd(data, boards, `<div data-board="0">${boardHtml(data)}</div>`);
@@ -224,7 +225,7 @@ function renderBoard(data: DeparturesResult): void {
     .map(
       (b, i) => `
       <section class="board-column" data-board="${i}">
-        ${boards.length > 1 ? `<h2 class="board-head">${t(b.arriveBy ? "departures.arrivals" : "departures.departures")}</h2>` : ""}
+        ${boards.length > 1 ? `<h2 class="board-head">${direction(b)}</h2>` : ""}
         <div class="board-scroll">${boardHtml(b)}</div>
       </section>`,
     )
@@ -253,7 +254,7 @@ function boardHtml(data: DeparturesResult): string {
 }
 
 /** Class of the departure of the trip opened in the panel. */
-const openClass = (st: StopTimeDto) => (panelTrip && panelTrip.tripId === st.tripId ? "open" : "");
+const openClass = (st: StopTimeDto) => (panelTrip?.tripId === st.tripId ? "open" : "");
 
 /** Generic board of the [departures], with their index in the result. */
 function boardTable(departures: { st: StopTimeDto; index: number }[], markTheoretical: boolean, tz?: string): string {
