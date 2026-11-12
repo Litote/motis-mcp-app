@@ -3,6 +3,7 @@ package org.litote.motis.mcp.tools
 import io.modelcontextprotocol.kotlin.sdk.server.Server
 import org.litote.motis.client.model.LocationType
 import org.litote.motis.mcp.MotisGateway
+import org.litote.motis.mcp.dto.LocalizedNames
 import org.litote.motis.mcp.dto.Coordinates
 import org.litote.motis.mcp.dto.PlaceMatchDto
 import org.litote.motis.mcp.dto.SearchResult
@@ -11,7 +12,8 @@ import org.litote.motis.mcp.dto.toDto
 
 private val LOCATION_TYPES = listOf("STOP", "ADDRESS", "PLACE")
 
-internal const val LANGUAGE_DESCRIPTION = "Preferred language of the names, as ISO 639-1 code (e.g. fr, de)."
+internal const val LANGUAGE_DESCRIPTION =
+    "Preferred language of the names, as ISO 639-1 code (e.g. fr, de). The names of the stations are translated in fr, es, en, nl, de and it (\"Gérone\" for Girona in fr)."
 
 /** Line of a place found by search_places, with what to give to the other tools. */
 private fun PlaceMatchDto.summaryLine(): String {
@@ -67,7 +69,8 @@ fun Server.addPlaceTools(gateway: MotisGateway, baseUrl: String) {
                 // a stop without lines (e.g. a copy of a station in another feed) has no departures: after the others
                 .sortedBy { it.type == LocationType.STOP && it.modes.isNullOrEmpty() }
                 .take(limit)
-        val result = SearchResult(query = text, matches = matches.map { it.toDto() })
+        val search = SearchResult(query = text, matches = matches.map { it.toDto() })
+        val result = LocalizedNames.of(args.stringList("language"))?.search(search) ?: search
         val summary =
             if (result.matches.isEmpty()) {
                 "No place found for \"$text\"."

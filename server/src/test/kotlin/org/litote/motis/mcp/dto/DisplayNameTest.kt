@@ -18,6 +18,9 @@ class DisplayNameTest {
         assertEquals("L’Isle d’Abeau", displayName("L’ISLE D’ABEAU"))
         assertEquals("Mt Blanc Terminal B", displayName("MT BLANC TERMINAL B"))
         // a single letter is a word, not an elision, without apostrophe
+        assertEquals("Valence", displayName("Estación de tren Valence"))
+        assertEquals("Nimes", displayName("Estación de tren NIMES"))
+        assertEquals("Figueres Vilafant", displayName("Estación de tren Figueres Vilafant"))
         assertEquals("Lyon A Gare", displayName("LYON A GARE"))
         assertEquals("Terminal B", displayName("TERMINAL B"))
     }
