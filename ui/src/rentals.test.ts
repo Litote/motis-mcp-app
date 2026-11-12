@@ -31,6 +31,26 @@ describe("rentals view", () => {
     expect(checkbox().checked).toBe(true);
   });
 
+  it("keeps the providers and the selected item when a provider is hidden", async () => {
+    const app = await loadView("rentals");
+    await app.toolResult({}, fixture("rentals"));
+    const checkbox = document.querySelector<HTMLInputElement>("input[data-provider='fr-gbfs-paris-1']")!;
+    $("#nearby li[data-key='station:6245']").click();
+
+    checkbox.checked = false;
+    checkbox.dispatchEvent(new Event("change", { bubbles: true }));
+
+    expect(checkbox.isConnected).toBe(true);
+    expect([...document.querySelectorAll<HTMLElement>("#nearby li")].map((li) => li.dataset.key)).toEqual([
+      "station:82328045",
+      "station:6245",
+    ]);
+    expect($("#nearby li.selected").dataset.key).toBe("station:6245");
+
+    document.querySelector<HTMLInputElement>("input[data-provider='fr-velib-velos-et-bornes-disponibilite-temps-reel']")!.click();
+    expect(document.querySelector("#nearby li.selected")).toBeNull();
+  });
+
   it("tells when the closest only are shown, or when there is no provider", async () => {
     const app = await loadView("rentals");
     const data = fixture<RentalsResult>("rentals");

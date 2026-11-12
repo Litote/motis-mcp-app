@@ -22,14 +22,16 @@ let tabs: StationTab[] = [];
 let activeTab: StationTab | null = null;
 /** Fullscreen: board of the other direction (the arrivals of a departures board...), shown beside the board. */
 let opposite: DeparturesResult | null = null;
-/** Fullscreen: trip opened from the boards, shown in a panel beside them. */
+/** Fullscreen: trip opened from the boards, shown in a panel beside them (null while loading). */
 let panelTrip: TripResult | null = null;
+/** Fullscreen: id of the trip of the panel, loaded or loading; null when the panel is closed. */
+let panelTripId: string | null = null;
 
 const app = startView("MOTIS departures", {
   render: (data, args) => {
     history.length = 0;
     opposite = null;
-    panelTrip = null;
+    closeTripPanel();
     if (data.kind !== "departures") {
       show(data as unknown as BoardData, false);
       return;
@@ -49,7 +51,7 @@ const app = startView("MOTIS departures", {
   },
   displayModeChanged: () => {
     const trip = panelTrip;
-    panelTrip = null;
+    closeTripPanel();
     opposite = null;
     // back inline, the trip of the panel is shown in place of the board, as when opened inline
     if (trip && !isFullscreen()) show(trip, true);
@@ -84,7 +86,7 @@ async function loadOpposite(pageCursor?: string): Promise<void> {
     });
     if (request !== lastOpposite || !isFullscreen()) return;
     opposite = data;
-    if (current?.kind === "departures") renderBoard(current);
+    if (current?.kind === "departures") showOpposite(current);
   } catch {
     // reported in the status bar
   }
@@ -201,6 +203,22 @@ function sncfRow(st: StopTimeDto, index: number, arriveBy: boolean, markTheoreti
     </li>`;
 }
 
+/**
+ * Fullscreen: shows the [opposite] board beside [data]. Already beside it, only its column is drawn again: the other
+ * board and the trip panel are left as they are.
+ */
+function showOpposite(data: DeparturesResult): void {
+  const boards = sideBySide(data);
+  const index = opposite ? boards.indexOf(opposite) : -1;
+  const column = content.querySelector(`.boards [data-board="${index}"] .board-scroll`);
+  if (!opposite || !column || shownBoards.length !== boards.length) {
+    renderBoard(data);
+    return;
+  }
+  shownBoards = boards;
+  column.innerHTML = boardHtml(opposite);
+}
+
 /** Fullscreen: the departures and the arrivals side by side, once both are loaded. */
 function sideBySide(data: DeparturesResult): DeparturesResult[] {
   if (!isFullscreen() || !opposite) return [data];
@@ -230,9 +248,12 @@ function renderBoard(data: DeparturesResult): void {
       </section>`,
     )
     .join("");
-  const tracks = [...boards.map(() => "minmax(0, 1fr)"), ...(panelTrip ? ["minmax(260px, 340px)"] : [])].join(" ");
-  renderToolbarAnd(data, boards, `<div class="boards" style="grid-template-columns: ${tracks}">${columns}${tripPanel()}</div>`);
+  renderToolbarAnd(data, boards, `<div class="boards" style="grid-template-columns: ${boardTracks(boards.length)}">${columns}${tripPanel()}</div>`);
 }
+
+/** Columns of the fullscreen boards: [count] boards, and the trip panel when open. */
+const boardTracks = (count: number) =>
+  [...Array.from({ length: count }, () => "minmax(0, 1fr)"), ...(panelTripId ? ["minmax(260px, 340px)"] : [])].join(" ");
 
 /** Board of [data]: like the SNCF boards at a French station, else a generic one. */
 function boardHtml(data: DeparturesResult): string {
@@ -254,7 +275,10 @@ function boardHtml(data: DeparturesResult): string {
 }
 
 /** Class of the departure of the trip opened in the panel. */
-const openClass = (st: StopTimeDto) => (panelTrip?.tripId === st.tripId ? "open" : "");
+const openClass = (st: StopTimeDto) => (panelTripId === st.tripId ? "open" : "");
+
+/** Boards shown, by their index in `data-board`. */
+let shownBoards: DeparturesResult[] = [];
 
 /** Generic board of the [departures], with their index in the result. */
 function boardTable(departures: { st: StopTimeDto; index: number }[], markTheoretical: boolean, tz?: string): string {
@@ -284,6 +308,7 @@ function renderToolbarAnd(data: DeparturesResult, boards: DeparturesResult[], bo
         <button type="button" data-action="departures" aria-pressed="${!data.arriveBy}">${t("departures.departures")}</button>
         <button type="button" data-action="arrivals" aria-pressed="${data.arriveBy}">${t("departures.arrivals")}</button>
       </div>`;
+  shownBoards = boards;
   content.innerHTML = `
     ${tabBar()}
     <div class="toolbar">
@@ -302,20 +327,10 @@ function renderToolbarAnd(data: DeparturesResult, boards: DeparturesResult[], bo
       void selectTab(tabs[Number(button.dataset.tab)]);
     }),
   );
-  content.querySelectorAll<HTMLElement>("[data-index]").forEach((tr) =>
-    tr.addEventListener("click", () => {
-      const board = boards[Number(tr.closest<HTMLElement>("[data-board]")?.dataset.board ?? 0)];
-      void openTrip(board.stopTimes[Number(tr.dataset.index)].tripId);
-    }),
-  );
   content.querySelectorAll<HTMLButtonElement>("button[data-action]").forEach((button) =>
     button.addEventListener("click", () => {
       const action = button.dataset.action;
-      if (action === "close-trip") {
-        panelTrip = null;
-        renderBoard(data);
-        return;
-      }
+      if (action === "close-trip") return;
       // the other board of the fullscreen pages along
       if (boards.length > 1 && (action === "previous" || action === "next"))
         void loadOpposite(action === "previous" ? opposite?.previousPageCursor : opposite?.nextPageCursor);
@@ -344,20 +359,67 @@ async function reload(changes: Args): Promise<void> {
   }
 }
 
-/** Opens a trip: in a panel beside the boards in fullscreen, else in place of the board. */
+/**
+ * Opens a trip: in a panel beside the boards in fullscreen (loading in the panel, the boards left as they are), else
+ * in place of the board.
+ */
 async function openTrip(tripId: string): Promise<void> {
-  try {
-    const trip = await callTool<TripResult>(app, "trip_details", { tripId });
-    if (isFullscreen() && current?.kind === "departures") {
-      panelTrip = trip;
-      renderBoard(current);
-    } else {
-      show(trip, true);
+  if (!isFullscreen() || current?.kind !== "departures") {
+    try {
+      show(await callTool<TripResult>(app, "trip_details", { tripId }), true);
+    } catch {
+      // reported in the status bar
     }
+    return;
+  }
+  panelTripId = tripId;
+  panelTrip = null;
+  updateTripPanel();
+  try {
+    const trip = await callTool<TripResult>(app, "trip_details", { tripId }, { quiet: true });
+    // another trip clicked, or the panel closed, meanwhile
+    if (panelTripId !== tripId) return;
+    panelTrip = trip;
   } catch {
     // reported in the status bar
+    if (panelTripId === tripId) closeTripPanel();
   }
+  updateTripPanel();
 }
+
+function closeTripPanel(): void {
+  panelTrip = null;
+  panelTripId = null;
+}
+
+/** Fullscreen: shows the trip panel, or removes it, and marks the departure of its trip, the boards left as they are. */
+function updateTripPanel(): void {
+  const boards = content.querySelector<HTMLElement>(".boards");
+  if (!boards) return;
+  boards.querySelector(".trip-panel")?.remove();
+  boards.insertAdjacentHTML("beforeend", tripPanel());
+  boards.style.gridTemplateColumns = boardTracks(shownBoards.length);
+  boards.querySelectorAll<HTMLElement>("[data-board]").forEach((column) => {
+    const board = shownBoards[Number(column.dataset.board)];
+    column.querySelectorAll<HTMLElement>("[data-index]").forEach((row) => {
+      row.classList.toggle("open", board?.stopTimes[Number(row.dataset.index)]?.tripId === panelTripId);
+    });
+  });
+}
+
+content.addEventListener("click", (e) => {
+  const target = e.target as HTMLElement;
+  if (target.closest("[data-action=close-trip]")) {
+    closeTripPanel();
+    updateTripPanel();
+    return;
+  }
+  // a departure of a board (the columns of the fullscreen boards may be drawn again on their own)
+  const row = target.closest<HTMLElement>("[data-board] [data-index]");
+  const board = row ? shownBoards[Number(row.closest<HTMLElement>("[data-board]")!.dataset.board)] : undefined;
+  const departure = board?.stopTimes[Number(row!.dataset.index)];
+  if (departure) void openTrip(departure.tripId);
+});
 
 function stopRow(stop: PlaceDto, color: string, isEnd: boolean): string {
   const arrival = stop.arrival ?? stop.scheduledArrival;
@@ -414,18 +476,15 @@ function renderTrip(data: TripResult): void {
   });
 }
 
-/** Fullscreen: panel of the trip opened from the boards, with a button to close it. */
+/** Fullscreen: panel of the trip opened from the boards (or loading), with a button to close it. */
 function tripPanel(): string {
-  if (!panelTrip) return "";
-  const heading = tripHeading(panelTrip);
+  if (!panelTripId) return "";
+  const heading = panelTrip ? tripHeading(panelTrip) : { title: t("loading"), subtitle: "" };
+  const close = `<button type="button" class="ghost icon" data-action="close-trip" title="${t("close")}" aria-label="${t("close")}">✕</button>`;
   return `
-    <aside class="trip-panel" aria-label="${esc(heading.title)}">
-      <div class="trip-panel-head">
-        <strong>${esc(heading.title)}</strong>
-        <button type="button" class="ghost icon" data-action="close-trip" title="${t("close")}" aria-label="${t("close")}">✕</button>
-      </div>
-      <div class="muted">${esc(heading.subtitle)}</div>
-      ${tripTimeline(panelTrip)}
+    <aside class="trip-panel" aria-label="${esc(heading.title)}" aria-busy="${!panelTrip}">
+      <div class="trip-panel-head"><strong>${esc(heading.title)}</strong>${close}</div>
+      ${panelTrip ? `<div class="muted">${esc(heading.subtitle)}</div>${tripTimeline(panelTrip)}` : ""}
     </aside>`;
 }
 

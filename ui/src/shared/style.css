@@ -84,6 +84,23 @@
   min-height: 0;
 }
 
+/* fullscreen: the status floats over the bottom of the view, not to move the panels (and resize the maps) while loading */
+:root[data-display-mode="fullscreen"] #status:not([hidden]) {
+  position: fixed;
+  z-index: 2000;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  max-width: calc(100% - 32px);
+  width: max-content;
+  background: var(--color-background-primary);
+  box-shadow: var(--shadow-floating), 0 0 0 1px var(--color-border-secondary);
+}
+
+:root[data-display-mode="fullscreen"] #status[data-kind="error"]:not([hidden]) {
+  background: color-mix(in srgb, var(--color-text-danger) 10%, var(--color-background-primary));
+}
+
 /* panels of the fullscreen layouts, shown in fullscreen only */
 :root:not([data-display-mode="fullscreen"]) .fullscreen-only {
   display: none;

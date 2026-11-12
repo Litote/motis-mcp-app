@@ -43,11 +43,14 @@ const hidden = new Set<string>();
 let sort: "distance" | "availability" = "distance";
 /** Markers of the stations and vehicles shown, by key of the nearby list. */
 const markers = new Map<string, L.CircleMarker>();
+/** Key of the item of the nearby list shown on the map. */
+let selectedKey: string | null = null;
 
 startView("MOTIS shared mobility", {
   render: (result) => {
     data = result as unknown as RentalsResult;
     hidden.clear();
+    selectedKey = null;
     render(true);
   },
   themeChanged: setTheme,
@@ -57,6 +60,7 @@ function colors(result: RentalsResult): Map<string, string> {
   return new Map(result.providers.map((p, i) => [p.id, p.color ?? PALETTE[i % PALETTE.length]]));
 }
 
+/** Shows the providers and their stations and vehicles; [refit] the map on them. */
 function render(refit: boolean): void {
   if (!data) return;
   const providerColors = colors(data);
@@ -73,12 +77,23 @@ function render(refit: boolean): void {
     ? data.providers.map((p) => providerLabel(p, providerColors)).join("")
     : `<span class="muted">${t("rentals.none")}</span>`;
 
+  drawProviders(data, providerColors);
+  if (refit) fit(themedMap, layer, data.bbox);
+}
+
+/**
+ * Draws the stations and vehicles of the providers shown, on the map and in the nearby list: the list keeps its scroll
+ * (a provider hidden or shown), its selected item when still shown.
+ */
+function drawProviders(result: RentalsResult, providerColors: Map<string, string>): void {
   layer.clearLayers();
   markers.clear();
-  drawStations(data, providerColors);
-  drawVehicles(data, providerColors);
-  renderNearby(data, providerColors);
-  if (refit) fit(themedMap, layer, data.bbox);
+  drawStations(result, providerColors);
+  drawVehicles(result, providerColors);
+  if (selectedKey && !markers.has(selectedKey)) selectedKey = null;
+  const scroll = nearbyEl.scrollTop;
+  renderNearby(result, providerColors);
+  nearbyEl.scrollTop = scroll;
 }
 
 interface NearbyItem {
@@ -135,7 +150,7 @@ function renderNearby(result: RentalsResult, providerColors: Map<string, string>
   nearbyEl.innerHTML = nearbyItems(result, providerColors)
     .map(
       (item) => `
-      <li class="clickable" data-key="${esc(item.key)}" tabindex="0">
+      <li class="clickable ${item.key === selectedKey ? "selected" : ""}" data-key="${esc(item.key)}" tabindex="0">
         <i class="${item.station ? "station" : ""}" style="background:${esc(item.color)}"></i>
         <span class="what"><strong>${esc(item.name)}</strong><span class="muted">${esc(item.detail)}</span></span>
         <span class="muted">${item.meters == null ? "" : distance(item.meters)}</span>
@@ -148,6 +163,7 @@ function renderNearby(result: RentalsResult, providerColors: Map<string, string>
 function showItem(key: string): void {
   const marker = markers.get(key);
   if (!marker) return;
+  selectedKey = key;
   nearbyEl.querySelectorAll<HTMLElement>("li").forEach((li) => li.classList.toggle("selected", li.dataset.key === key));
   map.setView(marker.getLatLng(), Math.max(map.getZoom(), 17));
   marker.openTooltip();
@@ -231,7 +247,8 @@ providersEl.addEventListener("change", (e) => {
   if (!id) return;
   if (input.checked) hidden.delete(id);
   else hidden.add(id);
-  render(false);
+  // the providers are left as they are (the checkbox keeps the focus): only their stations and vehicles change
+  if (data) drawProviders(data, colors(data));
 });
 
 const style = document.createElement("style");
