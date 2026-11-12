@@ -38,6 +38,16 @@ class StationNamesTest {
     }
 
     @Test
+    fun `a stop named after its city and a word for station takes the name of its station`() {
+        // the German feed names the station of Strasbourg "Strasbourg Bahnhof"
+        assertEquals("Nîmes Centre", stations.localize("Nimes Bahnhof", 43.8323, 4.3659, "fr"))
+        assertEquals("Nîmes Centre", stations.localize("Nîmes Gare SNCF", null, null, "fr"))
+        assertEquals("Valence TGV", stations.localize("Valence Bahnhof", 44.9901, 4.9701, "fr"))
+        // another word is kept
+        assertEquals("Nîmes Pont-du-Gard", stations.localize("Nîmes Pont-du-Gard", null, null, "fr"))
+    }
+
+    @Test
     fun `a city with several stations gives the main one when none is near`() {
         assertEquals("Valence Ville", stations.localize("Valence", null, null, "fr"))
         // the coordinates choose the station
