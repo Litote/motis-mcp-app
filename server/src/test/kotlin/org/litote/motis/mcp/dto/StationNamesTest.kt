@@ -48,6 +48,22 @@ class StationNamesTest {
     }
 
     @Test
+    fun `a city with several stations and no main one gives the name of the city`() {
+        val lille =
+            StationNames(
+                listOf(
+                    "8722326\t50.6365\t3.0705\t0\tLille Europe\tLille\t\tLila Europe\tLille-Europe station\t\t\t",
+                    "8722300\t50.6366\t3.0710\t0\tLille Flandres\tLille\t\tLila Flandres\tLille-Flandres station\t\t\t",
+                ).joinToString("\n"),
+            )
+        assertEquals("Lila", lille.localize("Lille", null, null, "es"))
+        assertEquals("Lila", lille.localize("Lille Bahnhof", 50.6365, 3.0705, "es"))
+        // no translation of the city: the name is kept
+        assertEquals("Lille", lille.localize("Lille", null, null, "en"))
+        assertEquals("Lille Centre", lille.localize("Lille Centre", null, null, "en"))
+    }
+
+    @Test
     fun `a city with several stations gives the main one when none is near`() {
         assertEquals("Valence Ville", stations.localize("Valence", null, null, "fr"))
         // the coordinates choose the station

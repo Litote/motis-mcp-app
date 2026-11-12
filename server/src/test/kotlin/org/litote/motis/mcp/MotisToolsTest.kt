@@ -684,8 +684,12 @@ class MotisToolsTest {
             }
         }
 
-    /** Geocoding of [text]: its station (named [stopName]) first, then the city of Strasbourg 1.3 km away. */
-    private fun stationBeforeCityMotis(stopName: String) =
+    /** Geocoding: a station named [stopName] first, then the [city] (by default Strasbourg, 1.3 km away). */
+    private fun stationBeforeCityMotis(
+        stopName: String,
+        city: String =
+            """{"type":"PLACE","category":"place_6","name":"Strasbourg","id":"node/26686563","lat":48.584614,"lon":7.7507127,"score":-21.46,"tokens":[],"areas":[]}""",
+    ) =
         MockMotis { request ->
             when (request.url.encodedPath) {
                 "/api/v1/geocode" ->
@@ -693,7 +697,7 @@ class MotisToolsTest {
                         """
                         [
                           {"type":"STOP","name":"$stopName","id":"de-DELFI_fr:24067:1284","lat":48.58534,"lon":7.73407,"score":-21.57,"tokens":[],"areas":[]},
-                          {"type":"PLACE","category":"place_6","name":"Strasbourg","id":"node/26686563","lat":48.584614,"lon":7.7507127,"score":-21.46,"tokens":[],"areas":[]}
+                          $city
                         ]
                         """.trimIndent(),
                     )
@@ -719,6 +723,27 @@ class MotisToolsTest {
             client.callTool("plan_journey", mapOf("from" to "48.39,-4.48", "to" to "Strasbourg Port du Rhin"))
 
             assertEquals("de-DELFI_fr:24067:1284", motis.request("/api/v6/plan").url.parameters["toPlace"])
+        }
+    }
+
+    @Test
+    fun `plan_journey keeps the station when the place of the same name is not its city`() {
+        listOf(
+            // not a city
+            """{"type":"PLACE","category":"museum_16","name":"Strasbourg","id":"node/1","lat":48.584614,"lon":7.7507127,"score":-21.46,"tokens":[],"areas":[]}""",
+            // no category
+            """{"type":"PLACE","name":"Strasbourg","id":"node/2","lat":48.584614,"lon":7.7507127,"score":-21.46,"tokens":[],"areas":[]}""",
+            // much less likely
+            """{"type":"PLACE","category":"place_6","name":"Strasbourg","id":"node/3","lat":48.584614,"lon":7.7507127,"score":-25.0,"tokens":[],"areas":[]}""",
+            // a stop, not a place
+            """{"type":"STOP","name":"Strasbourg","id":"other","lat":48.584614,"lon":7.7507127,"score":-21.46,"tokens":[],"areas":[]}""",
+        ).forEach { city ->
+            val motis = stationBeforeCityMotis("Strasbourg", city)
+            withMcpClient(motis) { client ->
+                client.callTool("plan_journey", mapOf("from" to "48.39,-4.48", "to" to "Strasbourg"))
+
+                assertEquals("de-DELFI_fr:24067:1284", motis.request("/api/v6/plan").url.parameters["toPlace"], city)
+            }
         }
     }
 
