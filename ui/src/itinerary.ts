@@ -207,48 +207,56 @@ function select(index: number, refit = true): void {
   const it = allItineraries(journey)[index];
   list.querySelectorAll("li").forEach((li) => li.classList.toggle("selected", li.dataset.index === String(index)));
   layer.clearLayers();
-  // casing under the lines, in the color of the background: the lines stay readable over the roads, in both themes
-  const casing = getComputedStyle(document.body).backgroundColor;
-  for (const leg of it.legs) {
-    const transit = Boolean(leg.tripId);
-    L.polyline(decode(leg.polyline), { color: casing, weight: transit ? 11 : 9, opacity: 1, interactive: false }).addTo(layer);
-  }
-  for (const leg of it.legs) {
-    const transit = Boolean(leg.tripId);
-    // in the street: round dots, not to be taken for the railways of the map
-    L.polyline(decode(leg.polyline), {
-      color: modeColor(leg.mode, leg.routeColor),
-      weight: transit ? 6 : 5,
-      opacity: transit ? 0.95 : 1,
-      dashArray: transit ? undefined : "0 9",
-      lineCap: "round",
-      lineJoin: "round",
-    })
-      .bindTooltip(transit ? `${esc(leg.line ?? "")} → ${esc(leg.headsign ?? "")}` : esc(modeLabel(leg.mode)), { sticky: true })
-      .addTo(layer);
-    if (transit) {
-      for (const stop of [leg.from, leg.to]) {
-        L.circleMarker([stop.lat, stop.lon], { radius: 5, color: "#fff", weight: 2, fillColor: modeColor(leg.mode, leg.routeColor), fillOpacity: 1 })
-          .bindTooltip(esc(stop.name))
-          .addTo(layer);
-      }
-    }
-  }
-  const first = it.legs[0];
+  // the lines are drawn in the colors of the page, to stay readable over the roads in both themes
+  const colors = getComputedStyle(document.body);
+  for (const leg of it.legs) drawCasing(leg, colors.backgroundColor);
+  for (const leg of it.legs) drawLeg(leg);
+  drawEnds(it.legs, colors.backgroundColor, colors.color);
   const last = it.legs.at(-1);
-  if (first && last) {
-    // start: ring; end: target
-    const text = getComputedStyle(document.body).color;
-    L.circleMarker([first.from.lat, first.from.lon], { radius: 7, color: text, weight: 3, fillColor: casing, fillOpacity: 1 })
-      .bindTooltip(esc(placeName(first.from)))
-      .addTo(layer);
-    L.circleMarker([last.to.lat, last.to.lon], { radius: 9, color: casing, weight: 2, fillColor: text, fillOpacity: 1 })
-      .bindTooltip(esc(placeName(last.to)))
-      .addTo(layer);
-    L.circleMarker([last.to.lat, last.to.lon], { radius: 3, stroke: false, fillColor: casing, fillOpacity: 1, interactive: false }).addTo(layer);
-  }
   legsList.innerHTML = it.legs.map(legDescription).join("") + (last ? legRow(last.endTime, last.to, "end") : "");
   if (refit) fit(themedMap, layer);
+}
+
+/** Casing under the line of [leg], in the [background] color. */
+function drawCasing(leg: LegDto, background: string): void {
+  const weight = leg.tripId ? 11 : 9;
+  L.polyline(decode(leg.polyline), { color: background, weight, opacity: 1, interactive: false }).addTo(layer);
+}
+
+/** Line of [leg], with its stops on board; in the street round dots, not to be taken for the railways of the map. */
+function drawLeg(leg: LegDto): void {
+  const transit = Boolean(leg.tripId);
+  const color = modeColor(leg.mode, leg.routeColor);
+  L.polyline(decode(leg.polyline), {
+    color,
+    weight: transit ? 6 : 5,
+    opacity: transit ? 0.95 : 1,
+    dashArray: transit ? undefined : "0 9",
+    lineCap: "round",
+    lineJoin: "round",
+  })
+    .bindTooltip(transit ? `${esc(leg.line ?? "")} → ${esc(leg.headsign ?? "")}` : esc(modeLabel(leg.mode)), { sticky: true })
+    .addTo(layer);
+  if (!transit) return;
+  for (const stop of [leg.from, leg.to]) {
+    L.circleMarker([stop.lat, stop.lon], { radius: 5, color: "#fff", weight: 2, fillColor: color, fillOpacity: 1 })
+      .bindTooltip(esc(stop.name))
+      .addTo(layer);
+  }
+}
+
+/** Start of the [legs] as a ring, end as a target, in the [background] and [text] colors of the page. */
+function drawEnds(legs: LegDto[], background: string, text: string): void {
+  const start = legs[0]?.from;
+  const end = legs.at(-1)?.to;
+  if (!start || !end) return;
+  L.circleMarker([start.lat, start.lon], { radius: 7, color: text, weight: 3, fillColor: background, fillOpacity: 1 })
+    .bindTooltip(esc(placeName(start)))
+    .addTo(layer);
+  L.circleMarker([end.lat, end.lon], { radius: 9, color: background, weight: 2, fillColor: text, fillOpacity: 1 })
+    .bindTooltip(esc(placeName(end)))
+    .addTo(layer);
+  L.circleMarker([end.lat, end.lon], { radius: 3, stroke: false, fillColor: background, fillOpacity: 1, interactive: false }).addTo(layer);
 }
 
 async function page(pageCursor?: string): Promise<void> {

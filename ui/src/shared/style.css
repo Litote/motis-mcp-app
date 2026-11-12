@@ -429,12 +429,12 @@ input[type="checkbox"] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #status[data-kind="loading"]::before {
-    animation-duration: 2.4s;
+  :root {
+    --ease: 0s;
   }
 
-  * {
-    transition: none !important;
+  #status[data-kind="loading"]::before {
+    animation-duration: 2.4s;
   }
 }
 
