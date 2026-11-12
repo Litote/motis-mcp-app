@@ -14,12 +14,17 @@ private val SMALL_WORDS =
 /** Abbreviations without vowel that are not acronyms. */
 private val ABBREVIATIONS = setOf("ST", "MT")
 
+/** Spanish prefix of the stops of the Spain-France high-speed feed: "Estación de tren Valence", "Estación de tren NIMES". */
+private val SPANISH_STATION_PREFIX = Regex("""^Estaci[oó]n de tren\s+""", RegexOption.IGNORE_CASE)
+
 /**
  * Name of a stop or of a destination as displayed: some feeds write them in capitals ("LYON PERRACHE" of Trenitalia),
  * the others in mixed case ("Lyon Perrache"). A name in capitals gets the mixed case, except its acronyms (words without
- * vowel: "TGV", "CDG"); a name already in mixed case is kept as is.
+ * vowel: "TGV", "CDG"); a name already in mixed case is kept as is. The Spanish prefix "Estación de tren" of the AVE feed is dropped ("Valence", not
+ * "Estación de tren Valence").
  */
-fun displayName(name: String): String {
+fun displayName(rawName: String): String {
+    val name = rawName.replace(SPANISH_STATION_PREFIX, "").ifBlank { rawName }
     if (name.any(Char::isLowerCase) || name.count(Char::isLetter) < 2) return name
     return WORD.replace(name) { match ->
         val word = match.value

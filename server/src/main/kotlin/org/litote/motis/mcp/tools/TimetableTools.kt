@@ -11,6 +11,7 @@ import org.litote.motis.mcp.ResolvedPlace
 import org.litote.motis.mcp.StopTimesQuery
 import org.litote.motis.mcp.UnknownStopException
 import org.litote.motis.mcp.apps.UiView
+import org.litote.motis.mcp.dto.LocalizedNames
 import org.litote.motis.mcp.dto.DeparturesResult
 import org.litote.motis.mcp.dto.ItineraryDto
 import org.litote.motis.mcp.dto.STATION_RADIUS
@@ -226,7 +227,7 @@ fun Server.addTimetableTools(gateway: MotisGateway) {
             string("language", LANGUAGE_DESCRIPTION)
         },
     ) { args ->
-        val result = DeparturesRequest(gateway, args).departures()
+        val result = DeparturesRequest(gateway, args).departures().let { r -> LocalizedNames.of(args.stringList("language"))?.departures(r) ?: r }
         ToolOutput.of(result.summary(), DeparturesResult.serializer(), result)
     }
 
@@ -241,8 +242,10 @@ fun Server.addTimetableTools(gateway: MotisGateway) {
         },
     ) { args ->
         val tripId = args.requireString("tripId")
-        val itinerary = gateway.trip(tripId, args.stringList("language")).toDto().withStops()
-        val result = TripResult(tripId = tripId, itinerary = itinerary)
+        val language = args.stringList("language")
+        val trip = TripResult(tripId = tripId, itinerary = gateway.trip(tripId, language).toDto().withStops())
+        val result = LocalizedNames.of(language)?.trip(trip) ?: trip
+        val itinerary = result.itinerary
         val summary =
             buildString {
                 appendLine(itinerary.describe())

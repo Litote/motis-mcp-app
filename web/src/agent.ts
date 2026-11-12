@@ -57,6 +57,8 @@ export function systemPrompt(
       "result line. Do not reproduce these lists or tables: answer in a few sentences with the key facts (best " +
       "option, next times, transfers), the user reads the details in the views.",
     "Answer in the language of the latest user message, not in the language of the place names or of the tool results.",
+    "Pass that language (ISO 639-1 code, e.g. fr) as the 'language' argument of the tools: the names of the stations are " +
+      "then given in it (fr, es, en, nl, de, it), e.g. Gérone and not Girona for a French user.",
   ];
   if (position) {
     parts.push(

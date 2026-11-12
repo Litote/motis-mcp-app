@@ -10,6 +10,7 @@ import org.litote.motis.mcp.TransferMargin
 import org.litote.motis.mcp.WalkingSpeed
 import org.litote.motis.mcp.apps.UiView
 import org.litote.motis.mcp.cities.CityJourneys
+import org.litote.motis.mcp.dto.LocalizedNames
 import org.litote.motis.mcp.dto.Coordinates
 import org.litote.motis.mcp.dto.ItineraryDto
 import org.litote.motis.mcp.dto.JourneyResult
@@ -116,7 +117,8 @@ fun Server.addRoutingTools(gateway: MotisGateway, cityJourneys: CityJourneys) {
             } else {
                 gateway.plan(query).toDto().fromMainLineStations(from.center().takeIf { from.isCity }, to.center().takeIf { to.isCity })
             }
-        val result = journeys.withEndNames(from.askedName(), to.askedName(), from.area, to.area).withStops()
+        val named = journeys.withEndNames(from.askedName(), to.askedName(), from.area, to.area).withStops()
+        val result = LocalizedNames.of(language)?.journey(named) ?: named
         val options =
             listOfNotNull(
                 walkingSpeed.takeIf { it != WalkingSpeed.NORMAL }?.let { "walking speed ${it.name}" },
