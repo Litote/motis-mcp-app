@@ -406,15 +406,30 @@ describe("departures view", () => {
       const trip = { ...fixture<TripResult>("trip"), tripId: board().stopTimes[0].tripId };
       app.answer(trip);
 
+      const boards = $(".boards");
       (columns()[1].querySelector("tr[data-index='0']") as HTMLElement).click();
+      // loading in the panel, without the status bar above the boards
+      expect($(".trip-panel").getAttribute("aria-busy")).toBe("true");
+      expect($("#status").hidden).toBe(true);
       await flush();
 
       expect($(".trip-panel strong").textContent).toBe("TGV INOUI 6633 → Lyon Perrache");
+      // the boards are left as they are: only the panel and the departure of the trip change
+      expect(boards.isConnected).toBe(true);
+      expect(boards.style.gridTemplateColumns).toBe("minmax(0, 1fr) minmax(0, 1fr) minmax(260px, 340px)");
       expect($("#title").textContent).toBe("Lyon Part Dieu");
       expect(document.querySelectorAll("tr.open")).toHaveLength(2);
 
       $("button[data-action=close-trip]").click();
       expect(document.querySelector(".trip-panel")).toBeNull();
+      expect(document.querySelectorAll("tr.open")).toHaveLength(0);
+      expect(boards.isConnected).toBe(true);
+
+      app.answer(new Error("MOTIS error: unknown trip"));
+      (columns()[0].querySelector("tr[data-index='0']") as HTMLElement).click();
+      await flush();
+      expect(document.querySelector(".trip-panel")).toBeNull();
+      expect($("#status").textContent).toBe("MOTIS error: unknown trip");
 
       app.answer(trip);
       (columns()[0].querySelector("tr[data-index='0']") as HTMLElement).click();

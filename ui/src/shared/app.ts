@@ -140,12 +140,17 @@ export function startView(name: string, handlers: ViewHandlers): App {
   return app;
 }
 
+/** Options of a server tool call: [quiet], no loading status (the view shows the loading where the result goes). */
+export interface CallOptions {
+  quiet?: boolean;
+}
+
 /**
  * Calls a server tool from the view and returns its structured content, and its text for the model.
- * A tool error is thrown as an Error with the message of the tool.
+ * A tool error is thrown as an Error with the message of the tool, also shown in the status bar.
  */
-export async function callToolResult<T>(app: App, name: string, args: Args): Promise<{ data: T; text: string }> {
-  setStatus(t("loading"), "loading");
+export async function callToolResult<T>(app: App, name: string, args: Args, options: CallOptions = {}): Promise<{ data: T; text: string }> {
+  if (!options.quiet) setStatus(t("loading"), "loading");
   try {
     const result = (await app.callServerTool({ name, arguments: args })) as ToolResultLike;
     if (result.isError) throw new Error(textOf(result) || t("toolFailed", { name }));
@@ -159,8 +164,8 @@ export async function callToolResult<T>(app: App, name: string, args: Args): Pro
 }
 
 /** Calls a server tool from the view and returns its structured content (see [callToolResult]). */
-export async function callTool<T>(app: App, name: string, args: Args): Promise<T> {
-  return (await callToolResult<T>(app, name, args)).data;
+export async function callTool<T>(app: App, name: string, args: Args, options: CallOptions = {}): Promise<T> {
+  return (await callToolResult<T>(app, name, args, options)).data;
 }
 
 /**
