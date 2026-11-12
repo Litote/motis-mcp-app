@@ -39,6 +39,8 @@
   "export.downloaded": "Staženo ✓",
   "thinking": "Přemýšlím…",
   "agent.tooManySteps": "Zastaveno: příliš mnoho kroků pro jednu otázku.",
+  "agent.emptyAnswer": "Model nedal žádnou odpověď: zkuste to znovu nebo zvolte jiný model.",
+  "model.fallbackOf": "záloha za {requested}: nedostupný nebo omezený",
   "tool.running": "probíhá…",
   "tool.arguments": "Argumenty",
   "tool.result": "Výsledek",

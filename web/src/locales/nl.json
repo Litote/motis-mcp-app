@@ -38,6 +38,8 @@
   "export.downloaded": "Gedownload ✓",
   "thinking": "Aan het nadenken…",
   "agent.tooManySteps": "Gestopt: te veel stappen voor één vraag.",
+  "agent.emptyAnswer": "Het model gaf geen antwoord: probeer het opnieuw of kies een ander model.",
+  "model.fallbackOf": "terugval van {requested}: niet beschikbaar of beperkt",
   "tool.running": "bezig…",
   "tool.arguments": "Argumenten",
   "tool.result": "Resultaat",

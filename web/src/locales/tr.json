@@ -38,6 +38,8 @@
   "export.downloaded": "İndirildi ✓",
   "thinking": "Düşünüyor…",
   "agent.tooManySteps": "Durduruldu: tek bir soru için çok fazla adım.",
+  "agent.emptyAnswer": "Model yanıt vermedi: yeniden deneyin veya başka bir model seçin.",
+  "model.fallbackOf": "{requested} yerine yedek: kullanılamıyor veya sınırlı",
   "tool.running": "çalışıyor…",
   "tool.arguments": "Argümanlar",
   "tool.result": "Sonuç",

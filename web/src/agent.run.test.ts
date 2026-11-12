@@ -100,7 +100,7 @@ describe("createAgent", () => {
     const last = results.at(-1)!;
     expect(last.status).toEqual({ type: "complete", reason: "stop" });
     // the models that answered, each once
-    expect(last.metadata).toEqual({ custom: { models: ["model", "fallback"] } });
+    expect(last.metadata).toEqual({ custom: { models: ["model", "fallback"], fallbackFrom: "model" } });
     expect(last.content).toEqual([
       { type: "text", text: "Checking." },
       expect.objectContaining({ type: "tool-call", toolCallId: "call-0-0", toolName: "departures", isError: false }),
@@ -162,6 +162,34 @@ describe("createAgent", () => {
 
     await expect(run(settings(onRunEnd))).rejects.toThrow("quota");
     expect(onRunEnd).toHaveBeenCalledOnce();
+  });
+
+  it("says so when the model gives no answer", async () => {
+    mcp.connectMcp.mockResolvedValue(server);
+    openrouter.streamChat.mockImplementation(answer({ text: "", toolCalls: [] }));
+
+    const last = (await run(settings())).at(-1)!;
+
+    expect(last.status).toEqual({ type: "complete", reason: "stop" });
+    expect(last.content).toEqual([{ type: "text", text: "_The model gave no answer: retry, or choose another model._" }]);
+  });
+
+  it("tells when a fallback model answered instead of the selected one", async () => {
+    mcp.connectMcp.mockResolvedValue(server);
+    openrouter.streamChat.mockImplementation(answer({ text: "Hi", toolCalls: [], model: "fallback" }));
+
+    const last = (await run(settings())).at(-1)!;
+
+    expect(last.metadata).toEqual({ custom: { models: ["fallback"], fallbackFrom: "model" } });
+  });
+
+  it("does not tell when the selected model answered", async () => {
+    mcp.connectMcp.mockResolvedValue(server);
+    openrouter.streamChat.mockImplementation(answer({ text: "Hi", toolCalls: [], model: "model" }));
+
+    const last = (await run(settings())).at(-1)!;
+
+    expect(last.metadata).toEqual({ custom: { models: ["model"], fallbackFrom: undefined } });
   });
 
   it("requires a key", async () => {

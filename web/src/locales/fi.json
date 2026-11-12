@@ -38,6 +38,8 @@
   "export.downloaded": "Ladattu ✓",
   "thinking": "Mietitään…",
   "agent.tooManySteps": "Keskeytetty: liian monta vaihetta yhteen kysymykseen.",
+  "agent.emptyAnswer": "Malli ei antanut vastausta: yritä uudelleen tai valitse toinen malli.",
+  "model.fallbackOf": "varamalli mallille {requested}: ei käytettävissä tai rajoitettu",
   "tool.running": "käynnissä…",
   "tool.arguments": "Argumentit",
   "tool.result": "Tulos",

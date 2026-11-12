@@ -38,6 +38,8 @@
   "export.downloaded": "Descargada ✓",
   "thinking": "Pensando…",
   "agent.tooManySteps": "Detenido: demasiados pasos para una sola pregunta.",
+  "agent.emptyAnswer": "El modelo no dio ninguna respuesta: inténtelo de nuevo o elija otro modelo.",
+  "model.fallbackOf": "respaldo de {requested}: no disponible o limitado",
   "tool.running": "en curso…",
   "tool.arguments": "Argumentos",
   "tool.result": "Resultado",

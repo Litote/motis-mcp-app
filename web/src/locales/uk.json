@@ -40,6 +40,8 @@
   "export.downloaded": "Завантажено ✓",
   "thinking": "Думаю…",
   "agent.tooManySteps": "Зупинено: забагато кроків для одного запитання.",
+  "agent.emptyAnswer": "Модель не дала відповіді: спробуйте ще раз або виберіть іншу модель.",
+  "model.fallbackOf": "заміна для {requested}: недоступна або обмежена",
   "tool.running": "виконується…",
   "tool.arguments": "Аргументи",
   "tool.result": "Результат",

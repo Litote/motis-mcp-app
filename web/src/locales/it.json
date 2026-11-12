@@ -38,6 +38,8 @@
   "export.downloaded": "Scaricata ✓",
   "thinking": "Sto pensando…",
   "agent.tooManySteps": "Interrotto: troppi passaggi per una sola domanda.",
+  "agent.emptyAnswer": "Il modello non ha dato alcuna risposta: riprova o scegli un altro modello.",
+  "model.fallbackOf": "ripiego di {requested}: non disponibile o limitato",
   "tool.running": "in corso…",
   "tool.arguments": "Argomenti",
   "tool.result": "Risultato",

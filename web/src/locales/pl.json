@@ -40,6 +40,8 @@
   "export.downloaded": "Pobrano ✓",
   "thinking": "Myślę…",
   "agent.tooManySteps": "Przerwano: zbyt wiele kroków jak na jedno pytanie.",
+  "agent.emptyAnswer": "Model nie udzielił odpowiedzi: spróbuj ponownie lub wybierz inny model.",
+  "model.fallbackOf": "zastępstwo za {requested}: niedostępny lub ograniczony",
   "tool.running": "w toku…",
   "tool.arguments": "Argumenty",
   "tool.result": "Wynik",

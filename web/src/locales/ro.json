@@ -39,6 +39,8 @@
   "export.downloaded": "Descărcată ✓",
   "thinking": "Mă gândesc…",
   "agent.tooManySteps": "Oprit: prea mulți pași pentru o singură întrebare.",
+  "agent.emptyAnswer": "Modelul nu a dat niciun răspuns: reîncercați sau alegeți alt model.",
+  "model.fallbackOf": "alternativă la {requested}: indisponibil sau limitat",
   "tool.running": "în curs…",
   "tool.arguments": "Argumente",
   "tool.result": "Rezultat",
