@@ -67,17 +67,26 @@ function Thinking() {
   );
 }
 
-/** Models that answered the message (the selected one, or fallback ones). */
+/** Models that answered the message (the selected one, or fallback ones, marked as such). */
 function AnswerModels() {
   useLanguage();
-  const models = useAuiState((s) => {
+  // a string, not an array: the selector must return a stable value
+  const answered = useAuiState((s) => {
     const value = s.message.metadata?.custom?.models;
-    return Array.isArray(value) ? value.join(" → ") : "";
+    return Array.isArray(value) ? value.join("\n") : "";
   });
-  if (!models) return null;
+  const fallbackFrom = useAuiState((s) => {
+    const value = s.message.metadata?.custom?.fallbackFrom;
+    return typeof value === "string" ? value : "";
+  });
+  if (!answered) return null;
+  const label = answered
+    .split("\n")
+    .map((m) => (fallbackFrom && m !== fallbackFrom ? `${m} [${t("model.fallbackOf", { requested: fallbackFrom })}]` : m))
+    .join(" → ");
   return (
     <div className="message-models" title={t("model.label")}>
-      {models}
+      {label}
     </div>
   );
 }

@@ -40,6 +40,8 @@
   "export.downloaded": "Скачано ✓",
   "thinking": "Думаю…",
   "agent.tooManySteps": "Остановлено: слишком много шагов для одного вопроса.",
+  "agent.emptyAnswer": "Модель не дала ответа: повторите попытку или выберите другую модель.",
+  "model.fallbackOf": "замена для {requested}: недоступна или ограничена",
   "tool.running": "выполняется…",
   "tool.arguments": "Аргументы",
   "tool.result": "Результат",

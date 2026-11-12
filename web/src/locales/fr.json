@@ -38,6 +38,8 @@
   "export.downloaded": "Téléchargée ✓",
   "thinking": "Réflexion en cours…",
   "agent.tooManySteps": "Arrêté : trop d’étapes pour une seule question.",
+  "agent.emptyAnswer": "Le modèle n’a donné aucune réponse : réessayez ou choisissez un autre modèle.",
+  "model.fallbackOf": "repli de {requested} : indisponible ou limité en débit",
   "tool.running": "en cours…",
   "tool.arguments": "Arguments",
   "tool.result": "Réponse",

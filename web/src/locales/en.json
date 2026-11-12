@@ -38,6 +38,8 @@
   "export.downloaded": "Downloaded ✓",
   "thinking": "Thinking…",
   "agent.tooManySteps": "Stopped: too many steps for one question.",
+  "agent.emptyAnswer": "The model gave no answer: retry, or choose another model.",
+  "model.fallbackOf": "fallback of {requested}: unavailable or rate limited",
   "tool.running": "running…",
   "tool.arguments": "Arguments",
   "tool.result": "Result",

@@ -38,6 +38,8 @@
   "export.downloaded": "Heruntergeladen ✓",
   "thinking": "Denkt nach…",
   "agent.tooManySteps": "Abgebrochen: zu viele Schritte für eine Frage.",
+  "agent.emptyAnswer": "Das Modell hat nicht geantwortet: Versuchen Sie es erneut oder wählen Sie ein anderes Modell.",
+  "model.fallbackOf": "Ersatz für {requested}: nicht verfügbar oder begrenzt",
   "tool.running": "läuft…",
   "tool.arguments": "Argumente",
   "tool.result": "Ergebnis",

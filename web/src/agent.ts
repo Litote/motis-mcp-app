@@ -181,7 +181,15 @@ export function createAgent(settings: AgentSettings): ChatModelAdapter {
       const done: ThreadAssistantMessagePart[] = [];
       // models that answered (fallback ones included), shown with the message
       const models: string[] = [];
-      const metadata = () => ({ custom: { models: [...models] } });
+      const requested = settings.model();
+      const fallbacks = settings.fallbackModels();
+      // set when a fallback model answered instead of the selected one: the chat says so
+      const metadata = () => ({
+        custom: {
+          models: [...models],
+          fallbackFrom: models.some((m) => m !== requested && fallbacks.includes(m)) ? requested : undefined,
+        },
+      });
       const addModel = (model: string | undefined) => {
         if (model && !models.includes(model)) models.push(model);
       };
@@ -239,6 +247,10 @@ export function createAgent(settings: AgentSettings): ChatModelAdapter {
           const calls = result.toolCalls.filter((call) => call.function.name);
           if (!calls.length) {
             done.push(...parts(result.text, []));
+            // nothing to show (e.g. reasoning only, or a provider that closed the stream): say so
+            if (!done.some((part) => part.type === "text" && part.text.trim())) {
+              done.push({ type: "text", text: `_${t("agent.emptyAnswer")}_` });
+            }
             yield { content: done, status: { type: "complete", reason: "stop" }, metadata: metadata() };
             return;
           }

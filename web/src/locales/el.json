@@ -38,6 +38,8 @@
   "export.downloaded": "Λήφθηκε ✓",
   "thinking": "Σκέφτομαι…",
   "agent.tooManySteps": "Διακόπηκε: πάρα πολλά βήματα για μία ερώτηση.",
+  "agent.emptyAnswer": "Το μοντέλο δεν έδωσε απάντηση: δοκιμάστε ξανά ή επιλέξτε άλλο μοντέλο.",
+  "model.fallbackOf": "εναλλακτικό του {requested}: μη διαθέσιμο ή με περιορισμό",
   "tool.running": "εκτελείται…",
   "tool.arguments": "Ορίσματα",
   "tool.result": "Αποτέλεσμα",

@@ -38,6 +38,8 @@
   "export.downloaded": "Nedladdad ✓",
   "thinking": "Tänker…",
   "agent.tooManySteps": "Avbrutet: för många steg för en fråga.",
+  "agent.emptyAnswer": "Modellen gav inget svar: försök igen eller välj en annan modell.",
+  "model.fallbackOf": "reserv för {requested}: otillgänglig eller begränsad",
   "tool.running": "körs…",
   "tool.arguments": "Argument",
   "tool.result": "Resultat",

@@ -38,6 +38,8 @@
   "export.downloaded": "Baixada ✓",
   "thinking": "Pensando…",
   "agent.tooManySteps": "Interrompido: etapas demais para uma única pergunta.",
+  "agent.emptyAnswer": "O modelo não deu nenhuma resposta: tente novamente ou escolha outro modelo.",
+  "model.fallbackOf": "alternativa a {requested}: indisponível ou limitado",
   "tool.running": "em execução…",
   "tool.arguments": "Argumentos",
   "tool.result": "Resultado",

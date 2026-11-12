@@ -38,6 +38,8 @@
   "export.downloaded": "Letöltve ✓",
   "thinking": "Gondolkodik…",
   "agent.tooManySteps": "Leállítva: túl sok lépés egyetlen kérdéshez.",
+  "agent.emptyAnswer": "A modell nem adott választ: próbálja újra, vagy válasszon másik modellt.",
+  "model.fallbackOf": "tartalék a(z) {requested} helyett: nem elérhető vagy korlátozott",
   "tool.running": "fut…",
   "tool.arguments": "Argumentumok",
   "tool.result": "Eredmény",

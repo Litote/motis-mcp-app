@@ -38,6 +38,8 @@
   "export.downloaded": "Downloadet ✓",
   "thinking": "Tænker…",
   "agent.tooManySteps": "Stoppet: for mange trin til ét spørgsmål.",
+  "agent.emptyAnswer": "Modellen gav intet svar: prøv igen, eller vælg en anden model.",
+  "model.fallbackOf": "reserve for {requested}: utilgængelig eller begrænset",
   "tool.running": "kører…",
   "tool.arguments": "Argumenter",
   "tool.result": "Resultat",
