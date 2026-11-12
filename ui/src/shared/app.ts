@@ -4,6 +4,7 @@ import {
   applyDocumentTheme,
   applyHostFonts,
   applyHostStyleVariables,
+  type McpUiDisplayMode,
   type McpUiHostContext,
 } from "@modelcontextprotocol/ext-apps";
 import { setLocale, t, translateDocument } from "./i18n";
@@ -22,6 +23,18 @@ export interface ViewHandlers {
   render(data: { kind: string } & Record<string, unknown>, args: Args): void;
   /** Called when the host changes the theme. */
   themeChanged?(theme: "light" | "dark"): void;
+  /** Called when the view goes fullscreen or back inline (the document has `data-display-mode` set already). */
+  displayModeChanged?(mode: McpUiDisplayMode): void;
+}
+
+/** True when the view is fullscreen: the views lay their content out to fill the window (style.css). */
+export const isFullscreen = (): boolean => document.documentElement.dataset.displayMode === "fullscreen";
+
+/** Sets the display mode of the document, and tells the view when it changes. */
+function setDisplayMode(mode: McpUiDisplayMode, handlers: ViewHandlers): void {
+  if (document.documentElement.dataset.displayMode === mode) return;
+  document.documentElement.dataset.displayMode = mode;
+  handlers.displayModeChanged?.(mode);
 }
 
 export { hostLocale } from "./i18n";
@@ -62,7 +75,7 @@ function applyContext(ctx: McpUiHostContext, handlers: ViewHandlers): void {
   if (fullscreen && ctx.availableDisplayModes) {
     fullscreen.hidden = !ctx.availableDisplayModes.includes("fullscreen");
   }
-  if (ctx.displayMode) document.documentElement.dataset.displayMode = ctx.displayMode;
+  if (ctx.displayMode) setDisplayMode(ctx.displayMode, handlers);
 }
 
 /** Current theme of the document (set by the host, or by the system preference). */
@@ -102,17 +115,17 @@ export function startView(name: string, handlers: ViewHandlers): App {
   const requestDisplayMode = async (mode: "inline" | "fullscreen") => {
     try {
       const result = await app.requestDisplayMode({ mode });
-      document.documentElement.dataset.displayMode = result.mode;
+      setDisplayMode(result.mode, handlers);
     } catch {
       // display mode not supported: ignored
     }
   };
   document.getElementById("fullscreen")?.addEventListener("click", () =>
-    requestDisplayMode(document.documentElement.dataset.displayMode === "fullscreen" ? "inline" : "fullscreen"),
+    requestDisplayMode(isFullscreen() ? "inline" : "fullscreen"),
   );
   // Escape leaves fullscreen: the keyboard focus is in the view, the host does not receive the key
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && document.documentElement.dataset.displayMode === "fullscreen") {
+    if (event.key === "Escape" && isFullscreen()) {
       void requestDisplayMode("inline");
     }
   });

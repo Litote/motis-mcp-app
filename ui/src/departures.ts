@@ -1,5 +1,5 @@
 // Departures board (departures) and trip timeline (trip_details).
-import { callTool, startView, type Args } from "./shared/app";
+import { callTool, isFullscreen, startView, type Args } from "./shared/app";
 import { day, delayBadge, delayMinutes, duration, esc, lineBadge, time } from "./shared/format";
 import { t } from "./shared/i18n";
 import { arrowLeft, chevronLeft, chevronRight } from "./shared/icons";
@@ -20,10 +20,16 @@ let boardArgs: Args = {};
 /** Tabs of the board of a railway station (none for the other stops), and the one shown. */
 let tabs: StationTab[] = [];
 let activeTab: StationTab | null = null;
+/** Fullscreen: board of the other direction (the arrivals of a departures board...), shown beside the board. */
+let opposite: DeparturesResult | null = null;
+/** Fullscreen: trip opened from the boards, shown in a panel beside them. */
+let panelTrip: TripResult | null = null;
 
 const app = startView("MOTIS departures", {
   render: (data, args) => {
     history.length = 0;
+    opposite = null;
+    panelTrip = null;
     if (data.kind !== "departures") {
       show(data as unknown as BoardData, false);
       return;
@@ -34,18 +40,72 @@ const app = startView("MOTIS departures", {
     activeTab = tabs[0] ?? null;
     if (!activeTab) {
       show(departures, false);
+      void loadOpposite();
       return;
     }
     // the departures of the tab in the result first, then all of them
     show({ ...departures, stopTimes: departures.stopTimes.filter((st) => inTab(activeTab!, st)) }, false);
     void selectTab(activeTab);
   },
+  displayModeChanged: () => {
+    const trip = panelTrip;
+    panelTrip = null;
+    opposite = null;
+    // back inline, the trip of the panel is shown in place of the board, as when opened inline
+    if (trip && !isFullscreen()) show(trip, true);
+    else if (current) show(current, false);
+    void loadOpposite();
+    tickClock();
+  },
 });
 
 /** Shows the departures of the station on the lines of [tab]. */
 function selectTab(tab: StationTab): Promise<void> {
   activeTab = tab;
-  return reload({ station: true, modes: tab.modes, lines: tab.lines, pageCursor: undefined });
+  const board = reload({ station: true, modes: tab.modes, lines: tab.lines, pageCursor: undefined });
+  void loadOpposite();
+  return board;
+}
+
+/** Number of the last request of the opposite board: the answers of the previous ones are ignored. */
+let lastOpposite = 0;
+
+/** Fullscreen: loads the board of the other direction (page [pageCursor]), shown beside the board. */
+async function loadOpposite(pageCursor?: string): Promise<void> {
+  if (!isFullscreen() || current?.kind !== "departures") return;
+  const board = current;
+  const request = ++lastOpposite;
+  try {
+    const data = await callTool<DeparturesResult>(app, "departures", {
+      ...boardArgs,
+      stopId: boardArgs.stopId ?? board.stop.stopId,
+      arriveBy: !board.arriveBy,
+      pageCursor,
+    });
+    if (request !== lastOpposite || !isFullscreen()) return;
+    opposite = data;
+    if (current?.kind === "departures") renderBoard(current);
+  } catch {
+    // reported in the status bar
+  }
+}
+
+// ─── Clock of the fullscreen boards, in the time zone of the station ───────────
+
+const clock = document.createElement("span");
+clock.className = "clock fullscreen-only";
+document.getElementById("fullscreen")?.before(clock);
+let clockTimer: ReturnType<typeof setInterval> | undefined;
+
+function tickClock(): void {
+  if (!isFullscreen()) {
+    clearInterval(clockTimer);
+    clockTimer = undefined;
+    return;
+  }
+  clockTimer ??= setInterval(tickClock, 10_000);
+  const tz = current?.kind === "departures" ? current.stop.tz : undefined;
+  clock.textContent = time(new Date().toISOString(), tz);
 }
 
 function tabBar(): string {
@@ -127,7 +187,7 @@ function sncfRow(st: StopTimeDto, index: number, arriveBy: boolean, markTheoreti
     status = theoreticalMark();
   }
   return `
-    <li class="train ${state}" data-index="${index}">
+    <li class="train ${state} ${openClass(st)}" data-index="${index}">
       <div class="lines">
         <div class="main-line">
           <span class="origine">${sncfOrigin(st)}</span>
@@ -141,12 +201,42 @@ function sncfRow(st: StopTimeDto, index: number, arriveBy: boolean, markTheoreti
     </li>`;
 }
 
+/** Fullscreen: the departures and the arrivals side by side, once both are loaded. */
+function sideBySide(data: DeparturesResult): DeparturesResult[] {
+  if (!isFullscreen() || !opposite) return [data];
+  return data.arriveBy ? [opposite, data] : [data, opposite];
+}
+
 function renderBoard(data: DeparturesResult): void {
   const tz = data.stop.tz;
   title.textContent = data.stop.name;
   const first = data.stopTimes[0]?.time;
   const firstDay = first ? ` · ${day(first, tz)}` : "";
-  subtitle.textContent = `${t(data.arriveBy ? "departures.arrivals" : "departures.departures")}${firstDay}`;
+  const boards = sideBySide(data);
+  const direction = (b: DeparturesResult) => t(b.arriveBy ? "departures.arrivals" : "departures.departures");
+  const directions = boards.map(direction).join(" · ");
+  subtitle.textContent = `${directions}${firstDay}`;
+  if (!isFullscreen()) {
+    renderToolbarAnd(data, boards, `<div data-board="0">${boardHtml(data)}</div>`);
+    return;
+  }
+  tickClock();
+  const columns = boards
+    .map(
+      (b, i) => `
+      <section class="board-column" data-board="${i}">
+        ${boards.length > 1 ? `<h2 class="board-head">${direction(b)}</h2>` : ""}
+        <div class="board-scroll">${boardHtml(b)}</div>
+      </section>`,
+    )
+    .join("");
+  const tracks = [...boards.map(() => "minmax(0, 1fr)"), ...(panelTrip ? ["minmax(260px, 340px)"] : [])].join(" ");
+  renderToolbarAnd(data, boards, `<div class="boards" style="grid-template-columns: ${tracks}">${columns}${tripPanel()}</div>`);
+}
+
+/** Board of [data]: like the SNCF boards at a French station, else a generic one. */
+function boardHtml(data: DeparturesResult): string {
+  const tz = data.stop.tz;
   const all = data.stopTimes.map((st, index) => ({ st, index }));
   // no real time at all (e.g. a feed without it): said once, rather than on each departure
   const theoretical = data.stopTimes.filter((st) => !st.cancelled && !st.realTime).length;
@@ -158,18 +248,20 @@ function renderBoard(data: DeparturesResult): void {
     const others = all.filter(({ st }) => !onSncfBoard(st));
     const rows = trains.map(({ st, index }) => sncfRow(st, index, data.arriveBy, mark, tz)).join("");
     const otherLines = others.length ? `<h3>${t("departures.otherLines")}</h3>${boardTable(others, mark, tz)}` : "";
-    renderToolbarAnd(data, `${note}<ol class="sncf-board ${data.arriveBy ? "arrivals" : ""}">${rows}</ol>${otherLines}`);
-    return;
+    return `${note}<ol class="sncf-board ${data.arriveBy ? "arrivals" : ""}">${rows}</ol>${otherLines}`;
   }
-  renderToolbarAnd(data, all.length ? note + boardTable(all, mark, tz) : `<p class="muted">${t("departures.none")}</p>`);
+  return all.length ? note + boardTable(all, mark, tz) : `<p class="muted">${t("departures.none")}</p>`;
 }
+
+/** Class of the departure of the trip opened in the panel. */
+const openClass = (st: StopTimeDto) => (panelTrip?.tripId === st.tripId ? "open" : "");
 
 /** Generic board of the [departures], with their index in the result. */
 function boardTable(departures: { st: StopTimeDto; index: number }[], markTheoretical: boolean, tz?: string): string {
   const rows = departures
     .map(
       ({ st, index }) => `
-      <tr class="clickable" data-index="${index}">
+      <tr class="clickable ${openClass(st)}" data-index="${index}">
         <td class="${st.cancelled ? "cancelled" : ""}">${timeCell(st, markTheoretical, tz)}</td>
         <td>${lineBadge(st.mode, st.line, st.routeColor, st.routeTextColor)}</td>
         <td>${esc(st.headsign)}${st.cancelled ? ` <strong class="late">${t("departures.cancelled")}</strong>` : ""}<div class="muted">${esc(st.agency)}</div></td>
@@ -180,8 +272,18 @@ function boardTable(departures: { st: StopTimeDto; index: number }[], markTheore
   return `<table class="board"><tbody>${rows}</tbody></table>`;
 }
 
-/** Paging and departures / arrivals buttons, then the [board]. */
-function renderToolbarAnd(data: DeparturesResult, board: string): void {
+/**
+ * Paging and departures / arrivals buttons, then the [board] html showing the [boards] (their index in `data-board`):
+ * the departures / arrivals buttons are left out when both are shown.
+ */
+function renderToolbarAnd(data: DeparturesResult, boards: DeparturesResult[], board: string): void {
+  const directions =
+    boards.length > 1
+      ? ""
+      : `<div class="segmented" role="group">
+        <button type="button" data-action="departures" aria-pressed="${!data.arriveBy}">${t("departures.departures")}</button>
+        <button type="button" data-action="arrivals" aria-pressed="${data.arriveBy}">${t("departures.arrivals")}</button>
+      </div>`;
   content.innerHTML = `
     ${tabBar()}
     <div class="toolbar">
@@ -190,10 +292,7 @@ function renderToolbarAnd(data: DeparturesResult, board: string): void {
         <button type="button" data-action="next" ${data.nextPageCursor ? "" : "disabled"}><span>${t("later")}</span>${chevronRight}</button>
       </div>
       <span class="spacer"></span>
-      <div class="segmented" role="group">
-        <button type="button" data-action="departures" aria-pressed="${!data.arriveBy}">${t("departures.departures")}</button>
-        <button type="button" data-action="arrivals" aria-pressed="${data.arriveBy}">${t("departures.arrivals")}</button>
-      </div>
+      ${directions}
     </div>
     ${board}`;
 
@@ -204,11 +303,22 @@ function renderToolbarAnd(data: DeparturesResult, board: string): void {
     }),
   );
   content.querySelectorAll<HTMLElement>("[data-index]").forEach((tr) =>
-    tr.addEventListener("click", () => openTrip(data.stopTimes[Number(tr.dataset.index)].tripId)),
+    tr.addEventListener("click", () => {
+      const board = boards[Number(tr.closest<HTMLElement>("[data-board]")?.dataset.board ?? 0)];
+      void openTrip(board.stopTimes[Number(tr.dataset.index)].tripId);
+    }),
   );
   content.querySelectorAll<HTMLButtonElement>("button[data-action]").forEach((button) =>
     button.addEventListener("click", () => {
       const action = button.dataset.action;
+      if (action === "close-trip") {
+        panelTrip = null;
+        renderBoard(data);
+        return;
+      }
+      // the other board of the fullscreen pages along
+      if (boards.length > 1 && (action === "previous" || action === "next"))
+        void loadOpposite(action === "previous" ? opposite?.previousPageCursor : opposite?.nextPageCursor);
       if (action === "previous") void reload({ pageCursor: data.previousPageCursor });
       // later departures of a French station with other lines (buses, metros): its trains only, to fill the board
       else if (action === "next" && !activeTab && isFrenchStation(data) && data.stopTimes.some((st) => !onSncfBoard(st)))
@@ -234,9 +344,16 @@ async function reload(changes: Args): Promise<void> {
   }
 }
 
+/** Opens a trip: in a panel beside the boards in fullscreen, else in place of the board. */
 async function openTrip(tripId: string): Promise<void> {
   try {
-    show(await callTool<TripResult>(app, "trip_details", { tripId }), true);
+    const trip = await callTool<TripResult>(app, "trip_details", { tripId });
+    if (isFullscreen() && current?.kind === "departures") {
+      panelTrip = trip;
+      renderBoard(current);
+    } else {
+      show(trip, true);
+    }
   } catch {
     // reported in the status bar
   }
@@ -257,17 +374,21 @@ function stopRow(stop: PlaceDto, color: string, isEnd: boolean): string {
     </li>`;
 }
 
-function renderTrip(data: TripResult): void {
-  const legs = data.itinerary.legs.filter((leg) => leg.tripId);
-  const main = legs[0] ?? data.itinerary.legs[0];
-  title.textContent = main ? `${main.line ?? ""} → ${main.headsign ?? main.to.name}` : data.tripId;
-  if (main) {
-    const agency = main.agency ? ` · ${main.agency}` : "";
-    subtitle.textContent = `${day(main.startTime, main.from.tz)} · ${duration(data.itinerary.durationSeconds)}${agency}`;
-  } else {
-    subtitle.textContent = "";
-  }
-  const timeline = legs
+/** Title and subtitle of a trip. */
+function tripHeading(data: TripResult): { title: string; subtitle: string } {
+  const main = data.itinerary.legs.find((leg) => leg.tripId) ?? data.itinerary.legs[0];
+  if (!main) return { title: data.tripId, subtitle: "" };
+  const agency = main.agency ? ` · ${main.agency}` : "";
+  return {
+    title: `${main.line ?? ""} → ${main.headsign ?? main.to.name}`,
+    subtitle: `${day(main.startTime, main.from.tz)} · ${duration(data.itinerary.durationSeconds)}${agency}`,
+  };
+}
+
+/** Stops of the legs of a trip, as a timeline in the color of their line. */
+function tripTimeline(data: TripResult): string {
+  return data.itinerary.legs
+    .filter((leg) => leg.tripId)
     .map((leg) => {
       const color = leg.routeColor ?? "#888";
       const stops = [leg.from, ...(leg.intermediateStops ?? []), leg.to];
@@ -276,13 +397,36 @@ function renderTrip(data: TripResult): void {
         <ol class="timeline">${stops.map((s, i) => stopRow(s, color, i === 0 || i === stops.length - 1)).join("")}</ol>`;
     })
     .join("");
+}
+
+function renderTrip(data: TripResult): void {
+  const heading = tripHeading(data);
+  title.textContent = heading.title;
+  subtitle.textContent = heading.subtitle;
   content.innerHTML = `
     <div class="toolbar"><button type="button" id="back" class="ghost" ${history.length ? "" : "hidden"}>${arrowLeft}<span>${t("departures.backToBoard")}</span></button></div>
-    ${timeline}`;
+    <div class="trip">${tripTimeline(data)}</div>`;
   document.getElementById("back")?.addEventListener("click", () => {
     const previous = history.pop();
-    if (previous) show(previous, false);
+    if (!previous) return;
+    show(previous, false);
+    void loadOpposite();
   });
+}
+
+/** Fullscreen: panel of the trip opened from the boards, with a button to close it. */
+function tripPanel(): string {
+  if (!panelTrip) return "";
+  const heading = tripHeading(panelTrip);
+  return `
+    <aside class="trip-panel" aria-label="${esc(heading.title)}">
+      <div class="trip-panel-head">
+        <strong>${esc(heading.title)}</strong>
+        <button type="button" class="ghost icon" data-action="close-trip" title="${t("close")}" aria-label="${t("close")}">✕</button>
+      </div>
+      <div class="muted">${esc(heading.subtitle)}</div>
+      ${tripTimeline(panelTrip)}
+    </aside>`;
 }
 
 const style = document.createElement("style");
@@ -336,5 +480,34 @@ style.textContent = `
   ol.sncf-board .platform { flex: none; display: flex; align-items: center; justify-content: center; min-width: 2rem; height: 2rem; padding: 0 0.1rem; box-sizing: border-box; border: 2px solid #eee; border-radius: 4px; background: #eee; color: #333; font-size: 1.25rem; font-weight: 700; white-space: nowrap; }
   ol.sncf-board .platform.empty { background: transparent; border-color: transparent; }
   ol.sncf-board .deleted .platform { color: #ff5c5c; }
+  ol.sncf-board .train.open { box-shadow: inset 0 0 0 3px #fe0; }
+  table.board tr.open td { background: var(--accent-soft); }
+
+  /* fullscreen: the departures and the arrivals side by side, in bigger type, each scrolling on its own; the trip
+     opened beside them; on a phone, one below the other, the trip first */
+  .clock { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .boards { display: grid; gap: 10px; flex: 1; min-height: 0; grid-template-rows: minmax(0, 1fr); }
+  .board-column { display: flex; flex-direction: column; gap: 6px; min-height: 0; min-width: 0; }
+  .board-head { margin: 0; font-size: var(--font-heading-sm-size); font-weight: 600; }
+  .board-scroll { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+  .board-scroll > * { flex: none; }
+  .board-scroll > p, .board-scroll > h3 { margin: 0; }
+  .trip-panel { display: flex; flex-direction: column; gap: 8px; min-height: 0; overflow-y: auto; padding: 12px;
+    border: 1px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-secondary); }
+  .trip-panel-head { display: flex; align-items: center; gap: 8px; }
+  .trip-panel-head strong { flex: 1; min-width: 0; }
+  .trip-panel ol.timeline .dot { background: var(--color-background-secondary); }
+  :root[data-display-mode="fullscreen"] ol.sncf-board { font-size: 17px; }
+  :root[data-display-mode="fullscreen"] ol.sncf-board .train { padding: 10px; }
+  :root[data-display-mode="fullscreen"] ol.sncf-board .heure { width: 3.6rem; font-size: 1.3em; }
+  :root[data-display-mode="fullscreen"] ol.sncf-board .platform { min-width: 2.5rem; height: 2.5rem; font-size: 1.5rem; }
+  :root[data-display-mode="fullscreen"] table.board { font-size: 15px; }
+  :root[data-display-mode="fullscreen"] .trip { overflow-y: auto; min-height: 0; }
+  @media (max-width: 640px) {
+    :root[data-display-mode="fullscreen"] .boards { grid-template-columns: minmax(0, 1fr) !important; grid-template-rows: none;
+      grid-auto-rows: max-content; overflow-y: auto; }
+    :root[data-display-mode="fullscreen"] .board-scroll { overflow: visible; }
+    .trip-panel { order: -1; overflow: visible; }
+  }
 `;
 document.head.appendChild(style);

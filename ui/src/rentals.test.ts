@@ -48,4 +48,29 @@ describe("rentals view", () => {
     app.onhostcontextchanged?.({ theme: "dark" });
     expect($(".map").classList.contains("dark-tiles")).toBe(true);
   });
+
+  it("lists the stations and vehicles, closest or available first, and shows the one clicked", async () => {
+    const app = await loadView("rentals");
+    const data = fixture<RentalsResult>("rentals");
+    data.vehicles[0].available = false;
+    await app.toolResult({}, data);
+    const nearby = () => [...document.querySelectorAll("#nearby li")].map((li) => li.textContent!.replace(/\s+/g, " ").trim());
+
+    expect(nearby()).toEqual([
+      "Victoria - Place du ChateletParis · 17 vehicles 68 m",
+      "Lime Paris Proper · bikeelectric assist · unavailable 1 km",
+      "Ventadour - OpéraParis · 13 vehicles 1.3 km",
+    ]);
+
+    $("button[data-sort=availability]").click();
+    expect(nearby()[2]).toMatch(/^Lime Paris Proper/);
+    expect($("button[data-sort=availability]").getAttribute("aria-pressed")).toBe("true");
+
+    $("#nearby li[data-key='station:6245']").click();
+    expect($("#nearby li.selected").dataset.key).toBe("station:6245");
+    expect(document.querySelector(".leaflet-tooltip")?.textContent).toContain("Ventadour - Opéra");
+
+    $("#nearby li[data-key='station:82328045']").dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    expect($("#nearby li.selected").dataset.key).toBe("station:82328045");
+  });
 });
