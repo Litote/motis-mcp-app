@@ -3,6 +3,7 @@ import L from "leaflet";
 import { callTool, callToolResult, setStatus, startView, updateModelContext, type Args } from "./shared/app";
 import { day, delayBadge, delayMinutes, distance, duration, esc, lineBadge, modeColor, modeLabel, time } from "./shared/format";
 import { t, type MessageKey } from "./shared/i18n";
+import { check, chevronLeft, chevronRight, sliders } from "./shared/icons";
 import { createMap, decode, fit } from "./shared/map";
 import type { ItineraryDto, JourneyResult, LegDto, PlaceDto } from "./shared/types";
 
@@ -32,27 +33,30 @@ const choices = (name: string, values: string[]) =>
 
 const modeCheckbox = (group: string) => {
   const key = `options.mode.${group}` as MessageKey;
-  return `<label><input type="checkbox" name="mode" value="${group}" checked> <span data-i18n="${key}">${t(key)}</span></label>`;
+  return `<label class="chip-toggle"><input type="checkbox" name="mode" value="${group}" checked>${check}<span data-i18n="${key}">${t(key)}</span></label>`;
 };
 
 content.innerHTML = `
   <div class="toolbar">
-    <button type="button" id="earlier" data-i18n="earlier">← Earlier</button>
-    <button type="button" id="later" data-i18n="later">Later →</button>
-    <button type="button" id="options-toggle" aria-expanded="false" aria-controls="options" data-i18n="itinerary.options">Options</button>
+    <div class="button-group">
+      <button type="button" id="earlier">${chevronLeft}<span data-i18n="earlier">${t("earlier")}</span></button>
+      <button type="button" id="later"><span data-i18n="later">${t("later")}</span>${chevronRight}</button>
+    </div>
+    <span class="spacer"></span>
+    <button type="button" id="options-toggle" aria-expanded="false" aria-controls="options">${sliders}<span data-i18n="itinerary.options">${t("itinerary.options")}</span></button>
   </div>
   <form id="options" class="options" hidden>
     <div class="option-row">
-      <select name="arriveBy">
-        <option value="false" data-i18n="options.leaveAt">${t("options.leaveAt")}</option>
-        <option value="true" data-i18n="options.arriveBy">${t("options.arriveBy")}</option>
-      </select>
+      <div class="segmented">
+        <label><input type="radio" name="arriveBy" value="false" checked><span data-i18n="options.leaveAt">${t("options.leaveAt")}</span></label>
+        <label><input type="radio" name="arriveBy" value="true"><span data-i18n="options.arriveBy">${t("options.arriveBy")}</span></label>
+      </div>
       <input type="datetime-local" name="time">
       <span class="muted" data-i18n="options.time">${t("options.time")}</span>
     </div>
-    <fieldset class="option-row">
+    <fieldset>
       <legend data-i18n="options.modes">${t("options.modes")}</legend>
-      ${Object.keys(MODE_GROUPS).map(modeCheckbox).join("")}
+      <div class="option-row">${Object.keys(MODE_GROUPS).map(modeCheckbox).join("")}</div>
     </fieldset>
     <div class="option-grid">
       <label><span data-i18n="options.maxTransfers">${t("options.maxTransfers")}</span>
@@ -70,13 +74,13 @@ content.innerHTML = `
         <select name="bike">${choices("bike", BIKES)}</select></label>
       <label class="check"><input type="checkbox" name="wheelchair"> <span data-i18n="options.wheelchair">${t("options.wheelchair")}</span></label>
     </div>
-    <div><button type="submit" data-i18n="options.search">${t("options.search")}</button></div>
+    <div class="options-footer"><button type="submit" class="primary" data-i18n="options.search">${t("options.search")}</button></div>
   </form>
   <div class="journey">
     <ul id="itineraries" class="list"></ul>
     <div>
       <div id="map" class="map"></div>
-      <ol id="legs" class="list"></ol>
+      <ol id="legs" class="legs"></ol>
     </div>
   </div>`;
 
@@ -92,6 +96,8 @@ const layer = L.featureGroup().addTo(map);
 
 let journey: JourneyResult | null = null;
 let planArgs: Args = {};
+/** Index of the itinerary shown on the map. */
+let selected = -1;
 /** Mode groups checked when the options were filled: unchanged, the modes of the call are kept as they are. */
 let initialModeGroups = "";
 
@@ -101,7 +107,13 @@ const app = startView("MOTIS journey planner", {
     render(data as unknown as JourneyResult);
     fillOptions(planArgs);
   },
-  themeChanged: setTheme,
+  themeChanged: (theme) => {
+    setTheme(theme);
+    // the lines are drawn in the colors of the page: drawn again once the host variables of the theme are applied
+    queueMicrotask(() => {
+      if (journey && selected >= 0) select(selected, false);
+    });
+  },
 });
 
 /** Name of a place: the ends of a journey given as coordinates, named `START` and `END` by MOTIS, are translated. */
@@ -140,7 +152,7 @@ function render(data: JourneyResult): void {
             .join(" ");
           return `
           <li class="clickable" data-index="${i}">
-            <div><strong>${time(it.startTime, tz)} → ${time(it.endTime, data.to.tz)}</strong>
+            <div class="trip-head"><strong>${time(it.startTime, tz)} → ${time(it.endTime, data.to.tz)}</strong>
               <span class="muted">${duration(it.durationSeconds)} · ${t("transfers", { count: it.transfers })}${i >= data.itineraries.length ? ` · ${t("itinerary.direct")}` : ""}</span></div>
             <div class="badges">${badges}</div>
           </li>`;
@@ -164,8 +176,8 @@ function transitDescription(leg: LegDto): string {
   const track = leg.from.track ? ` · ${t("track", { track: esc(leg.from.track) })}` : "";
   const agency = leg.agency ? ` · ${esc(leg.agency)}` : "";
   return (
-    `${lineBadge(leg.mode, leg.line, leg.routeColor, leg.routeTextColor, leg.agency)} → ${esc(leg.headsign ?? leg.to.name)}` +
-    `<div class="muted">${t("itinerary.stops", { count: stops })}${track}${agency}</div>`
+    `<div class="what">${lineBadge(leg.mode, leg.line, leg.routeColor, leg.routeTextColor, leg.agency)} → ${esc(leg.headsign ?? leg.to.name)}</div>` +
+    `<div class="detail">${t("itinerary.stops", { count: stops })}${track}${agency}</div>`
   );
 }
 
@@ -175,26 +187,42 @@ function legDescription(leg: LegDto): string {
   const delayText = leg.realTime ? delayBadge(delay) : "";
   const what = transit
     ? transitDescription(leg)
-    : `${esc(modeLabel(leg.mode))} ${distance(leg.distanceMeters)} <span class="muted">(${duration(leg.durationSeconds)})</span>`;
+    : `<div class="what">${esc(modeLabel(leg.mode))} ${distance(leg.distanceMeters)} (${duration(leg.durationSeconds)})</div>`;
+  return legRow(leg.startTime, leg.from, transit ? "" : "street", modeColor(leg.mode, leg.routeColor), what, delayText);
+}
+
+/** Step of the timeline of the legs: time, rail in the [color] of the leg (dotted in the street), place and leg. */
+function legRow(at: string, place: PlaceDto, kind: string, color = "", what = "", delayText = ""): string {
   return `
-    <li>
-      <div><strong>${time(leg.startTime, leg.from.tz)}</strong>${delayText} ${esc(placeName(leg.from))}</div>
-      <div class="leg" style="border-color:${esc(modeColor(leg.mode, leg.routeColor))}">${what}</div>
+    <li class="${kind}" style="--leg:${esc(color)}">
+      <span class="time">${time(at, place.tz)}${delayText}</span>
+      <span class="rail"></span>
+      <div class="body"><div class="place">${esc(placeName(place))}</div> ${what}</div>
     </li>`;
 }
 
-function select(index: number): void {
+function select(index: number, refit = true): void {
   if (!journey) return;
+  selected = index;
   const it = allItineraries(journey)[index];
   list.querySelectorAll("li").forEach((li) => li.classList.toggle("selected", li.dataset.index === String(index)));
   layer.clearLayers();
+  // casing under the lines, in the color of the background: the lines stay readable over the roads, in both themes
+  const casing = getComputedStyle(document.body).backgroundColor;
   for (const leg of it.legs) {
     const transit = Boolean(leg.tripId);
+    L.polyline(decode(leg.polyline), { color: casing, weight: transit ? 11 : 9, opacity: 1, interactive: false }).addTo(layer);
+  }
+  for (const leg of it.legs) {
+    const transit = Boolean(leg.tripId);
+    // in the street: round dots, not to be taken for the railways of the map
     L.polyline(decode(leg.polyline), {
       color: modeColor(leg.mode, leg.routeColor),
-      weight: transit ? 6 : 4,
-      opacity: 0.9,
-      dashArray: transit ? undefined : "4 8",
+      weight: transit ? 6 : 5,
+      opacity: transit ? 0.95 : 1,
+      dashArray: transit ? undefined : "0 9",
+      lineCap: "round",
+      lineJoin: "round",
     })
       .bindTooltip(transit ? `${esc(leg.line ?? "")} → ${esc(leg.headsign ?? "")}` : esc(modeLabel(leg.mode)), { sticky: true })
       .addTo(layer);
@@ -206,11 +234,21 @@ function select(index: number): void {
       }
     }
   }
+  const first = it.legs[0];
   const last = it.legs.at(-1);
-  legsList.innerHTML =
-    it.legs.map(legDescription).join("") +
-    (last ? `<li><div><strong>${time(last.endTime, last.to.tz)}</strong> ${esc(placeName(last.to))}</div></li>` : "");
-  fit(themedMap, layer);
+  if (first && last) {
+    // start: ring; end: target
+    const text = getComputedStyle(document.body).color;
+    L.circleMarker([first.from.lat, first.from.lon], { radius: 7, color: text, weight: 3, fillColor: casing, fillOpacity: 1 })
+      .bindTooltip(esc(placeName(first.from)))
+      .addTo(layer);
+    L.circleMarker([last.to.lat, last.to.lon], { radius: 9, color: casing, weight: 2, fillColor: text, fillOpacity: 1 })
+      .bindTooltip(esc(placeName(last.to)))
+      .addTo(layer);
+    L.circleMarker([last.to.lat, last.to.lon], { radius: 3, stroke: false, fillColor: casing, fillOpacity: 1, interactive: false }).addTo(layer);
+  }
+  legsList.innerHTML = it.legs.map(legDescription).join("") + (last ? legRow(last.endTime, last.to, "end") : "");
+  if (refit) fit(themedMap, layer);
 }
 
 async function page(pageCursor?: string): Promise<void> {
@@ -256,7 +294,7 @@ const choice = (value: unknown, values: string[], fallback: string) => {
 
 /** Fills the options panel with the arguments of the plan_journey call. */
 function fillOptions(args: Args): void {
-  field<HTMLSelectElement>("arriveBy").value = String(args.arriveBy === true || args.arriveBy === "true");
+  (options.elements.namedItem("arriveBy") as RadioNodeList).value = String(args.arriveBy === true || args.arriveBy === "true");
   field<HTMLInputElement>("time").value = localDateTime(args.time);
   const modes = modesOf(args.modes);
   const all = modes.length === 0 || modes.includes("TRANSIT");
@@ -296,7 +334,7 @@ function optionArgs(): Args | null {
     count: planArgs.count,
     language: planArgs.language,
     time: time ? new Date(time).toISOString() : undefined,
-    arriveBy: field<HTMLSelectElement>("arriveBy").value === "true" || undefined,
+    arriveBy: (options.elements.namedItem("arriveBy") as RadioNodeList).value === "true" || undefined,
     modes: modesArg(groups),
     maxTransfers: maxTransfers === "" ? undefined : Number(maxTransfers),
     maxWalkMinutes: maxWalkMinutes === 25 ? undefined : maxWalkMinutes,
@@ -344,22 +382,41 @@ style.textContent = `
   .journey { display: grid; grid-template-columns: minmax(220px, 1fr) 2fr; gap: 10px; }
   @media (max-width: 640px) { .journey { grid-template-columns: 1fr; } }
   #itineraries { max-height: calc(var(--map-height) + 200px); overflow-y: auto; }
-  #itineraries .badges { margin-top: 4px; display: flex; flex-wrap: wrap; gap: 3px; }
-  #legs { margin-top: 8px; }
-  #legs .leg { margin: 4px 0 4px 18px; padding: 2px 0 2px 10px; border-left: 4px solid; }
-  #options-toggle { margin-left: auto; }
-  .options { display: flex; flex-direction: column; gap: 8px; padding: 8px 10px; border: 1px solid var(--color-border-secondary);
+  .journey > * { min-width: 0; }
+  #itineraries .trip-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 8px; }
+  #itineraries .trip-head strong { font-variant-numeric: tabular-nums; }
+  #itineraries .badges { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
+
+  /* legs of the selected itinerary, as a timeline: plain rail on board, dotted in the street */
+  .legs { list-style: none; margin: 14px 0 0; padding: 0 2px; }
+  .legs > li { display: grid; grid-template-columns: 48px 16px 1fr; column-gap: 10px; }
+  .legs .time { font-weight: 600; font-variant-numeric: tabular-nums; line-height: 20px; white-space: nowrap; }
+  .legs .time .delay { display: block; width: max-content; margin-top: 2px; }
+  .legs .rail { position: relative; }
+  .legs .rail::before { content: ""; position: absolute; z-index: 1; top: 4px; left: 2px; width: 12px; height: 12px;
+    border: 3px solid var(--leg); border-radius: 50%; background: var(--color-background-primary); }
+  .legs .rail::after { content: ""; position: absolute; top: 16px; bottom: -4px; left: 6px; width: 4px; border-radius: 2px; background: var(--leg); }
+  .legs .street .rail::after { left: 6.5px; width: 0; border-radius: 0; background: none; border-left: 3px dotted var(--leg); }
+  .legs .end .rail::after { display: none; }
+  .legs .end .rail::before { border-color: var(--color-text-primary); background: var(--color-text-primary);
+    box-shadow: inset 0 0 0 2px var(--color-background-primary); }
+  .legs .body { min-width: 0; padding-bottom: 16px; }
+  .legs .place { font-weight: 600; line-height: 20px; }
+  .legs .what { margin-top: 4px; }
+  .legs .street .what { margin-top: 1px; color: var(--color-text-secondary); font-size: var(--font-text-sm-size); }
+  .legs .detail { margin-top: 2px; color: var(--color-text-secondary); font-size: var(--font-text-sm-size); }
+
+  .options { display: flex; flex-direction: column; gap: 14px; padding: 14px; border: 1px solid var(--color-border-secondary);
     border-radius: var(--border-radius-md); background: var(--color-background-secondary); font-size: var(--font-text-sm-size); }
   .options[hidden] { display: none; }
   .options fieldset { border: 0; margin: 0; padding: 0; }
-  .options legend { padding: 0; margin-bottom: 2px; color: var(--color-text-secondary); }
-  .option-row { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: center; }
-  .option-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px 12px; align-items: end; }
-  .option-grid label:not(.check) { display: flex; flex-direction: column; gap: 2px; color: var(--color-text-secondary); }
-  .option-grid label.check { padding-bottom: 4px; }
-  .options select, .options input:not([type=checkbox]) { font: inherit; color: var(--color-text-primary);
-    background: var(--color-background-primary); border: 1px solid var(--color-border-primary);
-    border-radius: var(--border-radius-sm); padding: 3px 6px; }
-  .options input:focus-visible, .options select:focus-visible { outline: 2px solid var(--color-ring-primary); outline-offset: 1px; }
+  .options legend, .option-grid label:not(.check) > span { padding: 0; margin-bottom: 6px; font-size: 11px; font-weight: 600;
+    letter-spacing: 0.04em; text-transform: uppercase; color: var(--color-text-secondary); }
+  .option-row { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+  .option-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; align-items: end; }
+  .option-grid label:not(.check) { display: flex; flex-direction: column; }
+  .option-grid label:not(.check) > span { margin-bottom: 4px; }
+  .option-grid label.check { display: inline-flex; align-items: center; gap: 8px; min-height: var(--control-height); }
+  .options-footer { display: flex; justify-content: flex-end; padding-top: 12px; border-top: 1px solid var(--color-border-secondary); }
 `;
 document.head.appendChild(style);

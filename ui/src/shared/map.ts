@@ -229,6 +229,20 @@ export function vectorLayer(source: TileSource, theme: "light" | "dark"): L.Grid
   }) as unknown as L.GridLayer;
 }
 
+/** Moves the fullscreen button of the header onto the map, at the top right, where the eyes are. */
+function fullscreenControl(map: L.Map): void {
+  const button = document.getElementById("fullscreen");
+  if (!button) return;
+  const control = new L.Control({ position: "topright" });
+  control.onAdd = () => {
+    const bar = L.DomUtil.create("div", "leaflet-bar");
+    bar.append(button);
+    L.DomEvent.disableClickPropagation(bar);
+    return bar;
+  };
+  control.addTo(map);
+}
+
 /**
  * Creates a map. In dark theme, the vector tiles are drawn in their dark flavor, the raster tiles inverted with a CSS
  * filter; the French rail overlay is inverted in both cases.
@@ -237,6 +251,8 @@ export function createMap(element: HTMLElement): ThemedMap {
   // zoom range of the map itself: else Leaflet takes it from the layers, and the rail overlay (from zoom 6, or below
   // zoom 12 over the vector maps) would clamp the map with an animated zoom, during which fitBounds is ignored
   const map = L.map(element, { zoomControl: true, preferCanvas: true, minZoom: 0, maxZoom: MAX_ZOOM }).setView([46.5, 2.5], 5);
+  map.attributionControl.setPrefix(false);
+  fullscreenControl(map);
   const { tiles, vectorTiles, railOverlays } = mapConfig();
   let vector: { layer: L.GridLayer; theme: "light" | "dark" } | null = null;
   if (vectorTiles) {

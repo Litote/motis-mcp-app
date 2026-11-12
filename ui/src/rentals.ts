@@ -64,7 +64,7 @@ function providerLabel(p: RentalsResult["providers"][number], providerColors: Ma
   const formFactors = p.formFactors.map(formFactor).join(", ");
   const areaVehicles = p.areaVehicles ? ` · ${t("rentals.areaVehicles", { count: p.areaVehicles })}` : "";
   return `
-      <label title="${esc(p.operator ?? "")}">
+      <label class="chip-toggle" title="${esc(p.operator ?? "")}">
         <input type="checkbox" data-provider="${esc(p.id)}" ${hidden.has(p.id) ? "" : "checked"} />
         <i style="background:${esc(providerColors.get(p.id))}"></i>${esc(p.name)}
         <span class="muted">${formFactors} · ${t("rentals.providerCounts", { stations: p.stations, vehicles: p.vehicles })}${areaVehicles}</span>
