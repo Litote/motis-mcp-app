@@ -439,6 +439,30 @@ describe("departures view", () => {
       expect($("#back").hidden).toBe(false);
     });
 
+    it("draws the other board again on its own when it comes after the board", async () => {
+      const app = await loadView("departures");
+      await app.toolResult({ stopId: "S1" }, board());
+      app.answer({ ...board(), arriveBy: true });
+      await fullscreen(app, "fullscreen");
+      let answerOpposite!: (result: unknown) => void;
+      app.callServerTool.mockImplementationOnce(() => new Promise((resolve) => (answerOpposite = resolve)));
+      app.answer(board());
+
+      $("button[data-action=next]").click();
+      await flush();
+      const departures = columns()[0];
+      answerOpposite({ content: [], structuredContent: { ...board(), arriveBy: true, stopTimes: [] } });
+      await flush();
+
+      expect(departures.isConnected).toBe(true);
+      expect(columns()[1].textContent).toContain("No departure in this period.");
+      app.answer(fixture("trip"));
+      (departures.querySelector("tr[data-index='0']") as HTMLElement).click();
+      await flush();
+      expect(document.querySelector(".trip-panel")).not.toBeNull();
+      await fullscreen(app, "inline");
+    });
+
     it("shows a trip opened inline, and the boards side by side once back to the board", async () => {
       const app = await loadView("departures");
       await app.toolResult({ stopId: "S1" }, board());

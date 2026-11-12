@@ -86,7 +86,7 @@ async function loadOpposite(pageCursor?: string): Promise<void> {
     });
     if (request !== lastOpposite || !isFullscreen()) return;
     opposite = data;
-    if (current?.kind === "departures") renderBoard(current);
+    if (current?.kind === "departures") showOpposite(current);
   } catch {
     // reported in the status bar
   }
@@ -203,6 +203,22 @@ function sncfRow(st: StopTimeDto, index: number, arriveBy: boolean, markTheoreti
     </li>`;
 }
 
+/**
+ * Fullscreen: shows the [opposite] board beside [data]. Already beside it, only its column is drawn again: the other
+ * board and the trip panel are left as they are.
+ */
+function showOpposite(data: DeparturesResult): void {
+  const boards = sideBySide(data);
+  const index = opposite ? boards.indexOf(opposite) : -1;
+  const column = content.querySelector(`.boards [data-board="${index}"] .board-scroll`);
+  if (!opposite || !column || shownBoards.length !== boards.length) {
+    renderBoard(data);
+    return;
+  }
+  shownBoards = boards;
+  column.innerHTML = boardHtml(opposite);
+}
+
 /** Fullscreen: the departures and the arrivals side by side, once both are loaded. */
 function sideBySide(data: DeparturesResult): DeparturesResult[] {
   if (!isFullscreen() || !opposite) return [data];
@@ -311,12 +327,6 @@ function renderToolbarAnd(data: DeparturesResult, boards: DeparturesResult[], bo
       void selectTab(tabs[Number(button.dataset.tab)]);
     }),
   );
-  content.querySelectorAll<HTMLElement>("[data-index]").forEach((tr) =>
-    tr.addEventListener("click", () => {
-      const board = boards[Number(tr.closest<HTMLElement>("[data-board]")?.dataset.board ?? 0)];
-      void openTrip(board.stopTimes[Number(tr.dataset.index)].tripId);
-    }),
-  );
   content.querySelectorAll<HTMLButtonElement>("button[data-action]").forEach((button) =>
     button.addEventListener("click", () => {
       const action = button.dataset.action;
@@ -398,9 +408,17 @@ function updateTripPanel(): void {
 }
 
 content.addEventListener("click", (e) => {
-  if (!(e.target as HTMLElement).closest("[data-action=close-trip]")) return;
-  closeTripPanel();
-  updateTripPanel();
+  const target = e.target as HTMLElement;
+  if (target.closest("[data-action=close-trip]")) {
+    closeTripPanel();
+    updateTripPanel();
+    return;
+  }
+  // a departure of a board (the columns of the fullscreen boards may be drawn again on their own)
+  const row = target.closest<HTMLElement>("[data-board] [data-index]");
+  const board = row ? shownBoards[Number(row.closest<HTMLElement>("[data-board]")!.dataset.board)] : undefined;
+  const departure = board?.stopTimes[Number(row!.dataset.index)];
+  if (departure) void openTrip(departure.tripId);
 });
 
 function stopRow(stop: PlaceDto, color: string, isEnd: boolean): string {
