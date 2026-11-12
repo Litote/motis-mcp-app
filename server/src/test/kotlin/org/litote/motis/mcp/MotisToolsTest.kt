@@ -684,6 +684,69 @@ class MotisToolsTest {
             }
         }
 
+    /** Geocoding: a station named [stopName] first, then the [city] (by default Strasbourg, 1.3 km away). */
+    private fun stationBeforeCityMotis(
+        stopName: String,
+        city: String =
+            """{"type":"PLACE","category":"place_6","name":"Strasbourg","id":"node/26686563","lat":48.584614,"lon":7.7507127,"score":-21.46,"tokens":[],"areas":[]}""",
+    ) =
+        MockMotis { request ->
+            when (request.url.encodedPath) {
+                "/api/v1/geocode" ->
+                    respondJson(
+                        """
+                        [
+                          {"type":"STOP","name":"$stopName","id":"de-DELFI_fr:24067:1284","lat":48.58534,"lon":7.73407,"score":-21.57,"tokens":[],"areas":[]},
+                          $city
+                        ]
+                        """.trimIndent(),
+                    )
+                "/api/v6/plan" -> respondJson(fixture("plan"))
+                else -> error("unexpected ${request.url}")
+            }
+        }
+
+    @Test
+    fun `plan_journey takes the city rather than its station of the same name`() {
+        val motis = stationBeforeCityMotis("Strasbourg")
+        withMcpClient(motis) { client ->
+            client.callTool("plan_journey", mapOf("from" to "48.39,-4.48", "to" to "Strasbourg"))
+
+            assertEquals("48.584614,7.7507127", motis.request("/api/v6/plan").url.parameters["toPlace"])
+        }
+    }
+
+    @Test
+    fun `plan_journey keeps a station named otherwise than the city`() {
+        val motis = stationBeforeCityMotis("Strasbourg Port du Rhin")
+        withMcpClient(motis) { client ->
+            client.callTool("plan_journey", mapOf("from" to "48.39,-4.48", "to" to "Strasbourg Port du Rhin"))
+
+            assertEquals("de-DELFI_fr:24067:1284", motis.request("/api/v6/plan").url.parameters["toPlace"])
+        }
+    }
+
+    @Test
+    fun `plan_journey keeps the station when the place of the same name is not its city`() {
+        listOf(
+            // not a city
+            """{"type":"PLACE","category":"museum_16","name":"Strasbourg","id":"node/1","lat":48.584614,"lon":7.7507127,"score":-21.46,"tokens":[],"areas":[]}""",
+            // no category
+            """{"type":"PLACE","name":"Strasbourg","id":"node/2","lat":48.584614,"lon":7.7507127,"score":-21.46,"tokens":[],"areas":[]}""",
+            // much less likely
+            """{"type":"PLACE","category":"place_6","name":"Strasbourg","id":"node/3","lat":48.584614,"lon":7.7507127,"score":-25.0,"tokens":[],"areas":[]}""",
+            // a stop, not a place
+            """{"type":"STOP","name":"Strasbourg","id":"other","lat":48.584614,"lon":7.7507127,"score":-21.46,"tokens":[],"areas":[]}""",
+        ).forEach { city ->
+            val motis = stationBeforeCityMotis("Strasbourg", city)
+            withMcpClient(motis) { client ->
+                client.callTool("plan_journey", mapOf("from" to "48.39,-4.48", "to" to "Strasbourg"))
+
+                assertEquals("de-DELFI_fr:24067:1284", motis.request("/api/v6/plan").url.parameters["toPlace"], city)
+            }
+        }
+    }
+
     @Test
     fun `plan_journey between addresses or points of interest goes door to door`() {
         listOf("ADDRESS" to null, "PLACE" to "museum_16", "PLACE" to "place_of_worship_16").forEach { (type, category) ->
@@ -940,6 +1003,24 @@ class MotisToolsTest {
                 result.text(),
             )
             assertEquals("5", motis.request("/api/v1/geocode").url.parameters["numResults"])
+        }
+    }
+
+    @Test
+    fun `homonym cities a bit less likely than the best match are ambiguous`() {
+        // Transitous in French: Brest, Belarus before Brest, France by 0.754
+        val matches =
+            """
+            [
+              {"id":"by","name":"Brest","type":"PLACE","category":"place_6","lat":52.094,"lon":23.685,"score":-17.702,"areas":[{"name":"Bélarus","adminLevel":2,"matched":false,"default":true}],"tokens":[]},
+              {"id":"fr","name":"Brest","type":"PLACE","category":"place_6","lat":48.391,"lon":-4.485,"score":-16.948,"areas":[{"name":"France","adminLevel":2,"matched":false,"default":true}],"tokens":[]}
+            ]
+            """.trimIndent()
+        withMcpClient(MockMotis { respondJson(matches) }) { client ->
+            val result = client.callTool("plan_journey", mapOf("from" to "Brest", "to" to "48.58,7.73"))
+
+            assertEquals(true, result.isError)
+            assertTrue(result.text().startsWith("\"Brest\" ('from') is ambiguous, candidates:\n"), result.text())
         }
     }
 

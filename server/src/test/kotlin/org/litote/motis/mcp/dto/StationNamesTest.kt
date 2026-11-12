@@ -38,6 +38,32 @@ class StationNamesTest {
     }
 
     @Test
+    fun `a stop named after its city and a word for station takes the name of its station`() {
+        // the German feed names the station of Strasbourg "Strasbourg Bahnhof"
+        assertEquals("Nîmes Centre", stations.localize("Nimes Bahnhof", 43.8323, 4.3659, "fr"))
+        assertEquals("Nîmes Centre", stations.localize("Nîmes Gare SNCF", null, null, "fr"))
+        assertEquals("Valence TGV", stations.localize("Valence Bahnhof", 44.9901, 4.9701, "fr"))
+        // another word is kept
+        assertEquals("Nîmes Pont-du-Gard", stations.localize("Nîmes Pont-du-Gard", null, null, "fr"))
+    }
+
+    @Test
+    fun `a city with several stations and no main one gives the name of the city`() {
+        val lille =
+            StationNames(
+                listOf(
+                    "8722326\t50.6365\t3.0705\t0\tLille Europe\tLille\t\tLila Europe\tLille-Europe station\t\t\t",
+                    "8722300\t50.6366\t3.0710\t0\tLille Flandres\tLille\t\tLila Flandres\tLille-Flandres station\t\t\t",
+                ).joinToString("\n"),
+            )
+        assertEquals("Lila", lille.localize("Lille", null, null, "es"))
+        assertEquals("Lila", lille.localize("Lille Bahnhof", 50.6365, 3.0705, "es"))
+        // no translation of the city: the name is kept
+        assertEquals("Lille", lille.localize("Lille", null, null, "en"))
+        assertEquals("Lille Centre", lille.localize("Lille Centre", null, null, "en"))
+    }
+
+    @Test
     fun `a city with several stations gives the main one when none is near`() {
         assertEquals("Valence Ville", stations.localize("Valence", null, null, "fr"))
         // the coordinates choose the station

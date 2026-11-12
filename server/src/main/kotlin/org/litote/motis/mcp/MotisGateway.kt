@@ -21,6 +21,7 @@ import org.litote.motis.mcp.dto.ShapeRepair
 import org.litote.motis.mcp.dto.StationLineDto
 import org.litote.motis.mcp.dto.displayName
 import org.litote.motis.mcp.dto.distanceKm
+import org.litote.motis.mcp.dto.normalizeName
 import org.litote.motis.mcp.dto.toDto
 import org.litote.motis.mcp.dto.withRepairedShapes
 import org.litote.motis.mcp.realtime.RealtimeOverlay
@@ -240,7 +241,8 @@ class MotisGateway(
                 },
             )
         }
-        val match = candidates.single()
+        // the station of a city named after it (Strasbourg): the city, for the journeys from/to all its stations
+        val match = candidates.single().let { stop -> matches.firstOrNull { it.isCityOfStop(stop) } ?: stop }
         val isStop = match.type == LocationType.STOP
         val dto = match.toDto()
         return ResolvedPlace(
@@ -493,15 +495,28 @@ class MotisGateway(
 
         /**
          * Score difference under which two matches are equally likely. MOTIS scores are negative, the best (lowest)
-         * first: calibrated on Transitous, where clear matches lead by more than 1 and homonyms by less than 0.3.
+         * first: calibrated on Transitous, where clear matches lead by more than 1 (Avignon, Orléans by 1.2 to 1.4) and
+         * homonyms by less than 0.8 (Brest, Belarus before Brest, France by 0.75 in French).
          */
-        private const val AMBIGUOUS_SCORE_GAP = 0.75
+        private const val AMBIGUOUS_SCORE_GAP = 1.0
 
         /** Distance beyond which two matches are different places (closer: entrances or platforms of one place). */
         private const val DISTINCT_PLACES_KM = 10.0
 
         private fun Match.isRivalOf(best: Match): Boolean =
             abs(score - best.score) < AMBIGUOUS_SCORE_GAP && distanceKm(lat, lon, best.lat, best.lon) > DISTINCT_PLACES_KM
+
+        /**
+         * True when this match is the city of the same name as the [stop], nearby and as likely: "Strasbourg" is the
+         * city, not its station, that the geocoder may put first.
+         */
+        private fun Match.isCityOfStop(stop: Match): Boolean =
+            stop.type == LocationType.STOP &&
+                type == LocationType.PLACE &&
+                category?.matches(CITY_CATEGORY) == true &&
+                normalizeName(name) == normalizeName(stop.name) &&
+                abs(score - stop.score) < AMBIGUOUS_SCORE_GAP &&
+                distanceKm(lat, lon, stop.lat, stop.lon) <= DISTINCT_PLACES_KM
 
         /**
          * Distance from a candidate to the [near] position beyond which, compared to the closest candidate, it is not
