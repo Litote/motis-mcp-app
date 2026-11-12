@@ -169,6 +169,18 @@ export function parseArguments(json: string): ToolArgs {
   }
 }
 
+/** The model [requested], when one of the [fallbacks] answered instead of it (among the [answered] models). */
+function fallbackFrom(answered: readonly string[], requested: string, fallbacks: readonly string[]): string | undefined {
+  return answered.some((m) => m !== requested && fallbacks.includes(m)) ? requested : undefined;
+}
+
+/** Adds a notice to [parts] when they have no text to show (e.g. reasoning only, or a stream closed by the provider). */
+function noAnswerNotice(parts: ThreadAssistantMessagePart[]): void {
+  if (!parts.some((part) => part.type === "text" && part.text.trim())) {
+    parts.push({ type: "text", text: `_${t("agent.emptyAnswer")}_` });
+  }
+}
+
 export function createAgent(settings: AgentSettings): ChatModelAdapter {
   return {
     async *run({ messages, abortSignal }) {
@@ -184,12 +196,7 @@ export function createAgent(settings: AgentSettings): ChatModelAdapter {
       const requested = settings.model();
       const fallbacks = settings.fallbackModels();
       // set when a fallback model answered instead of the selected one: the chat says so
-      const metadata = () => ({
-        custom: {
-          models: [...models],
-          fallbackFrom: models.some((m) => m !== requested && fallbacks.includes(m)) ? requested : undefined,
-        },
-      });
+      const metadata = () => ({ custom: { models: [...models], fallbackFrom: fallbackFrom(models, requested, fallbacks) } });
       const addModel = (model: string | undefined) => {
         if (model && !models.includes(model)) models.push(model);
       };
@@ -247,10 +254,7 @@ export function createAgent(settings: AgentSettings): ChatModelAdapter {
           const calls = result.toolCalls.filter((call) => call.function.name);
           if (!calls.length) {
             done.push(...parts(result.text, []));
-            // nothing to show (e.g. reasoning only, or a provider that closed the stream): say so
-            if (!done.some((part) => part.type === "text" && part.text.trim())) {
-              done.push({ type: "text", text: `_${t("agent.emptyAnswer")}_` });
-            }
+            noAnswerNotice(done);
             yield { content: done, status: { type: "complete", reason: "stop" }, metadata: metadata() };
             return;
           }
