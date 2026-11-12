@@ -3,6 +3,7 @@ import L from "leaflet";
 import { callTool, startView } from "./shared/app";
 import { esc, lineBadge, modeColor, modeLabel, time } from "./shared/format";
 import { t } from "./shared/i18n";
+import { arrowLeft } from "./shared/icons";
 import { bounds, createMap, decode, fit } from "./shared/map";
 import type { AreaResult, DeparturesResult, PlaceDto, ReachabilityResult } from "./shared/types";
 
@@ -11,7 +12,7 @@ type ExplorerData = AreaResult | ReachabilityResult;
 const content = document.getElementById("content")!;
 content.innerHTML = `
   <div class="toolbar">
-    <button id="back" type="button" hidden data-i18n="back">← Back</button>
+    <button id="back" class="ghost" type="button" hidden>${arrowLeft}<span data-i18n="back">${t("back")}</span></button>
     <div id="chips" class="chips"></div>
   </div>
   <div id="map" class="map"></div>

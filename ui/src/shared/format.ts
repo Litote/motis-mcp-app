@@ -81,7 +81,7 @@ export function modeColor(mode: string, routeColor?: string | null): string {
 export function delayBadge(delay: number): string {
   if (delay === 0) return "";
   const sign = delay > 0 ? "+" : "";
-  return ` <span class="late">${sign}${delay}</span>`;
+  return ` <span class="delay">${sign}${delay}</span>`;
 }
 
 /** Readable text color on [background]. */

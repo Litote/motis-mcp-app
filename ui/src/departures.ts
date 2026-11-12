@@ -2,6 +2,7 @@
 import { callTool, startView, type Args } from "./shared/app";
 import { day, delayBadge, delayMinutes, duration, esc, lineBadge, time } from "./shared/format";
 import { t } from "./shared/i18n";
+import { arrowLeft, chevronLeft, chevronRight } from "./shared/icons";
 import { RAIL_MODES, TRAIN_MODES, linePictogram, train } from "./shared/sncf";
 import { inTab, stationTabs, type StationTab } from "./shared/stationTabs";
 import type { DeparturesResult, PlaceDto, StopTimeDto, TripResult } from "./shared/types";
@@ -81,7 +82,10 @@ function timeCell(st: StopTimeDto, markTheoretical: boolean, tz?: string): strin
   }
   if (delay === 0) return `<span class="on-time" title="${t("departures.realTime")}">${time(actual, tz)}</span>`;
   const sign = delay > 0 ? "+" : "";
-  return `<span class="late" title="${t("departures.scheduled", { time: time(scheduled, tz) })}"><s class="muted">${time(scheduled, tz)}</s> ${time(actual, tz)} (${sign}${delay})</span>`;
+  return (
+    `<span class="late" title="${t("departures.scheduled", { time: time(scheduled, tz) })}">${time(actual, tz)}</span>` +
+    ` <span class="delay">${sign}${delay}</span> <div class="muted scheduled"><s>${time(scheduled, tz)}</s></div>`
+  );
 }
 
 /** French railway stations get a board like the ones of the SNCF stations (and of Carto Tchoo): not the bus or metro stops. */
@@ -169,7 +173,7 @@ function boardTable(departures: { st: StopTimeDto; index: number }[], markTheore
         <td class="${st.cancelled ? "cancelled" : ""}">${timeCell(st, markTheoretical, tz)}</td>
         <td>${lineBadge(st.mode, st.line, st.routeColor, st.routeTextColor)}</td>
         <td>${esc(st.headsign)}${st.cancelled ? ` <strong class="late">${t("departures.cancelled")}</strong>` : ""}<div class="muted">${esc(st.agency)}</div></td>
-        <td class="muted">${st.track ? t("track", { track: esc(st.track) }) : ""}</td>
+        <td>${st.track ? `<span class="track">${t("track", { track: esc(st.track) })}</span>` : ""}</td>
       </tr>`,
     )
     .join("");
@@ -181,11 +185,15 @@ function renderToolbarAnd(data: DeparturesResult, board: string): void {
   content.innerHTML = `
     ${tabBar()}
     <div class="toolbar">
-      <button type="button" data-action="previous" ${data.previousPageCursor ? "" : "disabled"}>${t("earlier")}</button>
-      <button type="button" data-action="next" ${data.nextPageCursor ? "" : "disabled"}>${t("later")}</button>
-      <span style="flex:1"></span>
-      <button type="button" data-action="departures" aria-pressed="${!data.arriveBy}">${t("departures.departures")}</button>
-      <button type="button" data-action="arrivals" aria-pressed="${data.arriveBy}">${t("departures.arrivals")}</button>
+      <div class="button-group">
+        <button type="button" data-action="previous" ${data.previousPageCursor ? "" : "disabled"}>${chevronLeft}<span>${t("earlier")}</span></button>
+        <button type="button" data-action="next" ${data.nextPageCursor ? "" : "disabled"}><span>${t("later")}</span>${chevronRight}</button>
+      </div>
+      <span class="spacer"></span>
+      <div class="segmented" role="group">
+        <button type="button" data-action="departures" aria-pressed="${!data.arriveBy}">${t("departures.departures")}</button>
+        <button type="button" data-action="arrivals" aria-pressed="${data.arriveBy}">${t("departures.arrivals")}</button>
+      </div>
     </div>
     ${board}`;
 
@@ -269,7 +277,7 @@ function renderTrip(data: TripResult): void {
     })
     .join("");
   content.innerHTML = `
-    <div class="toolbar"><button type="button" id="back" ${history.length ? "" : "hidden"}>${t("departures.backToBoard")}</button></div>
+    <div class="toolbar"><button type="button" id="back" class="ghost" ${history.length ? "" : "hidden"}>${arrowLeft}<span>${t("departures.backToBoard")}</span></button></div>
     ${timeline}`;
   document.getElementById("back")?.addEventListener("click", () => {
     const previous = history.pop();
@@ -280,13 +288,19 @@ function renderTrip(data: TripResult): void {
 const style = document.createElement("style");
 style.textContent = `
   table.board { width: 100%; border-collapse: collapse; }
-  table.board td { padding: 6px; border-bottom: 1px solid var(--color-border-secondary); vertical-align: top; }
+  table.board td { padding: 8px 6px; border-bottom: 1px solid var(--color-border-secondary); vertical-align: top; }
+  table.board tr:last-child td { border-bottom: 0; }
   table.board tr.clickable { cursor: pointer; }
-  table.board tr.clickable:hover { background: var(--color-background-secondary); }
-  table.board td:first-child { white-space: nowrap; font-variant-numeric: tabular-nums; }
-  .tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; }
-  .tabs button { display: inline-flex; align-items: center; min-height: 2rem; }
-  .tabs button[aria-selected="true"] { border-color: var(--color-ring-primary); box-shadow: inset 0 0 0 1px var(--color-ring-primary); font-weight: 600; }
+  table.board tr.clickable:hover td { background: var(--color-background-secondary); }
+  table.board td:first-child { white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
+  table.board td:last-child { text-align: right; }
+  table.board .scheduled { font-weight: 400; }
+  .tabs { display: flex; gap: 2px; overflow-x: auto; border-bottom: 1px solid var(--color-border-secondary); scrollbar-width: none; }
+  .tabs > button { flex: none; min-height: 36px; padding: 0 10px; border: 0; border-radius: 0; background: transparent;
+    box-shadow: inset 0 -2px 0 transparent; color: var(--color-text-secondary); }
+  .tabs > button:hover:not(:disabled) { background: transparent; color: var(--color-text-primary); box-shadow: inset 0 -2px 0 var(--color-border-primary); }
+  .tabs > button[aria-selected="true"] { color: var(--color-text-primary); font-weight: 600; box-shadow: inset 0 -2px 0 var(--accent); }
+  .tabs > button:focus-visible { box-shadow: inset 0 0 0 2px var(--accent-soft), inset 0 -2px 0 var(--accent); }
   .tabs .sncf-line svg { width: 1.25rem; height: 1.25rem; }
   ol.timeline { list-style: none; margin: 0 0 8px; padding: 0; }
   ol.timeline .stop { display: grid; grid-template-columns: 18px 90px 1fr; align-items: center; min-height: 28px; position: relative; }

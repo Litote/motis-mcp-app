@@ -125,7 +125,7 @@ describe("departures view", () => {
     expect($("#title").textContent).toBe("Lyon Part Dieu");
     expect($("#subtitle").textContent).toBe("Departures · Mon 12 Oct");
     expect(rows()).toEqual([
-      "23:16 23:19 (+3) 6633 Lyon PerracheSNCF VOYAGEURS track 4",
+      "23:19 +3 23:16 6633 Lyon PerracheSNCF VOYAGEURS track 4",
       "05:50 9852 Bruxelles Midi cancelledSNCF VOYAGEURS",
       "06:04 6602 Paris Gare de Lyon Hall 1 - 2SNCF VOYAGEURS",
     ]);
@@ -380,6 +380,6 @@ describe("departures view in French", () => {
     expect(rows()[0]).toContain("voie 4");
     expect(rows()[1]).toContain("supprimé");
     expect($("button[data-action=arrivals]").textContent).toBe("Arrivées");
-    expect($("button[data-action=next]").textContent).toBe("Plus tard →");
+    expect($("button[data-action=next]").textContent).toBe("Plus tard");
   });
 });
