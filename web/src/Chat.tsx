@@ -15,6 +15,7 @@ import remarkGfm from "remark-gfm";
 import { createAgent } from "./agent";
 import { locale, suggestions, t, useLanguage } from "./i18n";
 import { LanguagePicker } from "./LanguagePicker";
+import { ThemeButton } from "./ThemeButton";
 import { useLocation } from "./location";
 import {
   DEFAULT_MODEL,
@@ -271,6 +272,7 @@ export default function Chat({ apiKey }: Readonly<{ apiKey: string }>) {
               {t("quota.left", { count: quota.remaining, limit: quota.limit })}
             </span>
           )}
+          <ThemeButton />
           <LanguagePicker />
           <button
             type="button"
