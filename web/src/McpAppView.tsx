@@ -15,6 +15,7 @@ import { loadConfig } from "./config";
 import { locale, t, useLanguage } from "./i18n";
 import { IMPLEMENTATION, connectMcp, toolView, type McpServer, type ViewResource } from "./mcp";
 import { setViewContext } from "./agent";
+import { theme, useTheme } from "./theme";
 
 const PROXY_READY: McpUiSandboxProxyReadyNotification["method"] = "ui/notifications/sandbox-proxy-ready";
 
@@ -25,10 +26,6 @@ export interface McpAppViewProps {
   result: CallToolResult;
   /** A message sent by the view on behalf of the user (ui/message). */
   onMessage(text: string): void;
-}
-
-function theme(): "light" | "dark" {
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
 /** Loads sandbox.html (CSP of the view as query parameter) and resolves when the sandbox is ready. */
@@ -144,6 +141,7 @@ export function McpAppView(props: Readonly<McpAppViewProps>) {
   const propsRef = useRef(props);
   propsRef.current = props;
   const language = useLanguage();
+  const shownTheme = useTheme();
 
   /** Single path for every display mode change: the view is told the mode, then its new dimensions. */
   const setDisplayMode = useCallback((value: boolean) => {
@@ -207,6 +205,11 @@ export function McpAppView(props: Readonly<McpAppViewProps>) {
   useEffect(() => {
     void bridgeRef.current?.sendHostContextChange({ locale: locale() });
   }, [language]);
+
+  // the theme chosen in the chat (or the one of the system, when it changes), also in the views already shown
+  useEffect(() => {
+    void bridgeRef.current?.sendHostContextChange({ theme: shownTheme });
+  }, [shownTheme]);
 
   if (error) return <div className="view-error">{t("view.unavailable", { error })}</div>;
   return (

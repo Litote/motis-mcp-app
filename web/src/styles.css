@@ -11,8 +11,9 @@
   background: var(--bg);
   color: var(--fg);
 }
+/* dark: the theme of the system, unless the user chose light (data-theme, see theme.ts), or dark chosen */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #1c1c1e;
     --fg: #f2f2f7;
     --muted: #a1a1a6;
@@ -21,6 +22,17 @@
     --accent: #4da3ff;
     --error: #ff6b5b;
   }
+}
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #1c1c1e;
+  --fg: #f2f2f7;
+  --muted: #a1a1a6;
+  --border: #3a3a3c;
+  --surface: #2c2c2e;
+  --accent: #4da3ff;
+  --error: #ff6b5b;
 }
 * { box-sizing: border-box; }
 body { margin: 0; }
@@ -94,7 +106,8 @@ a { color: var(--accent); }
 .composer-button { align-self: flex-end; }
 
 .login { max-width: 520px; margin: 12vh auto; padding: 0 16px; display: flex; flex-direction: column; gap: 16px; }
-.login .language-picker { align-self: flex-end; }
+.login-settings { align-self: flex-end; display: flex; gap: 8px; }
+.theme-button { min-width: 2.5em; }
 .login p { color: var(--muted); line-height: 1.5; }
 .login .login-error { color: var(--error); }
 .login-key { display: flex; gap: 8px; }
