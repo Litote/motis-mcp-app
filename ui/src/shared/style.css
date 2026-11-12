@@ -61,8 +61,42 @@
   --color-border-secondary: #36383d;
 }
 
-:root[data-display-mode="fullscreen"] {
-  --map-height: calc(100vh - 120px);
+/* Fullscreen: the view fills the window, without a page scroll; #content takes the height left by the header, and each
+   view lays its panels out in it, each panel scrolling on its own (the safe area insets are the padding of the body). */
+:root[data-display-mode="fullscreen"],
+:root[data-display-mode="fullscreen"] body {
+  height: 100%;
+  overflow: hidden;
+}
+
+:root[data-display-mode="fullscreen"] main {
+  height: 100%;
+}
+
+:root[data-display-mode="fullscreen"] #content {
+  flex: 1;
+  min-height: 0;
+}
+
+:root[data-display-mode="fullscreen"] .map {
+  flex: 1;
+  height: auto;
+  min-height: 0;
+}
+
+/* panels of the fullscreen layouts, shown in fullscreen only */
+:root:not([data-display-mode="fullscreen"]) .fullscreen-only {
+  display: none;
+}
+
+/* panel floating over a fullscreen map, always or in fullscreen only */
+.floating,
+:root[data-display-mode="fullscreen"] .floats-in-fullscreen {
+  border: 1px solid var(--color-border-secondary);
+  border-radius: var(--border-radius-md);
+  background: color-mix(in srgb, var(--color-background-primary) 92%, transparent);
+  backdrop-filter: blur(4px);
+  box-shadow: var(--shadow-floating);
 }
 
 * {

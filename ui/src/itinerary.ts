@@ -78,7 +78,7 @@ content.innerHTML = `
   </form>
   <div class="journey">
     <ul id="itineraries" class="list"></ul>
-    <div>
+    <div class="route">
       <div id="map" class="map"></div>
       <ol id="legs" class="legs"></ol>
     </div>
@@ -98,6 +98,8 @@ let journey: JourneyResult | null = null;
 let planArgs: Args = {};
 /** Index of the itinerary shown on the map. */
 let selected = -1;
+/** Lines of the legs of the selected itinerary, by index of leg, with their weight. */
+let legLines: { line: L.Polyline; weight: number }[] = [];
 /** Mode groups checked when the options were filled: unchanged, the modes of the call are kept as they are. */
 let initialModeGroups = "";
 
@@ -181,20 +183,24 @@ function transitDescription(leg: LegDto): string {
   );
 }
 
-function legDescription(leg: LegDto): string {
+function legDescription(leg: LegDto, index: number): string {
   const transit = Boolean(leg.tripId);
   const delay = delayMinutes(leg.startTime, leg.scheduledStartTime);
   const delayText = leg.realTime ? delayBadge(delay) : "";
   const what = transit
     ? transitDescription(leg)
     : `<div class="what">${esc(modeLabel(leg.mode))} ${distance(leg.distanceMeters)} (${duration(leg.durationSeconds)})</div>`;
-  return legRow(leg.startTime, leg.from, transit ? "" : "street", modeColor(leg.mode, leg.routeColor), what, delayText);
+  return legRow(leg.startTime, leg.from, transit ? "" : "street", modeColor(leg.mode, leg.routeColor), what, delayText, index);
 }
 
-/** Step of the timeline of the legs: time, rail in the [color] of the leg (dotted in the street), place and leg. */
-function legRow(at: string, place: PlaceDto, kind: string, color = "", what = "", delayText = ""): string {
+/**
+ * Step of the timeline of the legs: time, rail in the [color] of the leg (dotted in the street), place and leg. A leg
+ * (its [index]) is highlighted on the map when hovered, and shown entirely when clicked.
+ */
+function legRow(at: string, place: PlaceDto, kind: string, color = "", what = "", delayText = "", index?: number): string {
+  const leg = index === undefined ? "" : ` data-leg="${index}" tabindex="0"`;
   return `
-    <li class="${kind}" style="--leg:${esc(color)}">
+    <li class="${kind}" style="--leg:${esc(color)}"${leg}>
       <span class="time">${time(at, place.tz)}${delayText}</span>
       <span class="rail"></span>
       <div class="body"><div class="place">${esc(placeName(place))}</div> ${what}</div>
@@ -210,7 +216,7 @@ function select(index: number, refit = true): void {
   // the lines are drawn in the colors of the page, to stay readable over the roads in both themes
   const colors = getComputedStyle(document.body);
   for (const leg of it.legs) drawCasing(leg, colors.backgroundColor);
-  for (const leg of it.legs) drawLeg(leg);
+  legLines = it.legs.map(drawLeg);
   drawEnds(it.legs, colors.backgroundColor, colors.color);
   const last = it.legs.at(-1);
   legsList.innerHTML = it.legs.map(legDescription).join("") + (last ? legRow(last.endTime, last.to, "end") : "");
@@ -224,12 +230,13 @@ function drawCasing(leg: LegDto, background: string): void {
 }
 
 /** Line of [leg], with its stops on board; in the street round dots, not to be taken for the railways of the map. */
-function drawLeg(leg: LegDto): void {
+function drawLeg(leg: LegDto): { line: L.Polyline; weight: number } {
   const transit = Boolean(leg.tripId);
   const color = modeColor(leg.mode, leg.routeColor);
-  L.polyline(decode(leg.polyline), {
+  const weight = transit ? 6 : 5;
+  const line = L.polyline(decode(leg.polyline), {
     color,
-    weight: transit ? 6 : 5,
+    weight,
     opacity: transit ? 0.95 : 1,
     dashArray: transit ? undefined : "0 9",
     lineCap: "round",
@@ -237,13 +244,53 @@ function drawLeg(leg: LegDto): void {
   })
     .bindTooltip(transit ? `${esc(leg.line ?? "")} → ${esc(leg.headsign ?? "")}` : esc(modeLabel(leg.mode)), { sticky: true })
     .addTo(layer);
-  if (!transit) return;
-  for (const stop of [leg.from, leg.to]) {
-    L.circleMarker([stop.lat, stop.lon], { radius: 5, color: "#fff", weight: 2, fillColor: color, fillOpacity: 1 })
-      .bindTooltip(esc(stop.name))
-      .addTo(layer);
+  if (transit) {
+    for (const stop of [leg.from, leg.to]) {
+      L.circleMarker([stop.lat, stop.lon], { radius: 5, color: "#fff", weight: 2, fillColor: color, fillOpacity: 1 })
+        .bindTooltip(esc(stop.name))
+        .addTo(layer);
+    }
   }
+  return { line, weight };
 }
+
+/** Highlights the leg [index] on the map: thicker, the other legs faded; none when undefined. */
+function highlightLeg(index?: number): void {
+  legLines.forEach(({ line, weight }, i) => {
+    const highlighted = i === index;
+    line.setStyle({ weight: highlighted ? weight + 4 : weight, opacity: index === undefined || highlighted ? 1 : 0.35 });
+    if (highlighted) line.bringToFront();
+  });
+}
+
+/** Shows the leg [index] entirely on the map, highlighted. */
+function showLeg(index: number): void {
+  const leg = legLines[index];
+  if (!leg) return;
+  highlightLeg(index);
+  const b = leg.line.getBounds();
+  if (b.isValid()) themedMap.show(b);
+}
+
+const legIndex = (e: Event) => {
+  const li = (e.target as HTMLElement).closest<HTMLElement>("li[data-leg]");
+  return li ? Number(li.dataset.leg) : undefined;
+};
+legsList.addEventListener("mouseover", (e) => highlightLeg(legIndex(e)));
+legsList.addEventListener("mouseleave", () => highlightLeg());
+legsList.addEventListener("focusin", (e) => highlightLeg(legIndex(e)));
+legsList.addEventListener("focusout", () => highlightLeg());
+legsList.addEventListener("click", (e) => {
+  const index = legIndex(e);
+  if (index !== undefined) showLeg(index);
+});
+legsList.addEventListener("keydown", (e) => {
+  const index = legIndex(e);
+  if (index !== undefined && (e.key === "Enter" || e.key === " ")) {
+    e.preventDefault();
+    showLeg(index);
+  }
+});
 
 /** Start of the [legs] as a ring, end as a target, in the [background] and [text] colors of the page. */
 function drawEnds(legs: LegDto[], background: string, text: string): void {
@@ -391,13 +438,31 @@ style.textContent = `
   @media (max-width: 640px) { .journey { grid-template-columns: 1fr; } }
   #itineraries { max-height: calc(var(--map-height) + 200px); overflow-y: auto; }
   .journey > * { min-width: 0; }
+
+  /* fullscreen: itineraries | map | legs, each column scrolling on its own; on a phone, the itineraries in a row above
+     the map, the legs below it */
+  :root[data-display-mode="fullscreen"] .journey { flex: 1; min-height: 0;
+    grid-template-columns: minmax(220px, 300px) minmax(0, 1fr) minmax(260px, 340px); grid-template-rows: minmax(0, 1fr); }
+  :root[data-display-mode="fullscreen"] .journey .route { display: contents; }
+  :root[data-display-mode="fullscreen"] #itineraries { max-height: none; padding: 1px; }
+  :root[data-display-mode="fullscreen"] .legs { margin: 0; overflow-y: auto; }
+  @media (max-width: 640px) {
+    :root[data-display-mode="fullscreen"] .journey { grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto minmax(0, 55fr) minmax(0, 45fr); }
+    :root[data-display-mode="fullscreen"] #itineraries { flex-direction: row; overflow-x: auto; overflow-y: hidden; }
+    :root[data-display-mode="fullscreen"] #itineraries > li { flex: none; }
+    :root[data-display-mode="fullscreen"] #itineraries .badges { display: none; }
+  }
   #itineraries .trip-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 8px; }
   #itineraries .trip-head strong { font-variant-numeric: tabular-nums; }
   #itineraries .badges { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
 
   /* legs of the selected itinerary, as a timeline: plain rail on board, dotted in the street */
   .legs { list-style: none; margin: 14px 0 0; padding: 0 2px; }
-  .legs > li { display: grid; grid-template-columns: 48px 16px 1fr; column-gap: 10px; }
+  .legs > li { display: grid; grid-template-columns: 48px 16px 1fr; column-gap: 10px; border-radius: var(--border-radius-sm); }
+  .legs > li[data-leg] { cursor: pointer; }
+  .legs > li[data-leg]:hover { background: var(--color-background-secondary); }
+  .legs > li[data-leg]:focus-visible { outline: none; box-shadow: var(--focus-ring); }
   .legs .time { font-weight: 600; font-variant-numeric: tabular-nums; line-height: 20px; white-space: nowrap; }
   .legs .time .delay { display: block; width: max-content; margin-top: 2px; }
   .legs .rail { position: relative; }

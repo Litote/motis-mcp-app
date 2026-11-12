@@ -363,6 +363,84 @@ describe("departures view", () => {
 
     expect($("#status").textContent).toBe("Connection to the host failed: Error: no host");
   });
+
+  describe("fullscreen", () => {
+    const columns = () => [...document.querySelectorAll(".board-column")];
+    const fullscreen = async (app: FakeApp, mode: "fullscreen" | "inline") => {
+      app.onhostcontextchanged?.({ displayMode: mode });
+      await flush();
+    };
+
+    it("shows the departures and the arrivals side by side, paging both", async () => {
+      const app = await loadView("departures");
+      await app.toolResult({ stopId: "S1" }, board());
+      const arrivals = { ...board(), arriveBy: true, previousPageCursor: "EARLIER|arrivals", nextPageCursor: "LATER|arrivals" };
+      app.answer(arrivals);
+
+      await fullscreen(app, "fullscreen");
+
+      expect(app.callServerTool).toHaveBeenLastCalledWith({ name: "departures", arguments: { stopId: "S1", arriveBy: true } });
+      expect(columns().map((c) => text(c.querySelector(".board-head")!))).toEqual(["Departures", "Arrivals"]);
+      expect($("#subtitle").textContent).toMatch(/^Departures · Arrivals · /);
+      expect(document.querySelector("button[data-action=arrivals]")).toBeNull();
+      expect($(".clock").textContent).toMatch(/^\d\d:\d\d$/);
+
+      // the other board is asked first
+      app.answer(arrivals, board());
+      $("button[data-action=next]").click();
+      await flush();
+      expect(app.callServerTool).toHaveBeenCalledWith({ name: "departures", arguments: { stopId: "S1", arriveBy: true, pageCursor: "LATER|arrivals" } });
+      expect(app.callServerTool).toHaveBeenLastCalledWith({ name: "departures", arguments: { stopId: "S1", pageCursor: "LATER|1791864300" } });
+
+      await fullscreen(app, "inline");
+      expect(columns()).toHaveLength(0);
+      expect($("#subtitle").textContent).toMatch(/^Departures · /);
+      expect(document.querySelector("button[data-action=arrivals]")).not.toBeNull();
+    });
+
+    it("opens a trip beside the boards, and in place of the board once back inline", async () => {
+      const app = await loadView("departures");
+      await app.toolResult({ stopId: "S1" }, board());
+      app.answer({ ...board(), arriveBy: true });
+      await fullscreen(app, "fullscreen");
+      const trip = { ...fixture<TripResult>("trip"), tripId: board().stopTimes[0].tripId };
+      app.answer(trip);
+
+      (columns()[1].querySelector("tr[data-index='0']") as HTMLElement).click();
+      await flush();
+
+      expect($(".trip-panel strong").textContent).toBe("TGV INOUI 6633 → Lyon Perrache");
+      expect($("#title").textContent).toBe("Lyon Part Dieu");
+      expect(document.querySelectorAll("tr.open")).toHaveLength(2);
+
+      $("button[data-action=close-trip]").click();
+      expect(document.querySelector(".trip-panel")).toBeNull();
+
+      app.answer(trip);
+      (columns()[0].querySelector("tr[data-index='0']") as HTMLElement).click();
+      await flush();
+      await fullscreen(app, "inline");
+      expect($("#title").textContent).toBe("TGV INOUI 6633 → Lyon Perrache");
+      expect($("#back").hidden).toBe(false);
+    });
+
+    it("shows a trip opened inline, and the boards side by side once back to the board", async () => {
+      const app = await loadView("departures");
+      await app.toolResult({ stopId: "S1" }, board());
+      app.answer(fixture("trip"));
+      (document.querySelector("tr[data-index='0']") as HTMLElement).click();
+      await flush();
+
+      await fullscreen(app, "fullscreen");
+      expect($("#title").textContent).toBe("TGV INOUI 6633 → Lyon Perrache");
+
+      app.answer({ ...board(), arriveBy: true });
+      $("#back").click();
+      await flush();
+      expect(columns()).toHaveLength(2);
+      await fullscreen(app, "inline");
+    });
+  });
 });
 
 describe("departures view in French", () => {

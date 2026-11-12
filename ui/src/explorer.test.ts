@@ -103,6 +103,23 @@ describe("explorer view", () => {
     expect(await popup()).toBe("LYON-PART-DIEUNo departure soon");
     expect(await popup()).toBe("LYON-PART-DIEUMOTIS error: timeout");
   });
+
+  it("lists the stops of a route beside the fullscreen map, and shows a stop clicked", async () => {
+    const app = await loadView("explorer");
+    await app.toolResult({}, fixture("route"));
+
+    const stops = texts("#route-stops [data-stop]");
+    expect(stops).toHaveLength(16);
+    expect(stops[0]).toBe("Lycée Lumière");
+    expect($("#route-stops .route-head").textContent).toContain("16 stops");
+    expect($("#route-stops").hidden).toBe(false);
+
+    $("#route-stops [data-stop='1']").click();
+    expect(document.querySelector(".leaflet-tooltip")?.textContent).toBe("Jet d'Eau - M. France");
+
+    await app.toolResult({}, fixture("area"));
+    expect($("#route-stops").hidden).toBe(true);
+  });
 });
 
 /**

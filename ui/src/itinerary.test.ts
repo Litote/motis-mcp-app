@@ -254,4 +254,18 @@ describe("itinerary view", () => {
       expect(app.updateModelContext).not.toHaveBeenCalled();
     });
   });
+
+  it("highlights a leg of the itinerary on the map, and shows it when clicked", async () => {
+    const app = await loadView("itinerary");
+    await app.toolResult({}, journey());
+    const legs = [...document.querySelectorAll<HTMLElement>("#legs > li[data-leg]")];
+
+    expect(legs.map((li) => li.dataset.leg)).toEqual(["0", "1", "2"]);
+    expect(document.querySelector("#legs > li.end")?.hasAttribute("data-leg")).toBe(false);
+    legs[1].dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+    legs[1].click();
+    legs[2].dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    $("#legs").dispatchEvent(new MouseEvent("mouseleave"));
+    expect($("#status").hidden).toBe(true);
+  });
 });
