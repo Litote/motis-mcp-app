@@ -150,6 +150,29 @@ class MainLineStationsTest {
     }
 
     @Test
+    fun `itineraries taking the trains of another one and more are left out`() {
+        val massy = place("Massy TGV", 48.726, 2.261, "massy")
+        val direct = leg("HIGHSPEED_RAIL", montparnasse, nantes, "2026-11-04T09:52:00Z", "2026-11-04T11:54:00Z", "tgv-8805")
+        val directItinerary = ItineraryDto(direct.startTime, direct.endTime, 7320, 0, listOf(direct))
+        val throughMassy =
+            ItineraryDto(
+                "2026-11-04T08:51:00Z",
+                direct.endTime,
+                10980,
+                1,
+                listOf(
+                    leg("HIGHSPEED_RAIL", massy, montparnasse, "2026-11-04T08:51:00Z", "2026-11-04T09:00:00Z", "tgv-8404"),
+                    leg("WALK", montparnasse, montparnasse, "2026-11-04T09:00:00Z", "2026-11-04T09:02:00Z"),
+                    direct,
+                ),
+            )
+
+        assertEquals(listOf(directItinerary), listOf(throughMassy, directItinerary).merged())
+        // without the direct train, the one through Massy is kept
+        assertEquals(listOf(throughMassy), listOf(throughMassy).merged())
+    }
+
+    @Test
     fun `itineraries without long-distance train are kept as is`() {
         val trimmed = journey(local).fromMainLineStations(paris, nantesCenter)
 

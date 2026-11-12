@@ -68,12 +68,19 @@ fun JourneyResult.cityStations(fromCity: Coordinates, toCity: Coordinates): Pair
 
 /**
  * The itineraries taking the same vehicles once, the shortest (e.g. made the same by the cut, or found from two
- * stations), sorted by departure.
+ * stations), sorted by departure. An itinerary taking the vehicles of another one and more is left out (e.g. a TGV from
+ * Massy TGV to Paris Montparnasse, then the TGV from Paris Montparnasse to Nantes, found with that TGV alone).
  */
-fun List<ItineraryDto>.merged(): List<ItineraryDto> =
-    sortedBy { it.durationSeconds }
-        .distinctBy { it.transitKey() }
+fun List<ItineraryDto>.merged(): List<ItineraryDto> {
+    val distinct = sortedBy { it.durationSeconds }.distinctBy { it.transitKey() }
+    val keys = distinct.map { it.transitKey() }
+    return distinct
+        .filterIndexed { i, _ -> keys.none { other -> other.size in 1..<keys[i].size && keys[i].containsInOrder(other) } }
         .sortedBy { Instant.parse(it.startTime) }
+}
+
+/** True when [part] is a run of consecutive elements of this list. */
+private fun <T> List<T>.containsInOrder(part: List<T>): Boolean = (0..size - part.size).any { subList(it, it + part.size) == part }
 
 private fun ItineraryDto.hasMainLineLegs(): Boolean = legs.any { it.mode in MAIN_LINE_MODES }
 
