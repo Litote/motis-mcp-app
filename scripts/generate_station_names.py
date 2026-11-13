@@ -36,6 +36,10 @@ OUT = Path(__file__).resolve().parent.parent / "server/src/main/resources/statio
 NOT_A_CITY = re.compile(r"metropolitan|metropol|\barea\b|\bregion\b|\bregio\b|\bregión\b|\bregione\b|\bzone\b|\bzona\b|\bagglom|\bgebied\b|\bprovince\b|\bprovincia\b|\bkreis\b|\bbezirk\b|\barrondissement\b|\bdistrict\b|\bcomarca\b|\bcanton\b", re.I)
 
 
+# the qualifier following the name of a city in the name of its station: "Frankfurt (Main) Hbf", "Ludwigshafen (Rh) Hbf"
+QUALIFIER = re.compile(r"^\s*\([^)]*\)")
+
+
 def normalize(text: str) -> str:
     text = unicodedata.normalize("NFKD", text.casefold())
     text = "".join(c for c in text if not unicodedata.combining(c))
@@ -133,8 +137,24 @@ def localize(name: str, candidates: list) -> tuple:
     if best:
         prefix, source, labels = best
         rest = name[len(source):] if name.casefold().startswith(source.casefold()) else name[len(prefix):]
-        # the rest of the name keeps its own punctuation ("Barcelona Sants", "Figueres – Vilafant")
-        return name[:len(name) - len(rest)], {lang: (labels[lang] + rest) if lang in labels else name for lang in LANGUAGES}
+        # the qualifier of a city ("Frankfurt (Main)") is part of it: its translation replaces both, its label
+        # in the language of the station ("Frankfurt") keeps the qualifier
+        qualifier = QUALIFIER.match(rest)
+        if qualifier:
+            rest = rest[qualifier.end():]
+        city = name[:len(name) - len(rest)]
+
+        def translated(lang: str) -> str:
+            label = labels.get(lang)
+            # the label of a district named after the city ("Hamburg-Neustadt" for "Neustadt") is not its translation
+            if label is None or normalize(label).endswith(" " + normalize(source)):
+                return name
+            if qualifier and normalize(label) == normalize(source):
+                return name
+            # the rest of the name keeps its own punctuation ("Barcelona Sants", "Figueres – Vilafant")
+            return label + rest
+
+        return city, {lang: translated(lang) for lang in LANGUAGES}
     return "", {lang: name for lang in LANGUAGES}
 
 
