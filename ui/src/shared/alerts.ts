@@ -17,7 +17,8 @@ const severity = (alerts: AlertDto[]) => (alerts.some(isSevere) ? "severe" : "")
 export function alertMark(alerts: AlertDto[]): string {
   if (!alerts.length) return "";
   const headers = alerts.map((a) => a.header).join("\n");
-  return `<span class="alert-mark ${severity(alerts)}" role="img" title="${esc(headers)}" aria-label="${esc(`${t("alerts.alert")}: ${headers}`)}">${warning}</span>`;
+  const label = t("alerts.alert") + ": " + headers;
+  return `<span class="alert-mark ${severity(alerts)}" role="img" title="${esc(headers)}" aria-label="${esc(label)}">${warning}</span>`;
 }
 
 /** End of the impact of an alert: its day and time. */
