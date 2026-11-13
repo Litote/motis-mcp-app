@@ -137,31 +137,43 @@ class StationNames(tsv: String) {
             val prefix = words.take(count).joinToString(" ")
             val key = normalizeName(prefix)
             val known = byCity[key] ?: byTranslatedCity[key] ?: continue
-            var rest = trimmed.substring(prefix.length)
-            // "Frankfurt (M)": the qualifier of the feed begins the one of the city
-            val qualifier = LEADING_QUALIFIER.find(rest)
-            val sameCity =
-                known.filter { candidates == null || it in candidates }
-                    .filter { qualifier == null || it.qualifier == null || it.qualifier.startsWith(normalizeName(qualifier.groupValues[1])) }
-            if (sameCity.isEmpty()) continue
-            if (qualifier != null && sameCity.any { it.qualifier != null }) rest = rest.substring(qualifier.range.last + 1)
-            // named after the city only: the name of the (main) station
-            val station = sameCity.singleOrNull() ?: sameCity.singleOrNull { it.main }
-            if (rest.isBlank() || normalizeName(rest) in STATION_WORDS) {
-                return station?.names?.get(index) ?: sameCity.firstNotNullOfOrNull { it.city(index) } ?: name
-            }
-            val city = sameCity.firstNotNullOfOrNull { it.city(index) } ?: return name
-            val localized = city + rest
-            // the same station written otherwise ("Frankfurt (Main) Hauptbahnhof" for "Frankfurt (Main) Hbf"): its name,
-            // unless it differs only by the spelling ("Lyon Part Dieu")
-            val same = sameCity.firstOrNull { stationWords(it.rest) == stationWords(rest) }?.names?.get(index)
-            return if (same != null && normalizeName(same) != normalizeName(localized)) same else localized
+            val (sameCity, rest) = inCity(known, trimmed.substring(prefix.length), candidates) ?: continue
+            return nameInCity(sameCity, rest, index) ?: name
         }
         // a station without city part ("Genève")
         val station = (byName[normalizeName(name)] ?: return name).let { all -> if (candidates == null) all else all.filter { it in candidates } }
         val translated = (station.singleOrNull() ?: station.singleOrNull { it.main })?.names?.get(index) ?: return name
         // the feed's spelling is kept ("Lyon-Part-Dieu") unless the station really has another name in the language
         return if (normalizeName(translated) == normalizeName(name)) name else translated
+    }
+
+    /**
+     * The stations of [known] (stations of a city) near the stop ([candidates], null without coordinates) and the [rest]
+     * of the name after the city and its qualifier, null when no station is left. "Frankfurt (M)": the qualifier of the
+     * feed begins the one of the city.
+     */
+    private fun inCity(known: List<Station>, rest: String, candidates: Set<Station>?): Pair<List<Station>, String>? {
+        val qualifier = LEADING_QUALIFIER.find(rest)
+        val feedQualifier = qualifier?.let { normalizeName(it.groupValues[1]) }
+        val sameCity =
+            known.filter { (candidates == null || it in candidates) && (feedQualifier == null || it.qualifier?.startsWith(feedQualifier) != false) }
+        if (sameCity.isEmpty()) return null
+        val qualified = qualifier != null && sameCity.any { it.qualifier != null }
+        return sameCity to if (qualified) rest.substring(qualifier.range.last + 1) else rest
+    }
+
+    /** The name in [index] of a stop of the stations of [sameCity] followed by [rest], null to keep the feed's name. */
+    private fun nameInCity(sameCity: List<Station>, rest: String, index: Int): String? {
+        // named after the city only: the name of the (main) station
+        if (rest.isBlank() || normalizeName(rest) in STATION_WORDS) {
+            val station = sameCity.singleOrNull() ?: sameCity.singleOrNull { it.main }
+            return station?.names?.get(index) ?: sameCity.firstNotNullOfOrNull { it.city(index) }
+        }
+        val localized = (sameCity.firstNotNullOfOrNull { it.city(index) } ?: return null) + rest
+        // the same station written otherwise ("Frankfurt (Main) Hauptbahnhof" for "Frankfurt (Main) Hbf"): its name,
+        // unless it differs only by the spelling ("Lyon Part Dieu")
+        val same = sameCity.firstOrNull { stationWords(it.rest) == stationWords(rest) }?.names?.get(index)
+        return if (same != null && normalizeName(same) != normalizeName(localized)) same else localized
     }
 
     private fun nearby(lat: Double, lon: Double): Set<Station> {
