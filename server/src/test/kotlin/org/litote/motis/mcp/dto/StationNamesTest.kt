@@ -77,6 +77,30 @@ class StationNamesTest {
         assertEquals("Girona", stations.localize("Girona", 42.5, 3.0, "fr"))
     }
 
+    private val frankfurt =
+        StationNames(
+            listOf(
+                "8011068\t50.10715\t8.66379\t1\tFrankfurt (Main) Hbf\tFrankfurt (Main)\tFrancfort-sur-le-Main Hbf\tFráncfort del Meno Hbf\t" +
+                    "\t\t\tFrancoforte sul Meno Hbf",
+                "8010113\t52.33639\t14.54669\t1\tFrankfurt (Oder)\tFrankfurt (Oder)\tFrancfort-sur-l'Oder\t\t\t\t\t",
+            ).joinToString("\n"),
+        )
+
+    @Test
+    fun `the stops of a station take its name whatever the feed`() {
+        // DELFI, NS International and SNCF stops of Frankfurt (Main) Hbf
+        assertEquals("Francfort-sur-le-Main Hbf", frankfurt.localize("Frankfurt (Main) Hauptbahnhof", 50.10668, 8.662828, "fr"))
+        assertEquals("Francfort-sur-le-Main Hbf", frankfurt.localize("Frankfurt (M) Hbf", 50.10712, 8.66383, "fr"))
+        assertEquals("Francfort-sur-le-Main Hbf", frankfurt.localize("Francfort sur le Main", 50.1073, 8.6624, "fr"))
+        assertEquals("Frankfurt (Main) Hbf", frankfurt.localize("Francfort sur le Main", 50.1073, 8.6624, "de"))
+        assertEquals("Frankfurt (Main) Hbf", frankfurt.localize("Frankfurt (M) Hbf", null, null, "en"))
+        // another stop of the city: only the city is translated
+        assertEquals("Francfort-sur-le-Main Hauptbahnhof tief", frankfurt.localize("Frankfurt (Main) Hauptbahnhof tief", 50.10711, 8.66256, "fr"))
+        assertEquals("Francfort-sur-le-Main Flughafen", frankfurt.localize("Frankfurt (Main) Flughafen", null, null, "fr"))
+        // the qualifier chooses the city
+        assertEquals("Francfort-sur-l'Oder", frankfurt.localize("Frankfurt (Oder)", null, null, "fr"))
+    }
+
     @Test
     fun `the other names are kept`() {
         assertEquals("Lyon Part Dieu", stations.localize("Lyon Part Dieu", null, null, "fr"))
@@ -103,5 +127,10 @@ class StationNamesTest {
         assertEquals("Vienne Hbf", real.localize("Wien Hbf", null, null, "fr"))
         // the name of an SNCF stop is kept but for its city
         assertEquals("Marsella St-Charles", real.localize("Marseille St-Charles", null, null, "es"))
+        // the stops of Frankfurt (Main) Hbf of the DELFI, NS International and SNCF feeds
+        assertEquals("Francfort-sur-le-Main Hbf", real.localize("Frankfurt (Main) Hauptbahnhof", 50.10668, 8.662828, "fr"))
+        assertEquals("Francfort-sur-le-Main Hbf", real.localize("Frankfurt (M) Hbf", 50.10712, 8.66383, "fr"))
+        assertEquals("Francfort-sur-le-Main Hbf", real.localize("Francfort sur le Main", 50.1073, 8.6624, "fr"))
+        assertEquals("Ludwigshafen-sur-le-Rhin Hbf", real.localize("Ludwigshafen (Rh) Hbf", null, null, "fr"))
     }
 }

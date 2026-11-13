@@ -32,6 +32,19 @@ internal fun normalizeName(text: String): String {
 private val STATION_WORDS =
     setOf("bahnhof", "bf", "gare", "gare sncf", "station", "train station", "railway station", "estacion", "estacion de tren", "stazione")
 
+/** The qualifier ending the name of a city: "(Main)" of "Frankfurt (Main)". */
+private val CITY_QUALIFIER = Regex("""\s*\(([^)]*)\)\s*$""")
+
+/** The qualifier following the city in the name of a stop: "(M)" of "Frankfurt (M) Hbf". */
+private val LEADING_QUALIFIER = Regex("""^\s*\(([^)]*)\)""")
+
+/** Abbreviations of the words of the names of stations, normalized. */
+private val STATION_ABBREVIATIONS = mapOf("hbf" to "hauptbahnhof", "bf" to "bahnhof")
+
+/** The words of [rest] of a name of station, normalized and without abbreviation: "Hbf" and "Hauptbahnhof" are the same. */
+private fun stationWords(rest: String): List<String> =
+    normalizeName(rest).split(' ').filter { it.isNotEmpty() }.map { STATION_ABBREVIATIONS[it] ?: it }
+
 /**
  * Railway stations with their name in each language of [STATION_LANGUAGES], to display the same station under the same
  * name whatever the feed ("NIMES" of the Spain-France high-speed feed, "Nîmes Centre" of the SNCF) and in the language of
@@ -55,11 +68,20 @@ class StationNames(tsv: String) {
     ) {
         val normalizedCity = normalizeName(city)
 
+        private val cityQualifier = CITY_QUALIFIER.find(city)
+
+        /** The qualifier of the city, normalized: "main" for "Frankfurt (Main)", null without qualifier. */
+        val qualifier: String? = cityQualifier?.let { normalizeName(it.groupValues[1]) }
+
+        /** The city without its qualifier, normalized: "frankfurt" for "Frankfurt (Main)". */
+        val baseCity: String = cityQualifier?.let { normalizeName(city.substring(0, it.range.first)) } ?: normalizedCity
+
+        /** The name without the city: " Hbf" for "Frankfurt (Main) Hbf". */
+        val rest: String = name.substring(city.length)
+
         /** The city of the station in [language], null when the name has no city part or no translation. */
-        fun city(language: Int): String? {
-            val rest = name.substring(city.length)
-            return names[language].takeIf { city.isNotEmpty() && it.endsWith(rest) }?.removeSuffix(rest)?.takeIf { it.isNotEmpty() }
-        }
+        fun city(language: Int): String? =
+            names[language].takeIf { city.isNotEmpty() && it.endsWith(rest) }?.removeSuffix(rest)?.takeIf { it.isNotEmpty() }
     }
 
     private val stations: List<Station> =
@@ -82,35 +104,58 @@ class StationNames(tsv: String) {
             .toList()
 
     private val grid: Map<Pair<Int, Int>, List<Station>> = stations.groupBy { cell(it.lat, it.lon) }
-    private val byCity: Map<String, List<Station>> = stations.filter { it.city.isNotEmpty() }.groupBy { it.normalizedCity }
+    private val withCity = stations.filter { it.city.isNotEmpty() }
+
+    /** The stations by city, with or without its qualifier ("frankfurt main" and "frankfurt"). */
+    private val byCity: Map<String, List<Station>> =
+        withCity.flatMap { s -> setOf(s.normalizedCity, s.baseCity).map { it to s } }.groupBy({ it.first }, { it.second })
+
+    /** The stations by the translations of their city: "francfort sur le main" of the SNCF feed. */
+    private val byTranslatedCity: Map<String, List<Station>> =
+        withCity.flatMap { s ->
+            STATION_LANGUAGES.indices.mapNotNull { s.city(it)?.let(::normalizeName) }.filter { it != s.normalizedCity }.distinct().map { it to s }
+        }.groupBy({ it.first }, { it.second })
     private val byName: Map<String, List<Station>> = stations.groupBy { normalizeName(it.name) }
-    private val maxCityWords = byCity.keys.maxOfOrNull { it.count { c -> c == ' ' } + 1 } ?: 0
+    private val maxCityWords = (byCity.keys + byTranslatedCity.keys).maxOfOrNull { it.count { c -> c == ' ' } + 1 } ?: 0
 
     /**
      * [name] of a stop in [language] (one of [STATION_LANGUAGES]): when it begins with the name of a city, this one is
      * written in [language] ("Gérone", "Barcelone Sants"), and a stop named after the city only (the high-speed feed:
      * "Nimes", or the city followed by a word for station: "Strasbourg Bahnhof") takes the name of its station ("Nîmes
-     * Centre", "Strasbourg"). With the coordinates, the stop must be at a station of
-     * this city (not a bus stop of the same name elsewhere). The name is returned as is for the other stops.
+     * Centre", "Strasbourg"). The city may be written in another language ("Francfort sur le Main" of the SNCF feed) or
+     * with a shortened qualifier ("Frankfurt (M) Hbf"), and a station written otherwise ("Hauptbahnhof" for "Hbf") takes
+     * the name of the station. With the coordinates, the stop must be at a station of this city (not a bus stop of the
+     * same name elsewhere). The name is returned as is for the other stops.
      */
     fun localize(name: String, lat: Double?, lon: Double?, language: String): String {
         val index = STATION_LANGUAGES.indexOf(language)
         if (index < 0) return name
         val candidates = if (lat != null && lon != null) nearby(lat, lon) else null
-        val words = name.trim().split(Regex("\\s+"))
+        val trimmed = name.trim()
+        val words = trimmed.split(Regex("\\s+"))
         for (count in minOf(maxCityWords, words.size) downTo 1) {
             val prefix = words.take(count).joinToString(" ")
             val key = normalizeName(prefix)
-            val sameCity = (byCity[key] ?: continue).let { all -> if (candidates == null) all else all.filter { it in candidates } }
+            val known = byCity[key] ?: byTranslatedCity[key] ?: continue
+            var rest = trimmed.substring(prefix.length)
+            // "Frankfurt (M)": the qualifier of the feed begins the one of the city
+            val qualifier = LEADING_QUALIFIER.find(rest)
+            val sameCity =
+                known.filter { candidates == null || it in candidates }
+                    .filter { qualifier == null || it.qualifier == null || it.qualifier.startsWith(normalizeName(qualifier.groupValues[1])) }
             if (sameCity.isEmpty()) continue
-            val rest = name.trim().substring(prefix.length)
+            if (qualifier != null && sameCity.any { it.qualifier != null }) rest = rest.substring(qualifier.range.last + 1)
             // named after the city only: the name of the (main) station
             val station = sameCity.singleOrNull() ?: sameCity.singleOrNull { it.main }
             if (rest.isBlank() || normalizeName(rest) in STATION_WORDS) {
                 return station?.names?.get(index) ?: sameCity.firstNotNullOfOrNull { it.city(index) } ?: name
             }
             val city = sameCity.firstNotNullOfOrNull { it.city(index) } ?: return name
-            return city + rest
+            val localized = city + rest
+            // the same station written otherwise ("Frankfurt (Main) Hauptbahnhof" for "Frankfurt (Main) Hbf"): its name,
+            // unless it differs only by the spelling ("Lyon Part Dieu")
+            val same = sameCity.firstOrNull { stationWords(it.rest) == stationWords(rest) }?.names?.get(index)
+            return if (same != null && normalizeName(same) != normalizeName(localized)) same else localized
         }
         // a station without city part ("Genève")
         val station = (byName[normalizeName(name)] ?: return name).let { all -> if (candidates == null) all else all.filter { it in candidates } }

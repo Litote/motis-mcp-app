@@ -9,7 +9,7 @@
 7102030	37.02978	-4.56119	0	Antequera AV	Antequera						
 7103100	37.78022	-3.79097	0	Jaén	Jaén						
 7103208	40.03492	-2.14441	1	Cuenca Fernando Zobel	Cuenca						
-7103213	39.52190	-1.13458	0	Requena Utiel							
+7103213	39.52190	-1.13458	0	Requena Utiel	Requena						
 7103216	39.45802	-0.38176	0	Valencia Joaquín Sorolla	Valencia	Valence Joaquín Sorolla					
 7103309	38.63176	-0.86770	0	Villena AVE	Villena						
 7103410	38.24623	-0.76563	0	Elx AV	Elx						
@@ -31,7 +31,7 @@
 7105461	43.24842	-2.99018	0	Irauregui							
 7105463	43.23335	-3.01559	0	Zaramillo	Zaramillo						
 7105467	43.20170	-3.05081	0	Sodupe	Sodupe						
-7105473	43.21049	-3.10935	0	Aranguren (Biscay)	Aranguren						
+7105473	43.21049	-3.10935	0	Aranguren (Biscay)	Aranguren (Biscay)						
 7105474	43.21082	-3.11588	1	Aranguren Apeadero	Aranguren						
 7105475	43.21314	-3.13156	0	Zalla	Zalla						
 7105483	43.19116	-3.19582	0	Balmaseda	Balmaseda		Valmaseda				
@@ -63,7 +63,7 @@
 7105541	43.36962	-5.18362	0	Ozanes	Ozanes						
 7105542	43.38129	-5.18705	0	Policlínico							
 7105543	43.38752	-5.18851	0	Arriondas	Arriondas			Les Arriondes			
-7105545	43.40144	-5.14282	0	Fuentes (Asturias)	Fuentes						
+7105545	43.40144	-5.14282	0	Fuentes (Asturias)	Fuentes (Asturias)						
 7105547	43.41192	-5.11770	0	Toraño	Toraño			Torañu			
 7105549	43.43118	-5.07331	0	Cuevas	Cuevas			Cueves			
 7105551	43.44049	-5.05593	0	Llovio	Llovio			Lloviu			
@@ -123,7 +123,7 @@
 7105738	42.96995	-3.78632	0	Soncillo	Soncillo						
 7105739	42.99488	-3.85837	0	Cabañas de Virtus	Cabañas	Cabanas de Virtus		Cabanas de Virtus	Cabanas de Virtus	Cabanas de Virtus	Cabanas de Virtus
 7105740	42.99102	-3.94766	0	Arija	Arija						
-7105741	42.98006	-3.96763	0	Llano	Llano		El Llano				
+7105741	42.98006	-3.96763	0	Llano	Llano						
 7105742	42.97355	-4.02978	0	Las Rozas de Valdearroyo Feve	Las Rozas de Valdearroyo						
 7105743	42.94172	-4.03743	0	Montes Claros							
 7105744	42.91430	-4.08723	0	Los Carabeos							
@@ -216,12 +216,12 @@
 7111210	42.84902	-2.51429	0	Alegria de Alava-Dulantzi	Alegria de Alava	Alegría/Dulantzi-Dulantzi	Alegría de Álava-Dulantzi	Alegría/Dulantzi-Dulantzi	Alegría-Dulantzi-Dulantzi	Alegría-Dulantzi-Dulantzi	Alegría-Dulantzi-Dulantzi
 7111212	42.84632	-2.38875	0	Salvatierra de Álava	Salvatierra						
 7111213	42.86939	-2.30656	0	Araia							
-7111300	42.89570	-2.18146	0	Alsasua	Alsasua	Altsasu-Alsasua		Altsasu – Alsasua		Altsasu – Alsasua	
+7111300	42.89570	-2.18146	0	Alsasua	Alsasua						
 7111303	42.93950	-2.26371	0	Zegama – Otzaurte	Zegama		Cegama – Otzaurte				
 7111306	43.05085	-2.33080	0	Legazpi	Legazpi		Legazpia				
 7111400	43.08705	-2.32002	0	Zumárraga	Zumárraga	Zumarraga		Zumarraga	Zumarraga	Zumarraga	Zumarraga
 7111404	43.04608	-2.20195	0	Beasaín	Beasaín	Beasain	Beasáin	Beasain	Beasain	Beasain	Beasain
-7111405	43.05276	-2.17937	0	Ordizia	Ordizia		Villafranca de Ordizia				
+7111405	43.05276	-2.17937	0	Ordizia	Ordizia						
 7111500	43.13559	-2.07920	0	Tolosa	Tolosa						
 7111507	43.26198	-1.97573	0	Hernani Centro	Hernani						
 7111511	43.31767	-1.97678	0	Donostia-San Sebastián	Donostia-San Sebastián	Saint-Sébastien	San Sebastián	San Sebastián	San Sebastián		San Sebastián
@@ -243,7 +243,7 @@
 7112013	40.83273	-4.16817	0	Ortigosa del Monte	Ortigosa del Monte						
 7112014	40.85668	-4.14116	0	Navas de Riofrío – La Losa	Navas de Riofrío						
 7113003	42.95140	-2.90077	0	Izarra							
-7113106	43.14222	-2.96043	0	Llodio	Llodio	Laudio		Laudio/Llodio		Laudio	
+7113106	43.14222	-2.96043	0	Llodio	Llodio	Laudio				Laudio	
 7113110	43.17900	-2.90274	0	Ugao-Miraballes	Ugao-Miraballes		Miravalles				
 7113200	43.25971	-2.92751	1	Bilbao Abando	Bilbao						
 7113206	43.25473	-2.94341	0	Ametzola	Ametzola		Amézola				
@@ -330,7 +330,7 @@
 7115301	43.46133	-5.82602	0	Villabona de Asturias	Villabona						
 7115302	43.50482	-5.78273	0	Serin							
 7115303	43.52080	-5.74631	0	Monteana							
-7115305	43.47456	-5.79907	0	Villabona Tabladiello	Villabona					Amasa-Villabona Tabladiello	
+7115305	43.47456	-5.79907	0	Villabona Tabladiello	Villabona						
 7115400	43.54171	-5.72314	0	Veriña	Veriña						
 7115401	43.53529	-5.69773	0	Calzada de Asturias	Calzada	Calzada de Losa de Asturias		Calzada de Losa de Asturias			Calzada de Losa de Asturias
 7116301	43.47603	-5.86142	0	Ferroñes	Ferroñes						
@@ -383,14 +383,14 @@
 7120309	43.01531	-7.55226	0	Lugo	Lugo						
 7120310	43.12130	-7.62482	0	Rabade	Rabade	Rábade	Rábade	Rábade	Rábade	Rábade	Rábade
 7120311	43.14911	-7.68623	0	Begonte	Begonte						
-7120312	43.17334	-7.75632	0	Baamonde	Baamonde		Santiago de Baamonde	Baamonde, Begonte			
+7120312	43.17334	-7.75632	0	Baamonde	Baamonde			Baamonde, Begonte			
 7120313	43.16376	-7.83703	0	Parga	Parga			Parga, Guitiriz			
 7120314	43.17902	-7.89511	0	Guitiriz	Guitiriz						
 7120316	43.14153	-8.03761	0	Teixeiro	Teixeiro		Teijeiro				
 7120317	43.12730	-8.14301	0	Curtis	Curtis						
 7120318	43.12708	-8.16345	0	Piñoi							
 7120319	43.17332	-8.20084	0	Cesuras	Cesuras						
-7120320	43.21815	-8.18706	0	Oza de los Ríos	Oza		Santa María de Oza de los Ríos	Oza, A Coruña de los Ríos			
+7120320	43.21815	-8.18706	0	Oza de los Ríos	Oza			Oza, A Coruña de los Ríos			
 7120400	43.27081	-8.22598	0	Betanzos-Infesta	Betanzos						
 7120402	43.28787	-8.30785	0	Cecebre	Cecebre						
 7120403	43.29069	-8.35240	0	Cambre	Cambre						
@@ -398,10 +398,10 @@
 7120410	43.33525	-8.41295	0	Elviña-Universidade	Elviña			Elviña, A Coruña-Universidade			
 7121001	43.28426	-8.21567	1	Betanzos-Cidade	Betanzos						
 7121002	43.34963	-8.20745	0	Miño	Miño						
-7121003	43.37806	-8.20139	0	Perbes	Perbes		San Pedro de Perbes	Perbes, Miño			
+7121003	43.37806	-8.20139	0	Perbes	Perbes			Perbes, Miño			
 7121004	43.41172	-8.18025	0	Pontedeume	Pontedeume		Puentedeume				
 7121005	43.41582	-8.16882	0	Cabanas-Areal	Cabanas		Cabañas-Areal				
-7121006	43.43850	-8.19748	0	Franza	Franza		Santiago de Franza				
+7121006	43.43850	-8.19748	0	Franza	Franza						
 7121007	43.46267	-8.18844	0	Barallobre	Barallobre						
 7121008	43.47235	-8.17520	0	Perlio	Perlio		Perlío	Perlío			
 7121009	43.49531	-8.16102	0	Neda	Neda						
@@ -416,10 +416,10 @@
 7122102	42.29300	-8.13902	0	Ribadavia	Ribadavia						
 7122103	42.21966	-8.18541	0	Filgueira	Filgueira			Filgueira (parroquia)			
 7122104	42.15484	-8.20133	0	Frieira							
-7122105	42.13723	-8.23563	0	Pousa-Crecente	Pousa			A Pousa-Crecente		A Pousa (Boimorto)-Crecente	
-7122106	42.10687	-8.30022	0	Arbo	Arbo			Arbo, Arbo			
+7122105	42.13723	-8.23563	0	Pousa-Crecente	Pousa					A Pousa (Boimorto)-Crecente	
+7122106	42.10687	-8.30022	0	Arbo	Arbo						
 7122107	42.09217	-8.35623	0	Sela	Sela			Sela, Arbo			
-7122108	42.07541	-8.42014	0	As Neves	As Neves	As Neves (As Neves)	Las Nieves	As Neves (As Neves)			
+7122108	42.07541	-8.42014	0	As Neves	As Neves		Las Nieves				
 7122109	42.08168	-8.49521	0	Salvaterra de Miño	Salvaterra de Miño		Salvatierra de Miño				
 7122110	42.05564	-8.56640	0	Caldelas	Caldelas			Caldelas de Miño, Tui			
 7122200	42.06567	-8.62226	0	Guillarei	Guillarei		Guillarey	Guillarei (San Mamede)			
@@ -469,13 +469,13 @@
 7131213	42.25640	-7.75311	0	Paderne-Cantoña	Paderne			Paderne, A Coruña-Cantoña			
 7131214	42.26540	-7.83148	0	Taboadela	Taboadela						
 7131303	42.41164	-8.02866	0	A Friela-Maside							
-7131304	42.43158	-8.06873	0	O Carballiño	O Carballiño						
+7131304	42.43158	-8.06873	0	O Carballiño	O Carballiño		Carballino				
 7131306	42.51927	-8.10492	0	O Irixo	O Irixo		Irijo				
 7131308	42.63243	-8.14294	0	Lalin	Lalin	Lalín	Lalín	Lalín	Lalín	Lalín	Lalín
 7131309	42.68427	-8.20724	0	Ponte Taboada	Ponte			Santuyanu Taboada			
 7131311	42.74648	-8.30458	0	Bandeira							
 7131312	42.77644	-8.42818	0	Vedra-Ribadulla	Vedra						
-7131400	42.87052	-8.54469	0	Santiago de Compostela	Santiago						
+7131400	42.87052	-8.54469	0	Santiago de Compostela	Santiago de Compostela	Saint-Jacques-de-Compostelle			Santiago de Compostella		Santiago di Compostela
 7131407	43.16116	-8.47102	0	Cerceda	Cerceda						
 7131408	43.18628	-8.46486	0	A Vila da Igrexa	A Vila						
 7131409	43.21512	-8.44949	0	Meirama Picardel	Meirama			Meirama, Cerceda Picardel			
@@ -484,7 +484,7 @@
 7131415	43.03782	-8.44808	0	Ordes	Ordes		Órdenes				
 7131416	43.20644	-8.44661	0	Cerceda-Meirama	Cerceda						
 7132001	41.25982	-5.01781	0	Campillo	Campillo						
-7132002	41.21524	-5.11509	0	El Carpio (Valladolid)	El Carpio						
+7132002	41.21524	-5.11509	0	El Carpio (Valladolid)	El Carpio (Valladolid)						
 7132003	41.19183	-5.13777	0	Fresno el Viejo	Fresno el Viejo						
 7132004	41.13336	-5.18367	0	Cantalapiedra	Cantalapiedra						
 7132006	41.07997	-5.40645	0	El Pedroso de la Armuña	El Pedroso de la Armuña						
@@ -604,7 +604,7 @@
 7151100	37.37760	-5.97955	0	Sevilla San Bernardo	Sevilla	Séville San Bernardo		Seville San Bernardo			Siviglia San Bernardo
 7151103	37.28726	-5.92337	0	Dos Hermanas	Dos Hermanas						
 7151110	37.36283	-5.97583	0	Sevilla-Virgen del Rocío	Sevilla	Séville-Virgen del Rocío		Seville-Virgen del Rocío			Siviglia-Virgen del Rocío
-7151111	37.32149	-5.96432	0	Bellavista (Sevilla)	Bellavista						
+7151111	37.32149	-5.96432	0	Bellavista (Sevilla)	Bellavista (Sevilla)						
 7151200	37.18324	-5.79022	0	Utrera	Utrera						
 7151202	37.02008	-5.94655	0	Las Cabezas de San Juan	Las Cabezas de San Juan					Las Cabezas	
 7151203	36.93006	-6.08667	0	Lebrija	Lebrija						
@@ -742,7 +742,7 @@
 7165209	39.95486	-0.07667	0	Almazora	Almazora			Almassora		Almassora	
 7165300	39.98826	-0.05208	0	Castellón de la Plana	Castellón de la Plana	Castelló de la Plana				Castelló de la Plana	
 7165304	40.09249	0.13981	0	Orpesa	Orpesa		Oropesa del Mar	Oropesa	Oropesa del Mar	Oropesa del Mar	Oropesa del Mar
-7165306	40.21219	0.19929	0	Torreblanca (Castellón)	Torreblanca						
+7165306	40.21219	0.19929	0	Torreblanca (Castellón)	Torreblanca (Castellón)						
 7165308	40.30344	0.22887	0	Alcalá de Xivert	Alcalá de Xivert	Alcalá de Chivert	Alcalá de Chivert	Alcalà de Xivert	Alcalà de Xivert	Alcalà de Xivert	Alcalà de Xivert
 7165311	40.42709	0.41475	0	Benicarló-Peñiscola	Benicarló						
 7165312	40.47245	0.45674	0	Vinaròs	Vinaròs		Vinaroz				
@@ -770,7 +770,7 @@
 7166012	40.15350	-2.56845	0	Caracenilla	Caracenilla						
 7166013	40.13720	-2.50689	0	Castillejo del Romeral	Castillejo del Romeral						
 7166014	40.15516	-2.40825	0	Cuevas de Velasco	Cuevas de Velasco						
-7166015	40.16920	-2.35714	0	Villar del Saz de Navalón	Villar			El Villar del Saz de Navalón			
+7166015	40.16920	-2.35714	0	Villar del Saz de Navalón	Villar						
 7166016	40.10278	-2.22104	0	Chillaron							
 7166100	40.06729	-2.13656	0	Cuenca Estación	Cuenca						
 7166103	39.95383	-1.88935	0	Cañada del Hoyo	Cañada del Hoyo						
@@ -823,7 +823,7 @@
 7167208	40.01175	-0.69631	0	Barracas	Barracas						
 7167211	39.94732	-0.57203	0	Caudiel	Caudiel						
 7167215	39.84710	-0.48233	0	Segorbe-Ciudad	Segorbe						
-7169001	38.98810	-0.48046	0	Genovés	Genovés					El Genovés	
+7169001	38.98810	-0.48046	0	Genovés	Genovés						
 7169002	38.93860	-0.45387	0	Beniganim	Beniganim	Benigànim	Benigánim	Benigànim	Benigánim	Benigànim	Benigánim
 7169003	38.90654	-0.45372	0	La Pobla del Duc	La Pobla del Duc		Puebla del Duc				
 7169004	38.88402	-0.49167	0	Montaverner	Montaverner		Montaberner				
@@ -1024,7 +1024,7 @@
 7178710	41.56747	2.03972	0	Terrassa Est	Terrassa		Tarrasa Est				
 7178800	41.47210	2.18168	0	Montcada Bifurcació	Montcada	Moncada Bifurcació	Moncada Bifurcació	Moncada Bifurcació	Moncada Bifurcació	Moncada Bifurcació	Moncada Bifurcació
 7178801	41.46052	2.18142	0	Barcelona-Torre Baró	Barcelona	Barcelone-Torre Baró					Barcellona-Torre Baró
-7178802	41.43071	2.18310	0	Sant Andreu Arenal	Sant Andreu		Distrito de Sant Andreu Arenal				
+7178802	41.43071	2.18310	0	Sant Andreu Arenal	Sant Andreu						
 7178804	41.39157	2.17983	0	Barcelona-Arc de Triomf	Barcelona	Barcelone-Arc de Triomf					Barcellona-Arc de Triomf
 7178805	41.38770	2.16928	0	Barcelona Plaça de Catalunya	Barcelona	Barcelone Plaça de Catalunya					Barcellona Plaça de Catalunya
 7178806	41.42296	2.18678	0	Barcelona la Sagrera Meridiana	Barcelona	Barcelone la Sagrera Meridiana					Barcellona la Sagrera Meridiana
@@ -1131,13 +1131,13 @@
 8001071	53.55273	10.00691	1	Hamburg Hbf	Hamburg	Hambourg Hbf	Hamburgo Hbf				Amburgo Hbf
 8001304	54.31498	10.13198	1	Kiel Hbf	Kiel						
 8002140	48.36544	10.88557	1	Augsburg Hbf	Augsburg	Augsbourg Hbf	Augsburgo Hbf				Augusta Hbf
-8002307	47.71175	10.31761	1	Kempten (Allgäu) Hbf	Kempten						
+8002307	47.71175	10.31761	1	Kempten (Allgäu) Hbf	Kempten (Allgäu)						
 8002371	47.54474	9.68030	1	Lindau-Insel Hbf	Lindau				Lindau (Bodensee)-Insel Hbf		Lindau (Bodensee)-Insel Hbf
 8003479	52.39170	13.06678	1	Potsdam Hbf	Potsdam						
 8005361	51.31826	9.48950	1	Kassel Hbf	Kassel	Cassel Hbf					
 8006050	51.04056	13.73204	1	Dresden Hbf	Dresden	Dresde Hbf	Dresde Hbf				Dresda Hbf
 8006377	50.83927	12.93030	1	Chemnitz Hbf	Chemnitz						
-8006640	50.71496	12.47598	1	Zwickau (Sachs) Hbf	Zwickau						
+8006640	50.71496	12.47598	1	Zwickau (Sachs) Hbf	Zwickau (Sachs)						
 8008073	51.36274	7.46025	1	Hagen Hbf	Hagen						
 8008094	51.21996	6.79432	1	Düsseldorf Hbf	Düsseldorf						
 8008143	51.25433	7.14938	1	Wuppertal Hbf	Wuppertal						
@@ -1151,20 +1151,20 @@
 8010316	51.42979	6.77591	1	Duisburg Hbf	Duisburg	Duisbourg Hbf	Duisburgo Hbf				
 8011018	50.07079	8.24373	1	Wiesbaden Hbf	Wiesbaden						
 8011051	50.12128	8.92916	1	Hanau Hbf	Hanau						
-8011068	50.10715	8.66379	1	Frankfurt (Main) Hbf	Frankfurt	Francfort-sur-le-Main (Main) Hbf	Fráncfort del Meno (Main) Hbf		Frankfurt am Main (Main) Hbf	Frankfurt am Main (Main) Hbf	Francoforte sul Meno (Main) Hbf
+8011068	50.10715	8.66379	1	Frankfurt (Main) Hbf	Frankfurt (Main)	Francfort-sur-le-Main Hbf	Fráncfort del Meno Hbf		Frankfurt am Main Hbf	Frankfurt am Main Hbf	Francoforte sul Meno Hbf
 8011336	49.87250	8.62964	1	Darmstadt Hbf	Darmstadt						
-8013088	51.64386	10.32993	1	Herzberg (Harz)	Herzberg						
+8013088	51.64386	10.32993	1	Herzberg (Harz)	Herzberg (Harz)						
 8013104	51.72627	10.24536	1	Osterode am Harz Mitte	Osterode am Harz						
 8013240	52.25224	10.53970	1	Braunschweig Hbf	Braunschweig	Brunswick Hbf	Brunswick Hbf	Brunswick Hbf			
 8013552	52.37676	9.74102	1	Hannover Hbf	Hannover	Hanovre Hbf		Hanover Hbf			
 8013597	52.02926	8.53272	1	Bielefeld Hbf	Bielefeld						
-8013646	52.98313	9.83121	1	Soltau (Han)	Soltau						
+8013646	52.98313	9.83121	1	Soltau (Han)	Soltau (Han)						
 8013751	53.08348	8.81383	1	Bremen Hbf	Bremen	Brême Hbf					Brema Hbf
 8013786	53.53492	8.59956	1	Bremerhaven Hbf	Bremerhaven						
 8013889	52.15016	10.40740	1	Salzgitter-Watenstedt	Salzgitter						
 8014008	49.47930	8.46953	1	Mannheim Hbf	Mannheim						
 8014021	49.40378	8.67574	1	Heidelberg Hbf	Heidelberg						
-8014186	49.25035	8.87510	1	Sinsheim (Elsenz) Hbf	Sinsheim						
+8014186	49.25035	8.87510	1	Sinsheim (Elsenz) Hbf	Sinsheim (Elsenz)						
 8014228	48.99351	8.40185	1	Karlsruhe Hbf	Karlsruhe						
 8014350	47.99769	7.84159	1	Freiburg (Breisgau) Hbf							
 8014441	47.61405	7.66542	1	Lörrach Hbf	Lörrach						
@@ -1173,19 +1173,19 @@
 8015165	51.19658	6.44611	1	Mönchengladbach Hbf	Mönchengladbach						
 8015345	50.76780	6.09150	1	Aachen Hbf	Aachen	Aix-la-Chapelle Hbf	Aquisgrán Hbf		Aken Hbf		Aquisgrana Hbf
 8015458	50.94303	6.95873	1	Köln Hbf	Köln	Cologne Hbf	Colonia Hbf	Cologne Hbf	Keulen Hbf		Colonia Hbf
-8015485	50.73201	7.09714	1	Bonn Hbf	Bonn			Stadtbezirk Bonn Hbf	Stadtbezirk Bonn Hbf		
+8015485	50.73201	7.09714	1	Bonn Hbf	Bonn						
 8016043	50.97255	11.03850	1	Erfurt Hbf	Erfurt		Érfurt Hbf				
 8016320	50.92485	11.58746	1	Jena Paradies	Jena	Iéna Paradies					
-8016333	50.71799	11.33915	1	Rudolstadt (Thür)	Rudolstadt						
+8016333	50.71799	11.33915	1	Rudolstadt (Thür)	Rudolstadt (Thür)						
 8016705	50.88342	12.07709	1	Gera Hbf	Gera						
 8019051	50.00111	8.25872	1	Mainz Hbf	Mainz	Mayence Hbf	Maguncia Hbf				Magonza Hbf
-8019082	49.47798	8.43340	1	Ludwigshafen (Rh) Hbf	Ludwigshafen	Ludwigshafen-sur-le-Rhin (Rh) Hbf			Ludwigshafen am Rhein (Rh) Hbf	Ludwigshafen am Rhein (Rh) Hbf	Ludwigshafen am Rhein (Rh) Hbf
-8019403	49.34961	8.14038	1	Neustadt (Weinstr) Hbf	Neustadt	Hamburg-Neustadt (Weinstr) Hbf					
+8019082	49.47798	8.43340	1	Ludwigshafen (Rh) Hbf	Ludwigshafen (Rh)	Ludwigshafen-sur-le-Rhin Hbf			Ludwigshafen am Rhein Hbf	Ludwigshafen am Rhein Hbf	Ludwigshafen am Rhein Hbf
+8019403	49.34961	8.14038	1	Neustadt (Weinstr) Hbf	Neustadt (Weinstr)						
 8019426	49.19818	8.12617	1	Landau (Pfalz) Hbf							
 8020097	47.62668	12.99906	1	Berchtesgaden Hbf	Berchtesgaden						
 8020347	48.14023	11.55834	1	München Hbf	München	Munich Hbf	Múnich Hbf	Munich Hbf			Monaco di Baviera Hbf
 8020658	48.35373	11.78597	1	München Flughafen Terminal	München	Munich Flughafen Terminal	Múnich Flughafen Terminal	Munich Flughafen Terminal			Monaco di Baviera Flughafen Terminal
-8021011	51.95656	7.63572	1	Münster (Westf) Hbf	Münster						
+8021011	51.95656	7.63572	1	Münster (Westf) Hbf	Münster (Westf)						
 8021025	52.27285	8.06178	1	Osnabrück Hbf	Osnabrück						
 8022193	49.44561	11.08299	1	Nürnberg Hbf	Nürnberg	Nuremberg Hbf	Núremberg Hbf	Nuremberg Hbf	Neurenberg Hbf		Norimberga Hbf
 8022534	49.80179	9.93578	1	Würzburg Hbf	Würzburg	Wurtzbourg Hbf	Wurzburgo Hbf				
@@ -1195,10 +1195,10 @@
 8024001	52.13035	11.62689	1	Magdeburg Hbf	Magdeburg	Magdebourg Hbf	Magdeburgo Hbf		Maagdenburg Hbf		Magdeburgo Hbf
 8025181	49.75685	6.65245	1	Trier Hbf	Trier	Trèves Hbf	Tréveris Hbf				Treviri Hbf
 8025391	49.24115	6.99099	1	Saarbrücken Hbf	Saarbrücken	Sarrebruck Hbf	Sarrebruck Hbf				
-8025446	49.35329	7.17666	1	Neunkirchen (Saar) Hbf	Neunkirchen						
+8025446	49.35329	7.17666	1	Neunkirchen (Saar) Hbf	Neunkirchen (Saar)						
 8026044	50.17422	12.12630	1	Selb Stadt	Selb						
 8026294	49.01167	12.09962	1	Regensburg Hbf	Regensburg	Ratisbonne Hbf	Ratisbona Hbf				Ratisbona Hbf
-8026353	48.54749	12.13593	1	Landshut (Bay) Hbf	Landshut						
+8026353	48.54749	12.13593	1	Landshut (Bay) Hbf	Landshut (Bay)						
 8027089	54.07832	12.13171	1	Rostock Hbf	Rostock						
 8027359	53.63466	11.40755	1	Schwerin Hbf	Schwerin						
 8028504	54.30863	13.07732	1	Stralsund Hbf	Stralsund						
@@ -1207,12 +1207,12 @@
 8029103	48.39943	9.98222	1	Ulm Hbf	Ulm						
 8029116	48.23330	9.87839	1	Laupheim Stadt	Laupheim						
 8029162	47.65322	9.47390	1	Friedrichshafen Stadt	Friedrichshafen						
-8029303	48.53973	9.29015	1	Metzingen (Württ)	Metzingen						
-8029345	48.27846	8.85030	1	Balingen (Württ)	Balingen						
+8029303	48.53973	9.29015	1	Metzingen (Württ)	Metzingen (Württ)						
+8029345	48.27846	8.85030	1	Balingen (Württ)	Balingen (Württ)						
 8029492	48.46032	8.42881	1	Freudenstadt Hbf	Freudenstadt						
 8029629	49.14331	9.20771	1	Heilbronn Hbf	Heilbronn						
 8032572	50.38250	8.09611	1	Limburg Süd	Limburg						
-8040415	53.83445	9.96720	1	Kaltenkirchen (Holst)	Kaltenkirchen						
+8040415	53.83445	9.96720	1	Kaltenkirchen (Holst)	Kaltenkirchen (Holst)						
 8044407	53.93547	14.18785	1	Seebad Ahlbeck	Seebad						
 8044408	53.94984	14.16959	1	Seebad Heringsdorf	Seebad						
 8050642	54.30513	8.65050	1	Bad St. Peter Süd							
@@ -1262,7 +1262,7 @@
 8311705	40.35153	15.00175	1	Agropoli-Castellabate	Agropoli						
 8311749	38.92116	16.25602	1	Lamezia Terme Centrale	Lamezia Terme						
 8311781	38.10412	15.63579	1	Reggio di Calabria Centrale							
-8311956	38.89613	16.59935	1	Catanzaro (Germaneto)	Catanzaro						
+8311956	38.89613	16.59935	1	Catanzaro (Germaneto)	Catanzaro (Germaneto)						
 8312002	38.10942	13.36747	1	Palermo Centrale	Palermo	Palerme Centrale					
 8312031	38.15907	14.83023	1	Brolo-Ficarra	Brolo						
 8312037	38.12836	15.05657	1	Oliveri-Tindari	Oliveri						
@@ -1274,7 +1274,7 @@
 8400058	52.37919	4.89943	1	Amsterdam-Centraal	Amsterdam						
 8400282	52.08051	4.32399	1	Den Haag Centraal	Den Haag	La Haye Centraal	La Haya Centraal	The Hague Centraal			L'Aia Centraal
 8400384	52.14669	4.49274	1	Leiden Lammenschans	Leiden	Leyde Lammenschans					Leida Lammenschans
-8400530	51.92507	4.46884	1	Rotterdam Centraal	Rotterdam	municipalité de Rotterdam Centraal	Róterdam Centraal				
+8400530	51.92507	4.46884	1	Rotterdam Centraal	Rotterdam		Róterdam Centraal				
 8400621	52.08758	5.11117	1	Utrecht Centraal	Utrecht						
 8400627	52.01877	5.54992	1	Veenendaal Centrum	Veenendaal						
 8500010	47.54708	7.58917	1	Basel SBB	Basel	Bâle SBB	Basilea SBB		Bazel SBB		Basilea SBB
