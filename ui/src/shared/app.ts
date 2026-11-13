@@ -123,6 +123,14 @@ export function startView(name: string, handlers: ViewHandlers): App {
   document.getElementById("fullscreen")?.addEventListener("click", () =>
     requestDisplayMode(isFullscreen() ? "inline" : "fullscreen"),
   );
+  // the links (of the alerts) are opened by the host: the sandbox of the view may block them
+  document.addEventListener("click", (event) => {
+    const link = (event.target as Element | null)?.closest?.<HTMLAnchorElement>("a[data-link]");
+    if (!link) return;
+    event.preventDefault();
+    event.stopPropagation();
+    app.openLink({ url: link.href }).catch(() => window.open(link.href, "_blank", "noopener"));
+  });
   // Escape leaves fullscreen: the keyboard focus is in the view, the host does not receive the key
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && isFullscreen()) {

@@ -28,6 +28,7 @@ export class FakeApp {
   callServerTool = vi.fn();
   updateModelContext = vi.fn(async (_params: { content: Array<{ type: string; text: string }> }) => ({}));
   requestDisplayMode = vi.fn(async ({ mode }: { mode: string }) => ({ mode }));
+  openLink = vi.fn(async (_params: { url: string }) => ({}));
 
   constructor() {
     FakeApp.last = this;

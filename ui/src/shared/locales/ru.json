@@ -168,5 +168,9 @@
   "propulsion.PLUG_IN_HYBRID": "подключаемый гибрид",
   "propulsion.HYDROGEN_FUEL_CELL": "водород",
   "duration.minutes": "{minutes} мин",
-  "duration.hours": "{hours} ч {minutes}"
+  "duration.hours": "{hours} ч {minutes}",
+  "alerts.alert": "Изменение в движении",
+  "alerts.title": "Изменения в движении",
+  "alerts.more": "Подробнее",
+  "alerts.until": "До {date}"
 }

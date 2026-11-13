@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { ThreadAssistantMessagePart } from "@assistant-ui/react";
-import { argLocalDateTime, evaluate, inOrder, localDateTime, tomorrow, toRecord, type RunRecord } from "./checks";
+import { argLocalDateTime, evaluate, inOrder, localDateTime, mentionsAlerts, tomorrow, toRecord, type RunRecord } from "./checks";
 import { SCENARIOS } from "./scenarios";
 
 const record = (overrides: Partial<RunRecord> = {}): RunRecord => ({
@@ -80,6 +80,18 @@ describe("evaluation checks", () => {
     });
 
     expect(failed(r, { tools: ["departures"], allowToolErrors: true, args: [{ tool: "departures", label: "id", check: (a) => a.stopId === "bordeaux" }] })).toEqual([]);
+  });
+
+  it("expects the answer to tell the service alerts given by the tools", () => {
+    const alerted = (answer: string) =>
+      record({ calls: [{ tool: "plan_journey", args: {}, isError: false, result: "1. ...\nService alerts:\n[1] RER A : perturbations" }], answer });
+
+    expect(mentionsAlerts(alerted("Prenez le RER A, attention il est perturbé."))).toBe(true);
+    expect(mentionsAlerts(alerted("Prenez le RER A à 12:04."))).toBe(false);
+    expect(mentionsAlerts(record())).toBe(true);
+    expect(failed(alerted("Prenez le RER A."), { tools: ["plan_journey"], run: [{ label: "tells the alerts", check: mentionsAlerts }] })).toEqual([
+      "tells the alerts",
+    ]);
   });
 
   it("reads the date-times of the arguments in the time zone of the place", () => {

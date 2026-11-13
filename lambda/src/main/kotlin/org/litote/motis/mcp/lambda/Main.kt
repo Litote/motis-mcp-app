@@ -71,7 +71,12 @@ class McpLambda(createServer: RoutingContext.() -> Server) {
 fun createMcpLambda(): McpLambda {
     val config = MotisMcpConfig.fromEnv()
     val motis = config.clientConfiguration()
-    val gateway = MotisGateway(motis, overlays = config.realtimeOverlays(motis.userAgent), repairShapes = config.repairShapes)
+    val gateway = MotisGateway(
+        motis,
+        overlays = config.realtimeOverlays(motis.userAgent),
+        sncfAlerts = config.sncfAlerts(motis.userAgent),
+        repairShapes = config.repairShapes,
+    )
     val views = loadViews(config.tiles)
     val cityStations = config.cityStationsStore()
     return McpLambda { createMotisMcpServer(gateway, config.baseUrl, config.tiles, views, cityStations, viewDomain(config)) }

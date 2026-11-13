@@ -24,6 +24,7 @@ import org.litote.motis.mcp.dto.onLines
 import org.litote.motis.mcp.dto.stationLines
 import org.litote.motis.mcp.dto.withStops
 import org.litote.motis.mcp.dto.toDto
+import org.litote.motis.mcp.dto.withAlerts
 import org.litote.motis.mcp.dto.withNearbyTrains
 import kotlin.time.Instant
 
@@ -43,8 +44,9 @@ private fun DeparturesResult.summary(): String =
             val cancelled = if (st.cancelled) " CANCELLED" else ""
             val track = st.track?.let { " track $it" } ?: ""
             val source = st.realTimeSource?.let { " (real time: $it)" } ?: ""
-            appendLine("- ${hhmm(st.time, stop.tz)}$delay ${st.mode} ${st.line} → ${st.headsign}$track$cancelled$source tripId=\"${st.tripId}\"")
+            appendLine("- ${hhmm(st.time, stop.tz)}$delay ${st.mode} ${st.line} → ${st.headsign}$track$cancelled$source${alertRefs(st.alerts)} tripId=\"${st.tripId}\"")
         }
+        appendAlerts(alerts)
         stationLines?.let { lines ->
             appendLine("Lines of the station (departures with station=true, modes and lines):")
             lines.groupBy { it.mode }.forEach { (mode, l) -> appendLine("- $mode: ${l.joinToString { "${it.line} (${it.agency})" }}") }
@@ -67,7 +69,7 @@ internal fun ItineraryDto.describe(): String =
             val headsign = leg.headsign?.let { " → $it" } ?: ""
             appendLine(
                 "  ${hhmm(leg.startTime, leg.from.tz)} ${leg.from.name} — ${leg.mode}$line$headsign — " +
-                    "${hhmm(leg.endTime, leg.to.tz)} ${leg.to.name}",
+                    "${hhmm(leg.endTime, leg.to.tz)} ${leg.to.name}${alertRefs(leg.alerts)}",
             )
         }
     }.trimEnd()
@@ -212,6 +214,7 @@ fun Server.addTimetableTools(gateway: MotisGateway) {
             Give 'stopId' (from search_places or explore_area) or a stop name in 'stop'.
             For a railway station, the first page also lists the lines of the station (all its stops within 200 m): their
             departures are given by 'station' true, with 'modes' and 'lines'.
+            $ALERTS_DESCRIPTION
             """.trimIndent(),
         view = UiView.DEPARTURES,
         schema = {
@@ -227,14 +230,17 @@ fun Server.addTimetableTools(gateway: MotisGateway) {
             string("language", LANGUAGE_DESCRIPTION)
         },
     ) { args ->
-        val result = DeparturesRequest(gateway, args).departures().let { r -> LocalizedNames.of(args.stringList("language"))?.departures(r) ?: r }
+        val result =
+            DeparturesRequest(gateway, args).departures()
+                .let { r -> LocalizedNames.of(args.stringList("language"))?.departures(r) ?: r }
+                .withAlerts()
         ToolOutput.of(result.summary(), DeparturesResult.serializer(), result)
     }
 
     motisTool(
         name = "trip_details",
         title = "Trip details",
-        description = "All the stops of a trip (one vehicle run) with their times. 'tripId' comes from departures or plan_journey.",
+        description = "All the stops of a trip (one vehicle run) with their times. 'tripId' comes from departures or plan_journey. $ALERTS_DESCRIPTION",
         view = UiView.DEPARTURES,
         schema = {
             string("tripId", "Trip id.", required = true)
@@ -244,7 +250,7 @@ fun Server.addTimetableTools(gateway: MotisGateway) {
         val tripId = args.requireString("tripId")
         val language = args.stringList("language")
         val trip = TripResult(tripId = tripId, itinerary = gateway.trip(tripId, language).toDto().withStops())
-        val result = LocalizedNames.of(language)?.trip(trip) ?: trip
+        val result = (LocalizedNames.of(language)?.trip(trip) ?: trip).withAlerts()
         val itinerary = result.itinerary
         val summary =
             buildString {
@@ -253,6 +259,7 @@ fun Server.addTimetableTools(gateway: MotisGateway) {
                     val stops = listOf(leg.from) + leg.intermediateStops.orEmpty() + leg.to
                     stops.forEach { s -> appendLine("  - ${hhmm(s.departure ?: s.arrival, s.tz)} ${s.name}${s.track?.let { " (track $it)" } ?: ""}") }
                 }
+                appendAlerts(result.alerts)
             }.trimEnd()
         ToolOutput.of(summary, TripResult.serializer(), result)
     }

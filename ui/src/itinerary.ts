@@ -3,6 +3,7 @@ import L from "leaflet";
 import { callTool, callToolResult, setStatus, startView, updateModelContext, type Args } from "./shared/app";
 import { day, delayBadge, delayMinutes, distance, duration, esc, lineBadge, modeColor, modeLabel, time } from "./shared/format";
 import { t, type MessageKey } from "./shared/i18n";
+import { alertList, alertMark, alertsOf } from "./shared/alerts";
 import { check, chevronLeft, chevronRight, sliders } from "./shared/icons";
 import { createMap, decode, fit } from "./shared/map";
 import type { ItineraryDto, JourneyResult, LegDto, PlaceDto } from "./shared/types";
@@ -152,11 +153,12 @@ function render(data: JourneyResult): void {
           const badges = (transit.length ? transit : it.legs)
             .map((l) => lineBadge(l.mode, l.line ?? modeLabel(l.mode), l.routeColor, l.routeTextColor, l.agency))
             .join(" ");
+          const alerts = alertsOf(data.alerts, [...new Set(it.legs.flatMap((l) => l.alerts ?? []))]);
           return `
           <li class="clickable" data-index="${i}">
             <div class="trip-head"><strong>${time(it.startTime, tz)} → ${time(it.endTime, data.to.tz)}</strong>
               <span class="muted">${duration(it.durationSeconds)} · ${t("transfers", { count: it.transfers })}${i >= data.itineraries.length ? ` · ${t("itinerary.direct")}` : ""}</span></div>
-            <div class="badges">${badges}</div>
+            <div class="badges">${badges}${alertMark(alerts)}</div>
           </li>`;
         })
         .join("")
@@ -179,7 +181,8 @@ function transitDescription(leg: LegDto): string {
   const agency = leg.agency ? ` · ${esc(leg.agency)}` : "";
   return (
     `<div class="what">${lineBadge(leg.mode, leg.line, leg.routeColor, leg.routeTextColor, leg.agency)} → ${esc(leg.headsign ?? leg.to.name)}</div>` +
-    `<div class="detail">${t("itinerary.stops", { count: stops })}${track}${agency}</div>`
+    `<div class="detail">${t("itinerary.stops", { count: stops })}${track}${agency}</div>` +
+    alertList(alertsOf(journey?.alerts, leg.alerts), leg.from.tz)
   );
 }
 
@@ -273,6 +276,8 @@ function showLeg(index: number): void {
 }
 
 const legIndex = (e: Event) => {
+  // the alerts of a leg unfold, without moving the map
+  if ((e.target as HTMLElement).closest(".alerts")) return undefined;
   const li = (e.target as HTMLElement).closest<HTMLElement>("li[data-leg]");
   return li ? Number(li.dataset.leg) : undefined;
 };

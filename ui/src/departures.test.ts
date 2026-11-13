@@ -499,4 +499,40 @@ describe("departures view in French", () => {
     expect($("button[data-action=arrivals]").textContent).toBe("Arrivées");
     expect($("button[data-action=next]").textContent).toBe("Plus tard");
   });
+
+  it("marks the departures with service alerts, and lists those of the board under a banner", async () => {
+    const app = await loadView("departures");
+    const result = board();
+    result.alerts = [{ header: "Grève" }, { header: "Ligne interrompue", effect: "NO_SERVICE" }, { header: "Not on the board" }];
+    result.stopTimes[0].alerts = [0];
+    result.stopTimes[2].alerts = [0, 1];
+    await app.toolResult({}, result);
+
+    const marks = [...document.querySelectorAll("tr[data-index]")].map((row) => row.querySelector(".alert-mark"));
+    expect(marks.map((m) => m?.getAttribute("title") ?? null)).toEqual(["Grève", null, "Grève\nLigne interrompue"]);
+    expect(marks[2]?.classList.contains("severe")).toBe(true);
+    expect(text($(".alert-banner > summary"))).toBe("Service alerts (2)");
+    expect([...document.querySelectorAll(".alert-banner .alert")].map(text)).toEqual(["Grève", "Ligne interrompue"]);
+  });
+
+  it("marks the trains of a French station with service alerts", async () => {
+    const app = await loadView("departures");
+    const result = sncfBoard();
+    result.alerts = [{ header: "Train court" }];
+    result.stopTimes[1].alerts = [0];
+    await app.toolResult({}, result);
+
+    expect(trains().map((train) => train.querySelector(".alert-mark")?.getAttribute("title") ?? null)).toEqual([null, "Train court", null]);
+  });
+
+  it("lists the service alerts of a trip above its stops", async () => {
+    const app = await loadView("departures");
+    const trip = fixture<TripResult>("trip");
+    trip.alerts = [{ header: "Travaux", description: "Arrêt reporté." }];
+    trip.itinerary.legs.find((leg) => leg.tripId)!.alerts = [0];
+    await app.toolResult({}, trip);
+
+    expect([...document.querySelectorAll(".trip .alert")].map(text)).toEqual(["TravauxArrêt reporté."]);
+  });
 });
+

@@ -268,4 +268,29 @@ describe("itinerary view", () => {
     $("#legs").dispatchEvent(new MouseEvent("mouseleave"));
     expect($("#status").hidden).toBe(true);
   });
+
+  it("marks the itineraries with service alerts, and lists them under their legs", async () => {
+    const app = await loadView("itinerary");
+    const data = journey();
+    data.alerts = [
+      { header: "Tram C : travaux", description: "Ligne interrompue entre A et B.", effect: "NO_SERVICE", url: "https://www.tcl.fr", end: "2026-10-20T03:00:00Z" },
+      { header: "Ascenseur hors service" },
+    ];
+    data.itineraries[0].legs[1].alerts = [0, 1];
+    data.itineraries[2].legs[1].alerts = [1];
+    await app.toolResult({}, data);
+
+    const marks = [...document.querySelectorAll("#itineraries li")].map((li) => li.querySelector(".alert-mark"));
+    expect(marks[0]?.classList.contains("severe")).toBe(true);
+    expect(marks[0]?.getAttribute("title")).toBe("Tram C : travaux\nAscenseur hors service");
+    expect(marks[1]).toBeNull();
+    expect(marks[2]?.classList.contains("severe")).toBe(false);
+    expect(items("#legs .alert")).toEqual([
+      "Tram C : travauxLigne interrompue entre A et B.Until Tue 20 Oct 05:00More information",
+      "Ascenseur hors service",
+    ]);
+
+    $("#legs .alert a").click();
+    expect(app.openLink).toHaveBeenCalledWith({ url: "https://www.tcl.fr/" });
+  });
 });

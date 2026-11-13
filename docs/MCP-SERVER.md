@@ -17,6 +17,13 @@ See the [README](../README.md) for an overview, the AWS Lambda deployment, the w
 | `plan_journey`   | plan                     | itineraries list and map                                               | "How to go from Paris Gare de Lyon to Versailles?"          |
 | `rentals`        | map/rentals              | shared bikes, scooters and cars map                                    | "Shared bikes near Châtelet, Paris"                         |
 
+`departures`, `trip_details` and `plan_journey` give the service alerts of the feeds (GTFS-RT: disruptions, works,
+closed elevators...) active at the time of each departure or leg: those of its line or trip and of the stops where the
+vehicle is boarded and left, as plain text (the HTML of some feeds removed). The feeds attach every alert of a line to
+its trips, the planned ones included: only the alerts whose impact period covers the departure or leg are kept. The
+views mark the departures and itineraries with alerts (those of the SNCF trains included, see below), red when the service is interrupted (`NO_SERVICE`), and list
+them; the text for the model numbers them. MOTIS does not route around the alerts.
+
 `plan_journey` walks up to 25 minutes to the first stop and from the last stop (`maxWalkMinutes`, MOTIS default:
 15 minutes). Transfers on foot come from the timetable, not routed on the streets (`useRoutedTransfers=false`): the
 server caps the routed ones (about 15 minutes), which drops walks between nearby stations such as Paris Gare de Lyon
@@ -118,7 +125,7 @@ MOTIS_APP_CONTACT=you@example.org server/build/install/server/bin/server --http 
 | `MOTIS_RAIL_OVERLAY`     | none                                             | railways drawn over the maps: `ign`, `openrailwaymap` (see below) |
 | `MOTIS_VIEW_DOMAIN_<HOST>` | default sandbox origin of the host             | dedicated origin of the views (see below)    |
 | `MCP_ALLOWED_HOSTS`      | localhost only                                   | host names accepted in HTTP mode             |
-| `MOTIS_SNCF_REALTIME`    | `true`                                           | SNCF real time overlay (see below)           |
+| `MOTIS_SNCF_REALTIME`    | `true`                                           | SNCF real time overlay and alerts (see below) |
 | `MOTIS_REPAIR_SHAPES`    | `true`                                           | repair of the detours of the shapes of the journeys (see below) |
 | `MOTIS_CITY_STATIONS_TABLE` | in memory                                     | DynamoDB table of the stations of the journeys between cities (partition key `pair`, string; TTL attribute `expiresAt`), in `AWS_REGION` (or at `AWS_ENDPOINT_URL_DYNAMODB`, e.g. DynamoDB Local), with the default AWS credentials |
 
@@ -128,7 +135,14 @@ times from the open [SNCF GTFS-RT trip updates](https://transport.data.gouv.fr/d
 from the SIRI Lite estimated timetable of the SNCF, matched by train number and scheduled time (`realTimeSource` of the
 stop times). The feeds are downloaded at most once a minute (GTFS-RT, ~1 MB) and every 3 minutes (SIRI, ~16 MB), only
 when a departures board has such trains. They cover the trains of the next hour or so, and the tracks are only known
-shortly before the departure. `MOTIS_SNCF_REALTIME=false` disables it.
+shortly before the departure.
+
+Transitous has no service alerts for the SNCF trains: they are taken from the open
+[SNCF GTFS-RT service alerts](https://transport.data.gouv.fr/datasets/horaires-sncf) (~600 kB, downloaded at most every
+2 minutes, only for results with SNCF trains) and added to their departures, trips and legs, matched by train number, in
+the language asked (fr, en, de, es, it, nl; else French). The stops named by an alert are not matched (the stop ids of
+Transitous are not those of the SNCF): the alert goes with the whole trip, its text names the stations.
+`MOTIS_SNCF_REALTIME=false` disables the real time and the alerts of the SNCF.
 
 The shapes of the transit legs (from the `shapes.txt` of the feeds, or matched by MOTIS on the OpenStreetMap rails) are
 sometimes wrong: e.g. the RER A drawn around Paris through Saint-Denis. A part of a shape between two stops that passes

@@ -142,5 +142,9 @@
   "propulsion.PLUG_IN_HYBRID": "lataushybridi",
   "propulsion.HYDROGEN_FUEL_CELL": "vety",
   "duration.minutes": "{minutes} min",
-  "duration.hours": "{hours} h {minutes}"
+  "duration.hours": "{hours} h {minutes}",
+  "alerts.alert": "Häiriö",
+  "alerts.title": "Häiriöt",
+  "alerts.more": "Lisätietoja",
+  "alerts.until": "{date} asti"
 }

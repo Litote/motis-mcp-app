@@ -142,5 +142,9 @@
   "propulsion.PLUG_IN_HYBRID": "ladbar hybrid",
   "propulsion.HYDROGEN_FUEL_CELL": "hydrogen",
   "duration.minutes": "{minutes} min",
-  "duration.hours": "{hours} t {minutes}"
+  "duration.hours": "{hours} t {minutes}",
+  "alerts.alert": "Avvik",
+  "alerts.title": "Avvik",
+  "alerts.more": "Mer informasjon",
+  "alerts.until": "Til {date}"
 }

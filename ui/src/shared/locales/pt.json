@@ -142,5 +142,9 @@
   "propulsion.PLUG_IN_HYBRID": "híbrido plug-in",
   "propulsion.HYDROGEN_FUEL_CELL": "hidrogênio",
   "duration.minutes": "{minutes} min",
-  "duration.hours": "{hours} h {minutes}"
+  "duration.hours": "{hours} h {minutes}",
+  "alerts.alert": "Alerta",
+  "alerts.title": "Alertas",
+  "alerts.more": "Mais informações",
+  "alerts.until": "Até {date}"
 }

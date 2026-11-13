@@ -155,5 +155,9 @@
   "propulsion.PLUG_IN_HYBRID": "plug-in hybrid",
   "propulsion.HYDROGEN_FUEL_CELL": "vodík",
   "duration.minutes": "{minutes} min",
-  "duration.hours": "{hours} h {minutes}"
+  "duration.hours": "{hours} h {minutes}",
+  "alerts.alert": "Mimořádnost",
+  "alerts.title": "Mimořádnosti",
+  "alerts.more": "Více informací",
+  "alerts.until": "Do {date}"
 }

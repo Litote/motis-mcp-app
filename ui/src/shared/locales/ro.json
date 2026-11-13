@@ -155,5 +155,9 @@
   "propulsion.PLUG_IN_HYBRID": "hibrid plug-in",
   "propulsion.HYDROGEN_FUEL_CELL": "hidrogen",
   "duration.minutes": "{minutes} min",
-  "duration.hours": "{hours} h {minutes}"
+  "duration.hours": "{hours} h {minutes}",
+  "alerts.alert": "Perturbare",
+  "alerts.title": "Perturbări",
+  "alerts.more": "Mai multe informații",
+  "alerts.until": "Până la {date}"
 }

@@ -142,5 +142,9 @@
   "propulsion.PLUG_IN_HYBRID": "hybride rechargeable",
   "propulsion.HYDROGEN_FUEL_CELL": "hydrogène",
   "duration.minutes": "{minutes} min",
-  "duration.hours": "{hours} h {minutes}"
+  "duration.hours": "{hours} h {minutes}",
+  "alerts.alert": "Perturbation",
+  "alerts.title": "Perturbations",
+  "alerts.more": "Plus d'informations",
+  "alerts.until": "Jusqu'au {date}"
 }

@@ -37,6 +37,8 @@ export interface Expectation {
   /** Checks of the arguments of the first successful call of a tool (of the first call when all failed). */
   args?: (Check<ToolArgs> & { tool: string })[];
   answer?: Check<string>[];
+  /** Checks of the whole run: the answer against the tool results (e.g. the alerts given by the tools). */
+  run?: Check<RunRecord>[];
   /** Tool errors expected (e.g. an ambiguous place): not counted as a failure. */
   allowToolErrors?: boolean;
   /** Maximum length of the answer: the views show the details, the model should not repeat them (default 1500). */
@@ -108,6 +110,9 @@ export function evaluate(record: RunRecord, expectation: Expectation): CheckResu
   for (const { label, check } of expectation.answer ?? []) {
     results.push({ label: `answer: ${label}`, ok: safely(() => check(record.answer)) });
   }
+  for (const { label, check } of expectation.run ?? []) {
+    results.push({ label, ok: safely(() => check(record)) });
+  }
   return results;
 }
 
@@ -162,4 +167,16 @@ export function tomorrow(tz: string, now: Date = new Date()): string {
 /** Text of an argument, lower case, for the checks on place names. */
 export function text(value: unknown): string {
   return typeof value === "string" ? value.toLowerCase() : Array.isArray(value) ? value.join(",").toLowerCase() : "";
+}
+
+/** Words of an answer telling about a service alert, in French or English. */
+const ALERT_WORDS = /perturb|travaux|interromp|ralenti|incident|grève|alerte|disrupt|works|interrupt|delay|strike|alert/i;
+
+/**
+ * The answer tells about the service alerts given by the tools (`Service alerts:` in their results): passes when no
+ * tool gave any (no disruption at the time of the run).
+ */
+export function mentionsAlerts(record: RunRecord): boolean {
+  const alerted = record.calls.some((call) => !call.isError && call.result.includes("Service alerts:"));
+  return !alerted || ALERT_WORDS.test(record.answer);
 }
