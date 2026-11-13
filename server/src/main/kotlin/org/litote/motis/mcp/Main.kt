@@ -28,7 +28,7 @@ private const val USAGE =
 Usage: motis-mcp-app [--stdio | --http [--port <port>] [--host <host>]]
 
   --stdio          MCP over stdin/stdout (default)
-  --http           MCP over Streamable HTTP, endpoint /mcp (and /mcp/chatgpt, /mcp/claude, /mcp/mistral, /mcp/cherry)
+  --http           MCP over Streamable HTTP, endpoint /mcp (and /mcp/chatgpt, /mcp/claude, /mcp/mistral)
   --port <port>    HTTP port (default 3001)
   --host <host>    HTTP bind address (default 127.0.0.1)
 
@@ -43,7 +43,7 @@ Environment:
   MOTIS_RAIL_OVERLAY   railways drawn over the maps, comma-separated (default: none): ign (France),
                        openrailwaymap (the world; elsewhere than France with ign)
   MOTIS_VIEW_DOMAIN_<HOST>  dedicated origin of the views (_meta.ui.domain) on the endpoint /mcp/<host> of a host:
-                       CHATGPT, CLAUDE (default: computed from the endpoint URL), MISTRAL, CHERRY
+                       CHATGPT, CLAUDE (default: computed from the endpoint URL), MISTRAL
   MCP_ALLOWED_HOSTS    comma-separated host names accepted in HTTP mode (default: localhost only)
   MOTIS_SNCF_REALTIME  true (default): real time of the SNCF GTFS-RT feed for the SNCF trains without real time in MOTIS,
                        and service alerts of the SNCF trains

@@ -96,7 +96,6 @@ class McpLambdaTest {
         assertEquals("https://motis.example.org", viewDomain("/mcp/chatgpt"))
         assertEquals(claudeViewDomain("https://abc.lambda-url.eu-west-3.on.aws/mcp/claude"), viewDomain("/mcp/claude"))
         assertNull(viewDomain("/mcp/mistral"))
-        assertNull(viewDomain("/mcp/cherry"))
     }
 
     @Test
