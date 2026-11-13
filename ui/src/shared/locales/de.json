@@ -142,5 +142,9 @@
   "propulsion.PLUG_IN_HYBRID": "Plug-in-Hybrid",
   "propulsion.HYDROGEN_FUEL_CELL": "Wasserstoff",
   "duration.minutes": "{minutes} Min.",
-  "duration.hours": "{hours} Std. {minutes}"
+  "duration.hours": "{hours} Std. {minutes}",
+  "alerts.alert": "Störung",
+  "alerts.title": "Störungen",
+  "alerts.more": "Weitere Informationen",
+  "alerts.until": "Bis {date}"
 }

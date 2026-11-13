@@ -2,10 +2,11 @@
 import { callTool, isFullscreen, startView, type Args } from "./shared/app";
 import { day, delayBadge, delayMinutes, duration, esc, lineBadge, time } from "./shared/format";
 import { t } from "./shared/i18n";
+import { alertBanner, alertList, alertMark, alertsOf } from "./shared/alerts";
 import { arrowLeft, chevronLeft, chevronRight } from "./shared/icons";
 import { RAIL_MODES, TRAIN_MODES, linePictogram, train } from "./shared/sncf";
 import { inTab, stationTabs, type StationTab } from "./shared/stationTabs";
-import type { DeparturesResult, PlaceDto, StopTimeDto, TripResult } from "./shared/types";
+import type { AlertDto, DeparturesResult, PlaceDto, StopTimeDto, TripResult } from "./shared/types";
 
 type BoardData = DeparturesResult | TripResult;
 
@@ -170,7 +171,7 @@ function sncfOrigin(st: StopTimeDto): string {
   return lineBadge(st.mode, st.line, st.routeColor, st.routeTextColor, st.agency);
 }
 
-function sncfRow(st: StopTimeDto, index: number, arriveBy: boolean, markTheoretical: boolean, tz?: string): string {
+function sncfRow(st: StopTimeDto, index: number, arriveBy: boolean, markTheoretical: boolean, tz?: string, alerts?: AlertDto[]): string {
   const number = train(st.mode, st.line, st.agency, st.trainNumber)?.number;
   // the end of the trip (origin of an arrival) is the big label: the intermediate stops are on the second line
   const stops = arriveBy ? (st.stops ?? []).slice(1) : (st.stops ?? []).slice(0, -1);
@@ -195,7 +196,7 @@ function sncfRow(st: StopTimeDto, index: number, arriveBy: boolean, markTheoreti
           <span class="origine">${sncfOrigin(st)}</span>
           <span class="numero">${esc(number)}</span>
           <span class="heure">${time(st.scheduledTime ?? st.time, tz)}</span>
-          <span class="station-label"><span>${esc(label)}</span>${status}</span>
+          <span class="station-label"><span>${esc(label)}</span>${alertMark(alertsOf(alerts, st.alerts))}${status}</span>
         </div>
         <div class="second-line" title="${esc(stops.map((s) => s.name).join(" • "))}">${via}</div>
       </div>
@@ -263,15 +264,17 @@ function boardHtml(data: DeparturesResult): string {
   const theoretical = data.stopTimes.filter((st) => !st.cancelled && !st.realTime).length;
   const allTheoretical = theoretical > 0 && !data.stopTimes.some((st) => st.realTime);
   const mark = theoretical > 0 && !allTheoretical;
-  const note = allTheoretical ? `<p class="muted theoretical-note">${t("departures.theoretical.all")}</p>` : "";
+  const theoreticalNote = allTheoretical ? `<p class="muted theoretical-note">${t("departures.theoretical.all")}</p>` : "";
+  // the alerts of the departures shown (a tab shows some lines of the station)
+  const note = alertBanner(alertsOf(data.alerts, [...new Set(data.stopTimes.flatMap((st) => st.alerts ?? []))]), tz) + theoreticalNote;
   if (isFrenchStation(data)) {
     const trains = all.filter(({ st }) => onSncfBoard(st));
     const others = all.filter(({ st }) => !onSncfBoard(st));
-    const rows = trains.map(({ st, index }) => sncfRow(st, index, data.arriveBy, mark, tz)).join("");
-    const otherLines = others.length ? `<h3>${t("departures.otherLines")}</h3>${boardTable(others, mark, tz)}` : "";
+    const rows = trains.map(({ st, index }) => sncfRow(st, index, data.arriveBy, mark, tz, data.alerts)).join("");
+    const otherLines = others.length ? `<h3>${t("departures.otherLines")}</h3>${boardTable(others, mark, tz, data.alerts)}` : "";
     return `${note}<ol class="sncf-board ${data.arriveBy ? "arrivals" : ""}">${rows}</ol>${otherLines}`;
   }
-  return all.length ? note + boardTable(all, mark, tz) : `<p class="muted">${t("departures.none")}</p>`;
+  return all.length ? note + boardTable(all, mark, tz, data.alerts) : `<p class="muted">${t("departures.none")}</p>`;
 }
 
 /** Class of the departure of the trip opened in the panel. */
@@ -280,15 +283,15 @@ const openClass = (st: StopTimeDto) => (panelTripId === st.tripId ? "open" : "")
 /** Boards shown, by their index in `data-board`. */
 let shownBoards: DeparturesResult[] = [];
 
-/** Generic board of the [departures], with their index in the result. */
-function boardTable(departures: { st: StopTimeDto; index: number }[], markTheoretical: boolean, tz?: string): string {
+/** Generic board of the [departures], with their index in the result, and the [alerts] of the result. */
+function boardTable(departures: { st: StopTimeDto; index: number }[], markTheoretical: boolean, tz?: string, alerts?: AlertDto[]): string {
   const rows = departures
     .map(
       ({ st, index }) => `
       <tr class="clickable ${openClass(st)}" data-index="${index}">
         <td class="${st.cancelled ? "cancelled" : ""}">${timeCell(st, markTheoretical, tz)}</td>
         <td>${lineBadge(st.mode, st.line, st.routeColor, st.routeTextColor)}</td>
-        <td>${esc(st.headsign)}${st.cancelled ? ` <strong class="late">${t("departures.cancelled")}</strong>` : ""}<div class="muted">${esc(st.agency)}</div></td>
+        <td>${esc(st.headsign)}${alertMark(alertsOf(alerts, st.alerts))}${st.cancelled ? ` <strong class="late">${t("departures.cancelled")}</strong>` : ""}<div class="muted">${esc(st.agency)}</div></td>
         <td>${st.track ? `<span class="track">${t("track", { track: esc(st.track) })}</span>` : ""}</td>
       </tr>`,
     )
@@ -456,6 +459,7 @@ function tripTimeline(data: TripResult): string {
       const stops = [leg.from, ...(leg.intermediateStops ?? []), leg.to];
       return `
         <div class="toolbar">${lineBadge(leg.mode, leg.line, leg.routeColor, leg.routeTextColor, leg.agency)} <span>${esc(leg.headsign ?? leg.to.name)}</span></div>
+        ${alertList(alertsOf(data.alerts, leg.alerts), leg.from.tz)}
         <ol class="timeline">${stops.map((s, i) => stopRow(s, color, i === 0 || i === stops.length - 1)).join("")}</ol>`;
     })
     .join("");

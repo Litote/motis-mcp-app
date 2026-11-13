@@ -142,5 +142,9 @@
   "propulsion.PLUG_IN_HYBRID": "laddhybrid",
   "propulsion.HYDROGEN_FUEL_CELL": "vätgas",
   "duration.minutes": "{minutes} min",
-  "duration.hours": "{hours} h {minutes}"
+  "duration.hours": "{hours} h {minutes}",
+  "alerts.alert": "Trafikstörning",
+  "alerts.title": "Trafikstörningar",
+  "alerts.more": "Mer information",
+  "alerts.until": "Till {date}"
 }

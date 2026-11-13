@@ -142,5 +142,9 @@
   "propulsion.PLUG_IN_HYBRID": "şarj edilebilir hibrit",
   "propulsion.HYDROGEN_FUEL_CELL": "hidrojen",
   "duration.minutes": "{minutes} dk",
-  "duration.hours": "{hours} sa {minutes}"
+  "duration.hours": "{hours} sa {minutes}",
+  "alerts.alert": "Aksaklık",
+  "alerts.title": "Aksaklıklar",
+  "alerts.more": "Daha fazla bilgi",
+  "alerts.until": "{date} tarihine kadar"
 }

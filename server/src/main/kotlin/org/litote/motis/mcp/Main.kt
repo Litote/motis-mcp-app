@@ -45,7 +45,8 @@ Environment:
   MOTIS_VIEW_DOMAIN_<HOST>  dedicated origin of the views (_meta.ui.domain) on the endpoint /mcp/<host> of a host:
                        CHATGPT, CLAUDE (default: computed from the endpoint URL), MISTRAL, CHERRY
   MCP_ALLOWED_HOSTS    comma-separated host names accepted in HTTP mode (default: localhost only)
-  MOTIS_SNCF_REALTIME  true (default): real time of the SNCF GTFS-RT feed for the SNCF trains without real time in MOTIS
+  MOTIS_SNCF_REALTIME  true (default): real time of the SNCF GTFS-RT feed for the SNCF trains without real time in MOTIS,
+                       and service alerts of the SNCF trains
 """
 
 /** Options of the command line. */
@@ -85,7 +86,12 @@ fun main(args: Array<String>) {
             usageError(e.message ?: "invalid arguments")
         }
     val motis = config.clientConfiguration()
-    val gateway = MotisGateway(motis, overlays = config.realtimeOverlays(motis.userAgent), repairShapes = config.repairShapes)
+    val gateway = MotisGateway(
+        motis,
+        overlays = config.realtimeOverlays(motis.userAgent),
+        sncfAlerts = config.sncfAlerts(motis.userAgent),
+        repairShapes = config.repairShapes,
+    )
     val views = loadViews(config.tiles)
     val cityStations = config.cityStationsStore()
     val create = { viewDomain: String? -> createMotisMcpServer(gateway, config.baseUrl, config.tiles, views, cityStations, viewDomain) }

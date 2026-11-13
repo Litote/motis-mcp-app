@@ -168,5 +168,9 @@
   "propulsion.PLUG_IN_HYBRID": "плагін-гібрид",
   "propulsion.HYDROGEN_FUEL_CELL": "водень",
   "duration.minutes": "{minutes} хв",
-  "duration.hours": "{hours} год {minutes}"
+  "duration.hours": "{hours} год {minutes}",
+  "alerts.alert": "Зміна в русі",
+  "alerts.title": "Зміни в русі",
+  "alerts.more": "Докладніше",
+  "alerts.until": "До {date}"
 }

@@ -1,6 +1,7 @@
 package org.litote.motis.mcp.dto
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 
 // Compact DTOs sent as `structuredContent`: they are read by the views and by the model,
 // so they only keep the fields useful to display or reason about the data.
@@ -8,6 +9,21 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Coordinates(val lat: Double, val lon: Double)
+
+/**
+ * Service alert (disruption, works, closed elevator...) active during a leg or at a stop time, as plain text. [effect]
+ * and [cause] are the GTFS-RT values (e.g. `NO_SERVICE`, `STRIKE`), null when unknown; [end] is the end of its impact,
+ * null when open or unknown.
+ */
+@Serializable
+data class AlertDto(
+    val header: String,
+    val description: String? = null,
+    val url: String? = null,
+    val effect: String? = null,
+    val cause: String? = null,
+    val end: String? = null,
+)
 
 @Serializable
 data class Bbox(val minLat: Double, val minLon: Double, val maxLat: Double, val maxLon: Double)
@@ -140,6 +156,10 @@ data class StopTimeDto(
     val trainNumber: String? = null,
     /** Next stops of the trip for a departure, previous stops for an arrival (in the order of the trip). */
     val stops: List<StopCallDto>? = null,
+    /** Indexes of the alerts of the stop time in the alerts of the result (see [DeparturesResult.withAlerts]). */
+    val alerts: List<Int>? = null,
+    /** Alerts of the stop time, until they are put in the table of the result. */
+    @Transient val pendingAlerts: List<AlertDto> = emptyList(),
 )
 
 /** Stop of a trip on a departures board: its name and the time the trip passes there. */
@@ -156,6 +176,8 @@ data class DeparturesResult(
     val previousPageCursor: String? = null,
     /** Lines of the station of the stop (stops within [STATION_RADIUS]), on the first page of a railway station. */
     val stationLines: List<StationLineDto>? = null,
+    /** Alerts of the stop times, referenced by their index. */
+    val alerts: List<AlertDto>? = null,
 )
 
 /** Line with departures at a station: train brand ("TGV INOUI") for the long-distance trains. */
@@ -188,6 +210,10 @@ data class LegDto(
     val tripId: String? = null,
     val intermediateStops: List<PlaceDto>? = null,
     val polyline: Polyline,
+    /** Indexes of the alerts of the leg (its line or trip, its ends) in the alerts of the result. */
+    val alerts: List<Int>? = null,
+    /** Alerts of the leg, until they are put in the table of the result. */
+    @Transient val pendingAlerts: List<AlertDto> = emptyList(),
 )
 
 @Serializable
@@ -221,7 +247,13 @@ data class ItineraryStop(
 )
 
 @Serializable
-data class TripResult(val kind: String = "trip", val tripId: String, val itinerary: ItineraryDto)
+data class TripResult(
+    val kind: String = "trip",
+    val tripId: String,
+    val itinerary: ItineraryDto,
+    /** Alerts of the legs, referenced by their index. */
+    val alerts: List<AlertDto>? = null,
+)
 
 // --- plan_journey ---
 
@@ -234,6 +266,8 @@ data class JourneyResult(
     val direct: List<ItineraryDto>,
     val nextPageCursor: String? = null,
     val previousPageCursor: String? = null,
+    /** Alerts of the legs, referenced by their index. */
+    val alerts: List<AlertDto>? = null,
 )
 
 // --- rentals ---

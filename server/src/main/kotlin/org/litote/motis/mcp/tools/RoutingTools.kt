@@ -17,6 +17,7 @@ import org.litote.motis.mcp.dto.JourneyResult
 import org.litote.motis.mcp.dto.fromMainLineStations
 import org.litote.motis.mcp.dto.hasMainLineLegs
 import org.litote.motis.mcp.dto.toDto
+import org.litote.motis.mcp.dto.withAlerts
 import org.litote.motis.mcp.dto.withEndNames
 import org.litote.motis.mcp.dto.withStops
 
@@ -34,6 +35,7 @@ fun Server.addRoutingTools(gateway: MotisGateway, cityJourneys: CityJourneys) {
             without the local legs to/from the city center; give an address for door-to-door itineraries.
             The itineraries do not all leave from (or arrive at) the same station: give the user the station of each one
             (departure, arrival: name, time, local time and track of the boarding in the first vehicle and of the leaving of the last one).
+            $ALERTS_DESCRIPTION
             """.trimIndent(),
         view = UiView.ITINERARY,
         schema = {
@@ -118,7 +120,7 @@ fun Server.addRoutingTools(gateway: MotisGateway, cityJourneys: CityJourneys) {
                 gateway.plan(query).toDto().fromMainLineStations(from.center().takeIf { from.isCity }, to.center().takeIf { to.isCity })
             }
         val named = journeys.withEndNames(from.askedName(), to.askedName(), from.area, to.area).withStops()
-        val result = LocalizedNames.of(language)?.journey(named) ?: named
+        val result = (LocalizedNames.of(language)?.journey(named) ?: named).withAlerts()
         val options =
             listOfNotNull(
                 walkingSpeed.takeIf { it != WalkingSpeed.NORMAL }?.let { "walking speed ${it.name}" },
@@ -146,6 +148,7 @@ private fun journeySummary(from: ResolvedPlace, to: ResolvedPlace, result: Journ
         options.takeIf { it.isNotEmpty() }?.let { appendLine("Options: ${it.joinToString()}.") }
         result.itineraries.forEachIndexed { i, it -> appendLine("${i + 1}. ${it.describe()}") }
         result.direct.firstOrNull()?.let { appendLine("Direct (without transit): ${it.describe()}") }
+        appendAlerts(result.alerts)
     }.trimEnd()
 
 /**

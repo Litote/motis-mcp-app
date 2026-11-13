@@ -142,5 +142,9 @@
   "propulsion.PLUG_IN_HYBRID": "plug-in-hybrid",
   "propulsion.HYDROGEN_FUEL_CELL": "brint",
   "duration.minutes": "{minutes} min.",
-  "duration.hours": "{hours} t. {minutes}"
+  "duration.hours": "{hours} t. {minutes}",
+  "alerts.alert": "Driftsforstyrrelse",
+  "alerts.title": "Driftsforstyrrelser",
+  "alerts.more": "Flere oplysninger",
+  "alerts.until": "Indtil {date}"
 }

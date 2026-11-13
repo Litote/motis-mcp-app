@@ -266,6 +266,10 @@ fun StopTime.toDto(arriveBy: Boolean, realTimeSource: String? = null): StopTimeD
             } else {
                 nextStops?.map { StopCallDto(displayName(it.name), (it.arrival ?: it.scheduledArrival)?.toString()) }
             },
+        pendingAlerts =
+            (if (arriveBy) place.arrival ?: place.scheduledArrival else place.departure ?: place.scheduledDeparture)
+                ?.let { place.alerts.activeAlerts(it) }
+                .orEmpty(),
     )
 }
 
@@ -300,6 +304,8 @@ fun Leg.toDto(): LegDto =
         tripId = tripId,
         intermediateStops = intermediateStops?.map { it.toDto() },
         polyline = legGeometry.toDto(),
+        // the alerts of the line or trip, and of the stops where the vehicle is boarded and left
+        pendingAlerts = (alerts.orEmpty() + from.alerts.orEmpty() + to.alerts.orEmpty()).activeAlerts(startTime, endTime),
     )
 
 fun Itinerary.toDto(): ItineraryDto =

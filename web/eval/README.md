@@ -8,7 +8,7 @@ which calls a real MCP server. Its tool calls and its answer are then checked ([
   (unless the scenario expects one), and the answer is short (≤ 1500 characters: the views show the details);
 - per scenario: the tools called, in order (e.g. `explore_area` then `route_details`), some arguments (e.g. `arriveBy`,
   `wheelchair`, a time of tomorrow at 08:00 in the local time of Lyon) and some properties of the answer (e.g. in English
-  for an English message).
+  for an English message, or telling the service alerts given by the tools, when they give some).
 
 The checks bear on the tool calls rather than on the facts of the answer, which depend on the timetable of the day.
 
@@ -30,7 +30,7 @@ OPENROUTER_API_KEY=sk-or-... npm run eval
 | `EVAL_SCENARIOS`     | all                                  | comma-separated scenario ids, e.g. `local_time,ambiguous` |
 | `EVAL_DELAY_MS`      | `0`                                  | pause between runs (free models: 20 requests/min)  |
 
-A full run is 15 scenarios × about 2 to 4 model calls per model: with a free model (50 requests per day without
+A full run is 16 scenarios × about 2 to 4 model calls per model: with a free model (50 requests per day without
 credits), run a few scenarios at a time with `EVAL_SCENARIOS`.
 
 The report is written to `web/eval/results/<date>.md` (and `.json`, git-ignored): a table scenario × model (checks

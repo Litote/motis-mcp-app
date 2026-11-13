@@ -142,5 +142,9 @@
   "propulsion.PLUG_IN_HYBRID": "επαναφορτιζόμενο υβριδικό",
   "propulsion.HYDROGEN_FUEL_CELL": "υδρογόνο",
   "duration.minutes": "{minutes} λεπ.",
-  "duration.hours": "{hours} ώ. {minutes}"
+  "duration.hours": "{hours} ώ. {minutes}",
+  "alerts.alert": "Ειδοποίηση",
+  "alerts.title": "Ειδοποιήσεις",
+  "alerts.more": "Περισσότερες πληροφορίες",
+  "alerts.until": "Έως {date}"
 }

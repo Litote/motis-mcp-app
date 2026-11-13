@@ -66,7 +66,7 @@ class SncfRealtimeOverlay(
     private val tracks = CachedFeed("SNCF SIRI Lite", ttl = 3.minutes, timeout = 6.seconds, timeSource) { fetchTracks() }
 
     override suspend fun patch(stopTimes: List<StopTime>): Map<Int, StopTime> {
-        val candidates = stopTimes.withIndex().filter { (_, st) -> !st.realTime && SNCF_TRIP.containsMatchIn(st.tripId) }
+        val candidates = stopTimes.withIndex().filter { (_, st) -> !st.realTime && SncfTrains.isSncfTrip(st.tripId) }
         if (candidates.isEmpty()) return emptyMap()
         val (trips, tracks) =
             coroutineScope {
@@ -110,13 +110,6 @@ class SncfRealtimeOverlay(
     companion object {
         const val FEED_URL = "https://proxy.transport.data.gouv.fr/resource/sncf-gtfs-rt-trip-updates"
         const val TRACKS_URL = "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-estimated-timetable"
-
-        /**
-         * Trip of the SNCF in Transitous, of the `fr-horaires-sncf` feed or of a regional one: its NeTEx id is a service
-         * journey of the SNCF, e.g. `<date>_<time>_fr-horaires-sncf_FR:ServiceJourney::SN6823FERRE_…` or
-         * `<date>_<time>_fr-trains-express-regionaux-zou-…_SNC:FR:ServiceJourney::SN17703FERRE_…`.
-         */
-        private val SNCF_TRIP = Regex("""ServiceJourney::SN\d""")
     }
 }
 
@@ -177,7 +170,7 @@ internal class TrainIndex(feed: FeedMessage) {
         feed.entity
             .mapNotNull { it.tripUpdate }
             .mapNotNull { tu ->
-                val number = TRAIN_NUMBER.find(tu.trip.tripId)?.groupValues?.get(1) ?: return@mapNotNull null
+                val number = SncfTrains.feedNumber(tu.trip.tripId) ?: return@mapNotNull null
                 number to
                     Trip(
                         cancelled = tu.trip.scheduleRelationship == TripDescriptor.CANCELED,
@@ -188,7 +181,7 @@ internal class TrainIndex(feed: FeedMessage) {
 
     /** [stopTime] with the real time of its trip, null when no trip of the feed, or more than one, matches. */
     fun patch(stopTime: StopTime): StopTime? {
-        val number = stopTime.tripShortName.trimStart('0').takeIf { it.isNotEmpty() && it.all(Char::isDigit) } ?: return null
+        val number = SncfTrains.number(stopTime.tripShortName) ?: return null
         val departure = stopTime.place.scheduledDeparture
         val arrival = stopTime.place.scheduledArrival
         val trip =
@@ -208,9 +201,6 @@ internal class TrainIndex(feed: FeedMessage) {
     }
 
     private companion object {
-        /** `OCE` + 2 letters (SN: train, SA, EA, LO: TER and coaches) + train number, e.g. `OCESN5537F…`. */
-        val TRAIN_NUMBER = Regex("""^OCE[A-Z]{2}0*(\d+)""")
-
         fun StopTimeEvent.estimated(): Instant? = time.takeIf { it != 0L }?.let(Instant::fromEpochSeconds)
 
         fun StopTimeEvent.scheduled(): Instant? = time.takeIf { it != 0L }?.let { Instant.fromEpochSeconds(it - delay) }

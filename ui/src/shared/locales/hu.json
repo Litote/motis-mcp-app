@@ -142,5 +142,9 @@
   "propulsion.PLUG_IN_HYBRID": "plug-in hibrid",
   "propulsion.HYDROGEN_FUEL_CELL": "hidrogén",
   "duration.minutes": "{minutes} perc",
-  "duration.hours": "{hours} ó {minutes} p"
+  "duration.hours": "{hours} ó {minutes} p",
+  "alerts.alert": "Forgalmi zavar",
+  "alerts.title": "Forgalmi zavarok",
+  "alerts.more": "További információ",
+  "alerts.until": "Eddig: {date}"
 }

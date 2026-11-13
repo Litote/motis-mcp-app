@@ -3,7 +3,7 @@
  * tool rendered by a view) come first, then the behaviors the server supports (local times, options, ambiguous names).
  * The checks bear on the tool calls rather than on the answer, which depends on the timetable of the day.
  */
-import { argLocalDateTime, text, tomorrow, type Scenario } from "./checks";
+import { argLocalDateTime, mentionsAlerts, text, tomorrow, type Scenario } from "./checks";
 
 const TZ = "Europe/Paris";
 
@@ -127,6 +127,15 @@ export const SCENARIOS: Scenario[] = [
       tools: ["departures"],
       allowToolErrors: true,
       answer: [{ label: "asks which one or names the city", check: (a) => a.includes("?") || /paris|bordeaux|marseille/i.test(a) }],
+    },
+  },
+  {
+    // the RER A and the lines of Île-de-France often have alerts: told when the tools give some
+    id: "alerts",
+    prompt: "Comment aller de Paris Gare de Lyon à La Défense ?",
+    expect: {
+      tools: ["plan_journey"],
+      run: [{ label: "tells the alerts given by the tools", check: mentionsAlerts }],
     },
   },
   {

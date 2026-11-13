@@ -142,5 +142,9 @@
   "propulsion.PLUG_IN_HYBRID": "ibrido plug-in",
   "propulsion.HYDROGEN_FUEL_CELL": "idrogeno",
   "duration.minutes": "{minutes} min",
-  "duration.hours": "{hours} h {minutes}"
+  "duration.hours": "{hours} h {minutes}",
+  "alerts.alert": "Avviso",
+  "alerts.title": "Avvisi",
+  "alerts.more": "Maggiori informazioni",
+  "alerts.until": "Fino a {date}"
 }

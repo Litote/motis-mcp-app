@@ -142,5 +142,9 @@
   "propulsion.PLUG_IN_HYBRID": "plug-inhybride",
   "propulsion.HYDROGEN_FUEL_CELL": "waterstof",
   "duration.minutes": "{minutes} min",
-  "duration.hours": "{hours} u {minutes}"
+  "duration.hours": "{hours} u {minutes}",
+  "alerts.alert": "Storing",
+  "alerts.title": "Storingen",
+  "alerts.more": "Meer informatie",
+  "alerts.until": "Tot {date}"
 }

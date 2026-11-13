@@ -1,6 +1,17 @@
 // structuredContent of the tools (see server/.../dto/Dtos.kt).
 import type { Bbox, Polyline } from "./map";
 
+/** Service alert active during a leg or at a stop time (plain text); [effect] and [cause] are GTFS-RT values. */
+export interface AlertDto {
+  header: string;
+  description?: string;
+  url?: string;
+  effect?: string;
+  cause?: string;
+  /** End of its impact, when known. */
+  end?: string;
+}
+
 export interface PlaceDto {
   name: string;
   lat: number;
@@ -65,6 +76,8 @@ export interface StopTimeDto {
   trainNumber?: string;
   /** Next stops of the trip for a departure, previous stops for an arrival. */
   stops?: { name: string; time?: string }[];
+  /** Indexes of its alerts in the alerts of the result. */
+  alerts?: number[];
 }
 
 export interface DeparturesResult {
@@ -76,6 +89,8 @@ export interface DeparturesResult {
   previousPageCursor?: string;
   /** Lines of the station of the stop, on the first page of a railway station. */
   stationLines?: StationLineDto[];
+  /** Alerts of the stop times, referenced by their index. */
+  alerts?: AlertDto[];
 }
 
 /** Line with departures at a station: train brand ("TGV INOUI") for the long-distance trains. */
@@ -106,6 +121,8 @@ export interface LegDto {
   tripId?: string;
   intermediateStops?: PlaceDto[];
   polyline: Polyline;
+  /** Indexes of its alerts in the alerts of the result. */
+  alerts?: number[];
 }
 
 export interface ItineraryDto {
@@ -120,6 +137,8 @@ export interface TripResult {
   kind: "trip";
   tripId: string;
   itinerary: ItineraryDto;
+  /** Alerts of the legs, referenced by their index. */
+  alerts?: AlertDto[];
 }
 
 export interface JourneyResult {
@@ -130,6 +149,8 @@ export interface JourneyResult {
   direct: ItineraryDto[];
   nextPageCursor?: string;
   previousPageCursor?: string;
+  /** Alerts of the legs, referenced by their index. */
+  alerts?: AlertDto[];
 }
 
 export interface RentalProviderDto {

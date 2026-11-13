@@ -824,3 +824,81 @@ input[type="checkbox"] {
   align-items: center;
   gap: 5px;
 }
+
+/* service alerts: a sign on the rows, the details in lists; red when the service is interrupted */
+.alert-mark {
+  display: inline-flex;
+  margin-left: 6px;
+  color: var(--color-text-warning);
+  vertical-align: -2px;
+}
+
+.alert-mark.severe,
+.alert.severe,
+.alert-banner.severe > summary {
+  color: var(--color-text-danger);
+}
+
+.alerts {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+}
+
+.alert {
+  padding: 4px 8px;
+  border-radius: var(--border-radius-sm);
+  background: color-mix(in srgb, currentColor 8%, transparent);
+  color: var(--color-text-warning);
+  font-size: var(--font-text-sm-size);
+}
+
+.alert summary,
+.alert-header,
+.alert-banner > summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.alert summary,
+.alert-banner > summary {
+  cursor: pointer;
+}
+
+.alert-mark .icon,
+.alert .icon,
+.alert-banner > summary .icon {
+  flex: none;
+  width: 15px;
+  height: 15px;
+}
+
+.alert .icon,
+.alert-banner > summary .icon {
+  margin-top: 1px;
+}
+
+.alert p {
+  margin: 4px 0 0;
+  color: var(--color-text-primary);
+}
+
+.alert .alert-description {
+  white-space: pre-line;
+}
+
+.alert-banner {
+  margin: 0 0 8px;
+}
+
+.alert-banner > summary {
+  color: var(--color-text-warning);
+}
+
+.alert-banner .alerts {
+  margin-top: 6px;
+}

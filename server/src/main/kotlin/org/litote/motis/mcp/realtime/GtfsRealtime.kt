@@ -7,7 +7,8 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.protobuf.ProtoNumber
 
 /*
- * Subset of the GTFS Realtime trip updates (https://gtfs.org/realtime/proto/): the other fields are skipped when decoded.
+ * Subset of the GTFS Realtime trip updates and alerts (https://gtfs.org/realtime/proto/): the other fields are skipped when
+ * decoded.
  * The enums are kept as numbers, a value added to the specification must not fail the decoding. The signed fields are
  * read as Long: a negative int32 is encoded on 64 bits.
  */
@@ -29,6 +30,7 @@ internal data class FeedHeader(
 internal data class FeedEntity(
     @ProtoNumber(1) val id: String = "",
     @ProtoNumber(3) val tripUpdate: TripUpdate? = null,
+    @ProtoNumber(5) val alert: GtfsAlert? = null,
 )
 
 @Serializable
@@ -68,4 +70,41 @@ internal data class StopTimeUpdate(
 internal data class StopTimeEvent(
     @ProtoNumber(1) val delay: Long = 0,
     @ProtoNumber(2) val time: Long = 0,
+)
+
+/** Service alert: [cause], [effect] and [severityLevel] are the numbers of the GTFS-RT enums (0: not given). */
+@Serializable
+internal data class GtfsAlert(
+    @ProtoNumber(1) val activePeriod: List<GtfsTimeRange> = emptyList(),
+    @ProtoNumber(5) val informedEntity: List<EntitySelector> = emptyList(),
+    @ProtoNumber(6) val cause: Int = 0,
+    @ProtoNumber(7) val effect: Int = 0,
+    @ProtoNumber(8) val url: TranslatedString? = null,
+    @ProtoNumber(10) val headerText: TranslatedString? = null,
+    @ProtoNumber(11) val descriptionText: TranslatedString? = null,
+    @ProtoNumber(14) val severityLevel: Int = 0,
+)
+
+/** Seconds since the epoch, 0: open. */
+@Serializable
+internal data class GtfsTimeRange(
+    @ProtoNumber(1) val start: Long = 0,
+    @ProtoNumber(2) val end: Long = 0,
+)
+
+@Serializable
+internal data class EntitySelector(
+    @ProtoNumber(1) val agencyId: String = "",
+    @ProtoNumber(2) val routeId: String = "",
+    @ProtoNumber(4) val trip: TripDescriptor? = null,
+    @ProtoNumber(5) val stopId: String = "",
+)
+
+@Serializable
+internal data class TranslatedString(@ProtoNumber(1) val translation: List<Translation> = emptyList())
+
+@Serializable
+internal data class Translation(
+    @ProtoNumber(1) val text: String = "",
+    @ProtoNumber(2) val language: String = "",
 )

@@ -142,5 +142,9 @@
   "propulsion.PLUG_IN_HYBRID": "híbrido enchufable",
   "propulsion.HYDROGEN_FUEL_CELL": "hidrógeno",
   "duration.minutes": "{minutes} min",
-  "duration.hours": "{hours} h {minutes}"
+  "duration.hours": "{hours} h {minutes}",
+  "alerts.alert": "Incidencia",
+  "alerts.title": "Incidencias",
+  "alerts.more": "Más información",
+  "alerts.until": "Hasta {date}"
 }

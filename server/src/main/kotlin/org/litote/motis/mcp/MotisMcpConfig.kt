@@ -12,6 +12,7 @@ import org.litote.motis.mcp.cities.CityStationsStore
 import org.litote.motis.mcp.cities.DynamoDbCityStationsStore
 import org.litote.motis.mcp.cities.InMemoryCityStationsStore
 import org.litote.motis.mcp.realtime.RealtimeOverlay
+import org.litote.motis.mcp.realtime.SncfAlerts
 import org.litote.motis.mcp.realtime.SncfRealtimeOverlay
 
 const val APP_NAME = "motis-mcp-app"
@@ -31,7 +32,8 @@ private val logger = KotlinLogging.logger {}
  * [allowedHosts] are the host names accepted by the HTTP server in addition to localhost (DNS rebinding protection),
  * null for localhost only.
  *
- * [sncfRealtime] adds the real time of the SNCF to its trains without real time in MOTIS, see [SncfRealtimeOverlay].
+ * [sncfRealtime] adds the real time of the SNCF to its trains without real time in MOTIS, see [SncfRealtimeOverlay], and
+ * the service alerts of the SNCF to its trains, see [SncfAlerts].
  *
  * [repairShapes] replaces the detours of the shapes of the transit legs by straight lines between their stops, see
  * [org.litote.motis.mcp.dto.LegGeometry].
@@ -93,6 +95,10 @@ data class MotisMcpConfig(
     /** Real-time overlays of the stop times (see [MotisGateway]), sending the [userAgent] of the MOTIS clients. */
     fun realtimeOverlays(userAgent: String?, engine: HttpClientEngineFactory<*> = OkHttp): List<RealtimeOverlay> =
         if (sncfRealtime) listOf(SncfRealtimeOverlay(HttpClient(engine), userAgent)) else emptyList()
+
+    /** Service alerts of the SNCF trains (see [MotisGateway]), sending the [userAgent] of the MOTIS clients. */
+    fun sncfAlerts(userAgent: String?, engine: HttpClientEngineFactory<*> = OkHttp): SncfAlerts? =
+        if (sncfRealtime) SncfAlerts(HttpClient(engine), userAgent) else null
 
     companion object {
         const val DEFAULT_BASE_URL = "https://api.transitous.org/"
