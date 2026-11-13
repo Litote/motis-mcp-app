@@ -196,8 +196,9 @@ class MotisGateway(
 
     /**
      * Resolves [input], the value of the tool argument [argument] ([stopArgument]: the argument taking a stop id
-     * instead, to retry with a candidate stop): `lat,lon` coordinates are used as is, other text is
-     * geocoded (stops only when [stopsOnly] is true, favoring places near the `lat,lon` [near] position) and the best
+     * instead, to retry with a candidate stop): `lat,lon` coordinates are used as is, `name@lat,lon` is the place of
+     * that name at these coordinates (the value given to retry with an ambiguous candidate other than a stop), other
+     * text is geocoded (stops only when [stopsOnly] is true, favoring places near the `lat,lon` [near] position) and the best
      * match is returned. Fails listing the candidates when another place, far from the best match, matches almost as
      * well; with [near], the candidates much farther from it than the closest one are not considered.
      */
@@ -210,6 +211,7 @@ class MotisGateway(
         language: List<String>? = null,
     ): ResolvedPlace {
         parseCoordinates(input)?.let { (lat, lon) -> return ResolvedPlace("$lat,$lon", input, lat, lon, isStop = false) }
+        parseNamedCoordinates(input)?.let { (name, coordinates) -> return resolvePlaceAt(name, coordinates, stopsOnly, language) }
         if (GEOCODER_ID.matches(input)) {
             throw MotisToolException(
                 "\"$input\" ('$argument') is the id of an address or point of interest, unknown to this tool: " +
@@ -236,13 +238,46 @@ class MotisGateway(
                         "ask the user which one they mean when the conversation does not tell.",
                 ) { m ->
                     val dto = m.toDto()
-                    val retry = if (m.type == LocationType.STOP) "$stopArgument=\"${m.id}\"" else "$argument=\"${m.lat},${m.lon}\""
+                    // a place other than a stop keeps its name: a city is still a city (journeys from/to its stations)
+                    val retry = if (m.type == LocationType.STOP) "$stopArgument=\"${m.id}\"" else "$argument=\"${m.name}@${m.lat},${m.lon}\""
                     "- ${dto.name}${dto.area?.let { " — $it" } ?: ""} (${m.lat},${m.lon}): $retry"
                 },
             )
         }
+        return resolved(candidates.single(), matches)
+    }
+
+    /**
+     * The place named [name] at [coordinates], from the geocoder: the closest match, if close enough. Else the
+     * coordinates, with that name.
+     */
+    private suspend fun resolvePlaceAt(
+        name: String,
+        coordinates: Pair<Double, Double>,
+        stopsOnly: Boolean,
+        language: List<String>?,
+    ): ResolvedPlace {
+        val (lat, lon) = coordinates
+        val matches =
+            geocode(
+                name,
+                types = if (stopsOnly) listOf(LocationType.STOP) else null,
+                near = "$lat,$lon",
+                numResults = RESOLUTION_CANDIDATES,
+                language = language,
+            )
+        val match =
+            matches
+                .minByOrNull { distanceKm(it.lat, it.lon, lat, lon) }
+                ?.takeIf { distanceKm(it.lat, it.lon, lat, lon) <= DISTINCT_PLACES_KM }
+                ?: return ResolvedPlace("$lat,$lon", name, lat, lon, isStop = false)
+        return resolved(match, matches)
+    }
+
+    /** The place of [candidate], one of the [matches] of the geocoder. */
+    private fun resolved(candidate: Match, matches: List<Match>): ResolvedPlace {
         // the station of a city named after it (Strasbourg): the city, for the journeys from/to all its stations
-        val match = candidates.single().let { stop -> matches.firstOrNull { it.isCityOfStop(stop) } ?: stop }
+        val match = matches.firstOrNull { it.isCityOfStop(candidate) } ?: candidate
         val isStop = match.type == LocationType.STOP
         val dto = match.toDto()
         return ResolvedPlace(
@@ -541,6 +576,12 @@ class MotisGateway(
         private val CITY_CATEGORY = Regex("""place_(capital_)?\d+|city|town|village""")
 
         private val COORDINATES = Regex("""^\s*(-?\d{1,2}(?:\.\d+)?)\s*,\s*(-?\d{1,3}(?:\.\d+)?)\s*$""")
+
+        private val NAMED_COORDINATES = Regex("""^(.*\S)\s*@(.+)$""")
+
+        /** The name and the coordinates of a `name@lat,lon` place, null for other text. */
+        fun parseNamedCoordinates(input: String): Pair<String, Pair<Double, Double>>? =
+            NAMED_COORDINATES.matchEntire(input)?.let { m -> parseCoordinates(m.groupValues[2])?.let { m.groupValues[1].trim() to it } }
 
         fun parseCoordinates(input: String): Pair<Double, Double>? =
             COORDINATES.matchEntire(input)?.let { m ->

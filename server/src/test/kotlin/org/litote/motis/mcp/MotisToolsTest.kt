@@ -1021,6 +1021,55 @@ class MotisToolsTest {
 
             assertEquals(true, result.isError)
             assertTrue(result.text().startsWith("\"Brest\" ('from') is ambiguous, candidates:\n"), result.text())
+            assertTrue(result.text().contains("- Brest — France (48.391,-4.485): from=\"Brest@48.391,-4.485\"\n"), result.text())
+        }
+    }
+
+    /** Geocoding of `Brest`: the cities of Belarus and France, the plan otherwise. */
+    private fun brestMotis() =
+        MockMotis { request ->
+            when (request.url.encodedPath) {
+                "/api/v1/geocode" ->
+                    respondJson(
+                        """
+                        [
+                          {"id":"by","name":"Brest","type":"PLACE","category":"place_6","lat":52.094,"lon":23.685,"score":-17.702,"areas":[{"name":"Bélarus","adminLevel":2,"matched":false,"default":true}],"tokens":[]},
+                          {"id":"fr","name":"Brest","type":"PLACE","category":"place_6","lat":48.391,"lon":-4.485,"score":-16.948,"areas":[{"name":"France","adminLevel":2,"matched":false,"default":true}],"tokens":[]}
+                        ]
+                        """.trimIndent(),
+                    )
+                "/api/v6/plan" -> respondJson(fixture("plan"))
+                else -> error("unexpected ${request.url}")
+            }
+        }
+
+    @Test
+    fun `an ambiguous city retried with the value of its candidate is still the city`() {
+        val motis = brestMotis()
+        withMcpClient(motis) { client ->
+            val result = client.callTool("plan_journey", mapOf("from" to "Brest@48.391,-4.485", "to" to "48.58,7.73"))
+
+            assertNotEquals(true, result.isError, result.text())
+            val geocode = motis.request("/api/v1/geocode").url.parameters
+            assertEquals("Brest", geocode["text"])
+            assertEquals("48.391,-4.485", geocode["place"])
+            assertEquals("48.391,-4.485", motis.request("/api/v6/plan").url.parameters["fromPlace"])
+            assertEquals("Brest", result.data(JourneyResult.serializer()).from.name)
+            // the stations are told from/to a city only
+            assertTrue(result.text().contains("Departure stations differ"), result.text())
+        }
+    }
+
+    @Test
+    fun `a named place without match at its coordinates keeps its name`() {
+        val motis = brestMotis()
+        withMcpClient(motis) { client ->
+            val result = client.callTool("plan_journey", mapOf("from" to "Brest@47.0,-1.0", "to" to "48.58,7.73"))
+
+            assertNotEquals(true, result.isError, result.text())
+            assertEquals("47.0,-1.0", motis.request("/api/v6/plan").url.parameters["fromPlace"])
+            assertEquals("Brest", result.data(JourneyResult.serializer()).from.name)
+            assertFalse(result.text().contains("Departure stations differ"), result.text())
         }
     }
 
@@ -1078,8 +1127,8 @@ class MotisToolsTest {
 
             assertEquals(true, result.isError)
             assertTrue(result.text().startsWith("\"Versailles\" ('to') is ambiguous, candidates:\n"), result.text())
-            assertTrue(result.text().contains("- Versailles — Yvelines (48.8,2.13): to=\"48.8,2.13\"\n"), result.text())
-            assertTrue(result.text().contains("- Versailles — Eure (49.1,1.15): to=\"49.1,1.15\"\n"), result.text())
+            assertTrue(result.text().contains("- Versailles — Yvelines (48.8,2.13): to=\"Versailles@48.8,2.13\"\n"), result.text())
+            assertTrue(result.text().contains("- Versailles — Eure (49.1,1.15): to=\"Versailles@49.1,1.15\"\n"), result.text())
             assertFalse(result.text().contains("Kentucky"), result.text())
         }
     }
