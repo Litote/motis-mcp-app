@@ -416,7 +416,7 @@ describe("departures view", () => {
       expect($(".trip-panel strong").textContent).toBe("TGV INOUI 6633 → Lyon Perrache");
       // the boards are left as they are: only the panel and the departure of the trip change
       expect(boards.isConnected).toBe(true);
-      expect(boards.style.gridTemplateColumns).toBe("minmax(0, 1fr) minmax(0, 1fr) minmax(260px, 340px)");
+      expect(boards.style.gridTemplateColumns).toBe("minmax(0px, 1fr) minmax(0px, 1fr) minmax(260px, 340px)");
       expect($("#title").textContent).toBe("Lyon Part Dieu");
       expect(document.querySelectorAll("tr.open")).toHaveLength(2);
 

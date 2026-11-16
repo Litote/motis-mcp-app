@@ -252,9 +252,12 @@ function renderBoard(data: DeparturesResult): void {
   renderToolbarAnd(data, boards, `<div class="boards" style="grid-template-columns: ${boardTracks(boards.length)}">${columns}${tripPanel()}</div>`);
 }
 
-/** Columns of the fullscreen boards: [count] boards, and the trip panel when open. */
+/**
+ * Columns of the fullscreen boards: [count] boards, and the trip panel when open. `0px` rather than `0`: the
+ * length is read back with its unit, as the browsers and jsdom 31 serialize it.
+ */
 const boardTracks = (count: number) =>
-  [...Array.from({ length: count }, () => "minmax(0, 1fr)"), ...(panelTripId ? ["minmax(260px, 340px)"] : [])].join(" ");
+  [...Array.from({ length: count }, () => "minmax(0px, 1fr)"), ...(panelTripId ? ["minmax(260px, 340px)"] : [])].join(" ");
 
 /** Board of [data]: like the SNCF boards at a French station, else a generic one. */
 function boardHtml(data: DeparturesResult): string {
