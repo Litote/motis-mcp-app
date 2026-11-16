@@ -150,8 +150,9 @@ the Conventional Commits:
 
 1. each push on `main` updates the release PR (version in `.release-please-manifest.json`, `CHANGELOG.md`);
 2. merging the release PR creates the tag and a **draft** GitHub release;
-3. the `docker` job builds the image for `linux/amd64` and `linux/arm64`, pushes it to `ghcr.io/litote/motis-mcp-app`
-   and runs a smoke test (`tools/list` over stdio);
+3. the `docker` job builds the image for `linux/amd64` and `linux/arm64`, with its provenance and SBOM, pushes it to
+   `ghcr.io/litote/motis-mcp-app` (`docker-publish` action of [Litote/ci](https://github.com/Litote/ci)) and runs a
+   smoke test (`tools/list` over stdio);
 4. the `docker-web` job does the same for the web chat image `ghcr.io/litote/motis-mcp-app-web`
    (`web/nginx/smoke-test.sh`);
 5. the draft release is published once both images are pushed.
