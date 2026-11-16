@@ -35,6 +35,22 @@ updates:
       vitest:
         patterns:
           - "*vitest*"
+      # The dependencies below are shared by ui/ and web/: bump both directories in a single PR
+      jsdom:
+        patterns:
+          - "jsdom"
+      vite:
+        patterns:
+          - "vite"
+      typescript:
+        patterns:
+          - "typescript"
+      types-node:
+        patterns:
+          - "@types/node"
+      mcp-ext-apps:
+        patterns:
+          - "@modelcontextprotocol/ext-apps"
 
   - package-ecosystem: "terraform"
     directories:
@@ -59,3 +75,8 @@ updates:
       interval: "weekly"
     cooldown:
       default-days: 7
+    groups:
+      # Both Dockerfiles build with the same node image: bump them in a single PR
+      node:
+        patterns:
+          - "node"
