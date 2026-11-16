@@ -533,6 +533,8 @@ describe("departures view in French", () => {
     await app.toolResult({}, trip);
 
     expect([...document.querySelectorAll(".trip .alert")].map(text)).toEqual(["TravauxArrêt reporté."]);
+    // A lone alert is unfolded already: nothing hints to click it.
+    expect(document.querySelector<HTMLDetailsElement>(".trip .alert details")?.open).toBe(true);
   });
 });
 

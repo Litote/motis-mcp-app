@@ -24,21 +24,22 @@ export function alertMark(alerts: AlertDto[]): string {
 /** End of the impact of an alert: its day and time. */
 const until = (end: string, tz?: string): string => t("alerts.until", { date: `${day(end, tz)} ${time(end, tz)}` });
 
-/** An alert: its header, and its details (description, end, link) when unfolded. */
-function alertItem(alert: AlertDto, tz?: string): string {
+/** An alert: its header, and its details (description, end, link) when unfolded, from the start when [open]. */
+function alertItem(alert: AlertDto, tz: string | undefined, open: boolean): string {
   const header = `${warning}<span>${esc(alert.header)}</span>`;
   const details = [
     alert.description ? `<p class="alert-description">${esc(alert.description)}</p>` : "",
     alert.end ? `<p class="muted">${esc(until(alert.end, tz))}</p>` : "",
     alert.url ? `<p><a href="${esc(alert.url)}" data-link target="_blank" rel="noopener noreferrer">${t("alerts.more")}</a></p>` : "",
   ].join("");
-  const body = details ? `<details><summary>${header}</summary>${details}</details>` : `<div class="alert-header">${header}</div>`;
+  const body = details ? `<details${open ? " open" : ""}><summary>${header}</summary>${details}</details>` : `<div class="alert-header">${header}</div>`;
   return `<li class="alert ${isSevere(alert) ? "severe" : ""}">${body}</li>`;
 }
 
-/** List of [alerts], each unfolded on a click; empty without alerts. */
+/** List of [alerts], each unfolded on a click, a lone one unfolded already: nothing hints to click it; empty without alerts. */
 export function alertList(alerts: AlertDto[], tz?: string): string {
-  return alerts.length ? `<ul class="alerts">${alerts.map((a) => alertItem(a, tz)).join("")}</ul>` : "";
+  const open = alerts.length === 1;
+  return alerts.length ? `<ul class="alerts">${alerts.map((a) => alertItem(a, tz, open)).join("")}</ul>` : "";
 }
 
 /** All the [alerts] of a result, folded under their count: a board shows many lines. */

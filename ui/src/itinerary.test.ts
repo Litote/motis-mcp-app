@@ -289,6 +289,8 @@ describe("itinerary view", () => {
       "Tram C : travauxLigne interrompue entre A et B.Until Tue 20 Oct 05:00More information",
       "Ascenseur hors service",
     ]);
+    // Among several alerts, each is unfolded on a click.
+    expect(document.querySelector<HTMLDetailsElement>("#legs .alert details")?.open).toBe(false);
 
     $("#legs .alert a").click();
     expect(app.openLink).toHaveBeenCalledWith({ url: "https://www.tcl.fr/" });
