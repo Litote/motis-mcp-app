@@ -32,7 +32,8 @@ function alertItem(alert: AlertDto, tz: string | undefined, open: boolean): stri
     alert.end ? `<p class="muted">${esc(until(alert.end, tz))}</p>` : "",
     alert.url ? `<p><a href="${esc(alert.url)}" data-link target="_blank" rel="noopener noreferrer">${t("alerts.more")}</a></p>` : "",
   ].join("");
-  const body = details ? `<details${open ? " open" : ""}><summary>${header}</summary>${details}</details>` : `<div class="alert-header">${header}</div>`;
+  const unfolded = open ? " open" : "";
+  const body = details ? `<details${unfolded}><summary>${header}</summary>${details}</details>` : `<div class="alert-header">${header}</div>`;
   return `<li class="alert ${isSevere(alert) ? "severe" : ""}">${body}</li>`;
 }
 
