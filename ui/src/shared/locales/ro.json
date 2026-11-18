@@ -39,6 +39,7 @@
   "itinerary.stops_one": "{count} stație",
   "itinerary.stops_few": "{count} stații",
   "itinerary.stops_other": "{count} de stații",
+  "itinerary.nonstop": "fără opriri",
   "itinerary.options": "Opțiuni",
   "itinerary.start": "Plecare",
   "itinerary.end": "Destinație",

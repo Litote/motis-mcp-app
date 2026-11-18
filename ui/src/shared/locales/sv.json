@@ -37,6 +37,7 @@
   "itinerary.none": "Ingen resa hittades.",
   "itinerary.stops_one": "{count} hållplats",
   "itinerary.stops_other": "{count} hållplatser",
+  "itinerary.nonstop": "utan uppehåll",
   "itinerary.options": "Alternativ",
   "itinerary.start": "Från",
   "itinerary.end": "Till",

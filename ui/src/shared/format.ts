@@ -77,9 +77,9 @@ export function modeColor(mode: string, routeColor?: string | null): string {
   return routeColor ?? MODE_COLORS[mode] ?? "#2b8a3e";
 }
 
-/** Delay badge, empty without delay. */
-export function delayBadge(delay: number): string {
-  if (delay === 0) return "";
+/** Delay badge (advance when negative), empty without delay unless [onTime] ("±0": back on time). */
+export function delayBadge(delay: number, onTime = false): string {
+  if (delay === 0) return onTime ? ` <span class="delay">±0</span>` : "";
   const sign = delay > 0 ? "+" : "";
   return ` <span class="delay">${sign}${delay}</span>`;
 }

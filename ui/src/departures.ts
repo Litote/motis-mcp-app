@@ -459,19 +459,33 @@ content.addEventListener("click", (e) => {
   if (departure) void openTrip(departure.tripId);
 });
 
-function stopRow(stop: PlaceDto, color: string, isEnd: boolean): string {
-  const arrival = stop.arrival ?? stop.scheduledArrival;
+/** Time of a stop of a trip (its departure, else its arrival), and its delay (advance when negative) in minutes. */
+function stopTiming(stop: PlaceDto): { actual?: string; delay: number } {
   const departure = stop.departure ?? stop.scheduledDeparture;
-  const actual = departure ?? arrival;
-  const scheduled = departure ? stop.scheduledDeparture : stop.scheduledArrival;
-  const delay = delayMinutes(actual, scheduled);
+  const actual = departure ?? stop.arrival ?? stop.scheduledArrival;
+  return { actual, delay: delayMinutes(actual, departure ? stop.scheduledDeparture : stop.scheduledArrival) };
+}
+
+/** Stop of a trip: its time and its [delay] badge. */
+function stopRow(stop: PlaceDto, color: string, isEnd: boolean, delay: string): string {
+  const { actual } = stopTiming(stop);
   const track = stop.track ? ` <span class="muted">${t("track", { track: esc(stop.track) })}</span>` : "";
   return `
     <li class="stop ${stop.cancelled ? "cancelled" : ""}" style="--line:${esc(color)}">
       <span class="dot ${isEnd ? "end" : ""}"></span>
-      <span class="time">${time(actual, stop.tz)}${delayBadge(delay)}</span>
+      <span class="time">${time(actual, stop.tz)}${delay}</span>
       <span>${esc(stop.name)}${track}</span>
     </li>`;
+}
+
+/**
+ * Delay badge of the stop [i] of a trip: at its ends, and where it changes ("-3" on each stop tells nothing), "±0" back
+ * on time (else read as late still).
+ */
+function stopDelayBadge(stops: PlaceDto[], i: number): string {
+  const { delay } = stopTiming(stops[i]);
+  const changed = i > 0 && delay !== stopTiming(stops[i - 1]).delay;
+  return i === 0 || i === stops.length - 1 || changed ? delayBadge(delay, changed) : "";
 }
 
 /** Title and subtitle of a trip. */
@@ -495,7 +509,9 @@ function tripTimeline(data: TripResult): string {
       return `
         <div class="toolbar">${lineBadge(leg.mode, leg.line, leg.routeColor, leg.routeTextColor, leg.agency)} <span>${esc(leg.headsign ?? leg.to.name)}</span></div>
         ${alertList(alertsOf(data.alerts, leg.alerts), leg.from.tz)}
-        <ol class="timeline">${stops.map((s, i) => stopRow(s, color, i === 0 || i === stops.length - 1)).join("")}</ol>`;
+        <ol class="timeline">${stops
+          .map((s, i) => stopRow(s, color, i === 0 || i === stops.length - 1, stopDelayBadge(stops, i)))
+          .join("")}</ol>`;
     })
     .join("");
 }

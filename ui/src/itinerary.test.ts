@@ -30,7 +30,7 @@ describe("itinerary view", () => {
     expect($("#itineraries li.selected").dataset.index).toBe("0");
     const legs = items("#legs > li");
     expect(legs[0]).toBe("23:10 Start Walk 562 m (8 min)");
-    expect(legs[1]).toBe("23:18 Part-Dieu Jules Favre C23 → Cité Internationale4 stops · TCL23:20Halles Paul Bocuse23:21Saxe - Lafayette23:23Cordeliers");
+    expect(legs[1]).toBe("23:18 Part-Dieu Jules Favre C23 → Cité Internationale3 stops · TCL23:20Halles Paul Bocuse23:21Saxe - Lafayette23:23Cordeliers");
     expect(legs.at(-1)).toBe("23:32 Destination");
     expect($<HTMLButtonElement>("#earlier").disabled).toBe(false);
   });
@@ -281,7 +281,8 @@ describe("itinerary view", () => {
 
     const stops = $<HTMLDetailsElement>("#legs li[data-leg='1'] details.stops");
     expect(stops.open).toBe(false);
-    expect(items("#legs li[data-leg='1'] .stops li")).toEqual(["23:22 +2Halles Paul Bocuse", "23:21Saxe - Lafayette", "23:23Cordeliers"]);
+    // the delay where it changes only: back on time at the second stop
+    expect(items("#legs li[data-leg='1'] .stops li")).toEqual(["23:22 +2Halles Paul Bocuse", "23:21 ±0Saxe - Lafayette", "23:23Cordeliers"]);
     expect(stops.querySelectorAll("li")[1].classList.contains("cancelled")).toBe(true);
     // the walks and the legs without intermediate stops have no list
     expect(document.querySelector("#legs li[data-leg='0'] .stops")).toBeNull();
@@ -289,6 +290,29 @@ describe("itinerary view", () => {
     stops.querySelector("summary")!.click();
     expect(stops.open).toBe(true);
     expect($("#status").hidden).toBe(true);
+  });
+
+  it("counts the intermediate stops of a leg, those unfolded, and says a leg without them nonstop", async () => {
+    const app = await loadView("itinerary");
+    const data = journey();
+    data.itineraries[0].legs[1].intermediateStops = [];
+    await app.toolResult({}, data);
+
+    expect(items("#legs li[data-leg='1'] .detail")).toEqual(["nonstop · TCL"]);
+    expect(document.querySelector("#legs li[data-leg='1'] .stops")).toBeNull();
+  });
+
+  it("does not repeat on each intermediate stop the delay of the departure", async () => {
+    const app = await loadView("itinerary");
+    const data = journey();
+    const bus = data.itineraries[0].legs[1];
+    const early = (at: string) => new Date(Date.parse(at) - 180_000).toISOString();
+    Object.assign(bus, { realTime: true, startTime: early(bus.scheduledStartTime!) });
+    bus.intermediateStops!.forEach((stop) => Object.assign(stop, { arrival: early(stop.scheduledArrival!) }));
+    await app.toolResult({}, data);
+
+    expect(items("#legs li[data-leg='1'] > .time .delay")).toEqual(["-3"]);
+    expect(document.querySelectorAll("#legs li[data-leg='1'] .stops .delay")).toHaveLength(0);
   });
 
   it("marks the itineraries with service alerts, and lists them under their legs", async () => {

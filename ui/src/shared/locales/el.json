@@ -37,6 +37,7 @@
   "itinerary.none": "Δεν βρέθηκε διαδρομή.",
   "itinerary.stops_one": "{count} στάση",
   "itinerary.stops_other": "{count} στάσεις",
+  "itinerary.nonstop": "χωρίς στάσεις",
   "itinerary.options": "Επιλογές",
   "itinerary.start": "Αφετηρία",
   "itinerary.end": "Προορισμός",

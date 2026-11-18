@@ -37,6 +37,7 @@
   "itinerary.none": "Keine Verbindung gefunden.",
   "itinerary.stops_one": "{count} Halt",
   "itinerary.stops_other": "{count} Halte",
+  "itinerary.nonstop": "ohne Halt",
   "itinerary.options": "Optionen",
   "itinerary.start": "Start",
   "itinerary.end": "Ziel",

@@ -37,6 +37,7 @@
   "itinerary.none": "Güzergâh bulunamadı.",
   "itinerary.stops_one": "{count} durak",
   "itinerary.stops_other": "{count} durak",
+  "itinerary.nonstop": "ara durak yok",
   "itinerary.options": "Seçenekler",
   "itinerary.start": "Nereden",
   "itinerary.end": "Nereye",

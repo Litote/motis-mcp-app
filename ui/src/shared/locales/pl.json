@@ -41,6 +41,7 @@
   "itinerary.stops_few": "{count} przystanki",
   "itinerary.stops_many": "{count} przystanków",
   "itinerary.stops_other": "{count} przystanku",
+  "itinerary.nonstop": "bez przystanków",
   "itinerary.options": "Opcje",
   "itinerary.start": "Start",
   "itinerary.end": "Cel",

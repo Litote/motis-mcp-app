@@ -175,22 +175,46 @@ list.addEventListener("click", (e) => {
   if (li) select(Number(li.dataset.index));
 });
 
-/** Intermediate stop of a leg: its time (arrival, else departure), late in real time, struck out when cancelled. */
-function intermediateStop(stop: PlaceDto, realTime: boolean): string {
-  const at = stop.arrival ?? stop.departure;
-  const delay = realTime ? delayBadge(delayMinutes(at, stop.scheduledArrival ?? stop.scheduledDeparture)) : "";
-  return `<li class="${stop.cancelled ? "cancelled" : ""}"><span class="time">${time(at, stop.tz)}${delay}</span><span>${esc(stop.name)}</span></li>`;
+/** Time of an intermediate stop: its arrival, else its departure. */
+const stopTime = (stop: PlaceDto) => stop.arrival ?? stop.departure;
+
+/** Delay (advance when negative) of an intermediate stop, in minutes. */
+const stopDelay = (stop: PlaceDto) => delayMinutes(stopTime(stop), stop.scheduledArrival ?? stop.scheduledDeparture);
+
+/**
+ * Intermediate stop of a leg: its time, its [delay] (null when the same as at the previous stop: "-3" on each stop
+ * tells nothing), struck out when cancelled.
+ */
+function intermediateStop(stop: PlaceDto, delay: number | null): string {
+  // back on time: said, else read as late still
+  const badge = delay === null ? "" : delayBadge(delay, true);
+  return `<li class="${stop.cancelled ? "cancelled" : ""}"><span class="time">${time(stopTime(stop), stop.tz)}${badge}</span><span>${esc(stop.name)}</span></li>`;
+}
+
+/** Intermediate stops of a [leg], each delay in real time shown where it changes, from the one of the departure. */
+function intermediateStops(leg: LegDto): string {
+  let previous = delayMinutes(leg.startTime, leg.scheduledStartTime);
+  return (leg.intermediateStops ?? [])
+    .map((stop) => {
+      const delay = stopDelay(stop);
+      const changed = leg.realTime && delay !== previous ? delay : null;
+      previous = delay;
+      return intermediateStop(stop, changed);
+    })
+    .join("");
 }
 
 function transitDescription(leg: LegDto): string {
   const intermediate = leg.intermediateStops ?? [];
   const track = leg.from.track ? ` · ${t("track", { track: esc(leg.from.track) })}` : "";
   const agency = leg.agency ? ` · ${esc(leg.agency)}` : "";
-  const info = `${t("itinerary.stops", { count: intermediate.length + 1 })}${track}${agency}`;
+  // the intermediate stops, those unfolded: the arrival is the next step of the timeline
+  const stops = intermediate.length ? t("itinerary.stops", { count: intermediate.length }) : t("itinerary.nonstop");
+  const info = `${stops}${track}${agency}`;
   // the intermediate stops unfold under the leg, without moving the map
   const detail = intermediate.length
     ? `<details class="stops"><summary class="detail">${chevronRight}<span>${info}</span></summary>` +
-      `<ol>${intermediate.map((stop) => intermediateStop(stop, leg.realTime)).join("")}</ol></details>`
+      `<ol>${intermediateStops(leg)}</ol></details>`
     : `<div class="detail">${info}</div>`;
   return (
     `<div class="what">${lineBadge(leg.mode, leg.line, leg.routeColor, leg.routeTextColor, leg.agency)} → ${esc(leg.headsign ?? leg.to.name)}</div>` +

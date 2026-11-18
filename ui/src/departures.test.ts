@@ -327,6 +327,22 @@ describe("departures view", () => {
     expect($("#title").textContent).toBe("Lyon Part Dieu");
   });
 
+  it("shows the delay of a trip at its ends and where it changes, not on each stop", async () => {
+    const app = await loadView("departures");
+    const trip = fixture<TripResult>("trip");
+    const leg = trip.itinerary.legs[0];
+    const shift = (at: string | null | undefined, minutes: number) => (at ? new Date(Date.parse(at) + minutes * 60_000).toISOString() : at);
+    // 3 min early from the start, then on time again from the third stop
+    [leg.from, ...leg.intermediateStops!, leg.to].forEach((stop, i) => {
+      const minutes = i < 2 ? -3 : 0;
+      Object.assign(stop, { departure: shift(stop.scheduledDeparture, minutes), arrival: shift(stop.scheduledArrival, minutes) });
+    });
+    await app.toolResult({ tripId: "t" }, trip);
+
+    const delays = [...document.querySelectorAll("li.stop .time")].map((time) => time.querySelector(".delay")?.textContent ?? null);
+    expect(delays).toEqual(["-3", null, "±0", null, null]);
+  });
+
   it("shows a trip result without a board to go back to", async () => {
     const app = await loadView("departures");
     await app.toolResult({ tripId: "t" }, fixture("trip"));
