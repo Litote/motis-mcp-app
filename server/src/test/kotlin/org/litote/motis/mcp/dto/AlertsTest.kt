@@ -96,6 +96,24 @@ class AlertsTest {
     }
 
     @Test
+    fun `an alert without link takes the first web link of its text`() {
+        val image = "https://www.sncf-voyageurs.com/medias-publics/2024-01/feuilles-mortes-sur-les-voies_2.jpg"
+        val description =
+            "<p>Des retards sont à prévoir.</p><p>Pour mieux comprendre : <a href='javascript:alert(1)'>ici</a> " +
+                "<a target='_blank' href='$image?a=1&amp;b=2'>adhérence dégradée</a></p>"
+
+        val dto = alert(""""headerText": "Adhérence dégradée", "descriptionText": "$description"""").toDto()!!
+
+        assertEquals("$image?a=1&b=2", dto.url)
+        assertEquals("Des retards sont à prévoir.\nPour mieux comprendre : ici adhérence dégradée", dto.description)
+        // its own link first
+        assertEquals(
+            "https://www.sncf-voyageurs.com",
+            alert(""""headerText": "Info", "descriptionText": "$description", "url": "https://www.sncf-voyageurs.com"""").toDto()?.url,
+        )
+    }
+
+    @Test
     fun `a long header is cut, and given entirely as description`() {
         val text = "Bus 18 en 21 rijden om vanaf halte Haarlemmerplein. Details: gvb.nl -- Bus 18 and 21 run a diverted route from Haarlemmerplein. Details: gvb.nl"
         val dto = alert(""""headerText": "$text"""").toDto()!!

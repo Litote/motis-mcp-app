@@ -62,7 +62,9 @@ internal fun Alert.toDto(): AlertDto? {
         header = header,
         // a long header cut is given entirely as description
         description = (description ?: fullHeader)?.withoutHeader(header)?.truncated(MAX_DESCRIPTION_CHARS),
-        url = url?.trim()?.takeIf { it.startsWith("https://") || it.startsWith("http://") },
+        // without its own link, the first one of its text ("Pour mieux comprendre : <a>adhérence dégradée</a>" of the SNCF):
+        // its text is kept, its address lost with the HTML
+        url = url?.trim()?.takeIf(::isWebLink) ?: firstLink(descriptionText) ?: firstLink(headerText),
         effect = effect?.takeUnless { it in UNKNOWN_EFFECTS }?.serialName(),
         cause = cause?.takeUnless { it in UNKNOWN_CAUSES }?.serialName(),
         end = impactEnd()?.toString(),
@@ -79,6 +81,14 @@ private fun String.withoutHeader(header: String): String? {
     val whole = header.last() in ".!?" || getOrNull(header.length) == '\n'
     return if (whole && startsWith(header)) removePrefix(header).trim().ifBlank { null } else this
 }
+
+private fun isWebLink(url: String): Boolean = url.startsWith("https://") || url.startsWith("http://")
+
+private val LINK = Regex("""<a\s[^>]*\bhref\s*=\s*["']([^"']+)["']""", RegexOption.IGNORE_CASE)
+
+/** Address of the first web link of an [html] text, its entities decoded; null without. */
+private fun firstLink(html: String?): String? =
+    html?.let { text -> LINK.findAll(text).map { plainText(it.groupValues[1]) }.firstOrNull(::isWebLink) }
 
 private fun firstSentence(text: String): String = text.substringBefore('\n').let { line -> SENTENCE_END.find(line)?.let { line.substring(0, it.range.first + 1) } ?: line }
 
