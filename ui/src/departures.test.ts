@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { $, FakeApp, fixture, flush, loadView } from "./test/host";
 import type { DeparturesResult, TripResult } from "./shared/types";
 
@@ -135,6 +135,23 @@ describe("departures view", () => {
     expect($("#fullscreen").hidden).toBe(false);
   });
 
+  it("dims the departures gone, by their expected time, else their scheduled one", async () => {
+    // between the expected time of the first train (21:19, 3 min late) and the next departure
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-12T21:17:00Z"));
+    try {
+      const app = await loadView("departures");
+      await app.toolResult({}, board());
+      expect([...document.querySelectorAll("tr[data-index]")].map((row) => row.classList.contains("past"))).toEqual([false, false, false]);
+
+      vi.setSystemTime(new Date("2026-10-12T21:20:00Z"));
+      await app.toolResult({}, sncfBoard());
+      expect(trains().map((train) => train.classList.contains("past"))).toEqual([true, false, false]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("marks the scheduled times of a board mixing real and scheduled times", async () => {
     const app = await loadView("departures");
     const mixed = board();
@@ -170,7 +187,8 @@ describe("departures view", () => {
       "9852 05:50 Bruxelles Midicancelled Paris Gare de Lyon Hall 1 - 2 07:56",
       "6602 06:04 Paris Gare de Lyon Hall 1 - 2",
     ]);
-    expect(trains().map((li) => li.className.trim())).toEqual(["train delayed", "train deleted", "train"]);
+    // the fixture is in the past: its departures are gone
+    expect(trains().map((li) => [...li.classList].join(" "))).toEqual(["train delayed past", "train deleted past", "train past"]);
     expect(trains()[0].querySelector(".min")!.getAttribute("title")).toBe("expected at 23:19");
     expect(trains()[0].querySelector(".origine svg")).not.toBeNull();
     expect(trains()[2].querySelector(".platform")!.classList.contains("empty")).toBe(true);

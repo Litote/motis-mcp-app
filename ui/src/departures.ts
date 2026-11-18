@@ -210,7 +210,7 @@ function sncfRow(st: StopTimeDto, index: number, arriveBy: boolean, markTheoreti
   }
   const { mark, line } = rowAlerts(st, alerts);
   return `
-    <li class="train ${state} ${openClass(st)}" data-index="${index}">
+    <li class="train ${state} ${pastClass(st)} ${openClass(st)}" data-index="${index}">
       <div class="lines">
         <div class="main-line">
           <span class="origine">${sncfOrigin(st)}</span>
@@ -305,6 +305,12 @@ function boardHtml(data: DeparturesResult): string {
   return all.length ? note + boardTable(all, mark, tz, alerts) : `<p class="muted">${t("departures.none")}</p>`;
 }
 
+/**
+ * Class of a departure gone (an arrival made): its expected time, else its theoretical one, is passed. Not said gone:
+ * a theoretical time does not tell it.
+ */
+const pastClass = (st: StopTimeDto) => (st.time && Date.parse(st.time) < Date.now() ? "past" : "");
+
 /** Class of the departure of the trip opened in the panel. */
 const openClass = (st: StopTimeDto) => (panelTripId === st.tripId ? "open" : "");
 
@@ -317,7 +323,7 @@ function boardTable(departures: { st: StopTimeDto; index: number }[], markTheore
     .map(({ st, index }) => ({ st, index, ...rowAlerts(st, alerts) }))
     .map(
       ({ st, index, mark, line }) => `
-      <tr class="clickable ${openClass(st)}" data-index="${index}">
+      <tr class="clickable ${pastClass(st)} ${openClass(st)}" data-index="${index}">
         <td class="${st.cancelled ? "cancelled" : ""}">${timeCell(st, markTheoretical, tz)}</td>
         <td>${lineBadge(st.mode, st.line, st.routeColor, st.routeTextColor)}</td>
         <td>${esc(st.headsign)}${mark}${st.cancelled ? ` <strong class="late">${t("departures.cancelled")}</strong>` : ""}<div class="muted">${esc(st.agency)}</div>${line}</td>
@@ -528,6 +534,8 @@ style.textContent = `
   table.board tr:last-child td { border-bottom: 0; }
   table.board tr.clickable { cursor: pointer; }
   table.board tr.clickable:hover td { background: var(--color-background-secondary); }
+  /* the departures gone, before the time of the board: "earlier" pages back */
+  table.board tr.past td, ol.sncf-board .train.past > * { opacity: 0.5; }
   table.board td:first-child { white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
   table.board td:last-child { text-align: right; }
   table.board .scheduled { font-weight: 400; }
