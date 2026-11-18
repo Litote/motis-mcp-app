@@ -21,6 +21,13 @@ export function alertMark(alerts: AlertDto[]): string {
   return `<span class="alert-mark ${severity(alerts)}" role="img" title="${esc(headers)}" aria-label="${esc(label)}">${warning}</span>`;
 }
 
+/** Headers of the [alerts] of a single departure of a board, under its row; empty without alerts. */
+export function alertLine(alerts: AlertDto[]): string {
+  if (!alerts.length) return "";
+  const lines = alerts.map((a) => `<span title="${esc(a.description ?? a.header)}">${esc(a.header)}</span>`).join("");
+  return `<div class="alert-line ${severity(alerts)}">${warning}<span>${lines}</span></div>`;
+}
+
 /** End of the impact of an alert: its day and time. */
 const until = (end: string, tz?: string): string => t("alerts.until", { date: `${day(end, tz)} ${time(end, tz)}` });
 

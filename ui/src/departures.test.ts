@@ -509,10 +509,14 @@ describe("departures view in French", () => {
     await app.toolResult({}, result);
 
     const marks = [...document.querySelectorAll("tr[data-index]")].map((row) => row.querySelector(".alert-mark"));
-    expect(marks.map((m) => m?.getAttribute("title") ?? null)).toEqual(["Grève", null, "Grève\nLigne interrompue"]);
-    expect(marks[2]?.classList.contains("severe")).toBe(true);
-    expect(text($(".alert-banner > summary"))).toBe("Service alerts (2)");
-    expect([...document.querySelectorAll(".alert-banner .alert")].map(text)).toEqual(["Grève", "Ligne interrompue"]);
+    // the alert of several departures is marked on their rows and under the banner
+    expect(marks.map((m) => m?.getAttribute("title") ?? null)).toEqual(["Grève", null, "Grève"]);
+    expect(text($(".alert-banner > summary"))).toBe("Service alerts (1)");
+    expect([...document.querySelectorAll(".alert-banner .alert")].map(text)).toEqual(["Grève"]);
+    // the alert of a single departure is under its row
+    const lines = [...document.querySelectorAll("tr[data-index]")].map((row) => row.querySelector(".alert-line"));
+    expect(lines.map((l) => (l ? text(l) : null))).toEqual([null, null, "Ligne interrompue"]);
+    expect(lines[2]?.classList.contains("severe")).toBe(true);
   });
 
   it("marks the trains of a French station with service alerts", async () => {
@@ -522,7 +526,9 @@ describe("departures view in French", () => {
     result.stopTimes[1].alerts = [0];
     await app.toolResult({}, result);
 
-    expect(trains().map((train) => train.querySelector(".alert-mark")?.getAttribute("title") ?? null)).toEqual([null, "Train court", null]);
+    // the alert of a single train is under its row, not under the banner
+    expect(trains().map((train) => train.querySelector(".alert-line")?.textContent ?? null)).toEqual([null, "Train court", null]);
+    expect(document.querySelector(".alert-mark, .alert-banner")).toBeNull();
   });
 
   it("lists the service alerts of a trip above its stops", async () => {
