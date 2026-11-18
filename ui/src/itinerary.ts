@@ -175,13 +175,26 @@ list.addEventListener("click", (e) => {
   if (li) select(Number(li.dataset.index));
 });
 
+/** Intermediate stop of a leg: its time (arrival, else departure), late in real time, struck out when cancelled. */
+function intermediateStop(stop: PlaceDto, realTime: boolean): string {
+  const at = stop.arrival ?? stop.departure;
+  const delay = realTime ? delayBadge(delayMinutes(at, stop.scheduledArrival ?? stop.scheduledDeparture)) : "";
+  return `<li class="${stop.cancelled ? "cancelled" : ""}"><span class="time">${time(at, stop.tz)}${delay}</span><span>${esc(stop.name)}</span></li>`;
+}
+
 function transitDescription(leg: LegDto): string {
-  const stops = (leg.intermediateStops?.length ?? 0) + 1;
+  const intermediate = leg.intermediateStops ?? [];
   const track = leg.from.track ? ` · ${t("track", { track: esc(leg.from.track) })}` : "";
   const agency = leg.agency ? ` · ${esc(leg.agency)}` : "";
+  const info = `${t("itinerary.stops", { count: intermediate.length + 1 })}${track}${agency}`;
+  // the intermediate stops unfold under the leg, without moving the map
+  const detail = intermediate.length
+    ? `<details class="stops"><summary class="detail">${chevronRight}<span>${info}</span></summary>` +
+      `<ol>${intermediate.map((stop) => intermediateStop(stop, leg.realTime)).join("")}</ol></details>`
+    : `<div class="detail">${info}</div>`;
   return (
     `<div class="what">${lineBadge(leg.mode, leg.line, leg.routeColor, leg.routeTextColor, leg.agency)} → ${esc(leg.headsign ?? leg.to.name)}</div>` +
-    `<div class="detail">${t("itinerary.stops", { count: stops })}${track}${agency}</div>` +
+    detail +
     alertList(alertsOf(journey?.alerts, leg.alerts), leg.from.tz)
   );
 }
@@ -276,8 +289,8 @@ function showLeg(index: number): void {
 }
 
 const legIndex = (e: Event) => {
-  // the alerts of a leg unfold, without moving the map
-  if ((e.target as HTMLElement).closest(".alerts")) return undefined;
+  // the alerts and the stops of a leg unfold, without moving the map
+  if ((e.target as HTMLElement).closest(".alerts, .stops")) return undefined;
   const li = (e.target as HTMLElement).closest<HTMLElement>("li[data-leg]");
   return li ? Number(li.dataset.leg) : undefined;
 };
@@ -483,6 +496,17 @@ style.textContent = `
   .legs .what { margin-top: 4px; }
   .legs .street .what { margin-top: 1px; color: var(--color-text-secondary); font-size: var(--font-text-sm-size); }
   .legs .detail { margin-top: 2px; color: var(--color-text-secondary); font-size: var(--font-text-sm-size); }
+  .legs .stops > summary { display: flex; align-items: center; gap: 2px; width: max-content; max-width: 100%; cursor: pointer;
+    list-style: none; color: var(--color-text-primary); text-decoration: underline dotted; text-underline-offset: 3px; }
+  .legs .stops > summary::-webkit-details-marker { display: none; }
+  .legs .stops > summary:hover { text-decoration-style: solid; }
+  .legs .stops > summary:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: var(--border-radius-sm); }
+  .legs .stops > summary .icon { flex: none; width: 14px; height: 14px; margin-left: -2px; transition: transform var(--ease); }
+  .legs .stops[open] > summary .icon { transform: rotate(90deg); }
+  .legs .stops ol { list-style: none; margin: 6px 0 0; padding: 0; font-size: var(--font-text-sm-size); }
+  .legs .stops li { display: flex; gap: 8px; padding: 2px 0; }
+  .legs .stops .time { flex: none; min-width: 40px; font-weight: 400; line-height: inherit; color: var(--color-text-secondary); }
+  .legs .stops .time .delay { display: inline; margin: 0 0 0 4px; }
 
   .options { display: flex; flex-direction: column; gap: 14px; padding: 14px; border: 1px solid var(--color-border-secondary);
     border-radius: var(--border-radius-md); background: var(--color-background-secondary); font-size: var(--font-text-sm-size); }

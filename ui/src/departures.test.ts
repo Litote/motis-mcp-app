@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { $, FakeApp, fixture, flush, loadView } from "./test/host";
 import type { DeparturesResult, TripResult } from "./shared/types";
 
@@ -135,6 +135,23 @@ describe("departures view", () => {
     expect($("#fullscreen").hidden).toBe(false);
   });
 
+  it("dims the departures gone, by their expected time, else their scheduled one", async () => {
+    // between the expected time of the first train (21:19, 3 min late) and the next departure
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-12T21:17:00Z"));
+    try {
+      const app = await loadView("departures");
+      await app.toolResult({}, board());
+      expect([...document.querySelectorAll("tr[data-index]")].map((row) => row.classList.contains("past"))).toEqual([false, false, false]);
+
+      vi.setSystemTime(new Date("2026-10-12T21:20:00Z"));
+      await app.toolResult({}, sncfBoard());
+      expect(trains().map((train) => train.classList.contains("past"))).toEqual([true, false, false]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("marks the scheduled times of a board mixing real and scheduled times", async () => {
     const app = await loadView("departures");
     const mixed = board();
@@ -170,7 +187,8 @@ describe("departures view", () => {
       "9852 05:50 Bruxelles Midicancelled Paris Gare de Lyon Hall 1 - 2 07:56",
       "6602 06:04 Paris Gare de Lyon Hall 1 - 2",
     ]);
-    expect(trains().map((li) => li.className.trim())).toEqual(["train delayed", "train deleted", "train"]);
+    // the fixture is in the past: its departures are gone
+    expect(trains().map((li) => [...li.classList].join(" "))).toEqual(["train delayed past", "train deleted past", "train past"]);
     expect(trains()[0].querySelector(".min")!.getAttribute("title")).toBe("expected at 23:19");
     expect(trains()[0].querySelector(".origine svg")).not.toBeNull();
     expect(trains()[2].querySelector(".platform")!.classList.contains("empty")).toBe(true);
@@ -509,10 +527,14 @@ describe("departures view in French", () => {
     await app.toolResult({}, result);
 
     const marks = [...document.querySelectorAll("tr[data-index]")].map((row) => row.querySelector(".alert-mark"));
-    expect(marks.map((m) => m?.getAttribute("title") ?? null)).toEqual(["Grève", null, "Grève\nLigne interrompue"]);
-    expect(marks[2]?.classList.contains("severe")).toBe(true);
-    expect(text($(".alert-banner > summary"))).toBe("Service alerts (2)");
-    expect([...document.querySelectorAll(".alert-banner .alert")].map(text)).toEqual(["Grève", "Ligne interrompue"]);
+    // the alert of several departures is marked on their rows and under the banner
+    expect(marks.map((m) => m?.getAttribute("title") ?? null)).toEqual(["Grève", null, "Grève"]);
+    expect(text($(".alert-banner > summary"))).toBe("Service alerts (1)");
+    expect([...document.querySelectorAll(".alert-banner .alert")].map(text)).toEqual(["Grève"]);
+    // the alert of a single departure is under its row
+    const lines = [...document.querySelectorAll("tr[data-index]")].map((row) => row.querySelector(".alert-line"));
+    expect(lines.map((l) => (l ? text(l) : null))).toEqual([null, null, "Ligne interrompue"]);
+    expect(lines[2]?.classList.contains("severe")).toBe(true);
   });
 
   it("marks the trains of a French station with service alerts", async () => {
@@ -522,7 +544,9 @@ describe("departures view in French", () => {
     result.stopTimes[1].alerts = [0];
     await app.toolResult({}, result);
 
-    expect(trains().map((train) => train.querySelector(".alert-mark")?.getAttribute("title") ?? null)).toEqual([null, "Train court", null]);
+    // the alert of a single train is under its row, not under the banner
+    expect(trains().map((train) => train.querySelector(".alert-line")?.textContent ?? null)).toEqual([null, "Train court", null]);
+    expect(document.querySelector(".alert-mark, .alert-banner")).toBeNull();
   });
 
   it("lists the service alerts of a trip above its stops", async () => {

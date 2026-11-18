@@ -834,9 +834,31 @@ input[type="checkbox"] {
 }
 
 .alert-mark.severe,
+.alert-line.severe,
 .alert.severe,
 .alert-banner.severe > summary {
   color: var(--color-text-danger);
+}
+
+/* the alerts of a single departure of a board, under its row */
+.alert-line {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  margin-top: 2px;
+  color: var(--color-text-warning);
+  font-size: var(--font-text-sm-size);
+}
+
+.alert-line > span {
+  display: grid;
+}
+
+.alert-line .icon {
+  flex: none;
+  width: 13px;
+  height: 13px;
+  margin-top: 1px;
 }
 
 .alerts {

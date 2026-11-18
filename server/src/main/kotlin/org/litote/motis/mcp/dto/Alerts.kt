@@ -61,12 +61,23 @@ internal fun Alert.toDto(): AlertDto? {
     return AlertDto(
         header = header,
         // a long header cut is given entirely as description
-        description = (description ?: fullHeader)?.takeUnless { it == header }?.truncated(MAX_DESCRIPTION_CHARS),
+        description = (description ?: fullHeader)?.withoutHeader(header)?.truncated(MAX_DESCRIPTION_CHARS),
         url = url?.trim()?.takeIf { it.startsWith("https://") || it.startsWith("http://") },
         effect = effect?.takeUnless { it in UNKNOWN_EFFECTS }?.serialName(),
         cause = cause?.takeUnless { it in UNKNOWN_CAUSES }?.serialName(),
         end = impactEnd()?.toString(),
     )
+}
+
+/**
+ * The description without the [header] it starts with (the header of the SNCF is the first sentence of its description,
+ * the header of an alert without one is taken from it), null when only the header. Only a whole sentence or line is
+ * removed: "Grève" does not cut "Grève des contrôleurs".
+ */
+private fun String.withoutHeader(header: String): String? {
+    if (this == header) return null
+    val whole = header.last() in ".!?" || getOrNull(header.length) == '\n'
+    return if (whole && startsWith(header)) removePrefix(header).trim().ifBlank { null } else this
 }
 
 private fun firstSentence(text: String): String = text.substringBefore('\n').let { line -> SENTENCE_END.find(line)?.let { line.substring(0, it.range.first + 1) } ?: line }

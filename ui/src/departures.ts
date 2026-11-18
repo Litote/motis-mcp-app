@@ -2,7 +2,7 @@
 import { callTool, isFullscreen, startView, type Args } from "./shared/app";
 import { day, delayBadge, delayMinutes, duration, esc, lineBadge, time } from "./shared/format";
 import { t } from "./shared/i18n";
-import { alertBanner, alertList, alertMark, alertsOf } from "./shared/alerts";
+import { alertBanner, alertLine, alertList, alertMark, alertsOf } from "./shared/alerts";
 import { arrowLeft, chevronLeft, chevronRight } from "./shared/icons";
 import { RAIL_MODES, TRAIN_MODES, linePictogram, train } from "./shared/sncf";
 import { inTab, stationTabs, type StationTab } from "./shared/stationTabs";
@@ -171,7 +171,26 @@ function sncfOrigin(st: StopTimeDto): string {
   return lineBadge(st.mode, st.line, st.routeColor, st.routeTextColor, st.agency);
 }
 
-function sncfRow(st: StopTimeDto, index: number, arriveBy: boolean, markTheoretical: boolean, tz?: string, alerts?: AlertDto[]): string {
+/**
+ * Alerts of the departures of a board: those of a single departure are under its row, the others (of a line, of the
+ * station...) under the banner of the board, only marked on their rows.
+ */
+interface BoardAlerts {
+  table?: AlertDto[];
+  /** Indexes of the alerts of a single departure. */
+  own: Set<number>;
+}
+
+/** Alerts of [st] marked on its row (shared with other departures), and those under it (its own). */
+function rowAlerts(st: StopTimeDto, alerts: BoardAlerts): { mark: string; line: string } {
+  const indexes = st.alerts ?? [];
+  return {
+    mark: alertMark(alertsOf(alerts.table, indexes.filter((i) => !alerts.own.has(i)))),
+    line: alertLine(alertsOf(alerts.table, indexes.filter((i) => alerts.own.has(i)))),
+  };
+}
+
+function sncfRow(st: StopTimeDto, index: number, arriveBy: boolean, markTheoretical: boolean, tz: string | undefined, alerts: BoardAlerts): string {
   const number = train(st.mode, st.line, st.agency, st.trainNumber)?.number;
   // the end of the trip (origin of an arrival) is the big label: the intermediate stops are on the second line
   const stops = arriveBy ? (st.stops ?? []).slice(1) : (st.stops ?? []).slice(0, -1);
@@ -189,16 +208,18 @@ function sncfRow(st: StopTimeDto, index: number, arriveBy: boolean, markTheoreti
   } else if (markTheoretical && !st.realTime) {
     status = theoreticalMark();
   }
+  const { mark, line } = rowAlerts(st, alerts);
   return `
-    <li class="train ${state} ${openClass(st)}" data-index="${index}">
+    <li class="train ${state} ${pastClass(st)} ${openClass(st)}" data-index="${index}">
       <div class="lines">
         <div class="main-line">
           <span class="origine">${sncfOrigin(st)}</span>
           <span class="numero">${esc(number)}</span>
           <span class="heure">${time(st.scheduledTime ?? st.time, tz)}</span>
-          <span class="station-label"><span>${esc(label)}</span>${alertMark(alertsOf(alerts, st.alerts))}${status}</span>
+          <span class="station-label"><span>${esc(label)}</span>${mark}${status}</span>
         </div>
         <div class="second-line" title="${esc(stops.map((s) => s.name).join(" • "))}">${via}</div>
+        ${line}
       </div>
       <span class="platform ${st.track ? "" : "empty"}" title="${st.track ? t("track", { track: esc(st.track) }) : ""}">${esc(st.track)}</span>
     </li>`;
@@ -268,17 +289,27 @@ function boardHtml(data: DeparturesResult): string {
   const allTheoretical = theoretical > 0 && !data.stopTimes.some((st) => st.realTime);
   const mark = theoretical > 0 && !allTheoretical;
   const theoreticalNote = allTheoretical ? `<p class="muted theoretical-note">${t("departures.theoretical.all")}</p>` : "";
-  // the alerts of the departures shown (a tab shows some lines of the station)
-  const note = alertBanner(alertsOf(data.alerts, [...new Set(data.stopTimes.flatMap((st) => st.alerts ?? []))]), tz) + theoreticalNote;
+  // the alerts of the departures shown (a tab shows some lines of the station): those of a single departure under it
+  const counts = new Map<number, number>();
+  data.stopTimes.flatMap((st) => st.alerts ?? []).forEach((i) => counts.set(i, (counts.get(i) ?? 0) + 1));
+  const alerts: BoardAlerts = { table: data.alerts, own: new Set([...counts].filter(([, n]) => n === 1).map(([i]) => i)) };
+  const shared = [...counts.keys()].filter((i) => !alerts.own.has(i));
+  const note = alertBanner(alertsOf(data.alerts, shared), tz) + theoreticalNote;
   if (isFrenchStation(data)) {
     const trains = all.filter(({ st }) => onSncfBoard(st));
     const others = all.filter(({ st }) => !onSncfBoard(st));
-    const rows = trains.map(({ st, index }) => sncfRow(st, index, data.arriveBy, mark, tz, data.alerts)).join("");
-    const otherLines = others.length ? `<h3>${t("departures.otherLines")}</h3>${boardTable(others, mark, tz, data.alerts)}` : "";
+    const rows = trains.map(({ st, index }) => sncfRow(st, index, data.arriveBy, mark, tz, alerts)).join("");
+    const otherLines = others.length ? `<h3>${t("departures.otherLines")}</h3>${boardTable(others, mark, tz, alerts)}` : "";
     return `${note}<ol class="sncf-board ${data.arriveBy ? "arrivals" : ""}">${rows}</ol>${otherLines}`;
   }
-  return all.length ? note + boardTable(all, mark, tz, data.alerts) : `<p class="muted">${t("departures.none")}</p>`;
+  return all.length ? note + boardTable(all, mark, tz, alerts) : `<p class="muted">${t("departures.none")}</p>`;
 }
+
+/**
+ * Class of a departure gone (an arrival made): its expected time, else its theoretical one, is passed. Not said gone:
+ * a theoretical time does not tell it.
+ */
+const pastClass = (st: StopTimeDto) => (st.time && Date.parse(st.time) < Date.now() ? "past" : "");
 
 /** Class of the departure of the trip opened in the panel. */
 const openClass = (st: StopTimeDto) => (panelTripId === st.tripId ? "open" : "");
@@ -286,15 +317,16 @@ const openClass = (st: StopTimeDto) => (panelTripId === st.tripId ? "open" : "")
 /** Boards shown, by their index in `data-board`. */
 let shownBoards: DeparturesResult[] = [];
 
-/** Generic board of the [departures], with their index in the result, and the [alerts] of the result. */
-function boardTable(departures: { st: StopTimeDto; index: number }[], markTheoretical: boolean, tz?: string, alerts?: AlertDto[]): string {
+/** Generic board of the [departures], with their index in the result, and the [alerts] of the board. */
+function boardTable(departures: { st: StopTimeDto; index: number }[], markTheoretical: boolean, tz: string | undefined, alerts: BoardAlerts): string {
   const rows = departures
+    .map(({ st, index }) => ({ st, index, ...rowAlerts(st, alerts) }))
     .map(
-      ({ st, index }) => `
-      <tr class="clickable ${openClass(st)}" data-index="${index}">
+      ({ st, index, mark, line }) => `
+      <tr class="clickable ${pastClass(st)} ${openClass(st)}" data-index="${index}">
         <td class="${st.cancelled ? "cancelled" : ""}">${timeCell(st, markTheoretical, tz)}</td>
         <td>${lineBadge(st.mode, st.line, st.routeColor, st.routeTextColor)}</td>
-        <td>${esc(st.headsign)}${alertMark(alertsOf(alerts, st.alerts))}${st.cancelled ? ` <strong class="late">${t("departures.cancelled")}</strong>` : ""}<div class="muted">${esc(st.agency)}</div></td>
+        <td>${esc(st.headsign)}${mark}${st.cancelled ? ` <strong class="late">${t("departures.cancelled")}</strong>` : ""}<div class="muted">${esc(st.agency)}</div>${line}</td>
         <td>${st.track ? `<span class="track">${t("track", { track: esc(st.track) })}</span>` : ""}</td>
       </tr>`,
     )
@@ -502,6 +534,8 @@ style.textContent = `
   table.board tr:last-child td { border-bottom: 0; }
   table.board tr.clickable { cursor: pointer; }
   table.board tr.clickable:hover td { background: var(--color-background-secondary); }
+  /* the departures gone, before the time of the board: "earlier" pages back */
+  table.board tr.past td, ol.sncf-board .train.past > * { opacity: 0.5; }
   table.board td:first-child { white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
   table.board td:last-child { text-align: right; }
   table.board .scheduled { font-weight: 400; }
@@ -543,6 +577,7 @@ style.textContent = `
   ol.sncf-board .theoretical { flex: none; color: #cdd5e0; font-size: 0.7rem; font-weight: 400; white-space: nowrap; }
   ol.sncf-board .second-line { margin-top: 2px; font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   ol.sncf-board .second-line:empty { display: none; }
+  ol.sncf-board .alert-line { color: #fe0; font-size: 0.7rem; }
   ol.sncf-board .platform { flex: none; display: flex; align-items: center; justify-content: center; min-width: 2rem; height: 2rem; padding: 0 0.1rem; box-sizing: border-box; border: 2px solid #eee; border-radius: 4px; background: #eee; color: #333; font-size: 1.25rem; font-weight: 700; white-space: nowrap; }
   ol.sncf-board .platform.empty { background: transparent; border-color: transparent; }
   ol.sncf-board .deleted .platform { color: #ff5c5c; }
