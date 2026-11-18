@@ -71,12 +71,28 @@ class AlertsTest {
             ).toDto()!!
 
         assertEquals("Ascensor fuera de servicio.", dto.header)
-        assertEquals("Ascensor fuera de servicio. Como alternativa, puede utilizarse el otro ascensor.", dto.description)
+        // the header is not repeated at the start of the description
+        assertEquals("Como alternativa, puede utilizarse el otro ascensor.", dto.description)
         assertNull(dto.effect)
         assertNull(dto.cause)
         assertNull(dto.url)
         assertNull(alert(""""headerText": " ", "descriptionText": "<p></p>"""").toDto())
         assertEquals("Train supprimé.", alert(""""headerText": "Plus d'information :", "descriptionText": "<p>Train supprimé. Reportez-vous au suivant.</p>"""").toDto()?.header)
+    }
+
+    @Test
+    fun `the description does not repeat the header it starts with, a whole sentence or line only`() {
+        fun description(header: String, description: String) =
+            alert(""""headerText": "$header", "descriptionText": "$description"""").toDto()?.description
+
+        val sncf = "Le train qui doit assurer votre trajet arrive d'abord d'une autre destination."
+        assertEquals(
+            "Son arrivée étant retardée, cela décale également son départ sur votre trajet.",
+            description(sncf, "$sncf Son arrivée étant retardée, cela décale également son départ sur votre trajet."),
+        )
+        assertEquals("Reportez-vous au train suivant.", description("Train supprimé", "Train supprimé<br>Reportez-vous au train suivant."))
+        assertEquals("Grève des contrôleurs.", description("Grève", "Grève des contrôleurs."))
+        assertNull(description(sncf, sncf))
     }
 
     @Test
