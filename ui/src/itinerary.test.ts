@@ -30,7 +30,7 @@ describe("itinerary view", () => {
     expect($("#itineraries li.selected").dataset.index).toBe("0");
     const legs = items("#legs > li");
     expect(legs[0]).toBe("23:10 Start Walk 562 m (8 min)");
-    expect(legs[1]).toBe("23:18 Part-Dieu Jules Favre C23 → Cité Internationale4 stops · TCL");
+    expect(legs[1]).toBe("23:18 Part-Dieu Jules Favre C23 → Cité Internationale4 stops · TCL23:20Halles Paul Bocuse23:21Saxe - Lafayette23:23Cordeliers");
     expect(legs.at(-1)).toBe("23:32 Destination");
     expect($<HTMLButtonElement>("#earlier").disabled).toBe(false);
   });
@@ -266,6 +266,28 @@ describe("itinerary view", () => {
     legs[1].click();
     legs[2].dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
     $("#legs").dispatchEvent(new MouseEvent("mouseleave"));
+    expect($("#status").hidden).toBe(true);
+  });
+
+  it("unfolds the intermediate stops of a leg, without moving the map", async () => {
+    const app = await loadView("itinerary");
+    const data = journey();
+    const bus = data.itineraries[0].legs[1];
+    const [first, second] = bus.intermediateStops!;
+    Object.assign(bus, { realTime: true });
+    Object.assign(first, { arrival: new Date(Date.parse(first.scheduledArrival!) + 120_000).toISOString() });
+    Object.assign(second, { cancelled: true });
+    await app.toolResult({}, data);
+
+    const stops = $<HTMLDetailsElement>("#legs li[data-leg='1'] details.stops");
+    expect(stops.open).toBe(false);
+    expect(items("#legs li[data-leg='1'] .stops li")).toEqual(["23:22 +2Halles Paul Bocuse", "23:21Saxe - Lafayette", "23:23Cordeliers"]);
+    expect(stops.querySelectorAll("li")[1].classList.contains("cancelled")).toBe(true);
+    // the walks and the legs without intermediate stops have no list
+    expect(document.querySelector("#legs li[data-leg='0'] .stops")).toBeNull();
+
+    stops.querySelector("summary")!.click();
+    expect(stops.open).toBe(true);
     expect($("#status").hidden).toBe(true);
   });
 
