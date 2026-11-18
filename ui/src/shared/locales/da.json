@@ -37,6 +37,7 @@
   "itinerary.none": "Ingen rejse fundet.",
   "itinerary.stops_one": "{count} stop",
   "itinerary.stops_other": "{count} stop",
+  "itinerary.nonstop": "uden stop",
   "itinerary.options": "Indstillinger",
   "itinerary.start": "Fra",
   "itinerary.end": "Til",

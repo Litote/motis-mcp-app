@@ -37,6 +37,7 @@
   "itinerary.none": "Geen reisadvies gevonden.",
   "itinerary.stops_one": "{count} halte",
   "itinerary.stops_other": "{count} haltes",
+  "itinerary.nonstop": "zonder tussenstops",
   "itinerary.options": "Opties",
   "itinerary.start": "Vertrek",
   "itinerary.end": "Bestemming",

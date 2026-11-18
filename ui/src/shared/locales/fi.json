@@ -37,6 +37,7 @@
   "itinerary.none": "Reittiä ei löytynyt.",
   "itinerary.stops_one": "{count} pysäkki",
   "itinerary.stops_other": "{count} pysäkkiä",
+  "itinerary.nonstop": "ei välipysäkkejä",
   "itinerary.options": "Asetukset",
   "itinerary.start": "Lähtöpaikka",
   "itinerary.end": "Määränpää",

@@ -208,7 +208,9 @@ function transitDescription(leg: LegDto): string {
   const intermediate = leg.intermediateStops ?? [];
   const track = leg.from.track ? ` · ${t("track", { track: esc(leg.from.track) })}` : "";
   const agency = leg.agency ? ` · ${esc(leg.agency)}` : "";
-  const info = `${t("itinerary.stops", { count: intermediate.length + 1 })}${track}${agency}`;
+  // the intermediate stops, those unfolded: the arrival is the next step of the timeline
+  const stops = intermediate.length ? t("itinerary.stops", { count: intermediate.length }) : t("itinerary.nonstop");
+  const info = `${stops}${track}${agency}`;
   // the intermediate stops unfold under the leg, without moving the map
   const detail = intermediate.length
     ? `<details class="stops"><summary class="detail">${chevronRight}<span>${info}</span></summary>` +

@@ -37,6 +37,7 @@
   "itinerary.none": "Nem található útvonal.",
   "itinerary.stops_one": "{count} megálló",
   "itinerary.stops_other": "{count} megálló",
+  "itinerary.nonstop": "megállás nélkül",
   "itinerary.options": "Beállítások",
   "itinerary.start": "Honnan",
   "itinerary.end": "Hová",

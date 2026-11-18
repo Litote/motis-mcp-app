@@ -37,6 +37,7 @@
   "itinerary.none": "No itinerary found.",
   "itinerary.stops_one": "{count} stop",
   "itinerary.stops_other": "{count} stops",
+  "itinerary.nonstop": "nonstop",
   "itinerary.options": "Options",
   "itinerary.start": "Start",
   "itinerary.end": "Destination",

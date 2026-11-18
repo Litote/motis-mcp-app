@@ -41,6 +41,7 @@
   "itinerary.stops_few": "{count} зупинки",
   "itinerary.stops_many": "{count} зупинок",
   "itinerary.stops_other": "{count} зупинки",
+  "itinerary.nonstop": "без зупинок",
   "itinerary.options": "Параметри",
   "itinerary.start": "Звідки",
   "itinerary.end": "Куди",

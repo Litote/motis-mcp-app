@@ -39,6 +39,7 @@
   "itinerary.stops_one": "{count} zastávka",
   "itinerary.stops_few": "{count} zastávky",
   "itinerary.stops_other": "{count} zastávek",
+  "itinerary.nonstop": "bez zastávek",
   "itinerary.options": "Možnosti",
   "itinerary.start": "Odkud",
   "itinerary.end": "Kam",

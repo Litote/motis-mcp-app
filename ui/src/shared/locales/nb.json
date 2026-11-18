@@ -37,6 +37,7 @@
   "itinerary.none": "Fant ingen reise.",
   "itinerary.stops_one": "{count} stopp",
   "itinerary.stops_other": "{count} stopp",
+  "itinerary.nonstop": "uten stopp",
   "itinerary.options": "Alternativer",
   "itinerary.start": "Fra",
   "itinerary.end": "Til",
