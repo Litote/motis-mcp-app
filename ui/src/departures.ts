@@ -1,6 +1,6 @@
 // Departures board (departures) and trip timeline (trip_details).
 import { callTool, isFullscreen, startView, type Args } from "./shared/app";
-import { day, delayBadge, delayMinutes, duration, esc, lineBadge, time } from "./shared/format";
+import { day, delayMinutes, duration, esc, lineBadge, stopTimeHtml, time } from "./shared/format";
 import { t } from "./shared/i18n";
 import { alertBanner, alertLine, alertList, alertMark, alertsOf } from "./shared/alerts";
 import { arrowLeft, chevronLeft, chevronRight } from "./shared/icons";
@@ -479,27 +479,22 @@ content.addEventListener("click", (e) => {
 });
 
 /** Time of a stop of a trip (its departure, else its arrival), and its delay (advance when negative) in minutes. */
-function stopTiming(stop: PlaceDto): { actual?: string; delay: number } {
+function stopTiming(stop: PlaceDto): { actual?: string; scheduled?: string } {
   const departure = stop.departure ?? stop.scheduledDeparture;
   const actual = departure ?? stop.arrival ?? stop.scheduledArrival;
-  return { actual, delay: delayMinutes(actual, departure ? stop.scheduledDeparture : stop.scheduledArrival) };
+  return { actual, scheduled: departure ? stop.scheduledDeparture : stop.scheduledArrival };
 }
 
 /** Stop of a trip: its time and its [delay] badge. */
-function stopRow(stop: PlaceDto, color: string, isEnd: boolean, delay: string): string {
-  const { actual } = stopTiming(stop);
+function stopRow(stop: PlaceDto, color: string, isEnd: boolean): string {
+  const { actual, scheduled } = stopTiming(stop);
   const track = stop.track ? ` <span class="muted">${t("track", { track: esc(stop.track) })}</span>` : "";
   return `
     <li class="stop ${stop.cancelled ? "cancelled" : ""}" style="--line:${esc(color)}">
       <span class="dot ${isEnd ? "end" : ""}"></span>
-      <span class="time">${time(actual, stop.tz)}${delay}</span>
+      <span class="time">${stopTimeHtml(actual, scheduled, stop.tz)}</span>
       <span>${esc(stop.name)}${track}</span>
     </li>`;
-}
-
-/** Delay badge of a stop of a trip: on each stop late or early, none on time. */
-function stopDelayBadge(stop: PlaceDto): string {
-  return delayBadge(stopTiming(stop).delay);
 }
 
 /** Title and subtitle of a trip. */
@@ -524,7 +519,7 @@ function tripTimeline(data: TripResult): string {
         <div class="toolbar">${lineBadge(leg.mode, leg.line, leg.routeColor, leg.routeTextColor, leg.agency)} <span>${esc(leg.headsign ?? leg.to.name)}</span></div>
         ${alertList(alertsOf(data.alerts, leg.alerts), leg.from.tz)}
         <ol class="timeline">${stops
-          .map((s, i) => stopRow(s, color, i === 0 || i === stops.length - 1, stopDelayBadge(s)))
+          .map((s, i) => stopRow(s, color, i === 0 || i === stops.length - 1))
           .join("")}</ol>`;
     })
     .join("");
@@ -535,7 +530,7 @@ function renderTrip(data: TripResult): void {
   title.textContent = heading.title;
   subtitle.textContent = heading.subtitle;
   content.innerHTML = `
-    <div class="toolbar"><button type="button" id="back" class="ghost" ${history.length ? "" : "hidden"}>${arrowLeft}<span>${t("departures.backToBoard")}</span></button></div>
+    <div class="toolbar"><button type="button" id="back" ${history.length ? "" : "hidden"}>${arrowLeft}<span>${t("departures.backToBoard")}</span></button></div>
     <div class="trip">${tripTimeline(data)}</div>`;
   document.getElementById("back")?.addEventListener("click", () => {
     const previous = history.pop();
@@ -577,7 +572,7 @@ style.textContent = `
   .tabs > button:focus-visible { box-shadow: inset 0 0 0 2px var(--accent-soft), inset 0 -2px 0 var(--accent); }
   .tabs .sncf-line svg { width: 1.25rem; height: 1.25rem; }
   ol.timeline { list-style: none; margin: 0 0 8px; padding: 0; }
-  ol.timeline .stop { display: grid; grid-template-columns: 18px 90px 1fr; align-items: center; min-height: 28px; position: relative; }
+  ol.timeline .stop { display: grid; grid-template-columns: 18px 104px 1fr; align-items: center; min-height: 28px; position: relative; }
   ol.timeline .stop::before { content: ""; position: absolute; left: 7px; top: 0; bottom: 0; width: 4px; background: var(--line); }
   ol.timeline .stop:first-child::before { top: 50%; }
   ol.timeline .stop:last-child::before { bottom: 50%; }

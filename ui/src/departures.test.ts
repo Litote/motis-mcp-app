@@ -372,7 +372,7 @@ describe("departures view", () => {
     expect($("#title").textContent).toBe("Lyon Part Dieu");
   });
 
-  it("shows the delay of a trip on each stop late or early, none on time", async () => {
+  it("strikes out the scheduled time of each stop of a trip late or early, before the actual one", async () => {
     const app = await loadView("departures");
     const trip = fixture<TripResult>("trip");
     const leg = trip.itinerary.legs[0];
@@ -384,8 +384,10 @@ describe("departures view", () => {
     });
     await app.toolResult({ tripId: "t" }, trip);
 
-    const delays = [...document.querySelectorAll("li.stop .time")].map((time) => time.querySelector(".delay")?.textContent ?? null);
-    expect(delays).toEqual(["-3", "-3", null, null, null]);
+    const times = [...document.querySelectorAll("li.stop .time")];
+    expect(times.map((time) => time.querySelector("s.scheduled-time") !== null)).toEqual([true, true, false, false, false]);
+    expect(times[0].textContent).toMatch(/^\d\d:\d\d \d\d:\d\d$/);
+    expect(document.querySelector("li.stop .delay")).toBeNull();
   });
 
   it("shows a trip result without a board to go back to", async () => {

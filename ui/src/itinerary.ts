@@ -1,7 +1,7 @@
 // Journey planner: itineraries (plan_journey) as a list, the selected one on a map.
 import L from "leaflet";
 import { callTool, callToolResult, setStatus, startView, updateModelContext, type Args } from "./shared/app";
-import { day, delayBadge, delayMinutes, distance, duration, esc, lineBadge, modeColor, modeLabel, time } from "./shared/format";
+import { day, delayBadge, delayMinutes, distance, duration, esc, lineBadge, modeColor, modeLabel, stopTimeHtml, time } from "./shared/format";
 import { t, type MessageKey } from "./shared/i18n";
 import { alertList, alertMark, alertsOf } from "./shared/alerts";
 import { check, chevronLeft, chevronRight, sliders } from "./shared/icons";
@@ -179,16 +179,18 @@ list.addEventListener("click", (e) => {
 const stopTime = (stop: PlaceDto) => stop.arrival ?? stop.departure;
 
 /** Delay (advance when negative) of an intermediate stop, in minutes. */
-const stopDelay = (stop: PlaceDto) => delayMinutes(stopTime(stop), stop.scheduledArrival ?? stop.scheduledDeparture);
-
-/** Intermediate stop of a leg: its time, its [delay] in real time (none on time), struck out when cancelled. */
-function intermediateStop(stop: PlaceDto, delay: number): string {
-  return `<li class="${stop.cancelled ? "cancelled" : ""}"><span class="time">${time(stopTime(stop), stop.tz)}${delayBadge(delay)}</span><span>${esc(stop.name)}</span></li>`;
+/**
+ * Intermediate stop of a leg: its time, the scheduled one struck out before it when late or early in [realTime], struck
+ * out when cancelled.
+ */
+function intermediateStop(stop: PlaceDto, realTime: boolean): string {
+  const at = realTime ? stopTimeHtml(stopTime(stop), stop.scheduledArrival ?? stop.scheduledDeparture, stop.tz) : time(stopTime(stop), stop.tz);
+  return `<li class="${stop.cancelled ? "cancelled" : ""}"><span class="time">${at}</span><span>${esc(stop.name)}</span></li>`;
 }
 
-/** Intermediate stops of a [leg], each with its delay in real time. */
+/** Intermediate stops of a [leg], each with its time in real time. */
 function intermediateStops(leg: LegDto): string {
-  return (leg.intermediateStops ?? []).map((stop) => intermediateStop(stop, leg.realTime ? stopDelay(stop) : 0)).join("");
+  return (leg.intermediateStops ?? []).map((stop) => intermediateStop(stop, Boolean(leg.realTime))).join("");
 }
 
 function transitDescription(leg: LegDto): string {
@@ -517,7 +519,6 @@ style.textContent = `
   .legs .stops ol { list-style: none; margin: 6px 0 0; padding: 0; font-size: var(--font-text-sm-size); }
   .legs .stops li { display: flex; gap: 8px; padding: 2px 0; }
   .legs .stops .time { flex: none; min-width: 40px; font-weight: 400; line-height: inherit; color: var(--color-text-secondary); }
-  .legs .stops .time .delay { display: inline; margin: 0 0 0 4px; }
 
   .options { display: flex; flex-direction: column; gap: 14px; padding: 14px; border: 1px solid var(--color-border-secondary);
     border-radius: var(--border-radius-md); background: var(--color-background-secondary); font-size: var(--font-text-sm-size); }
