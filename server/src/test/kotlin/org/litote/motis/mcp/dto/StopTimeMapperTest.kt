@@ -91,4 +91,14 @@ class StopTimeMapperTest {
         assertEquals((leg.endTime - scheduled).inWholeSeconds, dto.durationSeconds)
         assertEquals((scheduled - 5.minutes).toString(), early.copy(mode = Mode.BUS).toDto().startTime)
     }
+
+    @Test
+    fun `a train stop named Gare SNCF by its feed takes the name of its station, a bus stop keeps it`() {
+        val sorgues = stopTime.place.copy(name = "Gare SNCF", lat = 44.0054, lon = 4.8756)
+        val train = stopTime.copy(mode = Mode.REGIONAL_RAIL, nextStops = listOf(sorgues))
+
+        assertEquals(listOf("Sorgues – Châteauneuf-du-Pape"), train.toDto(arriveBy = false).stops?.map { it.name })
+        assertEquals(listOf("Gare SNCF"), train.copy(mode = Mode.BUS).toDto(arriveBy = false).stops?.map { it.name })
+        assertEquals("Sorgues – Châteauneuf-du-Pape", sorgues.toDto(train = true).name)
+    }
 }

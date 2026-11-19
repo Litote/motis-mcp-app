@@ -167,8 +167,9 @@ def main() -> None:
     rows = [
         r for r in csv.DictReader(io.StringIO(text), delimiter=";")
         if r["uic"] and r["is_suggestable"] == "t" and r["country"] in COUNTRIES and r["latitude"] and r["longitude"]
-        # reduced scope: the main stations and the ones sold by Renfe (the international trains of Spain)
-        and (r["is_main_station"] == "t" or r["renfe_is_enabled"] == "t")
+        # reduced scope: the main stations, the ones sold by Renfe (the international trains of Spain) and all the ones
+        # of France sold by the SNCF (the train stops named "Gare SNCF" by their feed take the name of their station)
+        and (r["is_main_station"] == "t" or r["renfe_is_enabled"] == "t" or (r["country"] == "FR" and r["sncf_is_enabled"] == "t"))
     ]
     print(f"{len(rows)} stations", file=sys.stderr)
     labels = {}

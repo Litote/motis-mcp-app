@@ -16,6 +16,8 @@ class StationNamesTest {
                 "8776100\t44.92\t4.89\t1\tValence Ville\tValence\t\tValencia Ville\t\t\t\t",
                 "8776302\t44.99\t4.97\t0\tValence TGV\tValence\t\tValencia TGV\t\t\t\t",
                 "8000207\t50.943\t6.959\t1\tKöln Hbf\tKöln\tCologne Hbf\tColonia Hbf\tCologne Hbf\tKeulen Hbf\t\tColonia Hbf",
+                "8776520\t44.00539\t4.87562\t0\tSorgues – Châteauneuf-du-Pape\tSorgues\t\t\t\t\t\t",
+                "8776510\t44.13730\t4.81959\t0\tOrange\tOrange\t\t\t\t\t\t",
             ).joinToString("\n"),
         )
 
@@ -28,6 +30,17 @@ class StationNamesTest {
         assertEquals("Colonia Hbf", stations.localize("Köln Hbf", null, null, "it"))
         // the rest of the name is the feed's
         assertEquals("Marsella Hall 1 - 2", stations.localize("Marseille Hall 1 - 2", null, null, "es"))
+    }
+
+    @Test
+    fun `a train stop named only as a station takes the name of the station there`() {
+        // the stops of the trains of the ZOU ! feed, named after the bus stops of their station
+        assertEquals("Sorgues – Châteauneuf-du-Pape", stations.stationName("Gare SNCF", 44.0054, 4.8756))
+        assertEquals("Orange", stations.stationName("PEM Gare Routière", 44.1375, 4.8201))
+        // a name of its own is kept, as a generic name far from a station
+        assertEquals(null, stations.stationName("Gare d'Avignon centre", 44.0054, 4.8756))
+        assertEquals(null, stations.stationName("Magenta", 44.0054, 4.8756))
+        assertEquals(null, stations.stationName("Gare SNCF", 44.02, 4.8756))
     }
 
     @Test

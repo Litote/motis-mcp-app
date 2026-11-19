@@ -32,6 +32,16 @@ internal fun normalizeName(text: String): String {
 private val STATION_WORDS =
     setOf("bahnhof", "bf", "gare", "gare sncf", "station", "train station", "railway station", "estacion", "estacion de tren", "stazione")
 
+/**
+ * Words of the names of the stops that say where to board, not where: a stop named with them only ("Gare SNCF", "PEM Gare
+ * Routière" of the ZOU ! feed for Sorgues and Orange) is not named after its city.
+ */
+private val GENERIC_WORDS =
+    setOf(
+        "gare", "sncf", "ter", "tgv", "pem", "pole", "echanges", "multimodal", "routiere", "voyageurs", "station", "bahnhof",
+        "hauptbahnhof", "stazione", "estacion", "de", "d", "des", "du", "la", "le", "les", "l",
+    )
+
 /** The qualifier ending the name of a city: "(Main)" of "Frankfurt (Main)". */
 private val CITY_QUALIFIER = Regex("""\s*\(([^)]*)\)\s*$""")
 
@@ -176,11 +186,23 @@ class StationNames(tsv: String) {
         return if (same != null && normalizeName(same) != normalizeName(localized)) same else localized
     }
 
+    /**
+     * The name of the railway station at [lat], [lon] of a train stop whose [name] says only that it is a station ("Gare
+     * SNCF", "PEM Gare Routière", see [GENERIC_WORDS]): the stops of the trains of the ZOU ! feed are named after the bus
+     * stops of their station. Null to keep the name: a name with a word of its own, or no station nearby.
+     */
+    fun stationName(name: String, lat: Double, lon: Double): String? {
+        if (stationWords(name).any { it !in GENERIC_WORDS }) return null
+        return nearby(lat, lon).minByOrNull { distance(it, lat, lon) }?.name
+    }
+
+    private fun distance(station: Station, lat: Double, lon: Double): Double =
+        hypot((station.lat - lat) * METERS_PER_DEGREE, (station.lon - lon) * METERS_PER_DEGREE * cos(Math.toRadians(lat)))
+
     private fun nearby(lat: Double, lon: Double): Set<Station> {
         val (row, column) = cell(lat, lon)
-        val metersPerDegreeLon = METERS_PER_DEGREE * cos(Math.toRadians(lat))
         return (row - 1..row + 1).flatMap { r -> (column - 1..column + 1).flatMap { c -> grid[r to c].orEmpty() } }
-            .filter { hypot((it.lat - lat) * METERS_PER_DEGREE, (it.lon - lon) * metersPerDegreeLon) <= RADIUS_M }
+            .filter { distance(it, lat, lon) <= RADIUS_M }
             .toSet()
     }
 
