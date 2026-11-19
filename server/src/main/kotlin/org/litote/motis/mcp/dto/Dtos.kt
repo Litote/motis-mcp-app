@@ -164,7 +164,12 @@ data class StopTimeDto(
 
 /** Stop of a trip on a departures board: its name and the time the trip passes there. */
 @Serializable
-data class StopCallDto(val name: String, val time: String? = null)
+data class StopCallDto(
+    val name: String,
+    val time: String? = null,
+    /** Scheduled time, to match the stop with the same stop of the train in another feed (see [distinctTrains]). */
+    @Transient val scheduledTime: String? = null,
+)
 
 @Serializable
 data class DeparturesResult(

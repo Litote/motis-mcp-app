@@ -17,6 +17,7 @@ import org.litote.motis.client.model.StopTime
 import org.litote.motis.mcp.BoundingBox
 import org.litote.motis.mcp.KM_PER_DEGREE
 import org.litote.motis.mcp.StopTimes
+import kotlin.time.Instant
 
 /** Maximum number of stops sent to the views: the most important ones are kept. */
 const val MAX_STOPS = 400
@@ -241,12 +242,24 @@ fun MapClient.RouteDetailsResponseBody.toAreaResult(title: String): AreaResult {
     return areaResult(AreaFrame("routeDetails", title, bbox, 0.0, clip = null), stops, routes, polylines, zoomFiltered)
 }
 
+/** Trains, without the metros. */
+private val TRAINS =
+    setOf(Mode.RAIL, Mode.HIGHSPEED_RAIL, Mode.LONG_DISTANCE, Mode.NIGHT_RAIL, Mode.REGIONAL_FAST_RAIL, Mode.REGIONAL_RAIL, Mode.SUBURBAN)
+
+/**
+ * A real time departure of a train, not before its [scheduled] time: a train does not leave early, the feeds that say so
+ * (Trenitalia) give the early arrival at the stop as its departure.
+ */
+private fun Instant?.notBefore(scheduled: Instant?, rail: Boolean): Instant? =
+    if (rail && this != null && scheduled != null && this < scheduled) scheduled else this
+
 /** [realTimeSource]: source of the real time when it is not MOTIS, see [org.litote.motis.mcp.realtime.RealtimeOverlay]. */
 fun StopTime.toDto(arriveBy: Boolean, realTimeSource: String? = null): StopTimeDto {
     // the SNCF regional trains of some feeds have their number as headsign ("847459" for the train "C17")
     val numberAsHeadsign = tripShortName.isBlank() && headsign.isNotEmpty() && headsign.all(Char::isDigit)
+    val rail = mode in TRAINS
     return StopTimeDto(
-        time = (if (arriveBy) place.arrival else place.departure)?.toString(),
+        time = (if (arriveBy) place.arrival else place.departure.notBefore(place.scheduledDeparture, rail))?.toString(),
         scheduledTime = (if (arriveBy) place.scheduledArrival else place.scheduledDeparture)?.toString(),
         realTime = realTime,
         realTimeSource = realTimeSource,
@@ -262,9 +275,12 @@ fun StopTime.toDto(arriveBy: Boolean, realTimeSource: String? = null): StopTimeD
         trainNumber = if (numberAsHeadsign) headsign else tripShortName.ifBlank { null },
         stops =
             if (arriveBy) {
-                previousStops?.map { StopCallDto(displayName(it.name), (it.departure ?: it.scheduledDeparture)?.toString()) }
+                previousStops?.map {
+                    val time = it.departure.notBefore(it.scheduledDeparture, rail) ?: it.scheduledDeparture
+                    StopCallDto(displayName(it.name), time?.toString(), it.scheduledDeparture?.toString())
+                }
             } else {
-                nextStops?.map { StopCallDto(displayName(it.name), (it.arrival ?: it.scheduledArrival)?.toString()) }
+                nextStops?.map { StopCallDto(displayName(it.name), (it.arrival ?: it.scheduledArrival)?.toString(), it.scheduledArrival?.toString()) }
             },
         pendingAlerts =
             (if (arriveBy) place.arrival ?: place.scheduledArrival else place.departure ?: place.scheduledDeparture)

@@ -14,10 +14,10 @@ const val STATION_RADIUS = 200L
  * the ones of MOTIS, "LATER|<epoch s>" (stop times from that time) and "EARLIER|<epoch s>" (stop times until that time).
  */
 fun DeparturesResult.withNearbyTrains(nearby: DeparturesResult, n: Int, earlier: Boolean): DeparturesResult {
-    val known = stopTimes.mapTo(mutableSetOf()) { it.key() }
-    val added = nearby.stopTimes.filter { known.add(it.key()) }
-    if (added.isEmpty()) return this
-    val all = (stopTimes + added).sortedBy { it.instant() }
+    // the same train at the stop and nearby is kept once, with the real time of either (see distinctTrains)
+    val all = (stopTimes + nearby.stopTimes).distinctTrains()
+    val own = stopTimes.mapTo(mutableSetOf()) { it.tripId }
+    if (all.all { it.tripId in own }) return if (all == stopTimes) this else copy(stopTimes = all)
     val pages = listOf(this, nearby).filter { it.stopTimes.size >= n }
     return if (earlier) {
         // the earliest stop time of a full page: the ones before it may be missing from the other list

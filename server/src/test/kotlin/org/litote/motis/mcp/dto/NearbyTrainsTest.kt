@@ -11,7 +11,7 @@ class NearbyTrainsTest {
     private fun epoch(hhmm: String) = Instant.parse(at(hhmm)).epochSeconds
 
     private fun st(tripId: String, hhmm: String, mode: String = "REGIONAL_RAIL", number: String? = null, headsign: String = "Juvisy") =
-        StopTimeDto(at(hhmm), at(hhmm), false, false, mode, "C", headsign, agency = "RER", tripId = tripId, trainNumber = number)
+        StopTimeDto(at(hhmm), at(hhmm), false, false, mode, if (mode == "HIGHSPEED_RAIL") "TGV INOUI" else "C", headsign, agency = "RER", tripId = tripId, trainNumber = number)
 
     private fun page(vararg stopTimes: StopTimeDto) =
         DeparturesResult(
@@ -58,6 +58,17 @@ class NearbyTrainsTest {
         val merged = sncf.withNearbyTrains(idfm, n = 5, earlier = false)
 
         assertEquals(listOf("sncf-ter", "sncf-c17", "rer"), merged.trips())
+    }
+
+    @Test
+    fun `keeps a train of the stop and of a nearby stop once, with the real time of either`() {
+        val idfm = page(st("rer1", "17:25", number = "ZUMO83"))
+        val sncf = page(st("sncf-rer1", "17:25", number = "ZUMO83").copy(time = at("17:29"), realTime = true))
+
+        val merged = idfm.withNearbyTrains(sncf, n = 3, earlier = false)
+
+        assertEquals(listOf("rer1" to at("17:29")), merged.stopTimes.map { it.tripId to it.time })
+        assertEquals(true, merged.stopTimes.single().realTime)
     }
 
     @Test
