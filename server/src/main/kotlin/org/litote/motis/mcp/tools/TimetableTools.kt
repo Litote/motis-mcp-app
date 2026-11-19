@@ -176,27 +176,16 @@ private class DeparturesRequest(private val gateway: MotisGateway, private val a
             ),
         ).toDto(arriveBy)
 
-        /**
-         * All the stops of the station. The first page is followed by the next one: the board of a station sorts its
-         * trains by scheduled time, a train late enough to be on the next page of MOTIS (sorted by expected time) takes its
-         * place among the first departures.
-         */
+        /** All the stops of the station: pages of MOTIS read until n stop times of the requested lines. */
         suspend fun stationStopTimes(id: String): DeparturesResult {
-            val first = stationPage(id, pageCursor)
-            val board = if (pageCursor != null) first else first.nextPageCursor?.let { first.followedBy(stationPage(id, it), earlier = false) } ?: first
+            var page = stopTimes(id, modes, STATION_RADIUS).distinctTrains()
             // the whole board of the station (asked by the model): its lines, for the tabs
-            return if (lines == null && modes == null) board.withStationLines(id) else board
-        }
-
-        /** Page of the station from [cursor]: pages of MOTIS read until n stop times of the requested lines. */
-        private suspend fun stationPage(id: String, cursor: String?): DeparturesResult {
-            var page = stopTimes(id, modes, STATION_RADIUS, cursor).distinctTrains()
-            val lines = lines ?: return page
+            val lines = lines ?: return if (modes == null) page.withStationLines(id) else page
             var result = page.onLines(lines)
             repeat(LINE_PAGES - 1) {
-                val next = (if (earlier) page.previousPageCursor else page.nextPageCursor) ?: return result
+                val cursor = (if (earlier) page.previousPageCursor else page.nextPageCursor) ?: return result
                 if (result.stopTimes.size >= n) return result
-                page = stopTimes(id, modes, STATION_RADIUS, next)
+                page = stopTimes(id, modes, STATION_RADIUS, cursor)
                 result = result.followedBy(page.onLines(lines), earlier)
             }
             return result

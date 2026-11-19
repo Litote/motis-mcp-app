@@ -524,11 +524,10 @@ class MotisToolsTest {
                 )
 
             val requests = motis.requests.filter { it.url.encodedPath == "/api/v6/stoptimes" }
-            // the same 3 trains on each page of the fixture: 4 pages read for the first page of the board, 4 for the next
-            // one read with it, without the probes of the station lines
-            assertEquals(8, requests.size)
+            // the same 3 trains on each page of the fixture: 4 pages read, without the probes of the station lines
+            assertEquals(4, requests.size)
             assertTrue(requests.all { it.url.parameters["radius"] == "200" && it.url.parameters["fetchStops"] == "true" })
-            assertEquals(listOf(null) + List(7) { "LATER|1791864300" }, requests.map { it.url.parameters["pageCursor"] })
+            assertEquals(listOf(null, "LATER|1791864300", "LATER|1791864300", "LATER|1791864300"), requests.map { it.url.parameters["pageCursor"] })
             val data = result.data(DeparturesResult.serializer())
             assertEquals(listOf("6633", "9852", "6602"), data.stopTimes.map { it.trainNumber })
             assertNull(data.stationLines)
@@ -559,8 +558,8 @@ class MotisToolsTest {
 
             val data = result.data(DeparturesResult.serializer())
             assertEquals(3, data.stopTimes.size)
-            // the board and its next page, then the lines of the station for the tabs: one probe per family of lines
-            assertEquals(2 + 5, motis.requests.count { it.url.encodedPath == "/api/v6/stoptimes" })
+            // the lines of the station, for the tabs: the board, then one probe per family of lines
+            assertEquals(1 + 5, motis.requests.count { it.url.encodedPath == "/api/v6/stoptimes" })
             assertEquals(listOf("TGV INOUI"), data.stationLines?.map { it.line })
         }
     }
@@ -573,8 +572,7 @@ class MotisToolsTest {
                 client.callTool("departures", mapOf("stopId" to "es-RENFE-Larga-Distancia-y-AVE_87303", "station" to true, "modes" to listOf("HIGHSPEED_RAIL")))
 
             assertNull(result.data(DeparturesResult.serializer()).stationLines)
-            // the first page of the board and the next one
-            assertEquals(2, motis.requests.count { it.url.encodedPath == "/api/v6/stoptimes" })
+            assertEquals(1, motis.requests.count { it.url.encodedPath == "/api/v6/stoptimes" })
         }
     }
 
