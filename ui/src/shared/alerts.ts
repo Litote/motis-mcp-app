@@ -38,10 +38,15 @@ const until = (end: string, tz?: string): string => t("alerts.until", { date: `$
 function alertItem(alert: AlertDto, tz: string | undefined, open: boolean, subject?: string): string {
   const about = subject ? `<span class="alert-subject">${esc(subject)}</span> — ` : "";
   const header = `${warning}<span>${about}${esc(alert.header)}</span>`;
+  const link = alert.url
+    ? `<p><a href="${esc(alert.url)}" data-link target="_blank" rel="noopener noreferrer">${esc(alert.linkText ?? t("alerts.more"))}</a></p>`
+    : "";
+  // a link ending the description ("veuillez cliquer sur :") right under it
   const details = [
     alert.description ? `<p class="alert-description">${esc(alert.description)}</p>` : "",
+    alert.linkText ? link : "",
     alert.end ? `<p class="muted">${esc(until(alert.end, tz))}</p>` : "",
-    alert.url ? `<p><a href="${esc(alert.url)}" data-link target="_blank" rel="noopener noreferrer">${t("alerts.more")}</a></p>` : "",
+    alert.linkText ? "" : link,
   ].join("");
   const unfolded = open ? " open" : "";
   const body = details ? `<details${unfolded}><summary>${header}</summary>${details}</details>` : `<div class="alert-header">${header}</div>`;

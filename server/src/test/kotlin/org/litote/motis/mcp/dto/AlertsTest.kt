@@ -105,12 +105,36 @@ class AlertsTest {
         val dto = alert(""""headerText": "Adhérence dégradée", "descriptionText": "$description"""").toDto()!!
 
         assertEquals("$image?a=1&b=2", dto.url)
-        assertEquals("Des retards sont à prévoir.\nPour mieux comprendre : ici adhérence dégradée", dto.description)
-        // its own link first
+        // the text of the link ending the description is the link
+        assertEquals("Des retards sont à prévoir.\nPour mieux comprendre : ici", dto.description)
+        assertEquals("adhérence dégradée", dto.linkText)
+        // its own link first: the text of the other one kept in the description
+        val own = alert(""""headerText": "Info", "descriptionText": "$description", "url": "https://www.sncf-voyageurs.com"""").toDto()!!
+        assertEquals("https://www.sncf-voyageurs.com", own.url)
+        assertEquals("Des retards sont à prévoir.\nPour mieux comprendre : ici adhérence dégradée", own.description)
+        assertNull(own.linkText)
+    }
+
+    @Test
+    fun `the link of the SNCF ending the description is its text, not the text left alone`() {
+        val image = "https://www.sncf-voyageurs.com/medias-publics/2024-01/panne-de-train_2.jpg"
+        val description =
+            "<p>Cause : votre train a fait l'objet d'une intervention de maintenance à PERPIGNAN.</p><p>Pour mieux comprendre " +
+                "la gestion de cet incident, veuillez cliquer sur :\\n<b><a href=\\\"$image\\\">panne de train</a></b></p>"
+
+        val dto = alert(""""headerText": "Votre train est retardé.", "descriptionText": "$description"""").toDto()!!
+
+        assertEquals(image, dto.url)
+        assertEquals("panne de train", dto.linkText)
         assertEquals(
-            "https://www.sncf-voyageurs.com",
-            alert(""""headerText": "Info", "descriptionText": "$description", "url": "https://www.sncf-voyageurs.com"""").toDto()?.url,
+            "Cause : votre train a fait l'objet d'une intervention de maintenance à PERPIGNAN.\n" +
+                "Pour mieux comprendre la gestion de cet incident, veuillez cliquer sur :",
+            dto.description,
         )
+        // a link inside the text: kept there, told as "more information"
+        val inside = alert(""""headerText": "Info", "descriptionText": "Voir <a href='$image'>la carte</a> du réseau."""").toDto()!!
+        assertEquals("Voir la carte du réseau.", inside.description)
+        assertNull(inside.linkText)
     }
 
     @Test
