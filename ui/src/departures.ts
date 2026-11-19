@@ -530,7 +530,7 @@ function renderTrip(data: TripResult): void {
   title.textContent = heading.title;
   subtitle.textContent = heading.subtitle;
   content.innerHTML = `
-    <div class="toolbar"><button type="button" id="back" class="ghost" ${history.length ? "" : "hidden"}>${arrowLeft}<span>${t("departures.backToBoard")}</span></button></div>
+    <div class="toolbar"><button type="button" id="back" ${history.length ? "" : "hidden"}>${arrowLeft}<span>${t("departures.backToBoard")}</span></button></div>
     <div class="trip">${tripTimeline(data)}</div>`;
   document.getElementById("back")?.addEventListener("click", () => {
     const previous = history.pop();
