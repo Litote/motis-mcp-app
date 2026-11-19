@@ -476,6 +476,26 @@ class MotisToolsTest {
     }
 
     @Test
+    fun `departures of a station without time zone are in the time zone of its stops`() {
+        // Bruxelles-Midi of the SNCB: a parent station, without tz, its stops with it
+        val stopTimes = Json.parseToJsonElement(fixture("stoptimes")).jsonObject
+        val withoutTz = JsonObject(stopTimes + ("place" to JsonObject(stopTimes.getValue("place").jsonObject - "tz"))).toString()
+        val motis =
+            MockMotis { request ->
+                respondJson(if (request.url.encodedPath == "/api/v6/stoptimes") withoutTz else fixture(FIXTURES.getValue(request.url.encodedPath)))
+            }
+        withMcpClient(motis) { client ->
+            val result = client.callTool("departures", mapOf("stopId" to "es-RENFE-Larga-Distancia-y-AVE_87303", "time" to "2026-10-12T23:00"))
+
+            assertNull(result.isError, result.text())
+            assertEquals("Europe/Paris", result.data(DeparturesResult.serializer()).stop.tz)
+            // 21:16Z, in the summer time of Paris
+            assertTrue(result.text().contains("- 23:16 "), result.text())
+            assertEquals("2026-10-12T21:00:00Z", motis.requests.last { it.url.encodedPath == "/api/v6/stoptimes" }.url.parameters["time"])
+        }
+    }
+
+    @Test
     fun `departures of buses only do not look for the trains around the stop`() {
         val motis = transitous()
         withMcpClient(motis) { client ->

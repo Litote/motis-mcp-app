@@ -314,10 +314,10 @@ function boardHtml(data: DeparturesResult): string {
     const trains = all.filter(({ st }) => onSncfBoard(st)).sort((a, b) => scheduledAt(a.st) - scheduledAt(b.st));
     const others = all.filter(({ st }) => !onSncfBoard(st));
     const rows = trains.map(({ st, index }) => sncfRow(st, index, data.arriveBy, mark, tz, alerts)).join("");
-    const otherLines = others.length ? `<h3>${t("departures.otherLines")}</h3>${boardTable(others, mark, tz, alerts)}` : "";
+    const otherLines = others.length ? `<h3>${t("departures.otherLines")}</h3>${boardTable(others, data.arriveBy, mark, tz, alerts)}` : "";
     return `${note}<ol class="sncf-board ${data.arriveBy ? "arrivals" : ""}">${rows}</ol>${otherLines}`;
   }
-  return all.length ? note + boardTable(all, mark, tz, alerts) : `<p class="muted">${t("departures.none")}</p>`;
+  return all.length ? note + boardTable(all, data.arriveBy, mark, tz, alerts) : `<p class="muted">${t("departures.none")}</p>`;
 }
 
 /** Scheduled time of a departure in ms, its expected one without it (sorts the SNCF board). */
@@ -335,8 +335,11 @@ const openClass = (st: StopTimeDto) => (panelTripId === st.tripId ? "open" : "")
 /** Boards shown, by their index in `data-board`. */
 let shownBoards: DeparturesResult[] = [];
 
-/** Generic board of the [departures], with their index in the result, and the [alerts] of the board. */
-function boardTable(departures: { st: StopTimeDto; index: number }[], markTheoretical: boolean, tz: string | undefined, alerts: BoardAlerts): string {
+/**
+ * Generic board of the [departures], with their index in the result, and the [alerts] of the board. An arrival shows where
+ * it comes from: its destination is often this station.
+ */
+function boardTable(departures: { st: StopTimeDto; index: number }[], arriveBy: boolean, markTheoretical: boolean, tz: string | undefined, alerts: BoardAlerts): string {
   const rows = departures
     .map(({ st, index }) => ({ st, index, ...rowAlerts(st, alerts) }))
     .map(
@@ -344,7 +347,7 @@ function boardTable(departures: { st: StopTimeDto; index: number }[], markTheore
       <tr class="clickable ${pastClass(st)} ${openClass(st)}" data-index="${index}">
         <td class="${st.cancelled ? "cancelled" : ""}">${timeCell(st, markTheoretical, tz)}</td>
         <td>${lineBadge(st.mode, st.line, st.routeColor, st.routeTextColor)}</td>
-        <td>${esc(st.headsign)}${mark}${st.cancelled ? ` <strong class="late">${t("departures.cancelled")}</strong>` : ""}<div class="muted">${esc(st.agency)}</div>${line}</td>
+        <td>${esc((arriveBy ? st.stops?.[0]?.name : undefined) ?? st.headsign)}${mark}${st.cancelled ? ` <strong class="late">${t("departures.cancelled")}</strong>` : ""}<div class="muted">${esc(st.agency)}</div>${line}</td>
         <td>${st.track ? `<span class="track">${t("track", { track: esc(st.track) })}</span>` : ""}</td>
       </tr>`,
     )

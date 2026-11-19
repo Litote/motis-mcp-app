@@ -310,7 +310,11 @@ class MotisGateway(
     suspend fun stop(stopId: String): ResolvedPlace? =
         when (val r = timetableClient.stoptimes(stopId = stopId, n = 1)) {
             is TimetableClient.StoptimesResponseSuccess ->
-                r.body.place.let { ResolvedPlace(stopId, displayName(it.name), it.lat, it.lon, isStop = true, tz = it.tz) }
+                r.body.place.let {
+                    // a parent station may come without time zone (Bruxelles-Midi of the SNCB): the one of its stops
+                    val tz = it.tz ?: r.body.stopTimes.firstNotNullOfOrNull { st -> st.place.tz }
+                    ResolvedPlace(stopId, displayName(it.name), it.lat, it.lon, isStop = true, tz = tz)
+                }
             is TimetableClient.StoptimesResponseFailure -> null
             is TimetableClient.StoptimesResponseUnknownFailure -> failStatus(r.statusCode)
         }

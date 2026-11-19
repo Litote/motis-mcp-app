@@ -259,6 +259,20 @@ describe("departures view", () => {
     expect(text(trains()[1])).toBe("9852 05:50 Marseille Saint-Charlescancelled Avignon TGV 04:30");
   });
 
+  it("shows the origin of the arrivals of a station outside France, its headsign when unknown", async () => {
+    const app = await loadView("departures");
+    const data = board();
+    data.arriveBy = true;
+    data.stopTimes[0].headsign = "Bruxelles-Midi";
+    data.stopTimes[0].stops = [{ name: "Ostende", time: "2026-10-13T02:00:00Z" }];
+    data.stopTimes[1].stops = undefined;
+    await app.toolResult({ stopId: "S1", arriveBy: true }, data);
+
+    expect(rows()[0]).toContain("Ostende");
+    expect(rows()[0]).not.toContain("Bruxelles-Midi");
+    expect(rows()[1]).toContain(data.stopTimes[1].headsign);
+  });
+
   it("shows the brand, line pictogram or badge of the other trains and lines of a French station", async () => {
     const app = await loadView("departures");
     const data = sncfBoard();
