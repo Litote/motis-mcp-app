@@ -47,7 +47,8 @@ private fun AreaResult.summary(): String =
         appendLine("$title: $totalStops stop(s), $totalRoutes route(s)${if (zoomFiltered) " (minor routes hidden at this zoom level: reduce the radius)" else ""}.")
         if (routes.isNotEmpty()) {
             appendLine("Routes (routeIdx: mode names):")
-            routes.take(40).forEach { appendLine("- ${it.routeIdx}: ${it.mode} ${it.names.joinToString(", ")} (${it.numStops} stops)") }
+            // no stop count: MOTIS counts the stops of a whole run, a loop run 8 times in a row by one trip has 627 of its 80 stops
+            routes.take(40).forEach { appendLine("- ${it.routeIdx}: ${it.mode} ${it.names.joinToString(", ")}") }
             if (routes.size > 40) appendLine("- … ${routes.size - 40} more")
         }
         if (stops.isNotEmpty()) {
