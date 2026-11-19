@@ -181,27 +181,14 @@ const stopTime = (stop: PlaceDto) => stop.arrival ?? stop.departure;
 /** Delay (advance when negative) of an intermediate stop, in minutes. */
 const stopDelay = (stop: PlaceDto) => delayMinutes(stopTime(stop), stop.scheduledArrival ?? stop.scheduledDeparture);
 
-/**
- * Intermediate stop of a leg: its time, its [delay] (null when the same as at the previous stop: "-3" on each stop
- * tells nothing), struck out when cancelled.
- */
-function intermediateStop(stop: PlaceDto, delay: number | null): string {
-  // back on time: said, else read as late still
-  const badge = delay === null ? "" : delayBadge(delay, true);
-  return `<li class="${stop.cancelled ? "cancelled" : ""}"><span class="time">${time(stopTime(stop), stop.tz)}${badge}</span><span>${esc(stop.name)}</span></li>`;
+/** Intermediate stop of a leg: its time, its [delay] in real time (none on time), struck out when cancelled. */
+function intermediateStop(stop: PlaceDto, delay: number): string {
+  return `<li class="${stop.cancelled ? "cancelled" : ""}"><span class="time">${time(stopTime(stop), stop.tz)}${delayBadge(delay)}</span><span>${esc(stop.name)}</span></li>`;
 }
 
-/** Intermediate stops of a [leg], each delay in real time shown where it changes, from the one of the departure. */
+/** Intermediate stops of a [leg], each with its delay in real time. */
 function intermediateStops(leg: LegDto): string {
-  let previous = delayMinutes(leg.startTime, leg.scheduledStartTime);
-  return (leg.intermediateStops ?? [])
-    .map((stop) => {
-      const delay = stopDelay(stop);
-      const changed = leg.realTime && delay !== previous ? delay : null;
-      previous = delay;
-      return intermediateStop(stop, changed);
-    })
-    .join("");
+  return (leg.intermediateStops ?? []).map((stop) => intermediateStop(stop, leg.realTime ? stopDelay(stop) : 0)).join("");
 }
 
 function transitDescription(leg: LegDto): string {
