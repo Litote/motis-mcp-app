@@ -8,6 +8,7 @@ import org.litote.motis.mcp.dto.Coordinates
 import org.litote.motis.mcp.dto.PlaceMatchDto
 import org.litote.motis.mcp.dto.SearchResult
 import org.litote.motis.mcp.dto.ServerInfoResult
+import org.litote.motis.mcp.dto.latLon
 import org.litote.motis.mcp.dto.toDto
 
 private val LOCATION_TYPES = listOf("STOP", "ADDRESS", "PLACE")
@@ -19,7 +20,7 @@ internal const val LANGUAGE_DESCRIPTION =
 private fun PlaceMatchDto.summaryLine(): String {
     // ids quoted: some end with ":" (e.g. SNCF stops), taken for punctuation and dropped by the models when not quoted;
     // only the stop ids are known by the other tools (MOTIS has no lookup of the geocoder ids, e.g. node/123)
-    val use = if (type == "STOP") "id=\"$id\" ($lat,$lon)" else "use \"$lat,$lon\""
+    val use = if (type == "STOP") "id=\"$id\" (${latLon(lat, lon)})" else "use \"${latLon(lat, lon)}\""
     val lines =
         when {
             modes != null -> " modes=${modes.joinToString(",")}"

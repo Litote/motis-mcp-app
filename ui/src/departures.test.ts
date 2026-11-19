@@ -229,6 +229,22 @@ describe("departures view", () => {
     expect(scrollIntoView).toHaveBeenCalledWith({ block: "nearest" });
   });
 
+  it("orders the SNCF board by scheduled time: a late train keeps its place", async () => {
+    const app = await loadView("departures");
+    const data = sncfBoard();
+    // MOTIS gives them by expected time: the train scheduled at 23:16, expected at 23:30, after the one of 23:20
+    const late = { ...data.stopTimes[0], time: "2026-10-12T21:30:00Z" };
+    const onTime = { ...data.stopTimes[2], scheduledTime: "2026-10-12T21:20:00Z", time: "2026-10-12T21:20:00Z" };
+    data.stopTimes = [onTime, late];
+    await app.toolResult({ stopId: "S1", count: 2 }, data);
+
+    expect(trains().map((li) => text(li).slice(0, 10))).toEqual(["6633 23:16", "6602 23:20"]);
+    app.answer(fixture<TripResult>("trip"));
+    (trains()[0] as HTMLElement).click();
+    await flush();
+    expect(app.callServerTool).toHaveBeenLastCalledWith({ name: "trip_details", arguments: { tripId: late.tripId } });
+  });
+
   it("shows the origin and the previous stops of the arrivals of a French station", async () => {
     const app = await loadView("departures");
     const data = sncfBoard();

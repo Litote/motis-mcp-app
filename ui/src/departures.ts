@@ -310,7 +310,8 @@ function boardHtml(data: DeparturesResult): string {
   const shared = [...counts.keys()].filter((i) => !alerts.own.has(i)).filter((i) => data.alerts?.[i]);
   const note = alertBanner(alertsOf(data.alerts, shared), tz, shared.map((i) => alertTrains(data.stopTimes, i))) + theoreticalNote;
   if (isFrenchStation(data)) {
-    const trains = all.filter(({ st }) => onSncfBoard(st));
+    // in the order of their scheduled times, shown on the board, as on the SNCF boards: a late train keeps its place
+    const trains = all.filter(({ st }) => onSncfBoard(st)).sort((a, b) => scheduledAt(a.st) - scheduledAt(b.st));
     const others = all.filter(({ st }) => !onSncfBoard(st));
     const rows = trains.map(({ st, index }) => sncfRow(st, index, data.arriveBy, mark, tz, alerts)).join("");
     const otherLines = others.length ? `<h3>${t("departures.otherLines")}</h3>${boardTable(others, mark, tz, alerts)}` : "";
@@ -318,6 +319,9 @@ function boardHtml(data: DeparturesResult): string {
   }
   return all.length ? note + boardTable(all, mark, tz, alerts) : `<p class="muted">${t("departures.none")}</p>`;
 }
+
+/** Scheduled time of a departure in ms, its expected one without it (sorts the SNCF board). */
+const scheduledAt = (st: StopTimeDto) => Date.parse(st.scheduledTime ?? st.time ?? "") || 0;
 
 /**
  * Class of a departure gone (an arrival made): the minute of its expected time, else of its theoretical one, is over.

@@ -80,7 +80,8 @@ class MotisToolsTest {
             assertEquals("Lyon Part-Dieu", request.url.parameters["text"])
             assertEquals("STOP", request.url.parameters["type"])
             assertEquals("45.76,4.86", request.url.parameters["place"])
-            assertEquals("2", request.url.parameters["numResults"])
+            // twice the limit: the duplicate places dropped leave enough of the others
+            assertEquals("4", request.url.parameters["numResults"])
             assertEquals("fr", request.url.parameters["language"])
             assertTrue(result.text().startsWith("2 result(s) for \"Lyon Part-Dieu\":\n- Lyon-Part-Dieu [STOP] id=\"es-RENFE"), result.text())
         }
@@ -104,7 +105,8 @@ class MotisToolsTest {
             val result = client.callTool("search_places", mapOf("text" to "45.7605,4.8597", "limit" to 3))
 
             val search = result.data(SearchResult.serializer())
-            assertEquals(3, search.matches.size)
+            // the three ticket machines "Billets Grandes Lignes" of the station, a few meters apart: one place
+            assertEquals(1, search.matches.size)
             assertTrue(search.matches.all { it.type == "PLACE" })
             // the coordinates of the places to give to the other tools, not their geocoder ids (unknown to them)
             val first = search.matches.first()
@@ -311,7 +313,7 @@ class MotisToolsTest {
             assertEquals(area.zoom, routes.url.parameters["zoom"]?.toDouble())
             val text = result.text()
             assertTrue(text.startsWith("45.7605,4.8597 (0.5 km): 12 stop(s), 4 route(s)."), text)
-            assertTrue(text.contains("- 803145: HIGHSPEED_RAIL AVE INT (9 stops)"), text)
+            assertTrue(text.contains("- 803145: HIGHSPEED_RAIL AVE INT\n"), text)
             assertTrue(text.contains("Main stops (stopId):\n- Lyon-Part-Dieu (\"it-trenitalia_870072319\") HIGHSPEED_RAIL"), text)
         }
     }
@@ -1054,7 +1056,7 @@ class MotisToolsTest {
                 """.trimIndent(),
                 result.text(),
             )
-            assertEquals("5", motis.request("/api/v1/geocode").url.parameters["numResults"])
+            assertEquals("10", motis.request("/api/v1/geocode").url.parameters["numResults"])
         }
     }
 

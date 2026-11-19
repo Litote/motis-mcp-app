@@ -71,7 +71,7 @@ function renderArea(data: AreaResult): void {
     data.kind === "routeDetails"
       ? ""
       : data.routes
-          .map((r) => `<span data-route="${r.routeIdx}" title="${esc(t("explorer.routeStops", { mode: modeLabel(r.mode), count: r.numStops }))}">${lineBadge(r.mode, r.names.join(" / "), r.color, r.textColor)}</span>`)
+          .map((r) => `<span data-route="${r.routeIdx}" title="${esc(modeLabel(r.mode))}">${lineBadge(r.mode, r.names.join(" / "), r.color, r.textColor)}</span>`)
           .join("");
 
   if (data.kind === "routeDetails") renderRouteStops(data);
@@ -115,7 +115,7 @@ function renderRouteStops(data: AreaResult): void {
     .join("");
   routeStops.innerHTML = `
     <div class="route-head">${lineBadge(route.mode, route.names.join(" / "), route.color, route.textColor)}
-      <span class="muted">${esc(t("explorer.routeStops", { mode: modeLabel(route.mode), count: route.numStops }))}</span></div>
+      <span class="muted">${esc(t("explorer.routeStops", { mode: modeLabel(route.mode), count: data.stops.length }))}</span></div>
     <ol style="--line:${color}">${stops}</ol>`;
   routeStops.hidden = false;
 }

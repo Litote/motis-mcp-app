@@ -14,6 +14,7 @@ import org.litote.motis.mcp.apps.UiView
 import org.litote.motis.mcp.dto.LocalizedNames
 import org.litote.motis.mcp.dto.DeparturesResult
 import org.litote.motis.mcp.dto.ItineraryDto
+import org.litote.motis.mcp.dto.PlaceDto
 import org.litote.motis.mcp.dto.STATION_RADIUS
 import org.litote.motis.mcp.dto.StationLineDto
 import org.litote.motis.mcp.dto.TripResult
@@ -35,7 +36,7 @@ private val TRAIN_MODES =
 
 private val RAIL_LABELS = TRAIN_MODES.map { it.label() } + Mode.RAIL.label()
 
-private fun DeparturesResult.summary(): String =
+internal fun DeparturesResult.summary(): String =
     buildString {
         val what = if (arriveBy) "Arrivals" else "Departures"
         appendLine("$what at ${stop.name} (stopId=\"${stop.stopId}\"):")
@@ -51,7 +52,7 @@ private fun DeparturesResult.summary(): String =
         appendAlerts(alerts)
         stationLines?.let { lines ->
             appendLine("Lines of the station (departures with station=true, modes and lines):")
-            lines.groupBy { it.mode }.forEach { (mode, l) -> appendLine("- $mode: ${l.joinToString { "${it.line} (${it.agency})" }}") }
+            lines.groupBy { it.mode }.forEach { (mode, l) -> appendLine("- $mode: ${l.joinToString { line -> line.line + (line.agency.takeIf { it.isNotBlank() }?.let { " ($it)" } ?: "") }}") }
         }
     }.trimEnd()
 
@@ -69,12 +70,32 @@ internal fun ItineraryDto.describe(): String =
         legs.forEach { leg ->
             val line = leg.line?.let { " $it" } ?: ""
             val headsign = leg.headsign?.let { " → $it" } ?: ""
-            appendLine(
-                "  ${hhmm(leg.startTime, leg.from.tz)} ${leg.from.name} — ${leg.mode}$line$headsign — " +
-                    "${hhmm(leg.endTime, leg.to.tz)} ${leg.to.name}${alertRefs(leg.alerts)}",
-            )
+            // the scheduled times of a late vehicle: those of the walks follow it, they would only repeat it
+            val schedule = leg.realTime && leg.tripId != null
+            val start = withSchedule(leg.startTime, leg.scheduledStartTime.takeIf { schedule }, leg.from.tz)
+            val end = withSchedule(leg.endTime, leg.scheduledEndTime.takeIf { schedule }, leg.to.tz)
+            appendLine("  $start ${leg.from.name} — ${leg.mode}$line$headsign — $end ${leg.to.name}${alertRefs(leg.alerts)}")
         }
     }.trimEnd()
+
+/** [time] in the local time of [tz], followed by the [scheduled] one when it differs: "16:07 (scheduled 16:02)". */
+private fun withSchedule(time: String?, scheduled: String?, tz: String?): String {
+    val actual = hhmm(time, tz)
+    val planned = scheduled?.let { hhmm(it, tz) }
+    return if (planned == null || planned == actual) actual else "$actual (scheduled $planned)"
+}
+
+/**
+ * Line of a stop of a trip: its arrival and departure when the vehicle waits there ("16:01 → 16:07"), each with its
+ * scheduled time when it differs ([realTime] leg).
+ */
+internal fun PlaceDto.tripStopLine(realTime: Boolean): String {
+    val arr = arrival?.let { withSchedule(it, scheduledArrival.takeIf { realTime }, tz) }
+    val dep = departure?.let { withSchedule(it, scheduledDeparture.takeIf { realTime }, tz) }
+    val times = if (arr == null || dep == null || arr == dep) dep ?: arr ?: "--:--" else "$arr → $dep"
+    val status = if (cancelled == true) " CANCELLED" else ""
+    return "  - $times $name${track?.let { " (track $it)" } ?: ""}$status"
+}
 
 /**
  * Families of the lines of a station, each probed with its next stop times (MOTIS has no list of the lines of a stop): the
@@ -280,7 +301,7 @@ fun Server.addTimetableTools(gateway: MotisGateway) {
                 appendLine(itinerary.describe())
                 itinerary.legs.filter { it.tripId != null }.forEach { leg ->
                     val stops = listOf(leg.from) + leg.intermediateStops.orEmpty() + leg.to
-                    stops.forEach { s -> appendLine("  - ${hhmm(s.departure ?: s.arrival, s.tz)} ${s.name}${s.track?.let { " (track $it)" } ?: ""}") }
+                    stops.forEach { s -> appendLine(s.tripStopLine(leg.realTime)) }
                 }
                 appendAlerts(result.alerts)
             }.trimEnd()

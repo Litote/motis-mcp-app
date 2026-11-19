@@ -405,6 +405,31 @@ fun distanceKm(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
     return kotlin.math.sqrt(x * x + y * y) * KM_PER_DEGREE
 }
 
+/** Distance within which two places of the same name and category are one (the ticket machines of a station). */
+private const val SAME_PLACE_KM = 0.1
+
+/**
+ * The matches without the places (not the stops) repeating a better one: same name, type and category, within
+ * [SAME_PLACE_KM] — OpenStreetMap maps each ticket machine or guidepost "Gare de Grenoble" of a station on its own.
+ */
+fun List<Match>.withoutDuplicatePlaces(): List<Match> =
+    fold(mutableListOf()) { kept, match ->
+        val duplicate =
+            match.type != LocationType.STOP &&
+                kept.any {
+                    it.type == match.type && it.category == match.category && it.name == match.name &&
+                        distanceKm(it.lat, it.lon, match.lat, match.lon) <= SAME_PLACE_KM
+                }
+        if (!duplicate) kept += match
+        kept
+    }
+
+/** "lat,lon" of a place in the texts, to 7 decimals (1 cm): the doubles of MOTIS print as 48.880959999999995. */
+fun latLon(lat: Double, lon: Double): String = "${decimal(lat)},${decimal(lon)}"
+
+private fun decimal(value: Double): String =
+    java.math.BigDecimal.valueOf(value).setScale(7, java.math.RoundingMode.HALF_UP).stripTrailingZeros().toPlainString()
+
 /**
  * With [dropEmptyProviders], the providers without station nor vehicle in the area are dropped: MOTIS returns some
  * whose declared service area is wrong (e.g. a provider of Konstanz in Paris).
@@ -420,9 +445,10 @@ fun MapClient.RentalsResponseBody.toDto(title: String, bbox: BoundingBox?, dropE
             providers.map { p ->
                 RentalProviderDto(
                     id = p.id,
-                    name = p.name,
+                    // some feeds end it with a space ("Citiz En Autopartage Métropole de Lyon ")
+                    name = p.name.trim(),
                     groupId = p.groupId,
-                    operator = p.`operator`?.ifBlank { null },
+                    operator = p.`operator`?.trim()?.ifBlank { null },
                     url = p.url?.ifBlank { null },
                     color = color(p.color),
                     formFactors = p.formFactors.map { it.serialName() },
@@ -435,7 +461,7 @@ fun MapClient.RentalsResponseBody.toDto(title: String, bbox: BoundingBox?, dropE
             stations.sortedBy { byDistance(it.lat, it.lon) }.take(MAX_POINTS).map { s ->
                 RentalStationDto(
                     id = s.id,
-                    name = s.name,
+                    name = s.name.trim(),
                     lat = s.lat,
                     lon = s.lon,
                     providerId = s.providerId,

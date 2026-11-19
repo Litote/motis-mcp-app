@@ -21,9 +21,11 @@ import org.litote.motis.mcp.dto.ShapeRepair
 import org.litote.motis.mcp.dto.StationLineDto
 import org.litote.motis.mcp.dto.displayName
 import org.litote.motis.mcp.dto.distanceKm
+import org.litote.motis.mcp.dto.latLon
 import org.litote.motis.mcp.dto.normalizeName
 import org.litote.motis.mcp.dto.toDto
 import org.litote.motis.mcp.dto.withRepairedShapes
+import org.litote.motis.mcp.dto.withoutDuplicatePlaces
 import org.litote.motis.mcp.realtime.RealtimeOverlay
 import org.litote.motis.mcp.realtime.SncfAlerts
 import java.util.Locale
@@ -181,21 +183,27 @@ class MotisGateway(
                     text = text,
                     type = types,
                     place = near,
-                    numResults = numResults?.toLong(),
+                    numResults = asked(numResults),
                     language = language,
                 )
         ) {
-            is GeocodeClient.GeocodeResponseSuccess -> r.body
+            is GeocodeClient.GeocodeResponseSuccess -> r.body.withoutDuplicatePlaces()
             is GeocodeClient.GeocodeResponseFailure -> fail(r.body.error)
             is GeocodeClient.GeocodeResponseUnknownFailure -> failStatus(r.statusCode)
         }
 
     suspend fun reverseGeocode(lat: Double, lon: Double, numResults: Int? = null): List<Match> =
-        when (val r = geocodeClient.reverseGeocode(place = "$lat,$lon", numResults = numResults?.toLong())) {
-            is GeocodeClient.ReverseGeocodeResponseSuccess -> r.body
+        when (val r = geocodeClient.reverseGeocode(place = "$lat,$lon", numResults = asked(numResults))) {
+            is GeocodeClient.ReverseGeocodeResponseSuccess -> r.body.withoutDuplicatePlaces()
             is GeocodeClient.ReverseGeocodeResponseFailure -> fail(r.body.error)
             is GeocodeClient.ReverseGeocodeResponseUnknownFailure -> failStatus(r.statusCode)
         }
+
+    /**
+     * Matches asked to MOTIS for [numResults]: twice as many, the duplicate places dropped (the ticket machines of a
+     * station, see withoutDuplicatePlaces) leaving enough of the others. The callers keep the first [numResults] of them.
+     */
+    private fun asked(numResults: Int?): Long? = numResults?.let { if (it > 1) it * 2L else it.toLong() }
 
     /**
      * Resolves [input], the value of the tool argument [argument] ([stopArgument]: the argument taking a stop id
@@ -228,7 +236,7 @@ class MotisGateway(
                 near = near,
                 numResults = RESOLUTION_CANDIDATES,
                 language = language,
-            )
+            ).take(RESOLUTION_CANDIDATES)
         // not a name: a stop id maybe (the geocoder does not search ids)
         val best = matches.firstOrNull() ?: return stop(input) ?: throw MotisToolException("No place found for \"$input\"")
         val candidates = (listOf(best) + matches.drop(1).filter { it.isRivalOf(best) }).closeTo(near)
@@ -242,8 +250,8 @@ class MotisGateway(
                 ) { m ->
                     val dto = m.toDto()
                     // a place other than a stop keeps its name: a city is still a city (journeys from/to its stations)
-                    val retry = if (m.type == LocationType.STOP) "$stopArgument=\"${m.id}\"" else "$argument=\"${m.name}@${m.lat},${m.lon}\""
-                    "- ${dto.name}${dto.area?.let { " — $it" } ?: ""} (${m.lat},${m.lon}): $retry"
+                    val retry = if (m.type == LocationType.STOP) "$stopArgument=\"${m.id}\"" else "$argument=\"${m.name}@${latLon(m.lat, m.lon)}\""
+                    "- ${dto.name}${dto.area?.let { " — $it" } ?: ""} (${latLon(m.lat, m.lon)}): $retry"
                 },
             )
         }
@@ -268,7 +276,7 @@ class MotisGateway(
                 near = "$lat,$lon",
                 numResults = RESOLUTION_CANDIDATES,
                 language = language,
-            )
+            ).take(RESOLUTION_CANDIDATES)
         val match =
             matches
                 .minByOrNull { distanceKm(it.lat, it.lon, lat, lon) }
