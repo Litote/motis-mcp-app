@@ -483,14 +483,9 @@ function stopRow(stop: PlaceDto, color: string, isEnd: boolean, delay: string): 
     </li>`;
 }
 
-/**
- * Delay badge of the stop [i] of a trip: at its ends, and where it changes ("-3" on each stop tells nothing), "±0" back
- * on time (else read as late still).
- */
-function stopDelayBadge(stops: PlaceDto[], i: number): string {
-  const { delay } = stopTiming(stops[i]);
-  const changed = i > 0 && delay !== stopTiming(stops[i - 1]).delay;
-  return i === 0 || i === stops.length - 1 || changed ? delayBadge(delay, changed) : "";
+/** Delay badge of a stop of a trip: on each stop late or early, none on time. */
+function stopDelayBadge(stop: PlaceDto): string {
+  return delayBadge(stopTiming(stop).delay);
 }
 
 /** Title and subtitle of a trip. */
@@ -515,7 +510,7 @@ function tripTimeline(data: TripResult): string {
         <div class="toolbar">${lineBadge(leg.mode, leg.line, leg.routeColor, leg.routeTextColor, leg.agency)} <span>${esc(leg.headsign ?? leg.to.name)}</span></div>
         ${alertList(alertsOf(data.alerts, leg.alerts), leg.from.tz)}
         <ol class="timeline">${stops
-          .map((s, i) => stopRow(s, color, i === 0 || i === stops.length - 1, stopDelayBadge(stops, i)))
+          .map((s, i) => stopRow(s, color, i === 0 || i === stops.length - 1, stopDelayBadge(s)))
           .join("")}</ol>`;
     })
     .join("");
