@@ -68,7 +68,8 @@ function Login({ error }: Readonly<{ error: string | null }>) {
         <button type="submit">{t("login.useKey")}</button>
       </form>
       <p className="login-legal">
-        <a href="/privacy.html">{t("legal.privacy")}</a> · <a href="/terms.html">{t("legal.terms")}</a>
+        <a href="/privacy.html">{t("legal.privacy")}</a> · <a href="/terms.html">{t("legal.terms")}</a> ·{" "}
+        <a href="https://github.com/Litote/motis-mcp-app">{t("legal.source")}</a>
       </p>
     </div>
   );
