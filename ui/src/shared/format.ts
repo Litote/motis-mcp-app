@@ -84,6 +84,15 @@ export function delayBadge(delay: number): string {
   return ` <span class="delay">${sign}${delay}</span>`;
 }
 
+/**
+ * Time of a stop in real time: the [scheduled] one struck out then the [actual] one when they differ ("+50" next to a
+ * time is read as the time, or as a duration), only the time else.
+ */
+export function stopTimeHtml(actual: string | null | undefined, scheduled: string | null | undefined, tz?: string | null): string {
+  if (delayMinutes(actual, scheduled) === 0) return time(actual ?? scheduled, tz);
+  return `<s class="scheduled-time">${time(scheduled, tz)}</s> <span class="late">${time(actual, tz)}</span>`;
+}
+
 /** Readable text color on [background]. */
 export function textOn(background: string, textColor?: string | null): string {
   if (textColor && textColor.toLowerCase() !== background.toLowerCase()) return textColor;

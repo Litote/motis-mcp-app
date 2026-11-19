@@ -281,8 +281,9 @@ describe("itinerary view", () => {
 
     const stops = $<HTMLDetailsElement>("#legs li[data-leg='1'] details.stops");
     expect(stops.open).toBe(false);
-    // the delay on each stop late, none back on time
-    expect(items("#legs li[data-leg='1'] .stops li")).toEqual(["23:22 +2Halles Paul Bocuse", "23:21Saxe - Lafayette", "23:23Cordeliers"]);
+    // the scheduled time struck out before the actual one on each stop late, only the time back on time
+    expect(items("#legs li[data-leg='1'] .stops li")).toEqual(["23:20 23:22Halles Paul Bocuse", "23:21Saxe - Lafayette", "23:23Cordeliers"]);
+    expect(items("#legs li[data-leg='1'] .stops s.scheduled-time")).toEqual(["23:20"]);
     expect(stops.querySelectorAll("li")[1].classList.contains("cancelled")).toBe(true);
     // the walks and the legs without intermediate stops have no list
     expect(document.querySelector("#legs li[data-leg='0'] .stops")).toBeNull();
@@ -302,7 +303,7 @@ describe("itinerary view", () => {
     expect(document.querySelector("#legs li[data-leg='1'] .stops")).toBeNull();
   });
 
-  it("shows on each intermediate stop the delay kept from the departure", async () => {
+  it("strikes out on each intermediate stop the scheduled time, the delay kept from the departure", async () => {
     const app = await loadView("itinerary");
     const data = journey();
     const bus = data.itineraries[0].legs[1];
@@ -312,7 +313,8 @@ describe("itinerary view", () => {
     await app.toolResult({}, data);
 
     expect(items("#legs li[data-leg='1'] > .time .delay")).toEqual(["-3"]);
-    expect(items("#legs li[data-leg='1'] .stops .delay")).toEqual(["-3", "-3", "-3"]);
+    expect(document.querySelectorAll("#legs li[data-leg='1'] .stops .delay")).toHaveLength(0);
+    expect(document.querySelectorAll("#legs li[data-leg='1'] .stops s.scheduled-time")).toHaveLength(3);
   });
 
   it("marks the itineraries with service alerts, and lists them under their legs", async () => {

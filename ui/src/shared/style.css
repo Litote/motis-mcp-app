@@ -702,6 +702,12 @@ input[type="checkbox"] {
   color: var(--color-text-success);
 }
 
+/* scheduled time of a stop late or early, struck out before the actual one */
+.scheduled-time {
+  color: var(--color-text-secondary);
+  font-weight: 400;
+}
+
 /* delay in minutes, next to a time */
 .delay {
   display: inline-block;
