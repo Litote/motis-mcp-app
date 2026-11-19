@@ -301,7 +301,8 @@ fun StopTimes.toDto(arriveBy: Boolean): DeparturesResult = body.toDto(arriveBy, 
 
 fun TimetableClient.StoptimesResponseBody.toDto(arriveBy: Boolean, realTimeSources: Map<String, String> = emptyMap()): DeparturesResult =
     DeparturesResult(
-        stop = place.toDto(),
+        // a parent station may come without time zone (Bruxelles-Midi of the SNCB): the one of its stops
+        stop = place.toDto().let { it.copy(tz = it.tz ?: stopTimes.firstNotNullOfOrNull { st -> st.place.tz }) },
         arriveBy = arriveBy,
         stopTimes = stopTimes.map { it.toDto(arriveBy, realTimeSources[it.tripId]) },
         nextPageCursor = nextPageCursor.ifBlank { null },

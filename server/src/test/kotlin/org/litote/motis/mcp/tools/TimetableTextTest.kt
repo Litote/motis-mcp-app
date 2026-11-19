@@ -6,6 +6,8 @@ import org.litote.motis.mcp.dto.LegDto
 import org.litote.motis.mcp.dto.PlaceDto
 import org.litote.motis.mcp.dto.Polyline
 import org.litote.motis.mcp.dto.StationLineDto
+import org.litote.motis.mcp.dto.StopCallDto
+import org.litote.motis.mcp.dto.StopTimeDto
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -75,6 +77,28 @@ class TimetableTextTest {
 
         assertEquals("  - 15:15 Le Creusot-TGV (track 3) CANCELLED", stop.tripStopLine(realTime = true))
         assertEquals("  - 15:15 Le Creusot-TGV", stop.copy(departure = null, track = null, cancelled = null).tripStopLine(realTime = true))
+    }
+
+    @Test
+    fun `an arrival gives where it comes from, its destination often being the station`() {
+        val arrival =
+            StopTimeDto(
+                time = "2026-11-19T19:55:00Z",
+                scheduledTime = "2026-11-19T19:55:00Z",
+                realTime = false,
+                cancelled = false,
+                mode = "HIGHSPEED_RAIL",
+                line = "FR 9754",
+                headsign = "Milano Centrale",
+                agency = "TRENITALIA",
+                tripId = "t",
+                stops = listOf(StopCallDto("Roma Termini", "2026-11-19T17:00:00Z"), StopCallDto("Bologna Centrale", "2026-11-19T19:00:00Z")),
+            )
+        val board = DeparturesResult(stop = place("Milano Centrale"), arriveBy = true, stopTimes = listOf(arrival, arrival.copy(stops = null)))
+
+        assertTrue(board.summary().contains("- 20:55 HIGHSPEED_RAIL FR 9754 from Roma Termini → Milano Centrale tripId"), board.summary())
+        assertTrue(board.summary().contains("- 20:55 HIGHSPEED_RAIL FR 9754 → Milano Centrale tripId"), board.summary())
+        assertTrue(board.copy(arriveBy = false).summary().contains("- 20:55 HIGHSPEED_RAIL FR 9754 → Milano Centrale tripId"))
     }
 
     @Test

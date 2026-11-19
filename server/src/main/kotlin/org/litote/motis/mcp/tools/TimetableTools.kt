@@ -47,7 +47,9 @@ internal fun DeparturesResult.summary(): String =
             val track = st.track?.let { " track $it" } ?: ""
             val source = st.realTimeSource?.let { " (real time: $it)" } ?: ""
             val twin = st.realTimeTripId?.let { " realTimeTripId=\"$it\"" } ?: ""
-            appendLine("- ${hhmm(st.time, stop.tz)}$delay ${st.mode} ${st.line} → ${st.headsign}$track$cancelled$source${alertRefs(st.alerts)} tripId=\"${st.tripId}\"$twin")
+            // an arrival comes from somewhere: its destination is often this station
+            val origin = if (arriveBy) st.stops?.firstOrNull()?.let { " from ${it.name}" } ?: "" else ""
+            appendLine("- ${hhmm(st.time, stop.tz)}$delay ${st.mode} ${st.line}$origin → ${st.headsign}$track$cancelled$source${alertRefs(st.alerts)} tripId=\"${st.tripId}\"$twin")
         }
         appendAlerts(alerts)
         stationLines?.let { lines ->
