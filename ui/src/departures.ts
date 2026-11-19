@@ -407,6 +407,9 @@ async function openTrip(tripId: string, realTimeTripId?: string): Promise<void> 
   if (!isFullscreen() || current?.kind !== "departures") {
     try {
       show(await callTool<TripResult>(app, "trip_details", args), true);
+      // opened from the bottom of a long board: its top brought back into view, the view (sized to its content)
+      // scrolling in the page of the host
+      document.querySelector("header")?.scrollIntoView?.({ block: "nearest" });
     } catch {
       // reported in the status bar
     }
