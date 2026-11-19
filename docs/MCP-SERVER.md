@@ -144,6 +144,12 @@ the language asked (fr, en, de, es, it, nl; else French). The stops named by an 
 Transitous are not those of the SNCF): the alert goes with the whole trip, its text names the stations.
 `MOTIS_SNCF_REALTIME=false` disables the real time and the alerts of the SNCF.
 
+A train published by two feeds (e.g. the Frecciarossa between Paris, Lyon and Milan: numbered in the Italian feed of
+Trenitalia, which has no real time in France, and with real time in the French one) is shown once, with the number of
+one and the real time of the other; its stops are matched by scheduled time. `trip_details` takes its `realTimeTripId`
+to give the real time of the whole trip. A train never departs before its scheduled time: some feeds (Trenitalia) give
+the early arrival at a stop as its departure.
+
 The shapes of the transit legs (from the `shapes.txt` of the feeds, or matched by MOTIS on the OpenStreetMap rails) are
 sometimes wrong: e.g. the RER A drawn around Paris through Saint-Denis. A part of a shape between two stops that passes
 more than 500 m from them, or is longer than 3 times their distance plus 1.5 km, is replaced by a straight line between

@@ -72,7 +72,13 @@ class StationLinesTest {
 
         val kept = result.distinctTrains().stopTimes
         assertEquals(listOf("ter", "it"), kept.map { it.tripId })
-        assertEquals(StopTimeDto(at("07:37"), at("07:32"), true, false, "HIGHSPEED_RAIL", "FR 9241", "Juvisy", track = "K", agency = "TRENITALIA", tripId = "it", trainNumber = "9241"), kept[1])
+        assertEquals(
+            StopTimeDto(
+                at("07:37"), at("07:32"), true, false, "HIGHSPEED_RAIL", "FR 9241", "Juvisy", track = "K", agency = "TRENITALIA",
+                tripId = "it", trainNumber = "9241", realTimeTripId = "fr",
+            ),
+            kept[1],
+        )
     }
 
     @Test

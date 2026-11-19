@@ -246,6 +246,21 @@ describe("departures view", () => {
     expect(app.callServerTool).toHaveBeenLastCalledWith({ name: "trip_details", arguments: { tripId: data.stopTimes[1].tripId } });
   });
 
+  it("opens a train with the trip of the other feed that gives its real time", async () => {
+    const app = await loadView("departures");
+    const data = sncfBoard();
+    data.stopTimes[2].realTimeTripId = "fr-trenitalia-1";
+    await app.toolResult({ stopId: "S1" }, data);
+
+    app.answer(fixture<TripResult>("trip"));
+    (trains()[2] as HTMLElement).click();
+    await flush();
+    expect(app.callServerTool).toHaveBeenLastCalledWith({
+      name: "trip_details",
+      arguments: { tripId: data.stopTimes[2].tripId, realTimeTripId: "fr-trenitalia-1" },
+    });
+  });
+
   it("shows only the trains of the later departures of a French station with other lines", async () => {
     const app = await loadView("departures");
     const data = sncfBoard();

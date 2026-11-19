@@ -53,6 +53,7 @@ private fun StopTimeDto.withRealTimeOf(twins: List<StopTimeDto>): StopTimeDto {
         track = track ?: twin.track,
         realTimeSource = twin.realTimeSource,
         stops = stops?.withTimesOf(twin) ?: twin.stops,
+        realTimeTripId = twin.realTimeTripId ?: twin.tripId.takeIf { it != tripId },
     )
 }
 
@@ -76,7 +77,8 @@ private fun List<StopCallDto>.withTimesOf(twin: StopTimeDto): List<StopCallDto> 
     }
 }
 
-private fun delay(time: String?, scheduled: String?): Duration? =
+/** Delay of a [time] on its [scheduled] time, if both are known. */
+internal fun delay(time: String?, scheduled: String?): Duration? =
     if (time == null || scheduled == null) null else Instant.parse(time) - Instant.parse(scheduled)
 
 /** Stop times of these [lines] (see [lineName]) only. */
