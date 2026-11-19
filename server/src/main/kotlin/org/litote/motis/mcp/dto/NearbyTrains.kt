@@ -14,38 +14,44 @@ const val STATION_RADIUS = 200L
  * the ones of MOTIS, "LATER|<epoch s>" (stop times from that time) and "EARLIER|<epoch s>" (stop times until that time).
  */
 fun DeparturesResult.withNearbyTrains(nearby: DeparturesResult, n: Int, earlier: Boolean): DeparturesResult {
-    val known = stopTimes.mapTo(mutableSetOf()) { it.key() }
-    val added = nearby.stopTimes.filter { known.add(it.key()) }
-    if (added.isEmpty()) return this
-    val all = (stopTimes + added).sortedBy { it.instant() }
+    // the same train at the stop and nearby is kept once, with the real time of either (see distinctTrains)
+    val all = (stopTimes + nearby.stopTimes).distinctTrains()
+    val own = stopTimes.map { it.tripId }.toSet()
+    if (all.all { it.tripId in own }) return if (all == stopTimes) this else copy(stopTimes = all)
     val pages = listOf(this, nearby).filter { it.stopTimes.size >= n }
-    return if (earlier) {
-        // the earliest stop time of a full page: the ones before it may be missing from the other list
-        val horizon = pages.maxOfOrNull { it.stopTimes.first().instant() }
-        val complete = all.filter { horizon == null || it.instant() >= horizon }
-        val cut = complete.size > n && complete[complete.size - n].instant() > complete.first().instant()
-        // the stop times of the minute of the first kept one may be on both pages: keep them for the previous one
-        val lastDropped = if (cut) complete[complete.size - n - 1].instant() else null
-        val kept = if (lastDropped != null) complete.filter { it.instant() > lastDropped } else complete
-        copy(
-            stopTimes = kept,
-            previousPageCursor = cursor("EARLIER", lastDropped ?: horizon?.minus(1.minutes)) ?: previousPageCursor,
-            nextPageCursor = cursor("LATER", kept.lastOrNull()?.instant()?.plus(1.minutes)) ?: nextPageCursor,
-        )
-    } else {
-        // the latest stop time of a full page: the ones after it may be missing from the other list
-        val horizon = pages.minOfOrNull { it.stopTimes.last().instant() }
-        val complete = all.filter { horizon == null || it.instant() <= horizon }
-        val cut = complete.size > n && complete[n].instant() > complete.first().instant()
-        // the stop times of the minute of the first dropped one are on the next page
-        val firstDropped = if (cut) complete[n].instant() else null
-        val kept = if (firstDropped != null) complete.filter { it.instant() < firstDropped } else complete
-        copy(
-            stopTimes = kept,
-            previousPageCursor = cursor("EARLIER", kept.firstOrNull()?.instant()?.minus(1.minutes)) ?: previousPageCursor,
-            nextPageCursor = cursor("LATER", firstDropped ?: horizon?.plus(1.minutes)) ?: nextPageCursor,
-        )
-    }
+    return if (earlier) previousPage(all, pages, n) else nextPage(all, pages, n)
+}
+
+/** The page of the [n] latest stop times of [all], the merged previous [pages] of the stop and of the nearby stops. */
+private fun DeparturesResult.previousPage(all: List<StopTimeDto>, pages: List<DeparturesResult>, n: Int): DeparturesResult {
+    // the earliest stop time of a full page: the ones before it may be missing from the other list
+    val horizon = pages.maxOfOrNull { it.stopTimes.first().instant() }
+    val complete = all.filter { horizon == null || it.instant() >= horizon }
+    val cut = complete.size > n && complete[complete.size - n].instant() > complete.first().instant()
+    // the stop times of the minute of the first kept one may be on both pages: keep them for the previous one
+    val lastDropped = if (cut) complete[complete.size - n - 1].instant() else null
+    val kept = if (lastDropped != null) complete.filter { it.instant() > lastDropped } else complete
+    return copy(
+        stopTimes = kept,
+        previousPageCursor = cursor("EARLIER", lastDropped ?: horizon?.minus(1.minutes)) ?: previousPageCursor,
+        nextPageCursor = cursor("LATER", kept.lastOrNull()?.instant()?.plus(1.minutes)) ?: nextPageCursor,
+    )
+}
+
+/** The page of the [n] earliest stop times of [all], the merged next [pages] of the stop and of the nearby stops. */
+private fun DeparturesResult.nextPage(all: List<StopTimeDto>, pages: List<DeparturesResult>, n: Int): DeparturesResult {
+    // the latest stop time of a full page: the ones after it may be missing from the other list
+    val horizon = pages.minOfOrNull { it.stopTimes.last().instant() }
+    val complete = all.filter { horizon == null || it.instant() <= horizon }
+    val cut = complete.size > n && complete[n].instant() > complete.first().instant()
+    // the stop times of the minute of the first dropped one are on the next page
+    val firstDropped = if (cut) complete[n].instant() else null
+    val kept = if (firstDropped != null) complete.filter { it.instant() < firstDropped } else complete
+    return copy(
+        stopTimes = kept,
+        previousPageCursor = cursor("EARLIER", kept.firstOrNull()?.instant()?.minus(1.minutes)) ?: previousPageCursor,
+        nextPageCursor = cursor("LATER", firstDropped ?: horizon?.plus(1.minutes)) ?: nextPageCursor,
+    )
 }
 
 private fun cursor(direction: String, time: Instant?): String? = time?.let { "$direction|${it.epochSeconds}" }

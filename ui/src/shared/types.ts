@@ -74,6 +74,8 @@ export interface StopTimeDto {
   tripId: string;
   /** Train number or mission code. */
   trainNumber?: string;
+  /** Trip of the same train in another feed that gives its real time, for trip_details. */
+  realTimeTripId?: string;
   /** Next stops of the trip for a departure, previous stops for an arrival. */
   stops?: { name: string; time?: string }[];
   /** Indexes of its alerts in the alerts of the result. */

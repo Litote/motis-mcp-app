@@ -26,6 +26,7 @@ import org.litote.motis.mcp.dto.withStops
 import org.litote.motis.mcp.dto.toDto
 import org.litote.motis.mcp.dto.withAlerts
 import org.litote.motis.mcp.dto.withNearbyTrains
+import org.litote.motis.mcp.dto.withRealTimeOf
 import kotlin.time.Instant
 
 /** Modes of the trains: RAIL also includes the metros for MOTIS. */
@@ -44,7 +45,8 @@ private fun DeparturesResult.summary(): String =
             val cancelled = if (st.cancelled) " CANCELLED" else ""
             val track = st.track?.let { " track $it" } ?: ""
             val source = st.realTimeSource?.let { " (real time: $it)" } ?: ""
-            appendLine("- ${hhmm(st.time, stop.tz)}$delay ${st.mode} ${st.line} → ${st.headsign}$track$cancelled$source${alertRefs(st.alerts)} tripId=\"${st.tripId}\"")
+            val twin = st.realTimeTripId?.let { " realTimeTripId=\"$it\"" } ?: ""
+            appendLine("- ${hhmm(st.time, stop.tz)}$delay ${st.mode} ${st.line} → ${st.headsign}$track$cancelled$source${alertRefs(st.alerts)} tripId=\"${st.tripId}\"$twin")
         }
         appendAlerts(alerts)
         stationLines?.let { lines ->
@@ -244,12 +246,33 @@ fun Server.addTimetableTools(gateway: MotisGateway) {
         view = UiView.DEPARTURES,
         schema = {
             string("tripId", "Trip id.", required = true)
+            string(
+                "realTimeTripId",
+                "The realTimeTripId of the departure, if it has one: the same train in another feed, which gives its real time.",
+            )
             string("language", LANGUAGE_DESCRIPTION)
         },
     ) { args ->
         val tripId = args.requireString("tripId")
+        val realTimeTripId = args.string("realTimeTripId")?.takeIf { it != tripId }
         val language = args.stringList("language")
-        val trip = TripResult(tripId = tripId, itinerary = gateway.trip(tripId, language).toDto().withStops())
+        val merged =
+            coroutineScope {
+                // the twin is only for its real time: the trip is shown without it if it fails (e.g. a trip of yesterday)
+                val twin =
+                    realTimeTripId?.let { id ->
+                        async {
+                            try {
+                                gateway.trip(id, language).toDto()
+                            } catch (_: MotisToolException) {
+                                null
+                            }
+                        }
+                    }
+                val own = gateway.trip(tripId, language).toDto()
+                twin?.await()?.let { own.withRealTimeOf(it) } ?: own
+            }
+        val trip = TripResult(tripId = tripId, itinerary = merged.withStops())
         val result = (LocalizedNames.of(language)?.trip(trip) ?: trip).withAlerts()
         val itinerary = result.itinerary
         val summary =

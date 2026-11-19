@@ -401,10 +401,12 @@ async function reload(changes: Args): Promise<void> {
  * Opens a trip: in a panel beside the boards in fullscreen (loading in the panel, the boards left as they are), else
  * in place of the board.
  */
-async function openTrip(tripId: string): Promise<void> {
+async function openTrip(tripId: string, realTimeTripId?: string): Promise<void> {
+  // the trip of the other feed, if any, gives its real time
+  const args = realTimeTripId ? { tripId, realTimeTripId } : { tripId };
   if (!isFullscreen() || current?.kind !== "departures") {
     try {
-      show(await callTool<TripResult>(app, "trip_details", { tripId }), true);
+      show(await callTool<TripResult>(app, "trip_details", args), true);
     } catch {
       // reported in the status bar
     }
@@ -414,7 +416,7 @@ async function openTrip(tripId: string): Promise<void> {
   panelTrip = null;
   updateTripPanel();
   try {
-    const trip = await callTool<TripResult>(app, "trip_details", { tripId }, { quiet: true });
+    const trip = await callTool<TripResult>(app, "trip_details", args, { quiet: true });
     // another trip clicked, or the panel closed, meanwhile
     if (panelTripId !== tripId) return;
     panelTrip = trip;
@@ -456,7 +458,7 @@ content.addEventListener("click", (e) => {
   const row = target.closest<HTMLElement>("[data-board] [data-index]");
   const board = row ? shownBoards[Number(row.closest<HTMLElement>("[data-board]")!.dataset.board)] : undefined;
   const departure = board?.stopTimes[Number(row!.dataset.index)];
-  if (departure) void openTrip(departure.tripId);
+  if (departure) void openTrip(departure.tripId, departure.realTimeTripId);
 });
 
 /** Time of a stop of a trip (its departure, else its arrival), and its delay (advance when negative) in minutes. */

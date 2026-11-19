@@ -44,7 +44,7 @@ class StationLinesTest {
             )
 
         assertEquals(listOf("d1", "sncf-d1"), result.onLines(setOf("D")).stopTimes.map { it.tripId })
-        assertEquals(listOf("d1", "a1", "ter"), result.distinctTrains().stopTimes.map { it.tripId })
+        assertEquals(listOf("a1", "d1", "ter"), result.distinctTrains().stopTimes.map { it.tripId })
         assertEquals(listOf("ter"), result.onLines(setOf("TER")).stopTimes.map { it.tripId })
     }
 
@@ -59,6 +59,57 @@ class StationLinesTest {
             )
 
         assertEquals(listOf("it", "bus", "other"), result.distinctTrains().stopTimes.map { it.tripId })
+    }
+
+    @Test
+    fun `keeps the numbered train with the real time of its twin without number`() {
+        val result =
+            page(
+                st("it", "07:32", "HIGHSPEED_RAIL", "FR 9241", "TRENITALIA", number = "9241"),
+                st("fr", "07:32", "LONG_DISTANCE", "FR", "Trenitalia").copy(time = at("07:37"), realTime = true, track = "K"),
+                st("ter", "07:35", "REGIONAL_RAIL", "TER 891001", "SNCF"),
+            )
+
+        val kept = result.distinctTrains().stopTimes
+        assertEquals(listOf("ter", "it"), kept.map { it.tripId })
+        assertEquals(
+            StopTimeDto(
+                at("07:37"), at("07:32"), true, false, "HIGHSPEED_RAIL", "FR 9241", "Juvisy", track = "K", agency = "TRENITALIA",
+                tripId = "it", trainNumber = "9241", realTimeTripId = "fr",
+            ),
+            kept[1],
+        )
+    }
+
+    @Test
+    fun `gives the next stops the real time of the twin, matched by scheduled time, the delay kept where it lacks one`() {
+        fun stop(name: String, scheduled: String, time: String = scheduled) = StopCallDto(name, at(time), at(scheduled))
+        val italian =
+            st("it", "16:23", "HIGHSPEED_RAIL", "FR 9249", "TRENITALIA", number = "9249")
+                .copy(stops = listOf(stop("Chambery", "17:42"), stop("Modane", "19:00"), stop("Milano Centrale", "21:07")))
+        val french =
+            st("fr", "16:23", "LONG_DISTANCE", "FR", "Trenitalia").copy(
+                time = at("16:30"),
+                realTime = true,
+                stops = listOf(stop("St-Cassin", "17:28", "17:35"), stop("Chambéry", "17:42", "17:50"), stop("Milano", "21:07", "21:20")),
+            )
+
+        val kept = page(italian, french).distinctTrains().stopTimes.single()
+
+        assertEquals(listOf(at("17:50"), at("19:08"), at("21:20")), kept.stops?.map { it.time })
+        assertEquals(listOf("Chambery", "Modane", "Milano Centrale"), kept.stops?.map { it.name })
+    }
+
+    @Test
+    fun `keeps a train of two numbered feeds with the real time of either`() {
+        val result =
+            page(
+                st("d1", "17:32", "REGIONAL_RAIL", "D", number = "ZUMO83"),
+                st("sncf-d1", "17:32", "REGIONAL_RAIL", "D", "SNCF", number = "ZUMO83").copy(time = at("17:34"), realTime = true),
+            )
+
+        val kept = result.distinctTrains().stopTimes.single()
+        assertEquals("d1" to at("17:34"), kept.tripId to kept.time)
     }
 
     @Test

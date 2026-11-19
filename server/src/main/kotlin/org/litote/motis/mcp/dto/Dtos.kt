@@ -154,6 +154,8 @@ data class StopTimeDto(
     val tripId: String,
     /** Train number or mission code (GTFS trip_short_name). */
     val trainNumber: String? = null,
+    /** Trip of the same train in another feed that gives its real time (see [distinctTrains]), for trip_details. */
+    val realTimeTripId: String? = null,
     /** Next stops of the trip for a departure, previous stops for an arrival (in the order of the trip). */
     val stops: List<StopCallDto>? = null,
     /** Indexes of the alerts of the stop time in the alerts of the result (see [DeparturesResult.withAlerts]). */
@@ -164,7 +166,12 @@ data class StopTimeDto(
 
 /** Stop of a trip on a departures board: its name and the time the trip passes there. */
 @Serializable
-data class StopCallDto(val name: String, val time: String? = null)
+data class StopCallDto(
+    val name: String,
+    val time: String? = null,
+    /** Scheduled time, to match the stop with the same stop of the train in another feed (see [distinctTrains]). */
+    @Transient val scheduledTime: String? = null,
+)
 
 @Serializable
 data class DeparturesResult(

@@ -17,6 +17,7 @@ import org.litote.motis.client.model.StopTime
 import org.litote.motis.mcp.BoundingBox
 import org.litote.motis.mcp.KM_PER_DEGREE
 import org.litote.motis.mcp.StopTimes
+import kotlin.time.Instant
 
 /** Maximum number of stops sent to the views: the most important ones are kept. */
 const val MAX_STOPS = 400
@@ -54,7 +55,8 @@ fun Mode.label(): String = serialName()
 
 fun EncodedPolyline.toDto(): Polyline = Polyline(points, precision.toInt())
 
-fun Place.toDto(): PlaceDto =
+/** [train]: a stop of a train, which does not leave before its scheduled time (see [notBefore]). */
+fun Place.toDto(train: Boolean = false): PlaceDto =
     PlaceDto(
         // not the coordinates named START and END by MOTIS
         name = if (stopId != null) displayName(name) else name,
@@ -64,7 +66,7 @@ fun Place.toDto(): PlaceDto =
         modes = modes?.map { it.label() },
         track = track,
         arrival = arrival?.toString(),
-        departure = departure?.toString(),
+        departure = departure.notBefore(scheduledDeparture, train)?.toString(),
         scheduledArrival = scheduledArrival?.toString(),
         scheduledDeparture = scheduledDeparture?.toString(),
         cancelled = cancelled?.takeIf { it },
@@ -241,12 +243,24 @@ fun MapClient.RouteDetailsResponseBody.toAreaResult(title: String): AreaResult {
     return areaResult(AreaFrame("routeDetails", title, bbox, 0.0, clip = null), stops, routes, polylines, zoomFiltered)
 }
 
+/** Trains, without the metros. */
+private val TRAINS =
+    setOf(Mode.RAIL, Mode.HIGHSPEED_RAIL, Mode.LONG_DISTANCE, Mode.NIGHT_RAIL, Mode.REGIONAL_FAST_RAIL, Mode.REGIONAL_RAIL, Mode.SUBURBAN)
+
+/**
+ * A real time departure of a train, not before its [scheduled] time: a train does not leave early, the feeds that say so
+ * (Trenitalia) give the early arrival at the stop as its departure.
+ */
+private fun Instant?.notBefore(scheduled: Instant?, rail: Boolean): Instant? =
+    if (rail && this != null && scheduled != null && this < scheduled) scheduled else this
+
 /** [realTimeSource]: source of the real time when it is not MOTIS, see [org.litote.motis.mcp.realtime.RealtimeOverlay]. */
 fun StopTime.toDto(arriveBy: Boolean, realTimeSource: String? = null): StopTimeDto {
     // the SNCF regional trains of some feeds have their number as headsign ("847459" for the train "C17")
     val numberAsHeadsign = tripShortName.isBlank() && headsign.isNotEmpty() && headsign.all(Char::isDigit)
+    val rail = mode in TRAINS
     return StopTimeDto(
-        time = (if (arriveBy) place.arrival else place.departure)?.toString(),
+        time = (if (arriveBy) place.arrival else place.departure.notBefore(place.scheduledDeparture, rail))?.toString(),
         scheduledTime = (if (arriveBy) place.scheduledArrival else place.scheduledDeparture)?.toString(),
         realTime = realTime,
         realTimeSource = realTimeSource,
@@ -262,9 +276,12 @@ fun StopTime.toDto(arriveBy: Boolean, realTimeSource: String? = null): StopTimeD
         trainNumber = if (numberAsHeadsign) headsign else tripShortName.ifBlank { null },
         stops =
             if (arriveBy) {
-                previousStops?.map { StopCallDto(displayName(it.name), (it.departure ?: it.scheduledDeparture)?.toString()) }
+                previousStops?.map {
+                    val time = it.departure.notBefore(it.scheduledDeparture, rail) ?: it.scheduledDeparture
+                    StopCallDto(displayName(it.name), time?.toString(), it.scheduledDeparture?.toString())
+                }
             } else {
-                nextStops?.map { StopCallDto(displayName(it.name), (it.arrival ?: it.scheduledArrival)?.toString()) }
+                nextStops?.map { StopCallDto(displayName(it.name), (it.arrival ?: it.scheduledArrival)?.toString(), it.scheduledArrival?.toString()) }
             },
         pendingAlerts =
             (if (arriveBy) place.arrival ?: place.scheduledArrival else place.departure ?: place.scheduledDeparture)
@@ -284,16 +301,18 @@ fun TimetableClient.StoptimesResponseBody.toDto(arriveBy: Boolean, realTimeSourc
         previousPageCursor = previousPageCursor.ifBlank { null },
     )
 
-fun Leg.toDto(): LegDto =
-    LegDto(
+fun Leg.toDto(): LegDto {
+    val train = mode in TRAINS
+    val start = if (train && startTime < scheduledStartTime) scheduledStartTime else startTime
+    return LegDto(
         mode = mode.label(),
-        from = from.toDto(),
-        to = to.toDto(),
-        startTime = startTime.toString(),
+        from = from.toDto(train),
+        to = to.toDto(train),
+        startTime = start.toString(),
         endTime = endTime.toString(),
         scheduledStartTime = scheduledStartTime.toString(),
         scheduledEndTime = scheduledEndTime.toString(),
-        durationSeconds = duration,
+        durationSeconds = if (start == startTime) duration else (endTime - start).inWholeSeconds,
         realTime = realTime,
         distanceMeters = distance,
         line = lineName(listOf(displayName, routeShortName), routeLongName),
@@ -302,11 +321,12 @@ fun Leg.toDto(): LegDto =
         routeTextColor = color(routeTextColor),
         agency = agencyName,
         tripId = tripId,
-        intermediateStops = intermediateStops?.map { it.toDto() },
+        intermediateStops = intermediateStops?.map { it.toDto(train) },
         polyline = legGeometry.toDto(),
         // the alerts of the line or trip, and of the stops where the vehicle is boarded and left
         pendingAlerts = (alerts.orEmpty() + from.alerts.orEmpty() + to.alerts.orEmpty()).activeAlerts(startTime, endTime),
     )
+}
 
 fun Itinerary.toDto(): ItineraryDto =
     ItineraryDto(
