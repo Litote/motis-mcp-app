@@ -402,6 +402,8 @@ class MotisGateway(
                     stopId = query.stopId,
                     time = query.time,
                     arriveBy = query.arriveBy,
+                    // the stop times from the time on: MOTIS reads the arrivals before it by default (ignored with a cursor)
+                    direction = TimetableClient.Direction.LATER,
                     n = query.n.toLong(),
                     mode = query.modes,
                     radius = query.radius,

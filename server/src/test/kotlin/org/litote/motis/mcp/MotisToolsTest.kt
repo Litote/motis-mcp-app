@@ -158,6 +158,17 @@ class MotisToolsTest {
     }
 
     @Test
+    fun `arrivals are the ones from the time on, not the ones before it`() {
+        val motis = transitous()
+        withMcpClient(motis) { client ->
+            client.callTool("departures", mapOf("stopId" to "stop", "arriveBy" to true))
+            val request = motis.requests.last { it.url.encodedPath == "/api/v6/stoptimes" }
+            assertEquals("true", request.url.parameters["arriveBy"])
+            assertEquals("LATER", request.url.parameters["direction"])
+        }
+    }
+
+    @Test
     fun `date-times without offset are in the local time of the place`() {
         val motis = transitous()
         withMcpClient(motis) { client ->
