@@ -97,6 +97,8 @@ class SncfAlertsTest {
             assertEquals("Voitures hors quai", dto.header)
             assertEquals("Les dernières voitures ne seront pas reçues à quai.", dto.description)
             assertNull(dto.effect)
+            // the end of an alert of a train is that of the train: not told
+            assertNull(dto.end)
         }
 
     @Test
@@ -137,7 +139,7 @@ class SncfAlertsTest {
 
         assertEquals(AlertCause.MAINTENANCE, alert.cause)
         assertEquals(AlertEffect.NO_SERVICE, alert.effect)
-        assertEquals(Instant.fromEpochSeconds(1787562540), alert.impactPeriod?.single()?.start)
+        assertEquals(Instant.fromEpochSeconds(1787562540), alert.communicationPeriod?.single()?.start)
         assertNull(alert("1").copy(cause = 0, effect = 99).toMotis(null).cause)
         assertNull(alert("1").copy(effect = 99).toMotis(null).effect)
     }

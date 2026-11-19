@@ -181,6 +181,20 @@ interface BoardAlerts {
   own: Set<number>;
 }
 
+/** Most trains named in front of an alert of the banner: beyond, it is about a line, a station... */
+const MAX_ALERT_TRAINS = 3;
+
+/**
+ * Numbers of the trains of the alert [index], when it is about a few trains only: the SNCF gives the same header to the
+ * alerts of different trains ("Votre train est retardé."), they would be the same line under the banner.
+ */
+function alertTrains(stopTimes: StopTimeDto[], index: number): string | undefined {
+  const concerned = stopTimes.filter((st) => st.alerts?.includes(index));
+  const numbers = concerned.map((st) => train(st.mode, st.line, st.agency, st.trainNumber)?.number);
+  if (numbers.length > MAX_ALERT_TRAINS || numbers.some((n) => !n)) return undefined;
+  return [...new Set(numbers)].join(", ");
+}
+
 /** Alerts of [st] marked on its row (shared with other departures), and those under it (its own). */
 function rowAlerts(st: StopTimeDto, alerts: BoardAlerts): { mark: string; line: string } {
   const indexes = st.alerts ?? [];
@@ -293,8 +307,8 @@ function boardHtml(data: DeparturesResult): string {
   const counts = new Map<number, number>();
   data.stopTimes.flatMap((st) => st.alerts ?? []).forEach((i) => counts.set(i, (counts.get(i) ?? 0) + 1));
   const alerts: BoardAlerts = { table: data.alerts, own: new Set([...counts].filter(([, n]) => n === 1).map(([i]) => i)) };
-  const shared = [...counts.keys()].filter((i) => !alerts.own.has(i));
-  const note = alertBanner(alertsOf(data.alerts, shared), tz) + theoreticalNote;
+  const shared = [...counts.keys()].filter((i) => !alerts.own.has(i)).filter((i) => data.alerts?.[i]);
+  const note = alertBanner(alertsOf(data.alerts, shared), tz, shared.map((i) => alertTrains(data.stopTimes, i))) + theoreticalNote;
   if (isFrenchStation(data)) {
     const trains = all.filter(({ st }) => onSncfBoard(st));
     const others = all.filter(({ st }) => !onSncfBoard(st));

@@ -591,7 +591,7 @@ describe("departures view in French", () => {
     // the alert of several departures is marked on their rows and under the banner
     expect(marks.map((m) => m?.getAttribute("title") ?? null)).toEqual(["Grève", null, "Grève"]);
     expect(text($(".alert-banner > summary"))).toBe("Service alerts (1)");
-    expect([...document.querySelectorAll(".alert-banner .alert")].map(text)).toEqual(["Grève"]);
+    expect([...document.querySelectorAll(".alert-banner .alert")].map(text)).toEqual(["6633, 6602 — Grève"]);
     // the alert of a single departure is under its row
     const lines = [...document.querySelectorAll("tr[data-index]")].map((row) => row.querySelector(".alert-line"));
     expect(lines.map((l) => (l ? text(l) : null))).toEqual([null, null, "Ligne interrompue"]);
@@ -608,6 +608,26 @@ describe("departures view in French", () => {
     // the alert of a single train is under its row, not under the banner
     expect(trains().map((train) => train.querySelector(".alert-line")?.textContent ?? null)).toEqual([null, "Train court", null]);
     expect(document.querySelector(".alert-mark, .alert-banner")).toBeNull();
+  });
+
+  it("names the trains of the alerts of a few trains under the banner: the SNCF gives them the same header", async () => {
+    const app = await loadView("departures");
+    const result = sncfBoard();
+    // a TGV coupled to another one at the station: the alert of both is on two rows
+    result.stopTimes.push({ ...result.stopTimes[0], tripId: "coupled", line: "TGV INOUI 12526", trainNumber: undefined, alerts: [1] });
+    result.alerts = [
+      { header: "Votre train est retardé.", description: "Cause : maintenance à Perpignan." },
+      { header: "Votre train est retardé.", description: "Cause : maintenance à Roissy." },
+    ];
+    result.stopTimes[0].alerts = [0];
+    result.stopTimes[1].alerts = [1];
+    result.stopTimes[2].alerts = [0];
+    await app.toolResult({}, result);
+
+    expect([...document.querySelectorAll(".alert-banner .alert summary")].map(text)).toEqual([
+      "6633, 6602 — Votre train est retardé.",
+      "9852, 12526 — Votre train est retardé.",
+    ]);
   });
 
   it("lists the service alerts of a trip above its stops", async () => {
