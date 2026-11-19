@@ -435,12 +435,18 @@ class MotisGateway(
         return repaired
     }
 
+    /**
+     * The trip [tripId] alone: not joined with the trips of the same vehicle before or after it (in-seat transfers of
+     * MOTIS), e.g. the Trenitalia trains Paris → Lyon and Lyon → Paris of the same train set, shown as one round trip under
+     * the number of the first one.
+     */
     suspend fun trip(tripId: String, language: List<String>? = null): Itinerary =
-        when (val r = timetableClient.trip(tripId = tripId, language = language)) {
+        when (val r = timetableClient.trip(tripId = tripId, joinInterlinedLegs = false, language = language)) {
             is TimetableClient.TripResponseSuccess ->
-                repairShapes(r.body) { withRepairedShapes(it) }.let { trip -> sncfAlerts?.addToItineraries(listOf(trip), language)?.single() ?: trip }
-            is TimetableClient.TripResponseFailure -> fail(r.body.error)
-            is TimetableClient.TripResponseUnknownFailure -> failStatus(r.statusCode)
+                repairShapes(r.body.onlyTrip(tripId)) { withRepairedShapes(it) }
+                    .let { trip -> sncfAlerts?.addToItineraries(listOf(trip), language)?.single() ?: trip }
+            is TimetableClient.TripResponseFailure -> throw failure(r.body.error)
+            is TimetableClient.TripResponseUnknownFailure -> throw statusFailure(r.statusCode)
         }
 
     suspend fun plan(query: PlanQuery): RoutingClient.PlanResponseBody =
@@ -606,11 +612,19 @@ class MotisGateway(
                 (lat to lon).takeIf { lat in -90.0..90.0 && lon in -180.0..180.0 }
             }
 
-        private fun fail(message: String): Nothing = throw MotisToolException("MOTIS error: $message")
+        private fun fail(message: String): Nothing = throw failure(message)
 
-        /** Transient failures tell the model to retry, the others are reported as is. */
-        private fun failStatus(statusCode: Int): Nothing =
-            throw MotisToolException(
+        /** The error of MOTIS, thrown where it is met (see [statusFailure]). */
+        private fun failure(message: String) = MotisToolException("MOTIS error: $message")
+
+        private fun failStatus(statusCode: Int): Nothing = throw statusFailure(statusCode)
+
+        /**
+         * Transient failures tell the model to retry, the others are reported as is. Thrown where they are met, not by a
+         * function: JaCoCo does not count as covered a line whose call throws.
+         */
+        private fun statusFailure(statusCode: Int) =
+            MotisToolException(
                 when (statusCode) {
                     // not an HTTP status: the client reports its own exceptions (network error, timeout, unreadable
                     // response) as a 500 status, MOTIS answers its 500 errors with an error body
@@ -679,3 +693,12 @@ data class PlanQuery(
     val pageCursor: String? = null,
     val language: List<String>? = null,
 )
+
+/** The legs of the trip [tripId] of this itinerary of MOTIS (all of them if none is, e.g. a trip id of another form). */
+internal fun Itinerary.onlyTrip(tripId: String): Itinerary {
+    val own = legs.filter { it.tripId == tripId }
+    if (own.isEmpty() || own.size == legs.size) return this
+    val start = own.first().startTime
+    val end = own.last().endTime
+    return copy(legs = own, startTime = start, endTime = end, duration = (end - start).inWholeSeconds, transfers = 0)
+}

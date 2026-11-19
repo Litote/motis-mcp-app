@@ -5,6 +5,11 @@ import io.modelcontextprotocol.kotlin.sdk.types.CallToolResult
 import io.modelcontextprotocol.kotlin.sdk.types.TextContent
 import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
 import org.litote.motis.mcp.dto.AreaResult
 import org.litote.motis.mcp.dto.DeparturesResult
 import org.litote.motis.mcp.dto.JourneyResult
@@ -622,6 +627,42 @@ class MotisToolsTest {
             assertEquals(8640, trip.itinerary.durationSeconds)
             assertEquals(tripId, motis.request("/api/v6/trip").url.parameters["tripId"])
             assertTrue(result.text().contains("Lyon Perrache"), result.text())
+        }
+    }
+
+    @Test
+    fun `trip_details gives the trip asked alone, not joined with the trip of the same vehicle before it`() {
+        // the Trenitalia trains Paris → Lyon then Lyon → Paris of the same train set: two legs without joinInterlinedLegs
+        val trip = json.parseToJsonElement(fixture("trip")).jsonObject
+        val leg = trip.getValue("legs").jsonArray.single().jsonObject
+        val returnLeg = JsonObject(leg + mapOf("tripId" to JsonPrimitive("return"), "interlineWithPreviousLeg" to JsonPrimitive(true)))
+        val joined = JsonObject(trip + ("legs" to JsonArray(listOf(leg, returnLeg))) + ("transfers" to JsonPrimitive(1)))
+        val motis = MockMotis { respondJson(joined.toString()) }
+        withMcpClient(motis) { client ->
+            val result = client.callTool("trip_details", mapOf("tripId" to "return"))
+
+            val itinerary = result.data(TripResult.serializer()).itinerary
+            assertEquals(listOf("return"), itinerary.legs.map { it.tripId })
+            assertEquals(0, itinerary.transfers)
+            assertEquals("false", motis.request("/api/v6/trip").url.parameters["joinInterlinedLegs"])
+
+            // a trip id of another form than the ones of the legs: the whole trip
+            val other = client.callTool("trip_details", mapOf("tripId" to "other")).data(TripResult.serializer()).itinerary
+            assertEquals(2, other.legs.size)
+            assertEquals(1, other.transfers)
+        }
+    }
+
+    @Test
+    fun `trip_details reports the error of MOTIS, and an unexpected status`() {
+        withMcpClient(MockMotis { respondJson("""{"error": "trip not found"}""", HttpStatusCode.NotFound) }) { client ->
+            val result = client.callTool("trip_details", mapOf("tripId" to "gone"))
+
+            assertEquals(true, result.isError)
+            assertEquals("MOTIS error: trip not found", result.text())
+        }
+        withMcpClient(MockMotis { respondJson("", HttpStatusCode.Forbidden) }) { client ->
+            assertEquals(true, client.callTool("trip_details", mapOf("tripId" to "trip")).isError)
         }
     }
 
