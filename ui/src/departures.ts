@@ -306,10 +306,10 @@ function boardHtml(data: DeparturesResult): string {
 }
 
 /**
- * Class of a departure gone (an arrival made): its expected time, else its theoretical one, is passed. Not said gone:
- * a theoretical time does not tell it.
+ * Class of a departure gone (an arrival made): the minute of its expected time, else of its theoretical one, is over.
+ * The times are shown to the minute: a train due at 08:12 is not gone while the clock still says 08:12.
  */
-const pastClass = (st: StopTimeDto) => (st.time && Date.parse(st.time) < Date.now() ? "past" : "");
+const pastClass = (st: StopTimeDto) => (st.time && Date.parse(st.time) + 60_000 <= Date.now() ? "past" : "");
 
 /** Class of the departure of the trip opened in the panel. */
 const openClass = (st: StopTimeDto) => (panelTripId === st.tripId ? "open" : "");

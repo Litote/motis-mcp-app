@@ -152,6 +152,23 @@ describe("departures view", () => {
     }
   });
 
+  it("dims a departure once the minute of its expected time is over", async () => {
+    // the first train is expected at 21:19
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-12T21:19:59Z"));
+    try {
+      const app = await loadView("departures");
+      await app.toolResult({}, sncfBoard());
+      expect(trains()[0].classList.contains("past")).toBe(false);
+
+      vi.setSystemTime(new Date("2026-10-12T21:20:00Z"));
+      await app.toolResult({}, sncfBoard());
+      expect(trains()[0].classList.contains("past")).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("marks the scheduled times of a board mixing real and scheduled times", async () => {
     const app = await loadView("departures");
     const mixed = board();
