@@ -445,8 +445,8 @@ class MotisGateway(
             is TimetableClient.TripResponseSuccess ->
                 repairShapes(r.body.onlyTrip(tripId)) { withRepairedShapes(it) }
                     .let { trip -> sncfAlerts?.addToItineraries(listOf(trip), language)?.single() ?: trip }
-            is TimetableClient.TripResponseFailure -> fail(r.body.error)
-            is TimetableClient.TripResponseUnknownFailure -> failStatus(r.statusCode)
+            is TimetableClient.TripResponseFailure -> throw failure(r.body.error)
+            is TimetableClient.TripResponseUnknownFailure -> throw statusFailure(r.statusCode)
         }
 
     suspend fun plan(query: PlanQuery): RoutingClient.PlanResponseBody =
@@ -612,11 +612,19 @@ class MotisGateway(
                 (lat to lon).takeIf { lat in -90.0..90.0 && lon in -180.0..180.0 }
             }
 
-        private fun fail(message: String): Nothing = throw MotisToolException("MOTIS error: $message")
+        private fun fail(message: String): Nothing = throw failure(message)
 
-        /** Transient failures tell the model to retry, the others are reported as is. */
-        private fun failStatus(statusCode: Int): Nothing =
-            throw MotisToolException(
+        /** The error of MOTIS, thrown where it is met (see [statusFailure]). */
+        private fun failure(message: String) = MotisToolException("MOTIS error: $message")
+
+        private fun failStatus(statusCode: Int): Nothing = throw statusFailure(statusCode)
+
+        /**
+         * Transient failures tell the model to retry, the others are reported as is. Thrown where they are met, not by a
+         * function: JaCoCo does not count as covered a line whose call throws.
+         */
+        private fun statusFailure(statusCode: Int) =
+            MotisToolException(
                 when (statusCode) {
                     // not an HTTP status: the client reports its own exceptions (network error, timeout, unreadable
                     // response) as a 500 status, MOTIS answers its 500 errors with an error body

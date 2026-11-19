@@ -645,6 +645,24 @@ class MotisToolsTest {
             assertEquals(listOf("return"), itinerary.legs.map { it.tripId })
             assertEquals(0, itinerary.transfers)
             assertEquals("false", motis.request("/api/v6/trip").url.parameters["joinInterlinedLegs"])
+
+            // a trip id of another form than the ones of the legs: the whole trip
+            val other = client.callTool("trip_details", mapOf("tripId" to "other")).data(TripResult.serializer()).itinerary
+            assertEquals(2, other.legs.size)
+            assertEquals(1, other.transfers)
+        }
+    }
+
+    @Test
+    fun `trip_details reports the error of MOTIS, and an unexpected status`() {
+        withMcpClient(MockMotis { respondJson("""{"error": "trip not found"}""", HttpStatusCode.NotFound) }) { client ->
+            val result = client.callTool("trip_details", mapOf("tripId" to "gone"))
+
+            assertEquals(true, result.isError)
+            assertEquals("MOTIS error: trip not found", result.text())
+        }
+        withMcpClient(MockMotis { respondJson("", HttpStatusCode.Forbidden) }) { client ->
+            assertEquals(true, client.callTool("trip_details", mapOf("tripId" to "trip")).isError)
         }
     }
 
