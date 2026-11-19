@@ -56,18 +56,24 @@ private fun Alert.impactEnd(): Instant? {
 internal fun Alert.toDto(): AlertDto? {
     // a header introducing the description tells nothing ("Plus d'information :" of the SNCF)
     val fullHeader = plainText(headerText).takeUnless { it.isBlank() || it.endsWith(":") }
-    val description = plainText(descriptionText).ifBlank { null }
+    val fullDescription = plainText(descriptionText).ifBlank { null }
+    // without its own link, the first one of its text ("veuillez cliquer sur : <a>panne de train</a>" of the SNCF)
+    val ownUrl = url?.trim()?.takeIf(::isWebLink)
+    val link = if (ownUrl == null) firstLink(descriptionText) ?: firstLink(headerText) else null
+    // the text of the link ending the description is the link itself: "veuillez cliquer sur :", then the link
+    val before = link?.text?.takeIf { it.isNotBlank() }?.let { fullDescription?.takeIf { d -> d.endsWith(it) }?.removeSuffix(it)?.trimEnd() }
+    val linkText = link?.text?.takeIf { !before.isNullOrBlank() }
+    val description = if (linkText != null) before else fullDescription
     val header = (fullHeader ?: description?.let(::firstSentence) ?: return null).truncated(MAX_HEADER_CHARS)
     return AlertDto(
         header = header,
         // a long header cut is given entirely as description
         description = (description ?: fullHeader)?.withoutHeader(header)?.truncated(MAX_DESCRIPTION_CHARS),
-        // without its own link, the first one of its text ("Pour mieux comprendre : <a>adhérence dégradée</a>" of the SNCF):
-        // its text is kept, its address lost with the HTML
-        url = url?.trim()?.takeIf(::isWebLink) ?: firstLink(descriptionText) ?: firstLink(headerText),
+        url = ownUrl ?: link?.url,
         effect = effect?.takeUnless { it in UNKNOWN_EFFECTS }?.serialName(),
         cause = cause?.takeUnless { it in UNKNOWN_CAUSES }?.serialName(),
         end = impactEnd()?.toString(),
+        linkText = linkText,
     )
 }
 
@@ -84,11 +90,14 @@ private fun String.withoutHeader(header: String): String? {
 
 private fun isWebLink(url: String): Boolean = url.startsWith("https://") || url.startsWith("http://")
 
-private val LINK = Regex("""<a\s[^>]*\bhref\s*=\s*["']([^"']+)["']""", RegexOption.IGNORE_CASE)
+private val LINK = Regex("""<a\s[^>]*\bhref\s*=\s*["']([^"']+)["'][^>]*>(.*?)</a\s*>""", setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
 
-/** Address of the first web link of an [html] text, its entities decoded; null without. */
-private fun firstLink(html: String?): String? =
-    html?.let { text -> LINK.findAll(text).map { plainText(it.groupValues[1]) }.firstOrNull(::isWebLink) }
+/** A link of an HTML text: its address and its text, as plain text. */
+private data class Link(val url: String, val text: String)
+
+/** The first web link of an [html] text, its entities decoded; null without. */
+private fun firstLink(html: String?): Link? =
+    html?.let { text -> LINK.findAll(text).map { Link(plainText(it.groupValues[1]), plainText(it.groupValues[2])) }.firstOrNull { isWebLink(it.url) } }
 
 private fun firstSentence(text: String): String = text.substringBefore('\n').let { line -> SENTENCE_END.find(line)?.let { line.substring(0, it.range.first + 1) } ?: line }
 

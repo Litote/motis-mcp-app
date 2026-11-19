@@ -10,6 +10,8 @@ export interface AlertDto {
   cause?: string;
   /** End of its impact, when known. */
   end?: string;
+  /** Text of its [url] when it ends the description ("veuillez cliquer sur :"), else the link is "more information". */
+  linkText?: string;
 }
 
 export interface PlaceDto {

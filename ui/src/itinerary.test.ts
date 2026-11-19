@@ -341,4 +341,17 @@ describe("itinerary view", () => {
     $("#legs .alert a").click();
     expect(app.openLink).toHaveBeenCalledWith({ url: "https://www.tcl.fr/" });
   });
+
+  it("shows the link ending the description of an alert under its text, right after it", async () => {
+    const app = await loadView("itinerary");
+    const data = journey();
+    const url = "https://www.sncf-voyageurs.com/panne-de-train.jpg";
+    data.alerts = [{ header: "Votre train est retardé.", description: "Veuillez cliquer sur :", url, linkText: "panne de train", end: "2026-10-20T03:00:00Z" }];
+    data.itineraries[0].legs[1].alerts = [0];
+    await app.toolResult({}, data);
+
+    expect(items("#legs .alert details > p")).toEqual(["Veuillez cliquer sur :", "panne de train", "Until Tue 20 Oct 05:00"]);
+    $("#legs .alert a").click();
+    expect(app.openLink).toHaveBeenCalledWith({ url });
+  });
 });

@@ -13,7 +13,8 @@ data class Coordinates(val lat: Double, val lon: Double)
 /**
  * Service alert (disruption, works, closed elevator...) active during a leg or at a stop time, as plain text. [effect]
  * and [cause] are the GTFS-RT values (e.g. `NO_SERVICE`, `STRIKE`), null when unknown; [end] is the end of its impact,
- * null when open or unknown.
+ * null when open or unknown. [linkText]: the text of its [url] ending its description in the feed ("veuillez cliquer
+ * sur :" then "panne de train"), cut from the description; null for a link to tell as "more information".
  */
 @Serializable
 data class AlertDto(
@@ -23,6 +24,7 @@ data class AlertDto(
     val effect: String? = null,
     val cause: String? = null,
     val end: String? = null,
+    val linkText: String? = null,
 )
 
 @Serializable
