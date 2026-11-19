@@ -435,10 +435,16 @@ class MotisGateway(
         return repaired
     }
 
+    /**
+     * The trip [tripId] alone: not joined with the trips of the same vehicle before or after it (in-seat transfers of
+     * MOTIS), e.g. the Trenitalia trains Paris → Lyon and Lyon → Paris of the same train set, shown as one round trip under
+     * the number of the first one.
+     */
     suspend fun trip(tripId: String, language: List<String>? = null): Itinerary =
-        when (val r = timetableClient.trip(tripId = tripId, language = language)) {
+        when (val r = timetableClient.trip(tripId = tripId, joinInterlinedLegs = false, language = language)) {
             is TimetableClient.TripResponseSuccess ->
-                repairShapes(r.body) { withRepairedShapes(it) }.let { trip -> sncfAlerts?.addToItineraries(listOf(trip), language)?.single() ?: trip }
+                repairShapes(r.body.onlyTrip(tripId)) { withRepairedShapes(it) }
+                    .let { trip -> sncfAlerts?.addToItineraries(listOf(trip), language)?.single() ?: trip }
             is TimetableClient.TripResponseFailure -> fail(r.body.error)
             is TimetableClient.TripResponseUnknownFailure -> failStatus(r.statusCode)
         }
@@ -679,3 +685,12 @@ data class PlanQuery(
     val pageCursor: String? = null,
     val language: List<String>? = null,
 )
+
+/** The legs of the trip [tripId] of this itinerary of MOTIS (all of them if none is, e.g. a trip id of another form). */
+internal fun Itinerary.onlyTrip(tripId: String): Itinerary {
+    val own = legs.filter { it.tripId == tripId }
+    if (own.isEmpty() || own.size == legs.size) return this
+    val start = own.first().startTime
+    val end = own.last().endTime
+    return copy(legs = own, startTime = start, endTime = end, duration = (end - start).inWholeSeconds, transfers = 0)
+}
