@@ -27,12 +27,32 @@ function Login({ error }: Readonly<{ error: string | null }>) {
         <ThemeButton />
         <LanguagePicker />
       </div>
-      <h2>{t("login.title")}</h2>
+      <h1 className="home-title">Errance - MOTIS explorer</h1>
+      <p className="home-tagline">{t("home.tagline")}</p>
       <p>
-        {t("login.intro.before")}
-        <a href="https://openrouter.ai">OpenRouter</a>
-        {t("login.intro.after")}
+        {t("home.intro.before")}
+        <a href="https://transitous.org/">Transitous</a>
+        {t("home.intro.after")}
       </p>
+      <div>
+        <p>{t("home.examples")}</p>
+        <ul className="home-examples">
+          <li>{t("home.example.departures")}</li>
+          <li>{t("home.example.journey")}</li>
+          <li>{t("home.example.reachable")}</li>
+        </ul>
+      </div>
+      <h2>{t("home.how")}</h2>
+      <ol className="home-steps">
+        <li>
+          {t("home.step1.before")}
+          <a href="https://openrouter.ai/">OpenRouter</a>
+          {t("home.step1.after", { button: t("login.button") })}
+        </li>
+        <li>{t("home.step2")}</li>
+        <li>{t("home.step3")}</li>
+      </ol>
+      <p>{t("home.privacy")}</p>
       {message && <p className="login-error">{message}</p>}
       <button type="button" className="primary" onClick={() => void startLogin()}>
         {t("login.button")}
