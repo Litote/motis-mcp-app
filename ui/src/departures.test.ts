@@ -216,6 +216,19 @@ describe("departures view", () => {
     expect(app.callServerTool).toHaveBeenLastCalledWith({ name: "trip_details", arguments: { tripId: data().stopTimes[0].tripId } });
   });
 
+  it("brings the top of the view back into view when a trip is opened from the bottom of the board", async () => {
+    const app = await loadView("departures");
+    await app.toolResult({ stopId: "S1" }, data());
+    const scrollIntoView = vi.fn();
+    $("header").scrollIntoView = scrollIntoView;
+
+    app.answer(fixture<TripResult>("trip"));
+    (trains()[2] as HTMLElement).click();
+    await flush();
+
+    expect(scrollIntoView).toHaveBeenCalledWith({ block: "nearest" });
+  });
+
   it("shows the origin and the previous stops of the arrivals of a French station", async () => {
     const app = await loadView("departures");
     const data = sncfBoard();
