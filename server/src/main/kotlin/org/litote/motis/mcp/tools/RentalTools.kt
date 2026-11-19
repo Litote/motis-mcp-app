@@ -13,7 +13,7 @@ private const val NEAREST_STATIONS = 5
 fun Server.addRentalTools(gateway: MotisGateway) {
     motisTool(
         name = "rentals",
-        title = "Shared mobility",
+        title = "🚲",
         description =
             """
             Shared mobility (GBFS) in an area: bike, scooter and car sharing providers, their stations with available

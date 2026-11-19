@@ -232,7 +232,7 @@ private class DeparturesRequest(private val gateway: MotisGateway, private val a
 fun Server.addTimetableTools(gateway: MotisGateway) {
     motisTool(
         name = "departures",
-        title = "Departures board",
+        title = "🚉 ⇄",
         description =
             """
             Next departures (or arrivals) at a stop, with real-time delays, cancellations and tracks when available.
@@ -264,7 +264,7 @@ fun Server.addTimetableTools(gateway: MotisGateway) {
 
     motisTool(
         name = "trip_details",
-        title = "Trip details",
+        title = "🚆 ⋯",
         description = "All the stops of a trip (one vehicle run) with their times. 'tripId' comes from departures or plan_journey. $ALERTS_DESCRIPTION",
         view = UiView.DEPARTURES,
         schema = {
