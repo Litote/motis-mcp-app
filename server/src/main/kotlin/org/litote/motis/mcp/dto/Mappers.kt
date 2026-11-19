@@ -55,11 +55,14 @@ fun Mode.label(): String = serialName()
 
 fun EncodedPolyline.toDto(): Polyline = Polyline(points, precision.toInt())
 
-/** [train]: a stop of a train, which does not leave before its scheduled time (see [notBefore]). */
+/**
+ * [train]: a stop of a train, which does not leave before its scheduled time (see [notBefore]), and is named after its
+ * station when its feed names it "Gare SNCF" (see [StationNames.stationName]).
+ */
 fun Place.toDto(train: Boolean = false): PlaceDto =
     PlaceDto(
         // not the coordinates named START and END by MOTIS
-        name = if (stopId != null) displayName(name) else name,
+        name = if (stopId != null) stopName(train) else name,
         lat = lat,
         lon = lon,
         stopId = stopId,
@@ -254,6 +257,10 @@ private val TRAINS =
 private fun Instant?.notBefore(scheduled: Instant?, rail: Boolean): Instant? =
     if (rail && this != null && scheduled != null && this < scheduled) scheduled else this
 
+/** Name of a stop, of its station for a stop of a [train] named only "Gare SNCF" (see [StationNames.stationName]). */
+private fun Place.stopName(train: Boolean): String =
+    (if (train && isGenericStationName(name)) StationNames.default.stationName(name, lat, lon) else null) ?: displayName(name)
+
 /** [realTimeSource]: source of the real time when it is not MOTIS, see [org.litote.motis.mcp.realtime.RealtimeOverlay]. */
 fun StopTime.toDto(arriveBy: Boolean, realTimeSource: String? = null): StopTimeDto {
     // the SNCF regional trains of some feeds have their number as headsign ("847459" for the train "C17")
@@ -278,10 +285,10 @@ fun StopTime.toDto(arriveBy: Boolean, realTimeSource: String? = null): StopTimeD
             if (arriveBy) {
                 previousStops?.map {
                     val time = it.departure.notBefore(it.scheduledDeparture, rail) ?: it.scheduledDeparture
-                    StopCallDto(displayName(it.name), time?.toString(), it.scheduledDeparture?.toString())
+                    StopCallDto(it.stopName(rail), time?.toString(), it.scheduledDeparture?.toString())
                 }
             } else {
-                nextStops?.map { StopCallDto(displayName(it.name), (it.arrival ?: it.scheduledArrival)?.toString(), it.scheduledArrival?.toString()) }
+                nextStops?.map { StopCallDto(it.stopName(rail), (it.arrival ?: it.scheduledArrival)?.toString(), it.scheduledArrival?.toString()) }
             },
         pendingAlerts =
             (if (arriveBy) place.arrival ?: place.scheduledArrival else place.departure ?: place.scheduledDeparture)
