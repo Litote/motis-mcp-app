@@ -4,6 +4,14 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class StationNamesTest {
+    @Test
+    fun `a name of stop with no word of its own is generic`() {
+        assertEquals(true, isGenericStationName("Gare SNCF"))
+        assertEquals(true, isGenericStationName("PEM Gare Routière"))
+        assertEquals(false, isGenericStationName("Gare d'Avignon centre"))
+        assertEquals(false, isGenericStationName("Lyon Part Dieu"))
+    }
+
     // uic, lat, lon, main, name, city, fr, es, en, nl, de, it
     private val stations =
         StationNames(

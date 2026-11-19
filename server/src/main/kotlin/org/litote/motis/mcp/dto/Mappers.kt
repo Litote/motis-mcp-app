@@ -259,7 +259,7 @@ private fun Instant?.notBefore(scheduled: Instant?, rail: Boolean): Instant? =
 
 /** Name of a stop, of its station for a stop of a [train] named only "Gare SNCF" (see [StationNames.stationName]). */
 private fun Place.stopName(train: Boolean): String =
-    (if (train) StationNames.default.stationName(name, lat, lon) else null) ?: displayName(name)
+    (if (train && isGenericStationName(name)) StationNames.default.stationName(name, lat, lon) else null) ?: displayName(name)
 
 /** [realTimeSource]: source of the real time when it is not MOTIS, see [org.litote.motis.mcp.realtime.RealtimeOverlay]. */
 fun StopTime.toDto(arriveBy: Boolean, realTimeSource: String? = null): StopTimeDto {
