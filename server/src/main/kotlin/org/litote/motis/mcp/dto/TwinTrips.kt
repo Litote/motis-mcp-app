@@ -24,10 +24,11 @@ fun ItineraryDto.withRealTimeOf(twin: ItineraryDto): ItineraryDto {
                     val same = (stop.scheduledDeparture ?: stop.scheduledArrival)?.let(bySchedule::get) ?: stop.scheduledArrival?.let(bySchedule::get)
                     val departureDelay = same?.let { delay(it.departure, it.scheduledDeparture) }
                     val arrivalDelay = same?.let { delay(it.arrival, it.scheduledArrival) } ?: departureDelay ?: delay ?: return@map stop
-                    delay = departureDelay ?: arrivalDelay
+                    val leaving = departureDelay ?: arrivalDelay
+                    delay = leaving
                     stop.copy(
                         arrival = stop.scheduledArrival.shifted(arrivalDelay) ?: stop.arrival,
-                        departure = stop.scheduledDeparture.shifted(maxOf(delay ?: arrivalDelay, Duration.ZERO)) ?: stop.departure,
+                        departure = stop.scheduledDeparture.shifted(maxOf(leaving, Duration.ZERO)) ?: stop.departure,
                         cancelled = same?.cancelled ?: stop.cancelled,
                         track = stop.track ?: same?.track,
                     )
