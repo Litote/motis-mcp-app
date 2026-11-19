@@ -31,9 +31,13 @@ export function alertLine(alerts: AlertDto[]): string {
 /** End of the impact of an alert: its day and time. */
 const until = (end: string, tz?: string): string => t("alerts.until", { date: `${day(end, tz)} ${time(end, tz)}` });
 
-/** An alert: its header, and its details (description, end, link) when unfolded, from the start when [open]. */
-function alertItem(alert: AlertDto, tz: string | undefined, open: boolean): string {
-  const header = `${warning}<span>${esc(alert.header)}</span>`;
+/**
+ * An alert: its header, after its [subject] if any (the trains it is about), and its details (description, end, link)
+ * when unfolded, from the start when [open].
+ */
+function alertItem(alert: AlertDto, tz: string | undefined, open: boolean, subject?: string): string {
+  const about = subject ? `<span class="alert-subject">${esc(subject)}</span> — ` : "";
+  const header = `${warning}<span>${about}${esc(alert.header)}</span>`;
   const details = [
     alert.description ? `<p class="alert-description">${esc(alert.description)}</p>` : "",
     alert.end ? `<p class="muted">${esc(until(alert.end, tz))}</p>` : "",
@@ -44,14 +48,17 @@ function alertItem(alert: AlertDto, tz: string | undefined, open: boolean): stri
   return `<li class="alert ${isSevere(alert) ? "severe" : ""}">${body}</li>`;
 }
 
-/** List of [alerts], each unfolded on a click, a lone one unfolded already: nothing hints to click it; empty without alerts. */
-export function alertList(alerts: AlertDto[], tz?: string): string {
+/**
+ * List of [alerts], each unfolded on a click, a lone one unfolded already: nothing hints to click it; empty without alerts.
+ * [subjects] are those of the alerts, by position.
+ */
+export function alertList(alerts: AlertDto[], tz?: string, subjects?: (string | undefined)[]): string {
   const open = alerts.length === 1;
-  return alerts.length ? `<ul class="alerts">${alerts.map((a) => alertItem(a, tz, open)).join("")}</ul>` : "";
+  return alerts.length ? `<ul class="alerts">${alerts.map((a, i) => alertItem(a, tz, open, subjects?.[i])).join("")}</ul>` : "";
 }
 
-/** All the [alerts] of a result, folded under their count: a board shows many lines. */
-export function alertBanner(alerts: AlertDto[] | undefined, tz?: string): string {
+/** All the [alerts] of a result, folded under their count: a board shows many lines. [subjects] are those of the alerts. */
+export function alertBanner(alerts: AlertDto[] | undefined, tz?: string, subjects?: (string | undefined)[]): string {
   if (!alerts?.length) return "";
-  return `<details class="alert-banner ${severity(alerts)}"><summary>${warning}<span>${t("alerts.title")} (${alerts.length})</span></summary>${alertList(alerts, tz)}</details>`;
+  return `<details class="alert-banner ${severity(alerts)}"><summary>${warning}<span>${t("alerts.title")} (${alerts.length})</span></summary>${alertList(alerts, tz, subjects)}</details>`;
 }
