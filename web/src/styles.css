@@ -105,7 +105,14 @@ a { color: var(--accent); }
 }
 .composer-button { align-self: flex-end; }
 
-.login { max-width: 520px; margin: 12vh auto; padding: 0 16px; display: flex; flex-direction: column; gap: 16px; }
+.login { max-width: 600px; margin: 6vh auto; padding: 0 16px 32px; display: flex; flex-direction: column; gap: 16px; }
+.login .home-title { margin: 0; font-size: 1.6rem; }
+.login .home-tagline { margin: 0; color: var(--fg); font-size: 1.1rem; }
+.login h2 { margin: 8px 0 0; font-size: 1.15rem; }
+.login p, .login ul, .login ol { margin: 0; }
+.home-examples, .home-steps { color: var(--muted); line-height: 1.5; padding-left: 1.4em; }
+.home-examples { margin-top: 4px; list-style: none; padding-left: 0.6em; }
+.home-steps { display: flex; flex-direction: column; gap: 6px; }
 .login-settings { align-self: flex-end; display: flex; gap: 8px; }
 .theme-button { min-width: 2.5em; }
 .login p { color: var(--muted); line-height: 1.5; }
