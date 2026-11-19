@@ -62,7 +62,7 @@ private fun ResolvedPlace.toDto(): PlaceDto = PlaceDto(name = name, lat = lat, l
 fun Server.addAreaTools(gateway: MotisGateway) {
     motisTool(
         name = "explore_area",
-        title = "Explore an area",
+        title = "🗺️",
         description =
             """
             Shows on a map the public transport stops and routes (lines) of an area, given by a place and a radius
@@ -88,7 +88,7 @@ fun Server.addAreaTools(gateway: MotisGateway) {
 
     motisTool(
         name = "route_details",
-        title = "Route details",
+        title = "🚏 → 🚏",
         description = "Shows a route (line) on a map with all its stops and its shape. 'routeIdx' comes from explore_area.",
         view = UiView.EXPLORER,
         schema = {
@@ -110,7 +110,7 @@ fun Server.addAreaTools(gateway: MotisGateway) {
 
     motisTool(
         name = "reachability",
-        title = "Reachable places",
+        title = "🗺️ ⏱️",
         description =
             """
             Computes every stop reachable from (or, with arriveBy, to) a place by public transport within a maximum

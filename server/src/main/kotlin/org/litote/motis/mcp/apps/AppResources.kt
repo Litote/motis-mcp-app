@@ -25,12 +25,14 @@ enum class ToolVisibility(val value: String) { MODEL("model"), APP("app") }
 
 /**
  * MCP App views. Each one is a single HTML file bundled by Vite (`ui/`) and copied to the `ui/` classpath folder.
+ * [title] is made of pictograms, shown by the hosts whatever the language of the conversation: the views translate
+ * their own headings.
  */
 enum class UiView(val file: String, val title: String, val description: String) {
-    EXPLORER("explorer.html", "Map explorer", "Map of stops, routes and reachable places"),
-    DEPARTURES("departures.html", "Departures board", "Departures/arrivals of a stop and trip details"),
-    ITINERARY("itinerary.html", "Journey planner", "Itineraries between two places"),
-    RENTALS("rentals.html", "Shared mobility", "Rental providers, stations and vehicles"),
+    EXPLORER("explorer.html", "🗺️", "Map of stops, routes and reachable places"),
+    DEPARTURES("departures.html", "🚉 ⇄", "Departures/arrivals of a stop and trip details"),
+    ITINERARY("itinerary.html", "🧭", "Itineraries between two places"),
+    RENTALS("rentals.html", "🚲", "Rental providers, stations and vehicles"),
     ;
 
     val uri: String get() = "ui://motis/$file"
@@ -118,7 +120,8 @@ fun Server.addAppResources(tiles: MapTiles, domain: String?, html: (UiView) -> S
             RegisteredResource(
                 Resource(
                     uri = view.uri,
-                    name = view.title,
+                    name = view.file.removeSuffix(".html"),
+                    title = view.title,
                     description = view.description,
                     mimeType = MCP_APP_MIME_TYPE,
                     meta = resourceMeta,

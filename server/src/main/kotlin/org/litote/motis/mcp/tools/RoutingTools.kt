@@ -24,7 +24,7 @@ import org.litote.motis.mcp.dto.withStops
 fun Server.addRoutingTools(gateway: MotisGateway, cityJourneys: CityJourneys) {
     motisTool(
         name = "plan_journey",
-        title = "Plan a journey",
+        title = "🧭",
         description =
             """
             Computes public transport itineraries between two places (names, stop ids or 'lat,lon'),
