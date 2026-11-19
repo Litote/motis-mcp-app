@@ -67,3 +67,6 @@ coverage/
 
 ### Docker Compose ###
 .env
+
+### Claude Code ###
+.mcp.json
