@@ -112,7 +112,11 @@ private val EFFECTS =
         AlertEffect.STOP_MOVED, AlertEffect.NO_EFFECT, AlertEffect.ACCESSIBILITY_ISSUE,
     )
 
-/** The alert as MOTIS gives it: its periods are open when 0 (an end of 0 is read as open, see the mapping of the alerts). */
+/**
+ * The alert as MOTIS gives it: its periods are open when 0 (an end of 0 is read as open, see the mapping of the alerts).
+ * An alert of a train: its period, that of the train, is kept to filter the active alerts, as communication period
+ * not to be told as end of the impact ("until Sun. 22 Nov. 13:00" tells nothing on a train).
+ */
 internal fun GtfsAlert.toMotis(language: List<String>?): Alert =
     Alert(
         headerText = headerText.text(language),
@@ -120,7 +124,7 @@ internal fun GtfsAlert.toMotis(language: List<String>?): Alert =
         url = url.text(language).ifBlank { null },
         cause = CAUSES.getOrNull(cause - 1),
         effect = EFFECTS.getOrNull(effect - 1),
-        impactPeriod = activePeriod.map { TimeRange(start = Instant.fromEpochSeconds(it.start), end = Instant.fromEpochSeconds(it.end)) },
+        communicationPeriod = activePeriod.map { TimeRange(start = Instant.fromEpochSeconds(it.start), end = Instant.fromEpochSeconds(it.end)) },
     )
 
 /** Text in the first of the [language]s translated (`fr-FR` read as `fr`), else in French, else the first one. */
