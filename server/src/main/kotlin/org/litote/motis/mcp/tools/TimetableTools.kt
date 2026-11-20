@@ -214,7 +214,7 @@ private class DeparturesRequest(private val gateway: MotisGateway, private val a
 
         /** The country of the station of a board with trains, which chooses the board of the view. */
         suspend fun DeparturesResult.withCountry(): DeparturesResult =
-            if (!hasTrains()) this else copy(stop = stop.copy(country = gateway.country(stop.stopId ?: "${stop.lat},${stop.lon}", stop.lat, stop.lon)))
+            if (!hasTrains()) this else copy(stop = stop.copy(country = gateway.country(stop.lat, stop.lon)))
 
         /** Trains on the board, or at its stop (its next ones may be buses and metros only, as at a big station). */
         private fun DeparturesResult.hasTrains(): Boolean =

@@ -1,7 +1,6 @@
 package org.litote.motis.mcp
 
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import org.litote.motis.client.client.Client
@@ -160,22 +159,23 @@ class MotisGateway(
     internal val stationLines =
         TtlCache<Pair<String, List<String>?>, List<StationLineDto>>(maxSize = 500, ttl = 1.hours, timeSource) { it.isNotEmpty() }
 
-    /** Countries of the railway stations by stop id; not cached when unknown (a transient MOTIS failure). */
-    private val countryCache = TtlCache<String, String>(maxSize = 1000, ttl = 24.hours, timeSource) { it.isNotEmpty() }
+    /**
+     * Countries of the railway stations by coordinates (the same station in two feeds); not cached when unknown (a
+     * transient MOTIS failure).
+     */
+    private val countryCache = TtlCache<Pair<Double, Double>, String>(maxSize = 1000, ttl = 24.hours, timeSource) { it.isNotEmpty() }
 
     /**
-     * Country (ISO 3166-1 alpha-2) of the stop [stopId] at [lat], [lon], from the geocoding of its coordinates: null when
-     * unknown, or when MOTIS fails (the board of the station is then chosen by its time zone).
+     * Country (ISO 3166-1 alpha-2) of the place at [lat], [lon], from the geocoding of its coordinates: null when unknown,
+     * or when MOTIS fails (the board of a station is then chosen by its time zone).
      */
-    suspend fun country(stopId: String, lat: Double, lon: Double): String? =
+    suspend fun country(lat: Double, lon: Double): String? =
         countryCache
-            .getOrPut(stopId) {
+            .getOrPut(lat to lon) {
                 try {
                     reverseGeocode(lat, lon, numResults = 1).firstOrNull()?.country.orEmpty()
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    logger.debug(e) { "No country for the stop $stopId" }
+                } catch (e: MotisToolException) {
+                    logger.debug { "No country at $lat,$lon: ${e.message}" }
                     ""
                 }
             }.ifEmpty { null }

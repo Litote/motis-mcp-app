@@ -172,6 +172,32 @@ class MotisToolsTest {
     }
 
     @Test
+    fun `the board of a railway station is given without its country when it is unknown, asked again next time`() {
+        var reverseCalls = 0
+        val motis =
+            MockMotis { request ->
+                when {
+                    request.url.encodedPath != "/api/v1/reverse-geocode" -> respondJson(fixture(FIXTURES.getValue(request.url.encodedPath)))
+                    // a MOTIS failure, then no place there
+                    reverseCalls++ == 0 -> respondJson("", HttpStatusCode.ServiceUnavailable)
+                    reverseCalls == 2 -> respondJson("[]")
+                    else -> respondJson(fixture("reverse"))
+                }
+            }
+        withMcpClient(motis) { client ->
+            suspend fun board() = client.callTool("departures", mapOf("stopId" to "stop")).data(DeparturesResult.serializer())
+
+            repeat(2) {
+                val unknown = board()
+                assertNull(unknown.stop.country)
+                assertTrue(unknown.stopTimes.isNotEmpty())
+            }
+            assertEquals("FR", board().stop.country)
+            assertEquals(3, reverseCalls)
+        }
+    }
+
+    @Test
     fun `arrivals are the ones from the time on, not the ones before it`() {
         val motis = transitous()
         withMcpClient(motis) { client ->
