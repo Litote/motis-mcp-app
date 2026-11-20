@@ -29,6 +29,8 @@ export interface PlaceDto {
   tz?: string;
   /** City or region of a place asked by name. */
   area?: string;
+  /** Country of the railway station of a departures board (ISO 3166-1 alpha-2, e.g. "NL"), which chooses its board. */
+  country?: string;
 }
 
 export interface RouteDto {

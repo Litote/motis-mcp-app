@@ -160,6 +160,18 @@ class MotisToolsTest {
     }
 
     @Test
+    fun `the country of a railway station comes with its board, from the geocoding of its coordinates, and is cached`() {
+        val motis = transitous()
+        withMcpClient(motis) { client ->
+            repeat(2) {
+                val result = client.callTool("departures", mapOf("stopId" to "stop"))
+                assertEquals("FR", result.data(DeparturesResult.serializer()).stop.country)
+            }
+            assertEquals(1, motis.requests.count { it.url.encodedPath == "/api/v1/reverse-geocode" })
+        }
+    }
+
+    @Test
     fun `arrivals are the ones from the time on, not the ones before it`() {
         val motis = transitous()
         withMcpClient(motis) { client ->

@@ -38,9 +38,13 @@ export interface CountryBoard {
   css: string;
 }
 
-/** The station of [data] is in the time zone [tz] of a country, and has trains: not a bus or metro stop. */
-export const railwayStationIn = (tz: string) => (data: DeparturesResult) =>
-  data.stop.tz === tz && data.stopTimes.some((st) => RAIL_MODES.has(st.mode));
+/**
+ * The station of [data] is in the [country] (ISO 3166-1 alpha-2), and has trains: not a bus or metro stop. Without its
+ * country (an older server, a geocoding failure), the time zone [tz] of the country tells it: not always, the time zone
+ * of a stop may be the one of a foreign operator (Amsterdam Centraal in Europe/Brussels).
+ */
+export const railwayStationIn = (country: string, tz: string) => (data: DeparturesResult) =>
+  (data.stop.country ? data.stop.country === country : data.stop.tz === tz) && data.stopTimes.some((st) => RAIL_MODES.has(st.mode));
 
 /** Delay of a departure in minutes, in real time; 0 without it. */
 export const delayOf = (st: StopTimeDto) => (st.realTime ? delayMinutes(st.time, st.scheduledTime) : 0);

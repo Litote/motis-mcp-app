@@ -86,7 +86,7 @@ const css = `
 /** French railway stations, not the bus or metro stops; the trains and Île-de-France trams on the board. */
 export const sncfBoard: CountryBoard = {
   className: "sncf-board",
-  matches: railwayStationIn("Europe/Paris"),
+  matches: railwayStationIn("FR", "Europe/Paris"),
   onBoard: (st) => RAIL_MODES.has(st.mode) || linePictogram(st.mode, st.line, st.agency) !== null,
   row,
   css,

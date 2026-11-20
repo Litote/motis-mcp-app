@@ -63,7 +63,7 @@ const css = `
 /** Dutch railway stations, not the bus, tram or metro stops; the trains on the board. */
 export const nsBoard: CountryBoard = {
   className: "ns-board",
-  matches: railwayStationIn("Europe/Amsterdam"),
+  matches: railwayStationIn("NL", "Europe/Amsterdam"),
   onBoard: (st) => RAIL_MODES.has(st.mode),
   row,
   css,

@@ -982,6 +982,21 @@ describe("departures view at the stations of the other countries with a board of
     ]);
   });
 
+  it("chooses the board of a station by its country, its time zone may be the one of a foreign operator", async () => {
+    const app = await loadView("departures");
+    // Amsterdam Centraal: Europe/Brussels in MOTIS, from an operator of Belgium
+    const data = countryBoard("Europe/Brussels", "Amsterdam Centraal", [
+      { mode: "REGIONAL_RAIL", line: "Sprinter", trainNumber: "8257", agency: "NS", headsign: "Hoofddorp", track: "11a" },
+      { mode: "REGIONAL_RAIL", line: "Intercity", trainNumber: "2149", agency: "NS", headsign: "Den Haag Centraal", track: "2a" },
+      { mode: "REGIONAL_RAIL", line: "Sprinter", trainNumber: "4057", agency: "NS", headsign: "Rotterdam Centraal", track: "2b" },
+    ]);
+    data.stop.country = "NL";
+    await app.toolResult({ stopId: "S1" }, data);
+
+    expect(document.querySelector("ol.sncb-board")).toBeNull();
+    expect(rowsOf("ns-board")).toHaveLength(3);
+  });
+
   it("shows the board of a British station like the dot-matrix boards of National Rail", async () => {
     const app = await loadView("departures");
     await app.toolResult(

@@ -80,7 +80,7 @@ const css = `
 /** Swiss railway stations, not the bus or tram stops; the trains (with the S-Bahn) on the board. */
 export const sbbBoard: CountryBoard = {
   className: "sbb-board",
-  matches: railwayStationIn("Europe/Zurich"),
+  matches: railwayStationIn("CH", "Europe/Zurich"),
   onBoard: (st) => RAIL_MODES.has(st.mode),
   row,
   header,

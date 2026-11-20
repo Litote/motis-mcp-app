@@ -44,7 +44,7 @@ const css = `
   ol.sncb-board .train.open { box-shadow: inset 0 0 0 3px var(--yellow); }
   ol.sncb-board .heure { font-weight: 800; font-variant-numeric: tabular-nums; }
   ol.sncb-board .trein { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
-  ol.sncb-board .type { font-weight: 800; }
+  ol.sncb-board .type { max-width: 100%; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   ol.sncb-board .numero { color: #c7d5ef; font-size: 0.7rem; font-variant-numeric: tabular-nums; }
   ol.sncb-board .destination { min-width: 0; }
   ol.sncb-board .nom { display: flex; align-items: center; gap: 0.35rem; min-width: 0; font-weight: 700; }
@@ -68,7 +68,7 @@ const css = `
 /** Belgian railway stations, not the bus, tram or metro stops; the trains (with the S lines) on the board. */
 export const sncbBoard: CountryBoard = {
   className: "sncb-board",
-  matches: railwayStationIn("Europe/Brussels"),
+  matches: railwayStationIn("BE", "Europe/Brussels"),
   onBoard: (st) => RAIL_MODES.has(st.mode),
   row,
   css,

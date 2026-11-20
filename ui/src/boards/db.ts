@@ -83,7 +83,7 @@ const css = `
 /** German railway stations, not the bus, tram or U-Bahn stops; the trains (with the S-Bahn) on the board. */
 export const dbBoard: CountryBoard = {
   className: "db-board",
-  matches: railwayStationIn("Europe/Berlin"),
+  matches: railwayStationIn("DE", "Europe/Berlin"),
   onBoard: (st) => RAIL_MODES.has(st.mode),
   row,
   css,
