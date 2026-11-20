@@ -196,18 +196,24 @@ private class DeparturesRequest(private val gateway: MotisGateway, private val a
         /**
          * The trains of a station may be at stops of other feeds, e.g. the TGV of the IDFM stop "Gare de Lyon". A stop without
          * stop times may be a copy of a station in another feed, e.g. "Lyon Part Dieu (FR)" of the SNCB: its trains are nearby.
+         * A stop of a railway station may have only buses and metros, e.g. the IDFM stop "Gare Montparnasse", its trains at
+         * the SNCF stop 100 m away: MOTIS gives it a train mode.
          */
         suspend fun withNearbyTrains(id: String): DeparturesResult {
             val result = stopTimes(id, modes)
             val trainModes = modes?.let { m -> if (Mode.RAIL in m) TRAIN_MODES else TRAIN_MODES.filter { it in m } } ?: TRAIN_MODES
-            if (trainModes.isEmpty() || result.stopTimes.isNotEmpty() && result.stopTimes.none { it.mode in RAIL_LABELS }) return result
+            if (trainModes.isEmpty() || result.stopTimes.isNotEmpty() && !result.hasTrains()) return result
             val nearby = stopTimes(id, trainModes, STATION_RADIUS)
             return result.withNearbyTrains(nearby, n, earlier).withStationLines(id)
         }
 
         /** Lines of the station of a board with trains. */
         private suspend fun DeparturesResult.withStationLines(id: String): DeparturesResult =
-            if (stopTimes.none { it.mode in RAIL_LABELS }) this else copy(stationLines = stationLines(id).takeIf { it.isNotEmpty() })
+            if (!hasTrains()) this else copy(stationLines = stationLines(id).takeIf { it.isNotEmpty() })
+
+        /** Trains on the board, or at its stop (its next ones may be buses and metros only, as at a big station). */
+        private fun DeparturesResult.hasTrains(): Boolean =
+            stopTimes.any { it.mode in RAIL_LABELS } || stop.modes.orEmpty().any { it in RAIL_LABELS }
 
         /**
          * Lines of a railway station, for the tabs of the first page of its board. They are found from the next departures
