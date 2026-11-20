@@ -28,6 +28,7 @@
   "departures.cancelled": "odwołany",
   "departures.none": "Brak odjazdów w tym okresie.",
   "departures.backToBoard": "Powrót do tablicy",
+  "departures.trainHere": "Aktualne położenie pociągu",
   "departures.otherLines": "Inne linie",
   "departures.tabs": "Linie stacji",
   "departures.tab.trains": "Pociągi",

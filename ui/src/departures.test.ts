@@ -402,6 +402,102 @@ describe("departures view", () => {
     expect($("#title").textContent).toBe("Lyon Part Dieu");
   });
 
+  it("shows the station of the board in bold in the stops of the trip, whatever its id in the feed of the trip", async () => {
+    const app = await loadView("departures");
+    // the board of Lyon Part Dieu from the Renfe feed, the trip from the SNCF one
+    await app.toolResult({ stopId: "S1" }, board());
+    app.answer(fixture<TripResult>("trip"));
+    (document.querySelector("tr[data-index='0']") as HTMLElement).click();
+    await flush();
+
+    expect([...document.querySelectorAll("li.stop.board-stop .name")].map(text)).toEqual(["Lyon Part Dieu"]);
+  });
+
+  it("shows the station of the board in bold at the time of the departure, for a trip through it twice", async () => {
+    const app = await loadView("departures");
+    await app.toolResult({ stopId: "S1" }, board());
+    const trip = fixture<TripResult>("trip");
+    const leg = trip.itinerary.legs[0];
+    // the first stop renamed Lyon Part Dieu too, left before the departure of the board (21:16)
+    leg.from.name = "Lyon Part Dieu";
+    app.answer(trip);
+    (document.querySelector("tr[data-index='0']") as HTMLElement).click();
+    await flush();
+
+    const stops = [...document.querySelectorAll("li.stop")];
+    expect(stops.map((li) => li.classList.contains("board-stop"))).toEqual([false, false, false, true, false]);
+  });
+
+  it("shows no station in bold for a trip asked without a board", async () => {
+    const app = await loadView("departures");
+    await app.toolResult({ tripId: "t" }, fixture("trip"));
+
+    expect(document.querySelector("li.stop.board-stop")).toBeNull();
+  });
+
+  describe("position of the train", () => {
+    async function tripAt(now: string): Promise<Element[]> {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date(now));
+      const app = await loadView("departures");
+      await app.toolResult({ tripId: "t" }, fixture("trip"));
+      return [...document.querySelectorAll("ol.timeline > li")];
+    }
+    const shape = (items: Element[]) =>
+      items.map((li) => (li.classList.contains("between") ? "train" : li.querySelector(".vehicle") ? "stop+train" : "stop"));
+
+    it("is between two stops while running", async () => {
+      try {
+        // left Le Creusot at 20:23, at Mâcon at 20:41
+        expect(shape(await tripAt("2026-10-12T20:30:00Z"))).toEqual(["stop", "stop", "train", "stop", "stop", "stop"]);
+        expect($("li.between .vehicle").getAttribute("aria-label")).toBe("Current position of the train");
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("is at a stop between its arrival and its departure", async () => {
+      try {
+        // at Lyon Part Dieu from 21:10 to 21:16
+        expect(shape(await tripAt("2026-10-12T21:12:00Z"))).toEqual(["stop", "stop", "stop", "stop+train", "stop"]);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("moves every minute, the rest of the timeline left as it is", async () => {
+      vi.useFakeTimers({ toFake: ["Date", "setInterval", "clearInterval"] });
+      try {
+        vi.setSystemTime(new Date("2026-10-12T20:30:00Z"));
+        const app = await loadView("departures");
+        await app.toolResult({ tripId: "t" }, fixture("trip"));
+        const stops = [...document.querySelectorAll("li.stop")];
+        const items = () => [...document.querySelectorAll("ol.timeline > li")];
+        expect(shape(items())).toEqual(["stop", "stop", "train", "stop", "stop", "stop"]);
+
+        // at Mâcon from 20:41 to 20:44
+        vi.advanceTimersByTime(12 * 60_000);
+        expect(shape(items())).toEqual(["stop", "stop", "stop+train", "stop", "stop"]);
+        expect([...document.querySelectorAll("li.stop")]).toEqual(stops);
+        expect(document.querySelectorAll(".vehicle")).toHaveLength(1);
+        expect(getComputedStyle(stops[2].querySelector(".dot")!).display).toBe("none");
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it("is not shown before the departure or after the arrival", async () => {
+      try {
+        await tripAt("2026-10-12T18:00:00Z");
+        expect(document.querySelector(".vehicle")).toBeNull();
+        await tripAt("2026-10-12T21:30:00Z");
+        expect(document.querySelector(".vehicle")).toBeNull();
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
+
   it("strikes out the scheduled time of each stop of a trip late or early, before the actual one", async () => {
     const app = await loadView("departures");
     const trip = fixture<TripResult>("trip");

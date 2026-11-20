@@ -3,7 +3,7 @@ import { callTool, isFullscreen, startView, type Args } from "./shared/app";
 import { day, delayMinutes, duration, esc, lineBadge, stopTimeHtml, time } from "./shared/format";
 import { t } from "./shared/i18n";
 import { alertBanner, alertLine, alertList, alertMark, alertsOf } from "./shared/alerts";
-import { arrowLeft, chevronLeft, chevronRight } from "./shared/icons";
+import { arrowLeft, chevronLeft, chevronRight, trainFront } from "./shared/icons";
 import { RAIL_MODES, TRAIN_MODES, linePictogram, train } from "./shared/sncf";
 import { inTab, stationTabs, type StationTab } from "./shared/stationTabs";
 import type { AlertDto, DeparturesResult, PlaceDto, StopTimeDto, TripResult } from "./shared/types";
@@ -27,11 +27,21 @@ let opposite: DeparturesResult | null = null;
 let panelTrip: TripResult | null = null;
 /** Fullscreen: id of the trip of the panel, loaded or loading; null when the panel is closed. */
 let panelTripId: string | null = null;
+/** Station of the board the trip shown was opened from, in bold in its stops (null for a trip asked directly). */
+let tripFrom: BoardStop | null = null;
+
+/** Station of a board and the scheduled time there of a departure (or an arrival) of it. */
+interface BoardStop {
+  place: PlaceDto;
+  scheduledTime?: string;
+  arriveBy: boolean;
+}
 
 const app = startView("MOTIS departures", {
   render: (data, args) => {
     history.length = 0;
     opposite = null;
+    tripFrom = null;
     closeTripPanel();
     if (data.kind !== "departures") {
       show(data as unknown as BoardData, false);
@@ -272,6 +282,7 @@ function renderBoard(data: DeparturesResult): void {
   subtitle.textContent = `${directions}${firstDay}`;
   if (!isFullscreen()) {
     renderToolbarAnd(data, boards, `<div data-board="0">${boardHtml(data)}</div>`);
+    placeTrains();
     return;
   }
   tickClock();
@@ -285,6 +296,7 @@ function renderBoard(data: DeparturesResult): void {
     )
     .join("");
   renderToolbarAnd(data, boards, `<div class="boards" style="grid-template-columns: ${boardTracks(boards.length)}">${columns}${tripPanel()}</div>`);
+  placeTrains();
 }
 
 /**
@@ -463,6 +475,7 @@ function updateTripPanel(): void {
   boards.querySelector(".trip-panel")?.remove();
   boards.insertAdjacentHTML("beforeend", tripPanel());
   boards.style.gridTemplateColumns = boardTracks(shownBoards.length);
+  placeTrains();
   boards.querySelectorAll<HTMLElement>("[data-board]").forEach((column) => {
     const board = shownBoards[Number(column.dataset.board)];
     column.querySelectorAll<HTMLElement>("[data-index]").forEach((row) => {
@@ -482,7 +495,9 @@ content.addEventListener("click", (e) => {
   const row = target.closest<HTMLElement>("[data-board] [data-index]");
   const board = row ? shownBoards[Number(row.closest<HTMLElement>("[data-board]")!.dataset.board)] : undefined;
   const departure = board?.stopTimes[Number(row!.dataset.index)];
-  if (departure) void openTrip(departure.tripId, departure.realTimeTripId);
+  if (!departure) return;
+  tripFrom = { place: board!.stop, scheduledTime: departure.scheduledTime ?? departure.time, arriveBy: board!.arriveBy };
+  void openTrip(departure.tripId, departure.realTimeTripId);
 });
 
 /** Time of a stop of a trip (its departure, else its arrival), and its delay (advance when negative) in minutes. */
@@ -492,16 +507,107 @@ function stopTiming(stop: PlaceDto): { actual?: string; scheduled?: string } {
   return { actual, scheduled: departure ? stop.scheduledDeparture : stop.scheduledArrival };
 }
 
-/** Stop of a trip: its time and its [delay] badge. */
-function stopRow(stop: PlaceDto, color: string, isEnd: boolean): string {
+/** Stop of a trip: its time and its [delay] badge; the station of the board in bold. */
+function stopRow(stop: PlaceDto, color: string, isEnd: boolean, isBoardStop: boolean): string {
   const { actual, scheduled } = stopTiming(stop);
   const track = stop.track ? ` <span class="muted">${t("track", { track: esc(stop.track) })}</span>` : "";
+  const classes = ["stop", stop.cancelled ? "cancelled" : "", isBoardStop ? "board-stop" : ""].filter(Boolean).join(" ");
   return `
-    <li class="stop ${stop.cancelled ? "cancelled" : ""}" style="--line:${esc(color)}">
+    <li class="${classes}" style="--line:${esc(color)}">
       <span class="dot ${isEnd ? "end" : ""}"></span>
       <span class="time">${stopTimeHtml(actual, scheduled, stop.tz)}</span>
-      <span>${esc(stop.name)}${track}</span>
+      <span class="name">${esc(stop.name)}${track}</span>
     </li>`;
+}
+
+/** Icon of the train on the line of a trip, where it is now. */
+const vehicle = () =>
+  `<span class="vehicle" role="img" title="${t("departures.trainHere")}" aria-label="${t("departures.trainHere")}">${trainFront}</span>`;
+
+/** Stops of the legs of a trip, in the order of their timelines. */
+const legStops = (data: TripResult) =>
+  data.itinerary.legs.filter((leg) => leg.tripId).map((leg) => ({ leg, stops: [leg.from, ...(leg.intermediateStops ?? []), leg.to] }));
+
+/** Moves the train of the trips shown (the trip in place of the board, or in the panel) every minute. */
+let trainTimer: ReturnType<typeof setInterval> | undefined;
+
+/**
+ * Puts the train of the trips shown where it is now: on the dot of its stop, or on the line between two stops. Only
+ * the icon moves, the rest of the timelines left as they are (and the trip panel where it was scrolled to).
+ */
+function placeTrains(): void {
+  const shown = [
+    { root: current?.kind === "trip" ? content.querySelector(".trip") : null, trip: current?.kind === "trip" ? current : null },
+    { root: content.querySelector(".trip-panel"), trip: panelTrip },
+  ];
+  const now = Date.now();
+  let any = false;
+  for (const { root, trip } of shown) {
+    if (!root || !trip) continue;
+    any = true;
+    root.querySelectorAll(".vehicle, ol.timeline > li.between").forEach((el) => el.remove());
+    root.querySelectorAll("li.stop.train-here").forEach((li) => li.classList.remove("train-here"));
+    const timelines = root.querySelectorAll("ol.timeline");
+    legStops(trip).forEach(({ stops }, i) => {
+      const position = trainPosition(stops, now);
+      const row = position && timelines[i]?.children[stops.indexOf("at" in position ? position.at : position.after)];
+      if (!row) return;
+      if ("at" in position) {
+        row.classList.add("train-here");
+        row.insertAdjacentHTML("afterbegin", vehicle());
+      } else row.insertAdjacentHTML("afterend", `<li class="between">${vehicle()}</li>`);
+    });
+  }
+  if (any) trainTimer ??= setInterval(placeTrains, 60_000);
+  else {
+    clearInterval(trainTimer);
+    trainTimer = undefined;
+  }
+}
+
+const ms = (iso?: string) => (iso ? Date.parse(iso) : Number.NaN);
+
+/**
+ * Where the train of the [stops] (of a leg) is at [now]: at a stop (between its arrival and its departure), or between
+ * a stop and the next one; null before its departure from the first stop, from its arrival at the last one. The
+ * cancelled stops are passed by.
+ */
+function trainPosition(stops: PlaceDto[], now: number): { at: PlaceDto } | { after: PlaceDto } | null {
+  const served = stops.filter((s) => !s.cancelled);
+  for (let i = 0; i < served.length; i++) {
+    const stop = served[i];
+    const arrival = ms(stop.arrival ?? stop.scheduledArrival);
+    const departure = ms(stop.departure ?? stop.scheduledDeparture);
+    if (i === served.length - 1) return null;
+    if (i > 0 && arrival <= now && now < departure) return { at: stop };
+    const next = served[i + 1];
+    if (departure <= now && now < ms(next.arrival ?? next.scheduledArrival ?? next.departure ?? next.scheduledDeparture)) return { after: stop };
+  }
+  return null;
+}
+
+const normalized = (name: string) => name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
+/** Distance in km between two places (equirectangular: a few km at most). */
+function distanceKm(a: PlaceDto, b: PlaceDto): number {
+  const x = ((b.lon - a.lon) * Math.PI) / 180 * Math.cos((((a.lat + b.lat) / 2) * Math.PI) / 180);
+  const y = ((b.lat - a.lat) * Math.PI) / 180;
+  return Math.hypot(x, y) * 6371;
+}
+
+/**
+ * Stop of the [stops] of a trip at the station of the board it was opened [from]. The stops of the trip may come from
+ * another feed than the board (another id, the name of a hall): the one of the same id or name, or the nearest within
+ * 1 km, the one at the scheduled time of the departure first (a trip through the station twice).
+ */
+function boardStopOf(stops: PlaceDto[], from: BoardStop): PlaceDto | undefined {
+  const name = normalized(from.place.name);
+  const named = (s: PlaceDto) => (!!s.stopId && s.stopId === from.place.stopId) || normalized(s.name) === name;
+  const near = stops.filter((s) => named(s) || distanceKm(s, from.place) < 1);
+  const at = ms(from.scheduledTime);
+  const onTime = near.find((s) => ms(from.arriveBy ? s.scheduledArrival : s.scheduledDeparture) === at);
+  const nearest = near.reduce<PlaceDto | undefined>((best, s) => (!best || distanceKm(s, from.place) < distanceKm(best, from.place) ? s : best), undefined);
+  return onTime ?? near.find(named) ?? nearest;
 }
 
 /** Title and subtitle of a trip. */
@@ -515,19 +621,21 @@ function tripHeading(data: TripResult): { title: string; subtitle: string } {
   };
 }
 
-/** Stops of the legs of a trip, as a timeline in the color of their line. */
+/**
+ * Stops of the legs of a trip, as a timeline in the color of their line: the station of the board it was opened from
+ * in bold. The train is put on it once shown (see placeTrains).
+ */
 function tripTimeline(data: TripResult): string {
-  return data.itinerary.legs
-    .filter((leg) => leg.tripId)
-    .map((leg) => {
+  const legs = legStops(data);
+  const boardStop = tripFrom ? boardStopOf(legs.flatMap(({ stops }) => stops), tripFrom) : undefined;
+  return legs
+    .map(({ leg, stops }) => {
       const color = leg.routeColor ?? "#888";
-      const stops = [leg.from, ...(leg.intermediateStops ?? []), leg.to];
+      const rows = stops.map((s, i) => stopRow(s, color, i === 0 || i === stops.length - 1, s === boardStop));
       return `
         <div class="toolbar">${lineBadge(leg.mode, leg.line, leg.routeColor, leg.routeTextColor, leg.agency)} <span>${esc(leg.headsign ?? leg.to.name)}</span></div>
         ${alertList(alertsOf(data.alerts, leg.alerts), leg.from.tz)}
-        <ol class="timeline">${stops
-          .map((s, i) => stopRow(s, color, i === 0 || i === stops.length - 1))
-          .join("")}</ol>`;
+        <ol class="timeline" style="--line:${esc(color)}">${rows.join("")}</ol>`;
     })
     .join("");
 }
@@ -539,6 +647,7 @@ function renderTrip(data: TripResult): void {
   content.innerHTML = `
     <div class="toolbar"><button type="button" id="back" ${history.length ? "" : "hidden"}>${arrowLeft}<span>${t("departures.backToBoard")}</span></button></div>
     <div class="trip">${tripTimeline(data)}</div>`;
+  placeTrains();
   document.getElementById("back")?.addEventListener("click", () => {
     const previous = history.pop();
     if (!previous) return;
@@ -585,7 +694,17 @@ style.textContent = `
   ol.timeline .stop:last-child::before { bottom: 50%; }
   ol.timeline .dot { width: 10px; height: 10px; margin-left: 4px; border-radius: 50%; background: var(--color-background-primary); border: 2px solid var(--line); z-index: 1; }
   ol.timeline .dot.end { width: 14px; height: 14px; margin-left: 2px; }
-  ol.timeline .time { font-variant-numeric: tabular-nums; }
+  /* room for the train on the dot of its stop */
+  ol.timeline .time { padding-left: 6px; font-variant-numeric: tabular-nums; }
+  ol.timeline .board-stop .name { font-weight: 700; }
+  /* the train where it is now: on the dot of its stop, or on the line between two stops */
+  ol.timeline .between { display: grid; grid-template-columns: 18px; min-height: 26px; align-items: center; position: relative; }
+  ol.timeline .between::before { content: ""; position: absolute; left: 7px; top: 0; bottom: 0; width: 4px; background: var(--line); }
+  ol.timeline .stop.train-here > .dot { display: none; }
+  ol.timeline .vehicle { display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; margin-left: -2px; border-radius: 50%;
+    background: var(--line); color: #fff; z-index: 1; box-shadow: 0 0 0 2px var(--color-background-primary); }
+  .trip-panel ol.timeline .vehicle { box-shadow: 0 0 0 2px var(--color-background-secondary); }
+  ol.timeline .vehicle svg { width: 15px; height: 15px; }
 
   /* board of the French stations, with the colors of the SNCF boards (blue: departures, green: arrivals) */
   ol.sncf-board { --bright: #356db9; --dark: #103e7d; list-style: none; margin: 0; padding: 0; background: var(--bright); color: #fff; border-radius: var(--border-radius-sm); overflow: hidden; }

@@ -26,6 +26,7 @@
   "departures.cancelled": "peruttu",
   "departures.none": "Ei lähtöjä tällä aikavälillä.",
   "departures.backToBoard": "Takaisin taululle",
+  "departures.trainHere": "Junan nykyinen sijainti",
   "departures.otherLines": "Muut linjat",
   "departures.tabs": "Aseman linjat",
   "departures.tab.trains": "Junat",

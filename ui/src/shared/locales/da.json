@@ -26,6 +26,7 @@
   "departures.cancelled": "aflyst",
   "departures.none": "Ingen afgang i denne periode.",
   "departures.backToBoard": "Tilbage til tavlen",
+  "departures.trainHere": "Togets aktuelle position",
   "departures.otherLines": "Andre linjer",
   "departures.tabs": "Stationens linjer",
   "departures.tab.trains": "Tog",

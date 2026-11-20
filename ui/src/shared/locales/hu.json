@@ -26,6 +26,7 @@
   "departures.cancelled": "törölve",
   "departures.none": "Ebben az időszakban nincs indulás.",
   "departures.backToBoard": "Vissza a táblához",
+  "departures.trainHere": "A vonat jelenlegi helyzete",
   "departures.otherLines": "Egyéb vonalak",
   "departures.tabs": "Az állomás vonalai",
   "departures.tab.trains": "Vonatok",

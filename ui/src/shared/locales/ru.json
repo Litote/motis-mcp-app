@@ -28,6 +28,7 @@
   "departures.cancelled": "отменён",
   "departures.none": "Нет отправлений в этот период.",
   "departures.backToBoard": "Назад к табло",
+  "departures.trainHere": "Текущее положение поезда",
   "departures.otherLines": "Другие линии",
   "departures.tabs": "Линии станции",
   "departures.tab.trains": "Поезда",
