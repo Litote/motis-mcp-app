@@ -6,6 +6,7 @@
   "toolFailed": "Помилка {name}",
   "noData": "{name}: немає даних",
   "toggleFullscreen": "Повний екран",
+  "refresh": "Оновити на поточний час",
   "earlier": "Раніше",
   "later": "Пізніше",
   "back": "Назад",

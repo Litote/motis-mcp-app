@@ -6,6 +6,7 @@
   "toolFailed": "{name} mislyktes",
   "noData": "{name}: ingen data",
   "toggleFullscreen": "Fullskjerm",
+  "refresh": "Oppdater til nåværende tidspunkt",
   "earlier": "Tidligere",
   "later": "Senere",
   "back": "Tilbake",

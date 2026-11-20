@@ -6,6 +6,7 @@
   "toolFailed": "Το {name} απέτυχε",
   "noData": "{name}: χωρίς δεδομένα",
   "toggleFullscreen": "Πλήρης οθόνη",
+  "refresh": "Ανανέωση στην τρέχουσα ώρα",
   "earlier": "Νωρίτερα",
   "later": "Αργότερα",
   "back": "Πίσω",

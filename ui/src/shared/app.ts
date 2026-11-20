@@ -25,6 +25,11 @@ export interface ViewHandlers {
   themeChanged?(theme: "light" | "dark"): void;
   /** Called when the view goes fullscreen or back inline (the document has `data-display-mode` set already). */
   displayModeChanged?(mode: McpUiDisplayMode): void;
+  /**
+   * Loads again what the view shows, for the current time (refresh button of the header, shown once a result is rendered
+   * when given). The errors are reported in the status bar by the tool calls.
+   */
+  refresh?(): Promise<void>;
 }
 
 /** True when the view is fullscreen: the views lay their content out to fill the window (style.css). */
@@ -38,6 +43,14 @@ function setDisplayMode(mode: McpUiDisplayMode, handlers: ViewHandlers): void {
 }
 
 export { hostLocale } from "./i18n";
+
+const refreshButton = () => document.getElementById("refresh") as HTMLButtonElement | null;
+
+/** Shows the refresh button of the header, or hides it (e.g. a view showing something that does not change with time). */
+export function showRefresh(visible: boolean): void {
+  const button = refreshButton();
+  if (button) button.hidden = !visible;
+}
 
 const statusEl = () => document.getElementById("status");
 
@@ -104,6 +117,8 @@ export function startView(name: string, handlers: ViewHandlers): App {
       setStatus(textOf(r) || t("error"), "error");
     } else if (r.structuredContent && typeof r.structuredContent.kind === "string") {
       setStatus("");
+      // before the rendering: a view may hide it for what it shows
+      if (handlers.refresh) showRefresh(true);
       handlers.render(r.structuredContent as { kind: string }, lastArgs);
     } else {
       setStatus(textOf(r));
@@ -120,6 +135,19 @@ export function startView(name: string, handlers: ViewHandlers): App {
       // display mode not supported: ignored
     }
   };
+  // one refresh at a time: the icon turns until the view is loaded again
+  refreshButton()?.addEventListener("click", async () => {
+    const button = refreshButton()!;
+    if (!handlers.refresh || button.getAttribute("aria-busy") === "true") return;
+    button.setAttribute("aria-busy", "true");
+    try {
+      await handlers.refresh();
+    } catch {
+      // reported in the status bar
+    } finally {
+      button.removeAttribute("aria-busy");
+    }
+  });
   document.getElementById("fullscreen")?.addEventListener("click", () =>
     requestDisplayMode(isFullscreen() ? "inline" : "fullscreen"),
   );

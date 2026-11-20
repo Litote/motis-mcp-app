@@ -61,6 +61,20 @@ describe("explorer view", () => {
     expect($("#title").textContent).toBe("45.7605,4.8597 (0.5 km)");
   });
 
+  it("refreshes an isochrone from now, an area has no refresh", async () => {
+    const app = await loadView("explorer");
+    await app.toolResult({}, fixture("area"));
+    expect($("#refresh").hidden).toBe(true);
+
+    await app.toolResult({ place: "Lyon", maxTravelTimeMinutes: 10, time: "2026-10-12T08:00:00Z", arriveBy: true }, fixture("reachability"));
+    expect($("#refresh").hidden).toBe(false);
+    app.answer(fixture("reachability"));
+    $("#refresh").click();
+    await flush();
+    expect(app.callServerTool).toHaveBeenLastCalledWith({ name: "reachability", arguments: { place: "Lyon", maxTravelTimeMinutes: 10, arriveBy: true } });
+    expect($("#subtitle").textContent).toBe("56 stops within 10 min");
+  });
+
   it("shows an isochrone, colored by travel time", async () => {
     const app = await loadView("explorer");
     await app.toolResult({}, fixture("reachability"));

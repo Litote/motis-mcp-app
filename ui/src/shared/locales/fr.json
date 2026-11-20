@@ -6,6 +6,7 @@
   "toolFailed": "Échec de {name}",
   "noData": "{name} : aucune donnée",
   "toggleFullscreen": "Plein écran",
+  "refresh": "Actualiser à l'heure actuelle",
   "earlier": "Plus tôt",
   "later": "Plus tard",
   "back": "Retour",

@@ -6,6 +6,7 @@
   "toolFailed": "{name} mislukt",
   "noData": "{name}: geen gegevens",
   "toggleFullscreen": "Volledig scherm",
+  "refresh": "Vernieuwen naar de huidige tijd",
   "earlier": "Eerder",
   "later": "Later",
   "back": "Terug",

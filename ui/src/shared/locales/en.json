@@ -6,6 +6,7 @@
   "toolFailed": "{name} failed",
   "noData": "{name}: no data",
   "toggleFullscreen": "Toggle fullscreen",
+  "refresh": "Refresh to the current time",
   "earlier": "Earlier",
   "later": "Later",
   "back": "Back",

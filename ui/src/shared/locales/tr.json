@@ -6,6 +6,7 @@
   "toolFailed": "{name} başarısız oldu",
   "noData": "{name}: veri yok",
   "toggleFullscreen": "Tam ekran",
+  "refresh": "Geçerli saate göre yenile",
   "earlier": "Daha erken",
   "later": "Daha geç",
   "back": "Geri",

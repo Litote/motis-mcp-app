@@ -6,6 +6,7 @@
   "toolFailed": "Błąd: {name}",
   "noData": "{name}: brak danych",
   "toggleFullscreen": "Pełny ekran",
+  "refresh": "Odśwież na bieżącą godzinę",
   "earlier": "Wcześniej",
   "later": "Później",
   "back": "Wstecz",

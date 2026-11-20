@@ -28,6 +28,9 @@ let opposite: DeparturesResult | null = null;
 let panelTrip: TripResult | null = null;
 /** Fullscreen: id of the trip of the panel, loaded or loading; null when the panel is closed. */
 let panelTripId: string | null = null;
+/** Arguments of the trip_details call of the trip shown in place of the board, and of the one of the panel. */
+let tripArgs: Args = {};
+let panelTripArgs: Args = {};
 /** Station of the board the trip shown was opened from, in bold in its stops (null for a trip asked directly). */
 let tripFrom: BoardStop | null = null;
 
@@ -45,6 +48,7 @@ const app = startView("MOTIS departures", {
     tripFrom = null;
     closeTripPanel();
     if (data.kind !== "departures") {
+      tripArgs = args;
       show(data as unknown as BoardData, false);
       return;
     }
@@ -66,12 +70,29 @@ const app = startView("MOTIS departures", {
     closeTripPanel();
     opposite = null;
     // back inline, the trip of the panel is shown in place of the board, as when opened inline
-    if (trip && !isFullscreen()) show(trip, true);
-    else if (current) show(current, false);
+    if (trip && !isFullscreen()) {
+      tripArgs = panelTripArgs;
+      show(trip, true);
+    } else if (current) show(current, false);
     void loadOpposite();
     tickClock();
   },
+  refresh,
 });
+
+/**
+ * Loads again what is shown for now: the trip in place of the board, or the first page of the board (of its tab and
+ * direction) from now, with the other board and the trip of the panel in fullscreen.
+ */
+async function refresh(): Promise<void> {
+  if (current?.kind === "trip") {
+    const trip = await callTool<TripResult>(app, "trip_details", tripArgs);
+    if (current?.kind === "trip") show(trip, false);
+    return;
+  }
+  const boards = [reload({ time: undefined, pageCursor: undefined }), loadOpposite()];
+  await Promise.all([...boards, panelTripId ? loadPanelTrip(panelTripId, panelTripArgs) : undefined]);
+}
 
 /** Shows the departures of the station on the lines of [tab]. */
 function selectTab(tab: StationTab): Promise<void> {
@@ -108,7 +129,7 @@ async function loadOpposite(pageCursor?: string): Promise<void> {
 
 const clock = document.createElement("span");
 clock.className = "clock fullscreen-only";
-document.getElementById("fullscreen")?.before(clock);
+(document.getElementById("refresh") ?? document.getElementById("fullscreen"))?.before(clock);
 let clockTimer: ReturnType<typeof setInterval> | undefined;
 
 function tickClock(): void {
@@ -397,7 +418,9 @@ async function openTrip(tripId: string, realTimeTripId?: string): Promise<void> 
   const args = realTimeTripId ? { tripId, realTimeTripId } : { tripId };
   if (!isFullscreen() || current?.kind !== "departures") {
     try {
-      show(await callTool<TripResult>(app, "trip_details", args), true);
+      const trip = await callTool<TripResult>(app, "trip_details", args);
+      tripArgs = args;
+      show(trip, true);
       // opened from the bottom of a long board: its top brought back into view, the view (sized to its content)
       // scrolling in the page of the host
       document.querySelector("header")?.scrollIntoView?.({ block: "nearest" });
@@ -407,16 +430,22 @@ async function openTrip(tripId: string, realTimeTripId?: string): Promise<void> 
     return;
   }
   panelTripId = tripId;
+  panelTripArgs = args;
   panelTrip = null;
   updateTripPanel();
+  await loadPanelTrip(tripId, args);
+}
+
+/** Fullscreen: loads the trip [tripId] of the panel (shown loading, or the trip loaded before while refreshed). */
+async function loadPanelTrip(tripId: string, args: Args): Promise<void> {
   try {
     const trip = await callTool<TripResult>(app, "trip_details", args, { quiet: true });
     // another trip clicked, or the panel closed, meanwhile
     if (panelTripId !== tripId) return;
     panelTrip = trip;
   } catch {
-    // reported in the status bar
-    if (panelTripId === tripId) closeTripPanel();
+    // reported in the status bar; a trip shown is kept
+    if (panelTripId === tripId && !panelTrip) closeTripPanel();
   }
   updateTripPanel();
 }

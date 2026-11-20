@@ -6,6 +6,7 @@
   "toolFailed": "{name} misslyckades",
   "noData": "{name}: inga data",
   "toggleFullscreen": "Helskärm",
+  "refresh": "Uppdatera till aktuell tid",
   "earlier": "Tidigare",
   "later": "Senare",
   "back": "Tillbaka",
