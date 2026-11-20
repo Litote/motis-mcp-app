@@ -791,6 +791,30 @@ class MotisToolsTest {
     }
 
     @Test
+    fun `plan_journey takes the city rather than a mere stop of its name near the other end of the journey`() {
+        // Transitous, "La Rochelle" near Paris: the station and the city, then a stop of Juilly (Seine-et-Marne)
+        val city =
+            """{"type":"PLACE","category":"place_6","name":"La Rochelle","id":"node/1","lat":46.159732,"lon":-1.1515951,"score":-22.89,"tokens":[],"areas":[]},""" +
+                """{"type":"STOP","name":"La Rochelle","id":"juilly","lat":49.010567,"lon":2.7011826,"score":-22.1,"tokens":[],"areas":[]}"""
+        val motis = MockMotis { request ->
+            when (request.url.encodedPath) {
+                "/api/v1/geocode" ->
+                    respondJson(
+                        """[{"type":"STOP","name":"La Rochelle","id":"station","lat":46.152705,"lon":-1.145853,"score":-23.0,"tokens":[],"areas":[]},$city]""",
+                    )
+                "/api/v6/plan" -> respondJson(fixture("plan"))
+                else -> error("unexpected ${request.url}")
+            }
+        }
+        withMcpClient(motis) { client ->
+            val result = client.callTool("plan_journey", mapOf("from" to "48.844,2.374", "to" to "La Rochelle"))
+
+            assertNotEquals(true, result.isError, result.text())
+            assertEquals("46.159732,-1.1515951", motis.request("/api/v6/plan").url.parameters["toPlace"])
+        }
+    }
+
+    @Test
     fun `plan_journey keeps a station named otherwise than the city`() {
         val motis = stationBeforeCityMotis("Strasbourg Port du Rhin")
         withMcpClient(motis) { client ->
