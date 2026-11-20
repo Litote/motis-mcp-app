@@ -914,12 +914,14 @@ describe("departures view at the stations of the other countries with a board of
       ]),
     );
 
+    // time, destination, operator over its product (the operator alone when it is the product), number, remarks
+    expect(text($("ol.adif-board .titulo"))).toBe("Salidas DEPARTURES");
     expect(rowsOf("adif-board")).toEqual([
-      "23:16 Barcelona-Sants+5 min Stop A AVE03143",
-      "05:50 Valenciacancelled OUIGO06231",
+      "23:16 Barcelona-Sants renfeAVE 03143 +5 min",
+      "05:50 Valencia ouigo 06231 cancelled",
       "06:04 Parla C4a",
     ]);
-    expect([...document.querySelectorAll("ol.adif-board .producto")].map((p) => p.className)).toEqual(["producto renfe", "producto ouigo"]);
+    expect([...document.querySelectorAll("ol.adif-board .operador")].map((p) => p.className)).toEqual(["operador renfe", "operador ouigo"]);
   });
 
   it("shows the board of a Belgian station like the screens of the SNCB", async () => {
