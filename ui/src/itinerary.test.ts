@@ -92,6 +92,24 @@ describe("itinerary view", () => {
     expect(app.callServerTool).toHaveBeenCalledOnce();
   });
 
+  it("plans the journey again leaving now, and tells the model", async () => {
+    const app = await loadView("itinerary");
+    await app.toolResult({ from: "a", to: "b", time: "2026-10-12T08:00:00Z", arriveBy: true, maxTransfers: 1, pageCursor: "OLD" }, journey());
+    expect($("#refresh").hidden).toBe(false);
+    app.answer(journey());
+
+    $("#refresh").click();
+    await flush();
+
+    expect(app.callServerTool).toHaveBeenLastCalledWith({ name: "plan_journey", arguments: { from: "a", to: "b", maxTransfers: 1 } });
+    const options = $<HTMLFormElement>("#options").elements;
+    expect((options.namedItem("time") as HTMLInputElement).value).toBe("");
+    expect((options.namedItem("arriveBy") as RadioNodeList).value).toBe("false");
+    expect(app.updateModelContext.mock.lastCall![0].content[0].text).toMatch(
+      /^The user refreshed the journey planner view for now: plan_journey was called again with \{"from":"a","to":"b","maxTransfers":1\}/,
+    );
+  });
+
   it("reports a failed page", async () => {
     const app = await loadView("itinerary");
     await app.toolResult({}, journey());

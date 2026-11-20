@@ -117,7 +117,23 @@ const app = startView("MOTIS journey planner", {
       if (journey && selected >= 0) select(selected, false);
     });
   },
+  refresh,
 });
+
+/** Plans the journey again, leaving now: the time asked (a departure or an arrival) is left out. */
+async function refresh(): Promise<void> {
+  const { time: _time, arriveBy: _arriveBy, pageCursor: _pageCursor, ...rest } = planArgs;
+  const args: Args = {
+    ...rest,
+    from: planArgs.from ?? (journey ? `${journey.from.lat},${journey.from.lon}` : undefined),
+    to: planArgs.to ?? (journey ? `${journey.to.lat},${journey.to.lon}` : undefined),
+  };
+  const { data, text } = await callToolResult<JourneyResult>(app, "plan_journey", args);
+  planArgs = args;
+  render(data);
+  fillOptions(planArgs);
+  await updateModelContext(app, `The user refreshed the journey planner view for now: plan_journey was called again with ${JSON.stringify(args)}.\n${text}`);
+}
 
 /** Name of a place: the ends of a journey given as coordinates, named `START` and `END` by MOTIS, are translated. */
 function placeName(place: PlaceDto): string {

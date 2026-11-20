@@ -6,6 +6,7 @@
   "toolFailed": "Falha em {name}",
   "noData": "{name}: sem dados",
   "toggleFullscreen": "Tela cheia",
+  "refresh": "Atualizar para o horário atual",
   "earlier": "Antes",
   "later": "Depois",
   "back": "Voltar",

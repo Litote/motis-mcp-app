@@ -6,6 +6,7 @@
   "toolFailed": "{name} mislykkedes",
   "noData": "{name}: ingen data",
   "toggleFullscreen": "Fuld skærm",
+  "refresh": "Opdater til det aktuelle tidspunkt",
   "earlier": "Tidligere",
   "later": "Senere",
   "back": "Tilbage",

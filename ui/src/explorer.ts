@@ -1,6 +1,6 @@
 // Map explorer: stops and routes of an area (explore_area), a route (route_details), an isochrone (reachability).
 import L from "leaflet";
-import { callTool, startView } from "./shared/app";
+import { callTool, showRefresh, startView, type Args } from "./shared/app";
 import { esc, lineBadge, modeColor, modeLabel, time } from "./shared/format";
 import { t } from "./shared/i18n";
 import { arrowLeft } from "./shared/icons";
@@ -33,15 +33,36 @@ const layer = L.featureGroup().addTo(map);
 const history: ExplorerData[] = [];
 let current: ExplorerData | null = null;
 
+/** Arguments of the reachability call shown, for the refresh. */
+let reachabilityArgs: Args = {};
+
 const app = startView("MOTIS map explorer", {
-  render: (data) => show(data as unknown as ExplorerData, false),
+  render: (data, args) => {
+    if (data.kind === "reachability") reachabilityArgs = args;
+    show(data as unknown as ExplorerData, false);
+  },
   themeChanged: setTheme,
+  refresh,
 });
+
+/**
+ * Computes the reachable places again from now (the direction asked kept): the stops and routes of an area do not
+ * change with time, they have no refresh.
+ */
+async function refresh(): Promise<void> {
+  if (current?.kind !== "reachability") return;
+  const { time: _time, ...rest } = reachabilityArgs;
+  const args = { ...rest, place: rest.place ?? `${current.origin.lat},${current.origin.lon}` };
+  const data = await callTool<ReachabilityResult>(app, "reachability", args);
+  reachabilityArgs = args;
+  if (current?.kind === "reachability") show(data, false);
+}
 
 function show(data: ExplorerData, push: boolean): void {
   if (push && current) history.push(current);
   current = data;
   back.hidden = history.length === 0;
+  showRefresh(data.kind === "reachability");
   layer.clearLayers();
   chips.innerHTML = "";
   legend.innerHTML = "";

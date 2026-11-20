@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { $, fixture, loadView } from "./test/host";
+import { $, fixture, flush, loadView } from "./test/host";
 import type { RentalsResult } from "./shared/types";
 
 const providers = () => [...document.querySelectorAll("label")].map((el) => el.textContent!.replace(/\s+/g, " ").trim());
@@ -15,6 +15,33 @@ describe("rentals view", () => {
       "Lime Paris Proper bike · 0 st. · 1 veh. · 5556 in its whole area",
       "Paris bike · 2 st. · 0 veh.",
     ]);
+  });
+
+  it("refreshes the vehicles available, the providers hidden and the item selected kept", async () => {
+    const app = await loadView("rentals");
+    await app.toolResult({ place: "Châtelet", radiusKm: 1.5 }, fixture("rentals"));
+    const checkbox = () => document.querySelector<HTMLInputElement>("input[data-provider='fr-gbfs-paris-1']")!;
+    checkbox().checked = false;
+    checkbox().dispatchEvent(new Event("change", { bubbles: true }));
+    $("#nearby li[data-key='station:6245']").click();
+    app.answer(fixture("rentals"));
+
+    $("#refresh").click();
+    await flush();
+
+    expect(app.callServerTool).toHaveBeenLastCalledWith({ name: "rentals", arguments: { place: "Châtelet", radiusKm: 1.5 } });
+    expect(checkbox().checked).toBe(false);
+    expect($("#nearby li.selected").dataset.key).toBe("station:6245");
+  });
+
+  it("refreshes the area of the result when the arguments of the call are unknown", async () => {
+    const app = await loadView("rentals");
+    const data = fixture<RentalsResult>("rentals");
+    await app.toolResult({}, data);
+    app.answer(data);
+    $("#refresh").click();
+    await flush();
+    expect(app.callServerTool).toHaveBeenLastCalledWith({ name: "rentals", arguments: data.bbox });
   });
 
   it("hides and shows a provider", async () => {

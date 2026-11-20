@@ -1,6 +1,6 @@
 // Shared mobility (rentals): providers, stations and free-floating vehicles on a map.
 import L from "leaflet";
-import { startView } from "./shared/app";
+import { callTool, startView, type Args } from "./shared/app";
 import { distance, esc } from "./shared/format";
 import { t, tOptional } from "./shared/i18n";
 import { createMap, fit } from "./shared/map";
@@ -46,15 +46,30 @@ const markers = new Map<string, L.CircleMarker>();
 /** Key of the item of the nearby list shown on the map. */
 let selectedKey: string | null = null;
 
-startView("MOTIS shared mobility", {
-  render: (result) => {
+/** Arguments of the rentals call, for the refresh. */
+let rentalsArgs: Args = {};
+
+const app = startView("MOTIS shared mobility", {
+  render: (result, args) => {
     data = result as unknown as RentalsResult;
+    rentalsArgs = args;
     hidden.clear();
     selectedKey = null;
     render(true);
   },
   themeChanged: setTheme,
+  refresh,
 });
+
+/**
+ * Loads again the vehicles available in the area, the map, the providers hidden and the item selected left as they
+ * are. The area of the result when the arguments of the call are unknown.
+ */
+async function refresh(): Promise<void> {
+  const args = Object.keys(rentalsArgs).length || !data?.bbox ? rentalsArgs : { ...data.bbox };
+  data = await callTool<RentalsResult>(app, "rentals", args);
+  render(false);
+}
 
 function colors(result: RentalsResult): Map<string, string> {
   return new Map(result.providers.map((p, i) => [p.id, p.color ?? PALETTE[i % PALETTE.length]]));

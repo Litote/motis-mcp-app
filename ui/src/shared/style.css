@@ -257,6 +257,11 @@ button.icon {
   padding: 0;
 }
 
+/* refresh of the view: its icon turns while the view loads again */
+#refresh[aria-busy="true"] .icon {
+  animation: spin 0.8s linear infinite;
+}
+
 /* buttons side by side as one control (earlier | later) */
 .button-group {
   display: inline-flex;

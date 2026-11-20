@@ -377,6 +377,69 @@ describe("departures view", () => {
     expect($("#status").dataset.kind).toBe("error");
   });
 
+  it("refreshes the board from now, on the first page of its direction", async () => {
+    const app = await loadView("departures");
+    expect($("#refresh").hidden).toBe(true);
+    await app.toolResult({ stopId: "S1", count: 3, time: "2026-10-12T08:00:00+02:00" }, board());
+    expect($("#refresh").hidden).toBe(false);
+    app.answer({ ...board(), arriveBy: true });
+    $("button[data-action=arrivals]").click();
+    await flush();
+    app.answer({ ...board(), arriveBy: true });
+    $("button[data-action=next]").click();
+    await flush();
+
+    let answer: (value: unknown) => void = () => undefined;
+    app.callServerTool.mockReturnValueOnce(new Promise((resolve) => (answer = resolve)));
+    $("#refresh").click();
+    expect($("#refresh").getAttribute("aria-busy")).toBe("true");
+    // one refresh at a time
+    $("#refresh").click();
+    expect(app.callServerTool).toHaveBeenCalledTimes(3);
+    expect(app.callServerTool).toHaveBeenLastCalledWith({ name: "departures", arguments: { stopId: "S1", count: 3, arriveBy: true } });
+
+    answer({ content: [], structuredContent: { ...board(), arriveBy: true, stopTimes: [] } });
+    await flush();
+    expect($("#refresh").hasAttribute("aria-busy")).toBe(false);
+    expect($("#content").textContent).toContain("No departure in this period.");
+
+    app.answer(new Error("MOTIS error: unknown stop"));
+    $("#refresh").click();
+    await flush();
+    expect($("#status").textContent).toBe("MOTIS error: unknown stop");
+    expect($("#refresh").hasAttribute("aria-busy")).toBe(false);
+  });
+
+  it("refreshes the trip shown in place of the board, the board kept to go back to", async () => {
+    const app = await loadView("departures");
+    await app.toolResult({ stopId: "S1" }, board());
+    const trip = fixture<TripResult>("trip");
+    app.answer(trip);
+    (document.querySelector("tr[data-index='0']") as HTMLElement).click();
+    await flush();
+
+    app.answer({ ...trip, itinerary: { ...trip.itinerary, legs: [{ ...trip.itinerary.legs[0], line: "TGV INOUI 6635" }] } });
+    $("#refresh").click();
+    await flush();
+
+    expect(app.callServerTool).toHaveBeenLastCalledWith({
+      name: "trip_details",
+      arguments: { tripId: "20261012_21:00_fr-horaires-sncf_FR:ServiceJourney::SN6633FERRE_12999392" },
+    });
+    expect($("#title").textContent).toBe("TGV INOUI 6635 → Lyon Perrache");
+    $("#back").click();
+    expect($("#title").textContent).toBe("Lyon Part Dieu");
+  });
+
+  it("refreshes a trip result with the arguments of its call", async () => {
+    const app = await loadView("departures");
+    await app.toolResult({ tripId: "T1", realTimeTripId: "T2" }, fixture("trip"));
+    app.answer(fixture("trip"));
+    $("#refresh").click();
+    await flush();
+    expect(app.callServerTool).toHaveBeenLastCalledWith({ name: "trip_details", arguments: { tripId: "T1", realTimeTripId: "T2" } });
+  });
+
   it("opens a trip from the board, and goes back", async () => {
     const app = await loadView("departures");
     await app.toolResult({ stopId: "S1" }, board());
@@ -644,6 +707,38 @@ describe("departures view", () => {
       await fullscreen(app, "inline");
       expect($("#title").textContent).toBe("TGV INOUI 6633 → Lyon Perrache");
       expect($("#back").hidden).toBe(false);
+
+      // the trip of the panel refreshed in place of the board
+      app.answer(trip);
+      $("#refresh").click();
+      await flush();
+      expect(app.callServerTool).toHaveBeenLastCalledWith({ name: "trip_details", arguments: { tripId: trip.tripId } });
+    });
+
+    it("refreshes both boards and the trip of the panel", async () => {
+      const app = await loadView("departures");
+      await app.toolResult({ stopId: "S1", time: "2026-10-12T08:00:00+02:00" }, board());
+      app.answer({ ...board(), arriveBy: true });
+      await fullscreen(app, "fullscreen");
+      const trip = { ...fixture<TripResult>("trip"), tripId: board().stopTimes[0].tripId };
+      app.answer(trip);
+      (columns()[0].querySelector("tr[data-index='0']") as HTMLElement).click();
+      await flush();
+      app.callServerTool.mockClear();
+
+      app.answer(board(), { ...board(), arriveBy: true }, trip);
+      $("#refresh").click();
+      await flush();
+
+      expect(app.callServerTool.mock.calls.map(([call]) => call)).toEqual([
+        { name: "departures", arguments: { stopId: "S1" } },
+        { name: "departures", arguments: { stopId: "S1", arriveBy: true } },
+        { name: "trip_details", arguments: { tripId: board().stopTimes[0].tripId } },
+      ]);
+      expect(columns()).toHaveLength(2);
+      expect($(".trip-panel strong").textContent).toBe("TGV INOUI 6633 → Lyon Perrache");
+      // the clock before the buttons of the header
+      expect($(".clock").nextElementSibling?.id).toBe("refresh");
     });
 
     it("draws the other board again on its own when it comes after the board", async () => {
