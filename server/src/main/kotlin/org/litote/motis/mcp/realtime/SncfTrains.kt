@@ -15,11 +15,21 @@ internal object SncfTrains {
     /** `OCE` + 2 letters (SN: train, SA, EA, LO: TER and coaches) + train number, e.g. `OCESN5537F…`. */
     private val FEED_TRIP = Regex("""^OCE[A-Z]{2}0*(\d+)""")
 
+    /**
+     * NeTEx service journey, as the feeds may name the trips once the SNCF takes its sources from NeTEx and SIRI
+     * (announced for the API of the SNCF on 2026-11-24), e.g. `FR:ServiceJourney::SN6823FERRE_…`.
+     */
+    private val NETEX_FEED_TRIP = Regex("""ServiceJourney::[A-Z]{2}0*(\d+)""")
+
     fun isSncfTrip(tripId: String?): Boolean = tripId != null && TRANSITOUS_TRIP.containsMatchIn(tripId)
 
     /** Train number of a trip of Transitous, from its short name, without leading zeros; null when not a number. */
     fun number(tripShortName: String?): String? = tripShortName?.trimStart('0')?.takeIf { it.isNotEmpty() && it.all(Char::isDigit) }
 
-    /** Train number of a trip of the feeds of the SNCF, from its trip id; null when not an SNCF train. */
-    fun feedNumber(feedTripId: String): String? = FEED_TRIP.find(feedTripId)?.groupValues?.get(1)
+    /**
+     * Train number of a trip of the feeds of the SNCF, from its trip id (`OCE…` or NeTEx service journey), without
+     * leading zeros; null when not an SNCF train.
+     */
+    fun feedNumber(feedTripId: String): String? =
+        (FEED_TRIP.find(feedTripId) ?: NETEX_FEED_TRIP.find(feedTripId))?.groupValues?.get(1)
 }
