@@ -565,7 +565,7 @@ function placeTrains(): void {
   }
 }
 
-const ms = (iso?: string) => (iso ? Date.parse(iso) : NaN);
+const ms = (iso?: string) => (iso ? Date.parse(iso) : Number.NaN);
 
 /**
  * Where the train of the [stops] (of a leg) is at [now]: at a stop (between its arrival and its departure), or between
@@ -606,7 +606,8 @@ function boardStopOf(stops: PlaceDto[], from: BoardStop): PlaceDto | undefined {
   const near = stops.filter((s) => named(s) || distanceKm(s, from.place) < 1);
   const at = ms(from.scheduledTime);
   const onTime = near.find((s) => ms(from.arriveBy ? s.scheduledArrival : s.scheduledDeparture) === at);
-  return onTime ?? near.find(named) ?? near.sort((a, b) => distanceKm(a, from.place) - distanceKm(b, from.place))[0];
+  const nearest = near.reduce<PlaceDto | undefined>((best, s) => (!best || distanceKm(s, from.place) < distanceKm(best, from.place) ? s : best), undefined);
+  return onTime ?? near.find(named) ?? nearest;
 }
 
 /** Title and subtitle of a trip. */
