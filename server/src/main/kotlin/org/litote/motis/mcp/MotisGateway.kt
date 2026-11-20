@@ -239,7 +239,10 @@ class MotisGateway(
             ).take(RESOLUTION_CANDIDATES)
         // not a name: a stop id maybe (the geocoder does not search ids)
         val best = matches.firstOrNull() ?: return stop(input) ?: throw MotisToolException("No place found for \"$input\"")
-        val candidates = (listOf(best) + matches.drop(1).filter { it.isRivalOf(best) }).closeTo(near)
+        // a mere stop of that name (La Rochelle, a stop of Juilly) is not the intended place when the best match is a city
+        val bestIsCity = best.isCityIn(matches)
+        val candidates =
+            (listOf(best) + matches.drop(1).filter { it.isRivalOf(best) && (!bestIsCity || it.isCityIn(matches)) }).closeTo(near)
         if (candidates.size > 1) {
             throw MotisToolException(
                 candidates.joinToString(
@@ -299,7 +302,7 @@ class MotisGateway(
             isStop = isStop,
             area = dto.area,
             tz = match.tz,
-            isCity = match.type == LocationType.PLACE && match.category?.matches(CITY_CATEGORY) == true,
+            isCity = match.isCity(),
         )
     }
 
@@ -577,14 +580,19 @@ class MotisGateway(
         private fun Match.isRivalOf(best: Match): Boolean =
             abs(score - best.score) < AMBIGUOUS_SCORE_GAP && distanceKm(lat, lon, best.lat, best.lon) > DISTINCT_PLACES_KM
 
+        /** True when this match is a city, or the station of a city of the same name among the [matches]. */
+        private fun Match.isCityIn(matches: List<Match>): Boolean =
+            isCity() || matches.any { it.isCityOfStop(this) }
+
+        private fun Match.isCity(): Boolean = type == LocationType.PLACE && category?.matches(CITY_CATEGORY) == true
+
         /**
          * True when this match is the city of the same name as the [stop], nearby and as likely: "Strasbourg" is the
          * city, not its station, that the geocoder may put first.
          */
         private fun Match.isCityOfStop(stop: Match): Boolean =
             stop.type == LocationType.STOP &&
-                type == LocationType.PLACE &&
-                category?.matches(CITY_CATEGORY) == true &&
+                isCity() &&
                 normalizeName(name) == normalizeName(stop.name) &&
                 abs(score - stop.score) < AMBIGUOUS_SCORE_GAP &&
                 distanceKm(lat, lon, stop.lat, stop.lon) <= DISTINCT_PLACES_KM
