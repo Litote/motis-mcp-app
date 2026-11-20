@@ -27,10 +27,10 @@ function sncfBoard(): DeparturesResult {
 
 const data = () => sncfBoard();
 
-/** The same board in a station of a country without a board of its own (Switzerland): the generic board. */
+/** The same board in a station of a country without a board of its own (Austria): the generic board. */
 function board(): DeparturesResult {
   const data = sncfBoard();
-  data.stop.tz = "Europe/Zurich";
+  data.stop.tz = "Europe/Vienna";
   return data;
 }
 
@@ -936,6 +936,45 @@ describe("departures view at the stations of the other countries with a board of
       "23:16 IC2812 Liège-Guillemins+5' Stop A 12",
       "05:50 EST9126 London St. Pancras Int.cancelled",
       "06:04 S1 Anvers-Central",
+    ]);
+  });
+
+  it("shows the board of a Swiss station like the boards of the SBB", async () => {
+    const app = await loadView("departures");
+    await app.toolResult(
+      { stopId: "S1" },
+      countryBoard("Europe/Zurich", "Zürich HB", [
+        { mode: "LONG_DISTANCE", line: "IC 727", trainNumber: "727", agency: "Schweizerische Bundesbahnen SBB", headsign: "St. Gallen", track: "32" },
+        { mode: "REGIONAL_RAIL", line: "IR36", trainNumber: "2068", agency: "Schweizerische Bundesbahnen SBB", headsign: "Basel SBB", track: "16" },
+        { mode: "SUBURBAN", line: "S12", trainNumber: "19252", agency: "Schweizerische Bundesbahnen SBB", headsign: "Brugg AG", track: "41/42" },
+      ]),
+    );
+
+    // the number of a train named by its category only; the long-distance trains in red
+    expect(rowsOf("sbb-board")).toEqual([
+      "23:16 IC727 St. Gallen+5' Stop A 32",
+      "05:50 IR36 Basel SBBcancelled 16",
+      "06:04 S12 Brugg AG 41/42",
+    ]);
+    expect([...document.querySelectorAll("ol.sbb-board .piktogramm")].map((p) => p.classList.contains("fern"))).toEqual([true, false, false]);
+  });
+
+  it("shows the board of a Dutch station like the screens of the NS", async () => {
+    const app = await loadView("departures");
+    await app.toolResult(
+      { stopId: "S1" },
+      countryBoard("Europe/Amsterdam", "Amsterdam Centraal", [
+        { mode: "HIGHSPEED_RAIL", line: "ICE 127", trainNumber: "127", agency: "NS International", headsign: "Frankfurt (M) Hbf", track: "2b" },
+        { mode: "REGIONAL_RAIL", line: "Intercity", trainNumber: "2145", agency: "NS", headsign: "Den Haag Centraal", track: "2a" },
+        { mode: "REGIONAL_RAIL", line: "Sprinter", trainNumber: "4053", agency: "NS", headsign: "Rotterdam Centraal", track: "10b" },
+      ]),
+    );
+
+    // the delay next to the time, the type of train and its operator
+    expect(rowsOf("ns-board")).toEqual([
+      "23:16+5 Frankfurt (M) Hbf Stop A 2b ICENS International",
+      "05:50 Den Haag Centraalcancelled 2a IntercityNS",
+      "06:04 Rotterdam Centraal 10b SprinterNS",
     ]);
   });
 
