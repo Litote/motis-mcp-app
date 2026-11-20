@@ -20,7 +20,8 @@ function product(st: StopTimeDto): string {
   const number = tr.number?.replace(/^0+(?=\d)/, "");
   // a bare category ("ICE"): named by the train number
   if (number && /^[A-Za-z]+$/.test(tr.category)) return `<strong>${esc(tr.category)} ${esc(number)}</strong>`;
-  return `<strong>${esc(spaced(tr.category))}</strong>${number ? `<span class="nummer">${esc(number)}</span>` : ""}`;
+  const numberSpan = number ? `<span class="nummer">${esc(number)}</span>` : "";
+  return `<strong>${esc(spaced(tr.category))}</strong>${numberSpan}`;
 }
 
 function row({ st, index, arriveBy, tz, classes, alertMark, alertLine, markTheoretical }: BoardRow): string {

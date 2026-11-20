@@ -43,13 +43,20 @@ export const railwayStationIn = (tz: string) => (data: DeparturesResult) =>
 /** Delay of a departure in minutes, in real time; 0 without it. */
 export const delayOf = (st: StopTimeDto) => (st.realTime ? delayMinutes(st.time, st.scheduledTime) : 0);
 
+/** Digits at the end of [value], if any ("2229" of "RE_2 - 2229"); no regular expression: a backtracking one is slow. */
+function trailingDigits(value?: string): string | undefined {
+  const text = value?.trimEnd() ?? "";
+  let start = text.length;
+  while (start > 0 && text[start - 1] >= "0" && text[start - 1] <= "9") start--;
+  return start < text.length ? text.slice(start) : undefined;
+}
+
 /**
  * Category and number of a train: "ICE" and "546" for the line "ICE 546", the line ("RE2", "C4a") when it is not
  * followed by the number. The number of some feeds has the category or the line ("ICE 546", "RE_2 - 2229"): its digits.
  */
 export function trainName(st: StopTimeDto): { category: string; number?: string } | null {
-  const number = st.trainNumber?.match(/(\d+)\s*$/)?.[1];
-  const tr = train(st.mode, st.line, st.agency, number);
+  const tr = train(st.mode, st.line, st.agency, trailingDigits(st.trainNumber));
   return tr ? { category: tr.brand, number: tr.number } : null;
 }
 

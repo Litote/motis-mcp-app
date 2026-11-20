@@ -6,11 +6,14 @@ import { RAIL_MODES } from "../shared/sncf";
 import type { StopTimeDto } from "../shared/types";
 import { delayOf, railwayStationIn, theoreticalMark, trainName, tripEnd, type BoardRow, type CountryBoard } from "./row";
 
+/** Operators with a color of their own (class of the product). */
+const OPERATORS = ["renfe", "ouigo", "iryo"];
+
 /** Product of a train ("AVE", "Alvia"...) on the color of its operator, and its number; the badge of a commuter line. */
 function tren(st: StopTimeDto): string {
   const tr = trainName(st);
   if (!tr?.number) return lineBadge(st.mode, st.line, st.routeColor, st.routeTextColor, st.agency);
-  const operator = /renfe/i.test(st.agency) ? "renfe" : /ouigo/i.test(st.agency) ? "ouigo" : /iryo/i.test(st.agency) ? "iryo" : "";
+  const operator = OPERATORS.find((name) => st.agency.toLowerCase().includes(name)) ?? "";
   return `<span class="producto ${operator}">${esc(tr.category)}</span><span class="numero">${esc(tr.number)}</span>`;
 }
 
