@@ -24,6 +24,7 @@
   "departures.expected": "verwacht om {time}",
   "departures.delay": "+{minutes} min",
   "departures.cancelled": "rijdt niet",
+  "departures.onTime": "op tijd",
   "departures.none": "Geen vertrek in deze periode.",
   "departures.backToBoard": "Terug naar het vertrekbord",
   "departures.trainHere": "Huidige positie van de trein",

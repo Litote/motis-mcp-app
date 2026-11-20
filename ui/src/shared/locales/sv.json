@@ -24,6 +24,7 @@
   "departures.expected": "beräknad {time}",
   "departures.delay": "+{minutes} min",
   "departures.cancelled": "inställd",
+  "departures.onTime": "i tid",
   "departures.none": "Ingen avgång under denna period.",
   "departures.backToBoard": "Tillbaka till tavlan",
   "departures.trainHere": "Tågets nuvarande position",

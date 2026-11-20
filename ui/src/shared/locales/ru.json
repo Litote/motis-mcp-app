@@ -26,6 +26,7 @@
   "departures.expected": "ожидается в {time}",
   "departures.delay": "+{minutes} мин",
   "departures.cancelled": "отменён",
+  "departures.onTime": "вовремя",
   "departures.none": "Нет отправлений в этот период.",
   "departures.backToBoard": "Назад к табло",
   "departures.trainHere": "Текущее положение поезда",

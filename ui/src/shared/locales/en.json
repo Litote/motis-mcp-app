@@ -24,6 +24,7 @@
   "departures.expected": "expected at {time}",
   "departures.delay": "+{minutes} min",
   "departures.cancelled": "cancelled",
+  "departures.onTime": "on time",
   "departures.none": "No departure in this period.",
   "departures.backToBoard": "Back to the board",
   "departures.trainHere": "Current position of the train",

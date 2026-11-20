@@ -26,6 +26,7 @@
   "departures.expected": "przewidywany o {time}",
   "departures.delay": "+{minutes} min",
   "departures.cancelled": "odwołany",
+  "departures.onTime": "o czasie",
   "departures.none": "Brak odjazdów w tym okresie.",
   "departures.backToBoard": "Powrót do tablicy",
   "departures.trainHere": "Aktualne położenie pociągu",

@@ -24,6 +24,7 @@
   "departures.expected": "várhatóan {time}",
   "departures.delay": "+{minutes} perc",
   "departures.cancelled": "törölve",
+  "departures.onTime": "időben",
   "departures.none": "Ebben az időszakban nincs indulás.",
   "departures.backToBoard": "Vissza a táblához",
   "departures.trainHere": "A vonat jelenlegi helyzete",

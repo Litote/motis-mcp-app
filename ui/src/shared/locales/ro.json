@@ -25,6 +25,7 @@
   "departures.expected": "estimat la {time}",
   "departures.delay": "+{minutes} min",
   "departures.cancelled": "anulat",
+  "departures.onTime": "la timp",
   "departures.none": "Nicio plecare în această perioadă.",
   "departures.backToBoard": "Înapoi la panou",
   "departures.trainHere": "Poziția actuală a trenului",

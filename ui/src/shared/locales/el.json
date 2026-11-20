@@ -24,6 +24,7 @@
   "departures.expected": "αναμένεται στις {time}",
   "departures.delay": "+{minutes} λεπ.",
   "departures.cancelled": "ακυρώθηκε",
+  "departures.onTime": "στην ώρα του",
   "departures.none": "Καμία αναχώρηση σε αυτό το διάστημα.",
   "departures.backToBoard": "Πίσω στον πίνακα",
   "departures.trainHere": "Τρέχουσα θέση του τρένου",
