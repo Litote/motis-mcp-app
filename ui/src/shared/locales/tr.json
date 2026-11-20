@@ -24,6 +24,7 @@
   "departures.expected": "beklenen {time}",
   "departures.delay": "+{minutes} dk",
   "departures.cancelled": "iptal",
+  "departures.onTime": "zamanında",
   "departures.none": "Bu dönemde kalkış yok.",
   "departures.backToBoard": "Tabloya dön",
   "departures.trainHere": "Trenin şu anki konumu",

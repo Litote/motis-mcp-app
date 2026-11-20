@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { $, FakeApp, fixture, flush, loadView } from "./test/host";
-import type { DeparturesResult, TripResult } from "./shared/types";
+import type { DeparturesResult, StopTimeDto, TripResult } from "./shared/types";
 
 /** Board of Lyon Part Dieu: the first train 3 min late on track 4, the second cancelled, the third on time. */
 function sncfBoard(): DeparturesResult {
@@ -27,10 +27,10 @@ function sncfBoard(): DeparturesResult {
 
 const data = () => sncfBoard();
 
-/** The same board in a station outside France: the generic board. */
+/** The same board in a station of a country without a board of its own (Switzerland): the generic board. */
 function board(): DeparturesResult {
   const data = sncfBoard();
-  data.stop.tz = "Europe/Brussels";
+  data.stop.tz = "Europe/Zurich";
   return data;
 }
 
@@ -771,3 +771,190 @@ describe("departures view in French", () => {
   });
 });
 
+
+describe("departures view at a German station", () => {
+  /** Board of Berlin Hbf: an ICE 3 min late on track 6, a cancelled RE 20, an S-Bahn, and a bus. */
+  function dbBoard(): DeparturesResult {
+    const data = fixture<DeparturesResult>("departures");
+    data.stop = { ...data.stop, name: "Berlin Hbf", stopId: "de:11000:900003200", tz: "Europe/Berlin" };
+    const [first, second, third] = data.stopTimes;
+    data.stopTimes = [
+      {
+        ...first,
+        line: "ICE 546",
+        agency: "DB Fernverkehr AG",
+        // with its category, as in the feed of the DB
+        trainNumber: "ICE 546",
+        realTime: true,
+        time: "2026-10-12T21:19:00Z",
+        track: "6",
+        headsign: "Köln Hbf",
+        stops: [
+          { name: "Berlin-Spandau", time: "2026-10-12T21:30:00Z" },
+          { name: "Köln Hbf", time: "2026-10-13T01:46:00Z" },
+        ],
+      },
+      { ...second, mode: "REGIONAL_RAIL", line: "RE20", agency: "DB Regio AG Nordost", trainNumber: "018516", cancelled: true, track: "1", headsign: "Lübbenau, Bahnhof" },
+      { ...third, mode: "SUBURBAN", line: "S3", agency: "S-Bahn Berlin GmbH", trainNumber: "3102", routeColor: "0066ad", track: "16", headsign: "S Spandau Bhf (Berlin)" },
+      { ...third, mode: "BUS", line: "M41", agency: "Berliner Verkehrsbetriebe", tripId: "bus-m41", headsign: "Sonnenallee/Baumschulenstr.", track: "Pos. 2" },
+    ];
+    return data;
+  }
+
+  const trains = () => [...document.querySelectorAll<HTMLElement>("ol.db-board li.train")];
+
+  it("shows the board of a German station like the timetables posted at its stations", async () => {
+    const app = await loadView("departures");
+    await app.toolResult({ stopId: "S1" }, dbBoard());
+
+    expect(document.querySelector("ol.sncf-board")).toBeNull();
+    expect($("ol.db-board").classList.contains("arrivals")).toBe(false);
+    expect(trains().map(text)).toEqual([
+      "23:16 ICE 546 Köln Hbf 03:46+3 min Berlin-Spandau 23:30 6",
+      "05:50 RE 2018516 Lübbenau, Bahnhofcancelled 1",
+      "06:04 S3 S Spandau Bhf (Berlin)scheduled 16",
+    ]);
+    // a regional line apart from its train number, without its leading zeros
+    expect(trains()[1].querySelector(".nummer")!.textContent).toBe("18516");
+    // the long-distance trains in red
+    expect(trains().map((li) => li.classList.contains("fern"))).toEqual([true, false, false]);
+    expect(trains()[1].classList.contains("deleted")).toBe(true);
+    expect(trains()[0].querySelector(".verspaetung")!.getAttribute("title")).toBe("expected at 23:19");
+    // the bus below the board, on the generic one
+    expect($("h3").textContent).toBe("Other lines");
+    expect(document.querySelector("tr[data-index='3']")).not.toBeNull();
+
+    app.answer(fixture<TripResult>("trip"));
+    trains()[2].click();
+    await flush();
+    expect(app.callServerTool).toHaveBeenLastCalledWith({ name: "trip_details", arguments: { tripId: dbBoard().stopTimes[2].tripId } });
+  });
+
+  it("shows the arrivals of a German station on a white timetable, with their origin", async () => {
+    const app = await loadView("departures");
+    const data = dbBoard();
+    data.arriveBy = true;
+    data.stopTimes[0].stops = [
+      { name: "Köln Hbf", time: "2026-10-12T17:13:00Z" },
+      { name: "Hannover Hbf", time: "2026-10-12T19:31:00Z" },
+    ];
+    await app.toolResult({ stopId: "S1", arriveBy: true }, data);
+
+    expect($("ol.db-board").classList.contains("arrivals")).toBe(true);
+    expect(text(trains()[0])).toBe("23:16 ICE 546 Köln Hbf 19:13+3 min Hannover Hbf 21:31 6");
+  });
+
+  it("shows only the trains of the later departures of a German station with other lines", async () => {
+    const app = await loadView("departures");
+    await app.toolResult({ stopId: "S1" }, dbBoard());
+
+    app.answer(dbBoard());
+    $("button[data-action=next]").click();
+    await flush();
+    expect(app.callServerTool).toHaveBeenLastCalledWith({ name: "departures", arguments: expect.objectContaining({ modes: expect.arrayContaining(["SUBURBAN"]) }) });
+  });
+
+  it("keeps the generic board at a German stop without trains", async () => {
+    const app = await loadView("departures");
+    const data = dbBoard();
+    data.stopTimes.forEach((st) => (st.mode = "BUS"));
+    await app.toolResult({ stopId: "S1" }, data);
+
+    expect(document.querySelector("ol.db-board")).toBeNull();
+    expect(document.querySelectorAll("tr[data-index]")).toHaveLength(4);
+  });
+});
+
+describe("departures view at the stations of the other countries with a board of their own", () => {
+  /** Board of a station in [tz]: a long-distance train 5 min late, a cancelled one, a commuter line, and a bus. */
+  function countryBoard(tz: string, name: string, trains: Partial<StopTimeDto>[]): DeparturesResult {
+    const data = fixture<DeparturesResult>("departures");
+    data.stop = { ...data.stop, name, tz };
+    const [first, second, third] = data.stopTimes;
+    data.stopTimes = [
+      { ...first, ...trains[0], realTime: true, time: "2026-10-12T21:21:00Z", stops: [{ name: "Stop A", time: "2026-10-12T21:40:00Z" }, { name: trains[0].headsign!, time: "2026-10-12T23:00:00Z" }] },
+      { ...second, ...trains[1], cancelled: true },
+      { ...third, ...trains[2], realTime: true },
+      { ...third, mode: "BUS", line: "42", agency: "Bus", tripId: "bus-42", headsign: "Somewhere" },
+    ];
+    return data;
+  }
+
+  const rowsOf = (board: string) => [...document.querySelectorAll<HTMLElement>(`ol.${board} li.train`)].map(text);
+
+  it("shows the board of an Italian station like the monitors of RFI", async () => {
+    const app = await loadView("departures");
+    await app.toolResult(
+      { stopId: "S1" },
+      countryBoard("Europe/Rome", "Roma Termini", [
+        { mode: "HIGHSPEED_RAIL", line: "FR 9540", trainNumber: "9540", agency: "TRENITALIA", routeColor: "#c8102e", headsign: "MILANO CENTRALE", track: "8" },
+        { mode: "REGIONAL_RAIL", line: "RE2", trainNumber: "RE_2 - 2229", agency: "Trenord", routeColor: "#e40314", headsign: "Bergamo", track: "20 BIS" },
+        { mode: "SUBURBAN", line: "S5", agency: "Trenord", headsign: "Treviglio" },
+      ]),
+    );
+
+    expect(rowsOf("rfi-board")).toEqual([
+      "FR9540 MILANO CENTRALE Stop A 23:40 23:16 5' 8",
+      "RE2229 Bergamo 05:50 cancelled 20 BIS",
+      "S5 Treviglio 06:04",
+    ]);
+    expect($("ol.rfi-board .categoria").getAttribute("style")).toContain("#c8102e");
+    expect(document.querySelector("tr[data-index='3']")).not.toBeNull();
+  });
+
+  it("shows the board of a Spanish station like the screens of Adif", async () => {
+    const app = await loadView("departures");
+    await app.toolResult(
+      { stopId: "S1" },
+      countryBoard("Europe/Madrid", "Madrid Puerta de Atocha", [
+        { mode: "HIGHSPEED_RAIL", line: "AVE 03143", trainNumber: "03143", agency: "RENFE OPERADORA", headsign: "Barcelona-Sants" },
+        { mode: "HIGHSPEED_RAIL", line: "OUIGO 06231", trainNumber: "06231", agency: "OUIGO ESPAÑA", headsign: "Valencia" },
+        { mode: "REGIONAL_RAIL", line: "C4a", agency: "Renfe Cercanias", routeColor: "#2c2a86", headsign: "Parla" },
+      ]),
+    );
+
+    expect(rowsOf("adif-board")).toEqual([
+      "23:16 Barcelona-Sants+5 min Stop A AVE03143",
+      "05:50 Valenciacancelled OUIGO06231",
+      "06:04 Parla C4a",
+    ]);
+    expect([...document.querySelectorAll("ol.adif-board .producto")].map((p) => p.className)).toEqual(["producto renfe", "producto ouigo"]);
+  });
+
+  it("shows the board of a Belgian station like the screens of the SNCB", async () => {
+    const app = await loadView("departures");
+    await app.toolResult(
+      { stopId: "S1" },
+      countryBoard("Europe/Brussels", "Bruxelles-Midi", [
+        { mode: "REGIONAL_RAIL", line: "IC 2812", trainNumber: "2812", agency: "NMBS/SNCB", headsign: "Liège-Guillemins", track: "12" },
+        { mode: "HIGHSPEED_RAIL", line: "EST 9126", trainNumber: "9126", agency: "Eurostar", headsign: "London St. Pancras Int." },
+        { mode: "SUBURBAN", line: "S1", trainNumber: "1763", agency: "NMBS/SNCB", routeColor: "#006033", headsign: "Anvers-Central" },
+      ]),
+    );
+
+    expect(rowsOf("sncb-board")).toEqual([
+      "23:16 IC2812 Liège-Guillemins+5' Stop A 12",
+      "05:50 EST9126 London St. Pancras Int.cancelled",
+      "06:04 S1 Anvers-Central",
+    ]);
+  });
+
+  it("shows the board of a British station like the dot-matrix boards of National Rail", async () => {
+    const app = await loadView("departures");
+    await app.toolResult(
+      { stopId: "S1" },
+      countryBoard("Europe/London", "London Kings Cross", [
+        { mode: "LONG_DISTANCE", line: "LNER", trainNumber: "GR232000", agency: "LNER", headsign: "Leeds", track: "5" },
+        { mode: "REGIONAL_RAIL", line: "GN221600", trainNumber: "GN221600", agency: "Great Northern", headsign: "Cambridge", track: "10" },
+        { mode: "SUBURBAN", line: "TL351900", trainNumber: "TL351900", agency: "Thameslink", headsign: "Brighton", track: "A" },
+      ]),
+    );
+
+    // in the time zone of London; the time it is expected at when late, "on time" in real time
+    expect(rowsOf("nr-board")).toEqual([
+      "22:16 Leeds Stop A LNER 5 22:21",
+      "04:50 Cambridge Great Northern 10 cancelled",
+      "05:04 Brighton Thameslink A on time",
+    ]);
+  });
+});

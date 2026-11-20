@@ -24,6 +24,7 @@
   "departures.expected": "arvioitu {time}",
   "departures.delay": "+{minutes} min",
   "departures.cancelled": "peruttu",
+  "departures.onTime": "ajallaan",
   "departures.none": "Ei lähtöjä tällä aikavälillä.",
   "departures.backToBoard": "Takaisin taululle",
   "departures.trainHere": "Junan nykyinen sijainti",

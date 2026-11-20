@@ -24,6 +24,7 @@
   "departures.expected": "forventet {time}",
   "departures.delay": "+{minutes} min.",
   "departures.cancelled": "aflyst",
+  "departures.onTime": "til tiden",
   "departures.none": "Ingen afgang i denne periode.",
   "departures.backToBoard": "Tilbage til tavlen",
   "departures.trainHere": "Togets aktuelle position",

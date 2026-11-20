@@ -4,7 +4,8 @@ import { day, delayMinutes, duration, esc, lineBadge, stopTimeHtml, time } from 
 import { t } from "./shared/i18n";
 import { alertBanner, alertLine, alertList, alertMark, alertsOf } from "./shared/alerts";
 import { arrowLeft, chevronLeft, chevronRight, trainFront } from "./shared/icons";
-import { RAIL_MODES, TRAIN_MODES, linePictogram, train } from "./shared/sncf";
+import { TRAIN_MODES, train } from "./shared/sncf";
+import { countryBoard, countryBoardsCss, theoreticalMark } from "./boards";
 import { inTab, stationTabs, type StationTab } from "./shared/stationTabs";
 import type { AlertDto, DeparturesResult, PlaceDto, StopTimeDto, TripResult } from "./shared/types";
 
@@ -139,9 +140,6 @@ function show(data: BoardData, push: boolean): void {
   else renderBoard(data);
 }
 
-/** A theoretical time (no real time) cannot be told from an on-time one: marked on a board mixing both. */
-const theoreticalMark = () => `<span class="muted theoretical" title="${t("departures.theoretical.title")}">${t("departures.theoretical")}</span>`;
-
 /**
  * Time with its delay: "08:12 +3" in red, or green when on time in real time. A theoretical time is followed by
  * [theoreticalMark] when [markTheoretical].
@@ -159,26 +157,6 @@ function timeCell(st: StopTimeDto, markTheoretical: boolean, tz?: string): strin
     `<span class="late" title="${t("departures.scheduled", { time: time(scheduled, tz) })}">${time(actual, tz)}</span>` +
     ` <span class="delay">${sign}${delay}</span> <div class="muted scheduled"><s>${time(scheduled, tz)}</s></div>`
   );
-}
-
-/** French railway stations get a board like the ones of the SNCF stations (and of Carto Tchoo): not the bus or metro stops. */
-function isFrenchStation(data: DeparturesResult): boolean {
-  return data.stop.tz === "Europe/Paris" && data.stopTimes.some((st) => RAIL_MODES.has(st.mode));
-}
-
-/** Trains and Île-de-France trams, on the SNCF board: the other lines of the station (buses, metros) are listed below it. */
-function onSncfBoard(st: StopTimeDto): boolean {
-  return RAIL_MODES.has(st.mode) || linePictogram(st.mode, st.line, st.agency) !== null;
-}
-
-/** Logo of the brand (or brand name) of a train, or pictogram / badge of a line. */
-function sncfOrigin(st: StopTimeDto): string {
-  const pictogram = linePictogram(st.mode, st.line, st.agency);
-  if (pictogram) return `<span class="sncf-line ${st.line.startsWith("T") ? "tram" : ""}">${pictogram}</span>`;
-  const tr = train(st.mode, st.line, st.agency, st.trainNumber);
-  if (tr?.logo) return tr.logo;
-  if (tr) return `<span class="brand">${esc(tr.brand)}</span>`;
-  return lineBadge(st.mode, st.line, st.routeColor, st.routeTextColor, st.agency);
 }
 
 /**
@@ -212,41 +190,6 @@ function rowAlerts(st: StopTimeDto, alerts: BoardAlerts): { mark: string; line: 
     mark: alertMark(alertsOf(alerts.table, indexes.filter((i) => !alerts.own.has(i)))),
     line: alertLine(alertsOf(alerts.table, indexes.filter((i) => alerts.own.has(i)))),
   };
-}
-
-function sncfRow(st: StopTimeDto, index: number, arriveBy: boolean, markTheoretical: boolean, tz: string | undefined, alerts: BoardAlerts): string {
-  const number = train(st.mode, st.line, st.agency, st.trainNumber)?.number;
-  // the end of the trip (origin of an arrival) is the big label: the intermediate stops are on the second line
-  const stops = arriveBy ? (st.stops ?? []).slice(1) : (st.stops ?? []).slice(0, -1);
-  const label = (arriveBy ? st.stops?.[0] : st.stops?.at(-1))?.name ?? st.headsign;
-  const via = stops.map((s) => `<span class="etape">${esc(s.name)} ${time(s.time, tz)}</span>`).join(`<span class="point"> • </span>`);
-  const delay = st.realTime ? delayMinutes(st.time, st.scheduledTime) : 0;
-  let status = "";
-  let state = "";
-  if (st.cancelled) {
-    status = `<span class="min deleted">${t("departures.cancelled")}</span>`;
-    state = "deleted";
-  } else if (delay > 0) {
-    status = `<span class="min" title="${t("departures.expected", { time: time(st.time, tz) })}">${t("departures.delay", { minutes: delay })}</span>`;
-    state = "delayed";
-  } else if (markTheoretical && !st.realTime) {
-    status = theoreticalMark();
-  }
-  const { mark, line } = rowAlerts(st, alerts);
-  return `
-    <li class="train ${state} ${pastClass(st)} ${openClass(st)}" data-index="${index}">
-      <div class="lines">
-        <div class="main-line">
-          <span class="origine">${sncfOrigin(st)}</span>
-          <span class="numero">${esc(number)}</span>
-          <span class="heure">${time(st.scheduledTime ?? st.time, tz)}</span>
-          <span class="station-label"><span>${esc(label)}</span>${mark}${status}</span>
-        </div>
-        <div class="second-line" title="${esc(stops.map((s) => s.name).join(" • "))}">${via}</div>
-        ${line}
-      </div>
-      <span class="platform ${st.track ? "" : "empty"}" title="${st.track ? t("track", { track: esc(st.track) }) : ""}">${esc(st.track)}</span>
-    </li>`;
 }
 
 /**
@@ -306,7 +249,7 @@ function renderBoard(data: DeparturesResult): void {
 const boardTracks = (count: number) =>
   [...Array.from({ length: count }, () => "minmax(0px, 1fr)"), ...(panelTripId ? ["minmax(260px, 340px)"] : [])].join(" ");
 
-/** Board of [data]: like the SNCF boards at a French station, else a generic one. */
+/** Board of [data]: like the ones of the railway stations of its country (see boards), else a generic one. */
 function boardHtml(data: DeparturesResult): string {
   const tz = data.stop.tz;
   const all = data.stopTimes.map((st, index) => ({ st, index }));
@@ -321,18 +264,25 @@ function boardHtml(data: DeparturesResult): string {
   const alerts: BoardAlerts = { table: data.alerts, own: new Set([...counts].filter(([, n]) => n === 1).map(([i]) => i)) };
   const shared = [...counts.keys()].filter((i) => !alerts.own.has(i)).filter((i) => data.alerts?.[i]);
   const note = alertBanner(alertsOf(data.alerts, shared), tz, shared.map((i) => alertTrains(data.stopTimes, i))) + theoreticalNote;
-  if (isFrenchStation(data)) {
-    // in the order of their scheduled times, shown on the board, as on the SNCF boards: a late train keeps its place
-    const trains = all.filter(({ st }) => onSncfBoard(st)).sort((a, b) => scheduledAt(a.st) - scheduledAt(b.st));
-    const others = all.filter(({ st }) => !onSncfBoard(st));
-    const rows = trains.map(({ st, index }) => sncfRow(st, index, data.arriveBy, mark, tz, alerts)).join("");
+  const country = countryBoard(data);
+  if (country) {
+    // in the order of their scheduled times, shown on the board, as at the stations: a late train keeps its place
+    const trains = all.filter(({ st }) => country.onBoard(st)).sort((a, b) => scheduledAt(a.st) - scheduledAt(b.st));
+    const others = all.filter(({ st }) => !country.onBoard(st));
+    const rows = trains
+      .map(({ st, index }) => {
+        const { mark: alertMark, line: alertLine } = rowAlerts(st, alerts);
+        const classes = [pastClass(st), openClass(st)].filter(Boolean).join(" ");
+        return country.row({ st, index, arriveBy: data.arriveBy, tz, classes, alertMark, alertLine, markTheoretical: mark });
+      })
+      .join("");
     const otherLines = others.length ? `<h3>${t("departures.otherLines")}</h3>${boardTable(others, data.arriveBy, mark, tz, alerts)}` : "";
-    return `${note}<ol class="sncf-board ${data.arriveBy ? "arrivals" : ""}">${rows}</ol>${otherLines}`;
+    return `${note}<ol class="${country.className} ${data.arriveBy ? "arrivals" : ""}">${rows}</ol>${otherLines}`;
   }
   return all.length ? note + boardTable(all, data.arriveBy, mark, tz, alerts) : `<p class="muted">${t("departures.none")}</p>`;
 }
 
-/** Scheduled time of a departure in ms, its expected one without it (sorts the SNCF board). */
+/** Scheduled time of a departure in ms, its expected one without it (sorts the boards of the countries). */
 const scheduledAt = (st: StopTimeDto) => Date.parse(st.scheduledTime ?? st.time ?? "") || 0;
 
 /**
@@ -406,13 +356,20 @@ function renderToolbarAnd(data: DeparturesResult, boards: DeparturesResult[], bo
       if (boards.length > 1 && (action === "previous" || action === "next"))
         void loadOpposite(action === "previous" ? opposite?.previousPageCursor : opposite?.nextPageCursor);
       if (action === "previous") void reload({ pageCursor: data.previousPageCursor });
-      // later departures of a French station with other lines (buses, metros): its trains only, to fill the board
-      else if (action === "next" && !activeTab && isFrenchStation(data) && data.stopTimes.some((st) => !onSncfBoard(st)))
+      // later departures of a station with a board of its country and other lines (buses, metros): its trains only,
+      // to fill the board
+      else if (action === "next" && !activeTab && fillsBoard(data))
         void reload({ pageCursor: data.nextPageCursor, modes: TRAIN_MODES });
       else if (action === "next") void reload({ pageCursor: data.nextPageCursor });
       else void reload({ arriveBy: action === "arrivals", pageCursor: undefined });
     }),
   );
+}
+
+/** The station of [data] has a board of its country, and departures below it. */
+function fillsBoard(data: DeparturesResult): boolean {
+  const country = countryBoard(data);
+  return !!country && data.stopTimes.some((st) => !country.onBoard(st));
 }
 
 /** Number of the last board request: the answers of the previous ones (another tab clicked meanwhile) are ignored. */
@@ -676,7 +633,7 @@ style.textContent = `
   table.board tr.clickable { cursor: pointer; }
   table.board tr.clickable:hover td { background: var(--color-background-secondary); }
   /* the departures gone, before the time of the board: "earlier" pages back */
-  table.board tr.past td, ol.sncf-board .train.past > * { opacity: 0.5; }
+  table.board tr.past td { opacity: 0.5; }
   table.board td:first-child { white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
   table.board td:last-child { text-align: right; }
   table.board .scheduled { font-weight: 400; }
@@ -706,33 +663,6 @@ style.textContent = `
   .trip-panel ol.timeline .vehicle { box-shadow: 0 0 0 2px var(--color-background-secondary); }
   ol.timeline .vehicle svg { width: 15px; height: 15px; }
 
-  /* board of the French stations, with the colors of the SNCF boards (blue: departures, green: arrivals) */
-  ol.sncf-board { --bright: #356db9; --dark: #103e7d; list-style: none; margin: 0; padding: 0; background: var(--bright); color: #fff; border-radius: var(--border-radius-sm); overflow: hidden; }
-  ol.sncf-board.arrivals { --bright: #24842b; --dark: #0d5f13; }
-  ol.sncf-board .train { display: flex; align-items: center; gap: 8px; padding: 8px; cursor: pointer; }
-  ol.sncf-board .train:nth-child(2n) { background: var(--dark); }
-  ol.sncf-board .train.deleted { background: #b93535; }
-  ol.sncf-board .train:hover { filter: brightness(1.15); }
-  ol.sncf-board .lines { flex: 1; min-width: 0; }
-  ol.sncf-board .main-line { display: flex; align-items: center; min-width: 0; }
-  ol.sncf-board .origine { flex: none; width: 2.5rem; display: flex; align-items: center; font-size: 0.55rem; font-weight: 700; text-transform: uppercase; overflow: hidden; }
-  ol.sncf-board .origine > svg { max-width: 2.5rem; max-height: 1.25rem; width: 2.5rem; }
-  ol.sncf-board .origine .brand { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  ol.sncf-board .origine .sncf-line svg { width: 1.25rem; height: 1.25rem; }
-  ol.sncf-board .numero { flex: none; width: 3.5rem; padding-right: 0.5rem; text-align: right; font-size: 0.7rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  ol.sncf-board .heure { flex: none; width: 3rem; color: #fe0; font-weight: 900; font-variant-numeric: tabular-nums; }
-  ol.sncf-board .station-label { display: flex; align-items: center; gap: 0.25rem; min-width: 0; font-weight: 700; }
-  ol.sncf-board .station-label > span:first-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  ol.sncf-board .min { flex: none; padding: 0.1rem 0.25rem; border-radius: 4px; background: #ff7300; font-size: 0.7rem; font-weight: 700; white-space: nowrap; }
-  ol.sncf-board .min.deleted { background: #ff2e00; }
-  ol.sncf-board .theoretical { flex: none; color: #cdd5e0; font-size: 0.7rem; font-weight: 400; white-space: nowrap; }
-  ol.sncf-board .second-line { margin-top: 2px; font-size: 0.7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  ol.sncf-board .second-line:empty { display: none; }
-  ol.sncf-board .alert-line { color: #fe0; font-size: 0.7rem; }
-  ol.sncf-board .platform { flex: none; display: flex; align-items: center; justify-content: center; min-width: 2rem; height: 2rem; padding: 0 0.1rem; box-sizing: border-box; border: 2px solid #eee; border-radius: 4px; background: #eee; color: #333; font-size: 1.25rem; font-weight: 700; white-space: nowrap; }
-  ol.sncf-board .platform.empty { background: transparent; border-color: transparent; }
-  ol.sncf-board .deleted .platform { color: #ff5c5c; }
-  ol.sncf-board .train.open { box-shadow: inset 0 0 0 3px #fe0; }
   table.board tr.open td { background: var(--accent-soft); }
 
   /* fullscreen: the departures and the arrivals side by side, in bigger type, each scrolling on its own; the trip
@@ -749,10 +679,6 @@ style.textContent = `
   .trip-panel-head { display: flex; align-items: center; gap: 8px; }
   .trip-panel-head strong { flex: 1; min-width: 0; }
   .trip-panel ol.timeline .dot { background: var(--color-background-secondary); }
-  :root[data-display-mode="fullscreen"] ol.sncf-board { font-size: 17px; }
-  :root[data-display-mode="fullscreen"] ol.sncf-board .train { padding: 10px; }
-  :root[data-display-mode="fullscreen"] ol.sncf-board .heure { width: 3.6rem; font-size: 1.3em; }
-  :root[data-display-mode="fullscreen"] ol.sncf-board .platform { min-width: 2.5rem; height: 2.5rem; font-size: 1.5rem; }
   :root[data-display-mode="fullscreen"] table.board { font-size: 15px; }
   :root[data-display-mode="fullscreen"] .trip { overflow-y: auto; min-height: 0; }
   @media (max-width: 640px) {
@@ -761,5 +687,6 @@ style.textContent = `
     :root[data-display-mode="fullscreen"] .board-scroll { overflow: visible; }
     .trip-panel { order: -1; overflow: visible; }
   }
+  ${countryBoardsCss}
 `;
 document.head.appendChild(style);

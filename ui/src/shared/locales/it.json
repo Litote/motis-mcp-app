@@ -24,6 +24,7 @@
   "departures.expected": "atteso alle {time}",
   "departures.delay": "+{minutes} min",
   "departures.cancelled": "soppresso",
+  "departures.onTime": "in orario",
   "departures.none": "Nessuna partenza in questo periodo.",
   "departures.backToBoard": "Torna al tabellone",
   "departures.trainHere": "Posizione attuale del treno",
