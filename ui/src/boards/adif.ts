@@ -103,7 +103,7 @@ const css = `
 /** Spanish railway stations, not the bus or metro stops; the trains (with the Cercanías) on the board. */
 export const adifBoard: CountryBoard = {
   className: "adif-board",
-  matches: railwayStationIn("Europe/Madrid"),
+  matches: railwayStationIn("ES", "Europe/Madrid"),
   onBoard: (st) => RAIL_MODES.has(st.mode),
   row,
   header,

@@ -97,7 +97,7 @@ const css = `
 /** Italian railway stations, not the bus, tram or metro stops; the trains on the board. */
 export const rfiBoard: CountryBoard = {
   className: "rfi-board",
-  matches: railwayStationIn("Europe/Rome"),
+  matches: railwayStationIn("IT", "Europe/Rome"),
   onBoard: (st) => RAIL_MODES.has(st.mode),
   row,
   header,

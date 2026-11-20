@@ -152,7 +152,8 @@ private class DeparturesRequest(private val gateway: MotisGateway, private val a
     private suspend fun departures(stop: ResolvedPlace): DeparturesResult {
         // a time without offset is in the time zone of the stop
         val board = Board(args.instant("time") { stop.tz ?: gateway.stop(stop.id)?.tz })
-        return if (station) board.stationStopTimes(stop.id) else board.withNearbyTrains(stop.id)
+        val result = if (station) board.stationStopTimes(stop.id) else board.withNearbyTrains(stop.id)
+        return with(board) { result.withCountry() }
     }
 
     /** Stop times from [time], null for now. */
@@ -210,6 +211,10 @@ private class DeparturesRequest(private val gateway: MotisGateway, private val a
         /** Lines of the station of a board with trains. */
         private suspend fun DeparturesResult.withStationLines(id: String): DeparturesResult =
             if (!hasTrains()) this else copy(stationLines = stationLines(id).takeIf { it.isNotEmpty() })
+
+        /** The country of the station of a board with trains, which chooses the board of the view. */
+        suspend fun DeparturesResult.withCountry(): DeparturesResult =
+            if (!hasTrains()) this else copy(stop = stop.copy(country = gateway.country(stop.lat, stop.lon)))
 
         /** Trains on the board, or at its stop (its next ones may be buses and metros only, as at a big station). */
         private fun DeparturesResult.hasTrains(): Boolean =

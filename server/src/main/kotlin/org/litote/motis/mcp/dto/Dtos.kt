@@ -50,6 +50,11 @@ data class PlaceDto(
     val tz: String? = null,
     /** City or region of a place asked by name (ends of a journey, center of an area). */
     val area: String? = null,
+    /**
+     * Country of the railway station of a departures board (ISO 3166-1 alpha-2, e.g. "NL"), which chooses its board in
+     * the view: the time zone of a stop may be the one of a foreign operator (Amsterdam Centraal in Europe/Brussels).
+     */
+    val country: String? = null,
 )
 
 // --- search_places ---

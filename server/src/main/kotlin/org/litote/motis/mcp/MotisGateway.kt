@@ -159,6 +159,27 @@ class MotisGateway(
     internal val stationLines =
         TtlCache<Pair<String, List<String>?>, List<StationLineDto>>(maxSize = 500, ttl = 1.hours, timeSource) { it.isNotEmpty() }
 
+    /**
+     * Countries of the railway stations by coordinates (the same station in two feeds); not cached when unknown (a
+     * transient MOTIS failure).
+     */
+    private val countryCache = TtlCache<Pair<Double, Double>, String>(maxSize = 1000, ttl = 24.hours, timeSource) { it.isNotEmpty() }
+
+    /**
+     * Country (ISO 3166-1 alpha-2) of the place at [lat], [lon], from the geocoding of its coordinates: null when unknown,
+     * or when MOTIS fails (the board of a station is then chosen by its time zone).
+     */
+    suspend fun country(lat: Double, lon: Double): String? =
+        countryCache
+            .getOrPut(lat to lon) {
+                try {
+                    reverseGeocode(lat, lon, numResults = 1).firstOrNull()?.country.orEmpty()
+                } catch (e: MotisToolException) {
+                    logger.debug { "No country at $lat,$lon: ${e.message}" }
+                    ""
+                }
+            }.ifEmpty { null }
+
     suspend fun geocode(
         text: String,
         types: List<LocationType>? = null,

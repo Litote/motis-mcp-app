@@ -56,7 +56,7 @@ const css = `
 /** British railway stations, not the bus, tram or Underground stops; the trains on the board. */
 export const nationalRailBoard: CountryBoard = {
   className: "nr-board",
-  matches: railwayStationIn("Europe/London"),
+  matches: railwayStationIn("GB", "Europe/London"),
   onBoard: (st) => RAIL_MODES.has(st.mode),
   row,
   css,
