@@ -475,6 +475,72 @@ class MotisToolsTest {
         }
     }
 
+    /** Stop times of the fixture as buses of a stop of the IDFM feed with the [modes] given by MOTIS. */
+    private fun busStop(modes: List<String>): String {
+        val stopTimes = Json.parseToJsonElement(fixture("stoptimes")).jsonObject
+        val buses =
+            stopTimes.getValue("stopTimes").jsonArray.mapIndexed { i, st ->
+                JsonObject(
+                    st.jsonObject + mapOf(
+                        "mode" to JsonPrimitive("BUS"),
+                        "tripId" to JsonPrimitive("bus-$i"),
+                        "tripShortName" to JsonPrimitive(""),
+                        "routeShortName" to JsonPrimitive("91"),
+                        "displayName" to JsonPrimitive("91"),
+                    ),
+                )
+            }
+        val place =
+            JsonObject(
+                stopTimes.getValue("place").jsonObject + mapOf(
+                    "name" to JsonPrimitive("Gare Montparnasse"),
+                    "stopId" to JsonPrimitive("IDFM:71139"),
+                    "modes" to JsonArray(modes.map(::JsonPrimitive)),
+                ),
+            )
+        return JsonObject(stopTimes + mapOf("stopTimes" to JsonArray(buses), "place" to place)).toString()
+    }
+
+    @Test
+    fun `departures of a stop of a railway station with only buses and metros are merged with the trains around it`() {
+        // the IDFM stop "Gare Montparnasse": buses and metros, its trains at the SNCF stop 100 m away
+        val buses = busStop(listOf("REGIONAL_RAIL", "SUBWAY", "BUS"))
+        val motis =
+            MockMotis { request ->
+                if (request.url.encodedPath == "/api/v6/stoptimes" && request.url.parameters["radius"] == null) {
+                    respondJson(buses)
+                } else {
+                    respondJson(fixture(FIXTURES.getValue(request.url.encodedPath)))
+                }
+            }
+        withMcpClient(motis) { client ->
+            val result = client.callTool("departures", mapOf("stopId" to "IDFM:71139"))
+
+            assertNull(result.isError, result.text())
+            val data = result.data(DeparturesResult.serializer())
+            assertEquals(listOf("6633", "9852", "6602"), data.stopTimes.mapNotNull { it.trainNumber })
+            assertTrue(data.stopTimes.any { it.mode == "BUS" })
+            assertEquals("200", motis.requests.filter { it.url.encodedPath == "/api/v6/stoptimes" }[1].url.parameters["radius"])
+            assertNotNull(data.stationLines)
+        }
+    }
+
+    @Test
+    fun `departures of a bus stop do not look for the trains around it`() {
+        val buses = busStop(listOf("BUS"))
+        val motis =
+            MockMotis { request ->
+                respondJson(if (request.url.encodedPath == "/api/v6/stoptimes") buses else fixture(FIXTURES.getValue(request.url.encodedPath)))
+            }
+        withMcpClient(motis) { client ->
+            val result = client.callTool("departures", mapOf("stopId" to "IDFM:71139"))
+
+            assertNull(result.isError, result.text())
+            assertEquals(1, motis.requests.count { it.url.encodedPath == "/api/v6/stoptimes" })
+            assertNull(result.data(DeparturesResult.serializer()).stationLines)
+        }
+    }
+
     @Test
     fun `departures of a station without time zone are in the time zone of its stops`() {
         // Bruxelles-Midi of the SNCB: a parent station, without tz, its stops with it
