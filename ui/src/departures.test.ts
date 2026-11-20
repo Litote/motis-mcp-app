@@ -893,12 +893,13 @@ describe("departures view at the stations of the other countries with a board of
       ]),
     );
 
+    // brand, category, number, destination, time, delay, platform: the Frecce are high-speed trains, a line its agency
+    expect([...document.querySelectorAll("ol.rfi-board .intestazione > span")].map(text)).toEqual(["Impresa", "Categoria", "Treno", "Per", "Orario", "Ritardo", "Binario"]);
     expect(rowsOf("rfi-board")).toEqual([
-      "FR9540 MILANO CENTRALE Stop A 23:40 23:16 5' 8",
-      "RE2229 Bergamo 05:50 cancelled 20 BIS",
-      "S5 Treviglio 06:04",
+      "Frecciarossa AV 9540 MILANO CENTRALE 23:16 5 8",
+      "Trenord RE 2229 Bergamocancelled 05:50 20 BIS",
+      "Trenord S5 Treviglio 06:04",
     ]);
-    expect($("ol.rfi-board .categoria").getAttribute("style")).toContain("#c8102e");
     expect(document.querySelector("tr[data-index='3']")).not.toBeNull();
   });
 
@@ -950,13 +951,14 @@ describe("departures view at the stations of the other countries with a board of
       ]),
     );
 
-    // the number of a train named by its category only; the long-distance trains in red
+    // a line per train: category, time, the next stops then the destination, track, remark; red but for R and S
+    expect(text($("ol.sbb-board .kopf"))).toBe("Départ Abfahrt Partenza");
     expect(rowsOf("sbb-board")).toEqual([
-      "23:16 IC727 St. Gallen+5' Stop A 32",
-      "05:50 IR36 Basel SBBcancelled 16",
-      "06:04 S12 Brugg AG 41/42",
+      "IC 23:16 Stop ASt. Gallen 32 +5'",
+      "IR36 05:50 Basel SBB 16 cancelled",
+      "S12 06:04 Brugg AG 41/42",
     ]);
-    expect([...document.querySelectorAll("ol.sbb-board .piktogramm")].map((p) => p.classList.contains("fern"))).toEqual([true, false, false]);
+    expect([...document.querySelectorAll("ol.sbb-board .piktogramm")].map((p) => p.classList.contains("rot"))).toEqual([true, true, false]);
   });
 
   it("shows the board of a Dutch station like the screens of the NS", async () => {

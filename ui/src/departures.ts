@@ -277,7 +277,8 @@ function boardHtml(data: DeparturesResult): string {
       })
       .join("");
     const otherLines = others.length ? `<h3>${t("departures.otherLines")}</h3>${boardTable(others, data.arriveBy, mark, tz, alerts)}` : "";
-    return `${note}<ol class="${country.className} ${data.arriveBy ? "arrivals" : ""}">${rows}</ol>${otherLines}`;
+    const header = country.header?.(data.arriveBy) ?? "";
+    return `${note}<ol class="${country.className} ${data.arriveBy ? "arrivals" : ""}">${header}${rows}</ol>${otherLines}`;
   }
   return all.length ? note + boardTable(all, data.arriveBy, mark, tz, alerts) : `<p class="muted">${t("departures.none")}</p>`;
 }

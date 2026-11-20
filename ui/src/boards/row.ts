@@ -32,6 +32,8 @@ export interface CountryBoard {
   onBoard(st: StopTimeDto): boolean;
   /** `<li>` of a departure, with `data-index`. */
   row(row: BoardRow): string;
+  /** `<li>` heading the departures (or the arrivals), if any: its title, its column labels. */
+  header?(arriveBy: boolean): string;
   /** Style of the board. */
   css: string;
 }
