@@ -26,6 +26,7 @@
   "departures.cancelled": "fällt aus",
   "departures.none": "Keine Abfahrt in diesem Zeitraum.",
   "departures.backToBoard": "Zurück zur Anzeigetafel",
+  "departures.trainHere": "Aktuelle Position des Zuges",
   "departures.otherLines": "Weitere Linien",
   "departures.tabs": "Linien des Bahnhofs",
   "departures.tab.trains": "Züge",

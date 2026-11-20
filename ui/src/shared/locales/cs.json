@@ -27,6 +27,7 @@
   "departures.cancelled": "zrušeno",
   "departures.none": "V tomto období žádný odjezd.",
   "departures.backToBoard": "Zpět na tabuli",
+  "departures.trainHere": "Aktuální poloha vlaku",
   "departures.otherLines": "Další linky",
   "departures.tabs": "Linky stanice",
   "departures.tab.trains": "Vlaky",

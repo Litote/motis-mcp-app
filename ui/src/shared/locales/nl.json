@@ -26,6 +26,7 @@
   "departures.cancelled": "rijdt niet",
   "departures.none": "Geen vertrek in deze periode.",
   "departures.backToBoard": "Terug naar het vertrekbord",
+  "departures.trainHere": "Huidige positie van de trein",
   "departures.otherLines": "Andere lijnen",
   "departures.tabs": "Lijnen van het station",
   "departures.tab.trains": "Treinen",

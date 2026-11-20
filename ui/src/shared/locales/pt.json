@@ -26,6 +26,7 @@
   "departures.cancelled": "cancelado",
   "departures.none": "Nenhuma partida neste período.",
   "departures.backToBoard": "Voltar ao painel",
+  "departures.trainHere": "Posição atual do trem",
   "departures.otherLines": "Outras linhas",
   "departures.tabs": "Linhas da estação",
   "departures.tab.trains": "Trens",

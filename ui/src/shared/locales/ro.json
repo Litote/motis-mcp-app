@@ -27,6 +27,7 @@
   "departures.cancelled": "anulat",
   "departures.none": "Nicio plecare în această perioadă.",
   "departures.backToBoard": "Înapoi la panou",
+  "departures.trainHere": "Poziția actuală a trenului",
   "departures.otherLines": "Alte linii",
   "departures.tabs": "Liniile stației",
   "departures.tab.trains": "Trenuri",

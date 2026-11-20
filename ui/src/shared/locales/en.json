@@ -26,6 +26,7 @@
   "departures.cancelled": "cancelled",
   "departures.none": "No departure in this period.",
   "departures.backToBoard": "Back to the board",
+  "departures.trainHere": "Current position of the train",
   "departures.otherLines": "Other lines",
   "departures.tabs": "Lines of the station",
   "departures.tab.trains": "Trains",

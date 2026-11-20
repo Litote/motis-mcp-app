@@ -26,6 +26,7 @@
   "departures.cancelled": "inställd",
   "departures.none": "Ingen avgång under denna period.",
   "departures.backToBoard": "Tillbaka till tavlan",
+  "departures.trainHere": "Tågets nuvarande position",
   "departures.otherLines": "Andra linjer",
   "departures.tabs": "Stationens linjer",
   "departures.tab.trains": "Tåg",

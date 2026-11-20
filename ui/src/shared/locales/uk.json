@@ -28,6 +28,7 @@
   "departures.cancelled": "скасовано",
   "departures.none": "Немає відправлень у цей період.",
   "departures.backToBoard": "Назад до табло",
+  "departures.trainHere": "Поточне розташування поїзда",
   "departures.otherLines": "Інші лінії",
   "departures.tabs": "Лінії станції",
   "departures.tab.trains": "Потяги",

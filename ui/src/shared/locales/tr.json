@@ -26,6 +26,7 @@
   "departures.cancelled": "iptal",
   "departures.none": "Bu dönemde kalkış yok.",
   "departures.backToBoard": "Tabloya dön",
+  "departures.trainHere": "Trenin şu anki konumu",
   "departures.otherLines": "Diğer hatlar",
   "departures.tabs": "İstasyonun hatları",
   "departures.tab.trains": "Trenler",
