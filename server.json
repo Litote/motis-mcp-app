@@ -1,0 +1,35 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "org.litote/motis-mcp-app",
+  "title": "MOTIS explorer",
+  "description": "Public transport worldwide (Transitous): journeys, departure boards, real time, maps",
+  "version": "0.1.0",
+  "websiteUrl": "https://errance.litote.org",
+  "repository": {
+    "url": "https://github.com/Litote/motis-mcp-app",
+    "source": "github"
+  },
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://errance.litote.org/mcp"
+    }
+  ],
+  "packages": [
+    {
+      "registryType": "oci",
+      "identifier": "ghcr.io/litote/motis-mcp-app:0.1.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "MOTIS_APP_CONTACT",
+          "description": "E-mail address or website URL, required by the Transitous usage policy",
+          "isRequired": true,
+          "format": "string"
+        }
+      ]
+    }
+  ]
+}
