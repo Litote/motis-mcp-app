@@ -34,7 +34,8 @@ LABEL org.opencontainers.image.title="motis-mcp-app" \
       org.opencontainers.image.description="MCP App to explore the public transport data of a MOTIS server (Transitous)" \
       org.opencontainers.image.source="https://github.com/Litote/motis-mcp-app" \
       org.opencontainers.image.licenses="AGPL-3.0-only" \
-      org.opencontainers.image.version="$VERSION_NAME"
+      org.opencontainers.image.version="$VERSION_NAME" \
+      io.modelcontextprotocol.server.name="org.litote/motis-mcp-app"
 COPY --from=server /build/server/build/install/server /opt/motis-mcp-app
 USER nobody
 EXPOSE 3001
