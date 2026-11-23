@@ -60,13 +60,11 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up GraalVM CE 25
-        uses: graalvm/setup-graalvm@f70bc8032f90a104502824a54bcb94b6f01715bc # v1.6.8
+      # GraalVM CE 25 and Gradle
+      - name: Set up GraalVM and Gradle
+        uses: Litote/ci/.github/actions/setup-graalvm@fe7f5d3c7b0763dc89db8a8f90606284114ceb54 # v0.13.0
         with:
-          java-version: '25'
-          distribution: 'graalvm-community'
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          native-image-job-reports: 'false'
+          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
       # views (ui/) bundled by the Gradle build
       - name: Set up Node.js
@@ -76,12 +74,6 @@ jobs:
           cache: npm
           cache-dependency-path: ui/package-lock.json
 
-      - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
-        with:
-          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
-          build-scan-publish: false
-
       - name: Test
         run: ./gradlew test
 
@@ -90,10 +82,10 @@ jobs:
 
       # The zip must match the Terraform `architecture`: fail rather than deploy a function that cannot start
       - name: Check the executable is arm64
-        working-directory: lambda/build/native/nativeCompile
-        run: |
-          file bootstrap
-          file bootstrap | grep -q "ARM aarch64" || { echo "::error::bootstrap is not arm64"; exit 1; }
+        uses: Litote/ci/.github/actions/check-native-arch@fe7f5d3c7b0763dc89db8a8f90606284114ceb54 # v0.13.0
+        with:
+          working-directory: lambda/build/native/nativeCompile
+          binaries: bootstrap
 
       # Runs the executable in the Lambda runtime image, with MOTIS mocked: Transitous does not block the deployments
       - name: Smoke test in the Lambda runtime emulator
