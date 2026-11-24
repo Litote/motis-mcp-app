@@ -176,6 +176,14 @@ function fallbackFrom(answered: readonly string[], requested: string, fallbacks:
   return answered.some((m) => m !== requested && fallbacks.includes(m)) ? requested : undefined;
 }
 
+/**
+ * Id of a tool call that the provider sent without one: unique in the thread, as the views keep their context for the
+ * model by tool call id (setViewContext), and the history sent back to the model has one tool result per id.
+ */
+function fallbackToolCallId(): string {
+  return `call-${crypto.randomUUID()}`;
+}
+
 /** Adds a notice to [parts] when they have no text to show (e.g. reasoning only, or a stream closed by the provider). */
 function noAnswerNotice(parts: ThreadAssistantMessagePart[]): void {
   if (!parts.some((part) => part.type === "text" && part.text.trim())) {
@@ -205,17 +213,21 @@ export function createAgent(settings: AgentSettings): ChatModelAdapter {
       try {
         for (let step = 0; step < MAX_STEPS; step++) {
           let streamed: ThreadAssistantMessagePart[] = [];
+          // ids of the tool calls without one (some providers), by index: the same while streaming and once complete
+          const fallbackIds: string[] = [];
+          const withIds = (calls: ChatToolCall[]): ChatToolCall[] =>
+            calls
+              .map((call, i) => ({ ...call, id: call.id || (fallbackIds[i] ??= fallbackToolCallId()) }))
+              .filter((call) => call.function.name);
           const parts = (text: string, calls: ChatToolCall[]): ThreadAssistantMessagePart[] => [
             ...(text ? [{ type: "text" as const, text }] : []),
-            ...calls
-              .filter((call) => call.function.name)
-              .map((call, i) => ({
-                type: "tool-call" as const,
-                toolCallId: call.id || `call-${step}-${i}`,
-                toolName: call.function.name,
-                args: parseArguments(call.function.arguments),
-                argsText: call.function.arguments,
-              })),
+            ...withIds(calls).map((call) => ({
+              type: "tool-call" as const,
+              toolCallId: call.id,
+              toolName: call.function.name,
+              args: parseArguments(call.function.arguments),
+              argsText: call.function.arguments,
+            })),
           ];
           const updates: ThreadAssistantMessagePart[][] = [];
           let wake: (() => void) | undefined;
@@ -253,8 +265,8 @@ export function createAgent(settings: AgentSettings): ChatModelAdapter {
           }
           const result = await completion;
           addModel(result.model);
-          const calls = result.toolCalls.filter((call) => call.function.name);
-          if (!calls.length) {
+          const toolCalls = withIds(result.toolCalls);
+          if (!toolCalls.length) {
             done.push(...parts(result.text, []));
             noAnswerNotice(done);
             yield { content: done, status: { type: "complete", reason: "stop" }, metadata: metadata() };
@@ -267,7 +279,6 @@ export function createAgent(settings: AgentSettings): ChatModelAdapter {
             return;
           }
           // Executes the tool calls, then gives their results back to the model
-          const toolCalls = calls.map((call, i) => ({ ...call, id: call.id || `call-${step}-${i}` }));
           chat.push({ role: "assistant", content: result.text || null, tool_calls: toolCalls });
           const running = parts(result.text, toolCalls);
           yield { content: [...done, ...running], metadata: metadata() };

@@ -49,6 +49,16 @@ async function loadSandbox(iframe: HTMLIFrameElement, view: ViewResource): Promi
   await ready;
 }
 
+/** True for an absolute http(s) URL. */
+export function isWebLink(url: string): boolean {
+  try {
+    const { protocol } = new URL(url);
+    return protocol === "https:" || protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
 /** Display mode of a view, driven by the host (Close, Escape) or requested by the view (ui/request-display-mode). */
 interface DisplayMode {
   isFullscreen(): boolean;
@@ -97,6 +107,8 @@ function createBridge(
     return Promise.resolve({});
   };
   bridge.onopenlink = ({ url }) => {
+    // web links only: the views are not trusted (sandbox), a javascript: URL would run in the origin of the app
+    if (!isWebLink(url)) return Promise.resolve({ isError: true });
     window.open(url, "_blank", "noopener,noreferrer");
     return Promise.resolve({});
   };

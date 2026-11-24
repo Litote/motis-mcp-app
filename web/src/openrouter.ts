@@ -276,7 +276,7 @@ export async function streamChat(
   const state: ChatDelta = { text: "", toolCalls: [] };
   for await (const data of sseData(response.body)) {
     if (data === "[DONE]") break;
-    const chunk = JSON.parse(data);
+    const chunk = parseChunk(data);
     if (chunk.error) {
       throw new OpenRouterError(chunk.error.code ?? 500, errorMessage(chunk.error.code ?? 500, chunk.error.message ?? ""));
     }
@@ -285,6 +285,15 @@ export async function streamChat(
     onDelta(state);
   }
   return state;
+}
+
+/** A chunk of the stream: an unreadable one is an error of OpenRouter, not a SyntaxError shown as is. */
+function parseChunk(data: string) {
+  try {
+    return JSON.parse(data);
+  } catch {
+    throw new OpenRouterError(502, errorMessage(502, `unreadable stream chunk: ${data.slice(0, 200)}`));
+  }
 }
 
 function extractError(body: string): string {
@@ -317,20 +326,27 @@ export function applyDelta(state: ChatDelta, delta: StreamDelta | undefined): vo
   }
 }
 
-/** `data:` payloads of a server-sent events stream (comments such as `: OPENROUTER PROCESSING` are skipped). */
+/**
+ * `data:` payloads of a server-sent events stream (comments such as `: OPENROUTER PROCESSING` are skipped). The stream is
+ * cancelled when its reading stops before its end (`[DONE]`, error): the connection is not left open.
+ */
 export async function* sseData(body: ReadableStream<Uint8Array>): AsyncGenerator<string> {
   const reader = body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
-  for (;;) {
-    const { value, done } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    let newline: number;
-    while ((newline = buffer.indexOf("\n")) >= 0) {
-      const line = buffer.slice(0, newline).trimEnd();
-      buffer = buffer.slice(newline + 1);
-      if (line.startsWith("data:")) yield line.slice(5).trim();
+  try {
+    for (;;) {
+      const { value, done } = await reader.read();
+      if (done) return;
+      buffer += decoder.decode(value, { stream: true });
+      let newline: number;
+      while ((newline = buffer.indexOf("\n")) >= 0) {
+        const line = buffer.slice(0, newline).trimEnd();
+        buffer = buffer.slice(newline + 1);
+        if (line.startsWith("data:")) yield line.slice(5).trim();
+      }
     }
+  } finally {
+    await reader.cancel().catch(() => undefined);
   }
 }

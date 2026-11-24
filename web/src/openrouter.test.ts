@@ -19,6 +19,23 @@ describe("sseData", () => {
     }
     expect(payloads).toEqual(['{"a":1}', "[DONE]"]);
   });
+
+  it("cancels the stream when its reading stops before its end", async () => {
+    let cancelled = false;
+    const encoder = new TextEncoder();
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        controller.enqueue(encoder.encode("data: [DONE]\n\ndata: {}\n\n"));
+      },
+      cancel() {
+        cancelled = true;
+      },
+    });
+
+    for await (const data of sseData(body)) if (data === "[DONE]") break;
+
+    expect(cancelled).toBe(true);
+  });
 });
 
 describe("applyDelta", () => {

@@ -55,6 +55,29 @@ const settings = (onRunEnd = vi.fn()) => ({
 afterEach(() => vi.resetAllMocks());
 
 describe("createAgent", () => {
+  it("gives the tool calls without id one unique in the thread, the same while streaming and once complete", async () => {
+    mcp.connectMcp.mockResolvedValue(server);
+    mcp.callTool.mockResolvedValue({ content: [{ type: "text", text: "12:04" }] });
+    const withoutId = { text: "", toolCalls: [{ id: "", type: "function" as const, function: { name: "departures", arguments: "{}" } }] };
+    const toolCallIds = async () => {
+      openrouter.streamChat.mockImplementationOnce(answer(withoutId)).mockImplementationOnce(answer({ text: "At 12:04.", toolCalls: [] }));
+      const results = await run(settings());
+      const ids = results.flatMap((result) => result.content!.flatMap((part) => (part.type === "tool-call" ? [part.toolCallId] : [])));
+      // the tool result given back to the model has the id of its call
+      const messages = openrouter.streamChat.mock.calls.at(-1)![1].messages;
+      expect(messages.at(-1)).toMatchObject({ role: "tool", tool_call_id: ids[0] });
+      return new Set(ids);
+    };
+
+    const first = await toolCallIds();
+    const second = await toolCallIds();
+
+    expect(first.size).toBe(1);
+    expect(second.size).toBe(1);
+    // not call-0-0 for the first call of every user message: the views keep their context by tool call id
+    expect([...first][0]).not.toBe([...second][0]);
+  });
+
   it("stops after the tool calls when the user stops the run", async () => {
     const controller = new AbortController();
     mcp.connectMcp.mockResolvedValue(server);
@@ -103,12 +126,13 @@ describe("createAgent", () => {
     expect(last.metadata).toEqual({ custom: { models: ["model", "fallback"], fallbackFrom: "model" } });
     expect(last.content).toEqual([
       { type: "text", text: "Checking." },
-      expect.objectContaining({ type: "tool-call", toolCallId: "call-0-0", toolName: "departures", isError: false }),
+      expect.objectContaining({ type: "tool-call", toolCallId: expect.stringMatching(/^call-/), toolName: "departures", isError: false }),
       { type: "text", text: "Next train at 12:04." },
     ]);
     // the second model call gets the tool result
     const chat = openrouter.streamChat.mock.calls[1][1].messages;
-    expect(chat.at(-1)).toEqual({ role: "tool", tool_call_id: "call-0-0", content: "12:04 TER" });
+    const toolCallId = (last.content![1] as { toolCallId: string }).toolCallId;
+    expect(chat.at(-1)).toEqual({ role: "tool", tool_call_id: toolCallId, content: "12:04 TER" });
     expect(chat[0].content).toContain("MOTIS server.");
     expect(openrouter.streamChat.mock.calls[0][1]).toMatchObject({ model: "model", fallbackModels: ["fallback"] });
     expect(onRunEnd).toHaveBeenCalledOnce();
