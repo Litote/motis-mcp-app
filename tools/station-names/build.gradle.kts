@@ -7,6 +7,7 @@ plugins {
 
 dependencies {
     implementation(libs.serialization.json)
+    testImplementation(kotlin("test"))
 }
 
 kotlin {
@@ -25,4 +26,8 @@ tasks.named<JavaExec>("run") {
             providers.gradleProperty("csv").orNull?.let { rootProject.file(it).absolutePath },
         ),
     )
+}
+
+tasks.test {
+    useJUnitPlatform()
 }

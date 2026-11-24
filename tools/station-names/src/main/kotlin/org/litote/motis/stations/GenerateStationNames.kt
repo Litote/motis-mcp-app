@@ -165,27 +165,31 @@ SELECT ?q ?city ?pop ?lang ?label WHERE {
     return found.mapValues { it.value.second }
 }
 
+/** The city found at the beginning of a name: its label [prefix] once normalized, its label [source], all its [labels]. */
+private class CityMatch(val prefix: String, val source: String, val labels: Labels)
+
+/** The candidate one of which labels begins [name] (the longest label wins: the others are districts). */
+private fun cityMatch(name: String, candidates: List<Labels>): CityMatch? {
+    val norm = normalize(name)
+    var best: CityMatch? = null
+    for (labels in candidates.filterNot { c -> c.values.any { NOT_A_CITY.containsMatchIn(it) } }) {
+        for (source in labels.values) {
+            val prefix = normalize(source)
+            val begins = prefix.isNotEmpty() && (norm == prefix || norm.startsWith("$prefix "))
+            if (begins && prefix.length > (best?.prefix?.length ?: -1)) best = CityMatch(prefix, source, labels)
+        }
+    }
+    return best
+}
+
 /**
  * (city part of [name], name of the station in each language): the city part is replaced by the label of the city.
  * The city is the candidate one of which labels begins the name (the others are districts).
  */
 internal fun localize(name: String, candidates: List<Labels>): Pair<String, Map<String, String>> {
-    val norm = normalize(name)
-    var best: Triple<String, String, Labels>? = null
-    for (labels in candidates) {
-        if (labels.values.any { NOT_A_CITY.containsMatchIn(it) }) continue
-        for (source in labels.values) {
-            val prefix = normalize(source)
-            if (prefix.isNotEmpty() && (norm == prefix || norm.startsWith("$prefix ")) &&
-                (best == null || prefix.length > best.first.length)
-            ) {
-                best = Triple(prefix, source, labels)
-            }
-        }
-    }
-    if (best == null) return "" to LANGUAGES.associateWith { name }
-    val (prefix, source, labels) = best
-    var rest = if (casefold(name).startsWith(casefold(source))) name.drop(source.length) else name.drop(prefix.length)
+    val match = cityMatch(name, candidates) ?: return "" to LANGUAGES.associateWith { name }
+    val source = match.source
+    var rest = if (casefold(name).startsWith(casefold(source))) name.drop(source.length) else name.drop(match.prefix.length)
     // the qualifier of a city ("Frankfurt (Main)") is part of it: its translation replaces both, its label
     // in the language of the station ("Frankfurt") keeps the qualifier
     val qualifier = QUALIFIER.find(rest)
@@ -193,10 +197,12 @@ internal fun localize(name: String, candidates: List<Labels>): Pair<String, Map<
     val city = name.dropLast(rest.length)
 
     fun translated(lang: String): String {
-        val label = labels[lang]
+        val label = match.labels[lang] ?: return name
+        val normalizedLabel = normalize(label)
+        val normalizedSource = normalize(source)
         // the label of a district named after the city ("Hamburg-Neustadt" for "Neustadt") is not its translation
-        if (label == null || normalize(label).endsWith(" " + normalize(source))) return name
-        if (qualifier != null && normalize(label) == normalize(source)) return name
+        if (normalizedLabel.endsWith(" $normalizedSource")) return name
+        if (qualifier != null && normalizedLabel == normalizedSource) return name
         // the rest of the name keeps its own punctuation ("Barcelona Sants", "Figueres – Vilafant")
         return label + rest
     }
@@ -234,6 +240,67 @@ private fun readCsv(text: String, delimiter: Char): List<Map<String, String>> {
 /** [value] with 5 decimals, rounded as Python formats it ("%.5f": the exact binary value, half to even). */
 private fun fiveDecimals(value: String): String = BigDecimal(value.toDouble()).setScale(5, RoundingMode.HALF_EVEN).toPlainString()
 
+private fun Map<String, String>.uic(): String = getValue("uic")
+
+private fun Map<String, String>.stationName(): String = getValue("name").trim()
+
+/** The stations of the generated file. */
+private fun selectedStations(text: String): List<Map<String, String>> =
+    readCsv(text, ';').filter { r ->
+        r.uic().isNotEmpty() && r["is_suggestable"] == "t" && r["country"] in COUNTRIES &&
+            r.getValue("latitude").isNotEmpty() && r.getValue("longitude").isNotEmpty() &&
+            // reduced scope: the main stations, the ones sold by Renfe (the international trains of Spain) and all the ones
+            // of France sold by the SNCF (the train stops named "Gare SNCF" by their feed take the name of their station)
+            (r["is_main_station"] == "t" || r["renfe_is_enabled"] == "t" || (r["country"] == "FR" && r["sncf_is_enabled"] == "t"))
+    }
+
+/** uic -> labels of the cities the station is located in, according to Wikidata. */
+private fun labelsByUic(rows: List<Map<String, String>>): MutableMap<String, MutableList<Labels>> {
+    val labels = mutableMapOf<String, MutableList<Labels>>()
+    val uics = rows.map { it.uic() }.toSortedSet().toList()
+    for (chunk in uics.chunked(BATCH).withIndex()) {
+        cityLabels(chunk.value).forEach { (uic, cities) -> labels[uic] = cities.toMutableList() }
+        System.err.println("  ${minOf((chunk.index + 1) * BATCH, uics.size)}/${uics.size}")
+        Thread.sleep(1_000)
+    }
+    return labels
+}
+
+/** Adds to [labels] the city of the stations of [rows] that Wikidata does not know by their UIC code, found by the beginning of their name. */
+private fun addLabelsByName(rows: List<Map<String, String>>, labels: MutableMap<String, MutableList<Labels>>) {
+    val unresolved = rows.filter { localize(it.stationName(), labels[it.uic()].orEmpty()).first.isEmpty() }
+    for (country in COUNTRIES) {
+        val todo = unresolved.filter { it["country"] == country }
+        val names = todo.flatMap { prefixes(it.stationName()) }.toSortedSet().toList()
+        val cities = if (names.isNotEmpty()) citiesByName(country, names) else emptyMap()
+        for (r in todo) {
+            val candidate = prefixes(r.stationName()).sortedByDescending { it.length }.firstOrNull { it in cities } ?: continue
+            labels.getOrPut(r.uic()) { mutableListOf() } += cities.getValue(candidate)
+        }
+        System.err.println("  $country: ${todo.size} by name")
+    }
+}
+
+/** Writes the stations of [rows] in [out], one line per UIC code; returns the number of stations written. */
+private fun writeStations(out: File, rows: List<Map<String, String>>, labels: Map<String, List<Labels>>): Int {
+    out.parentFile.mkdirs()
+    val seen = mutableSetOf<String>()
+    out.bufferedWriter().use { f ->
+        f.write("# Generated by the tools/station-names module from Trainline stations (ODbL) and Wikidata (CC0). Do not edit.\n")
+        f.write("# uic\tlat\tlon\tmain\tname\tcity\t" + LANGUAGES.joinToString("\t") + "\t(empty: same as name)\n")
+        for (r in rows.sortedBy { it.uic() }.filter { seen.add(it.uic()) }) {
+            val name = r.stationName()
+            val (city, names) = localize(name, labels[r.uic()].orEmpty())
+            val cells = listOf(
+                r.uic(), fiveDecimals(r.getValue("latitude")), fiveDecimals(r.getValue("longitude")),
+                if (r["is_main_station"] == "t") "1" else "0", name, city,
+            ) + LANGUAGES.map { if (names.getValue(it) == name) "" else names.getValue(it) }
+            f.write(cells.joinToString("\t") + "\n")
+        }
+    }
+    return seen.size
+}
+
 /** Arguments: the generated file, then the Trainline CSV (downloaded when not given). */
 fun main(args: Array<String>) {
     val out = File(args.getOrElse(0) { "server/src/main/resources/stations/stations.tsv" })
@@ -241,49 +308,10 @@ fun main(args: Array<String>) {
         val request = HttpRequest.newBuilder(URI(CSV_URL)).header("User-Agent", USER_AGENT).timeout(Duration.ofSeconds(120)).build()
         http.send(request, HttpResponse.BodyHandlers.ofString()).body()
     }
-    val rows = readCsv(text, ';').filter { r ->
-        r.getValue("uic").isNotEmpty() && r["is_suggestable"] == "t" && r["country"] in COUNTRIES &&
-            r.getValue("latitude").isNotEmpty() && r.getValue("longitude").isNotEmpty() &&
-            // reduced scope: the main stations, the ones sold by Renfe (the international trains of Spain) and all the ones
-            // of France sold by the SNCF (the train stops named "Gare SNCF" by their feed take the name of their station)
-            (r["is_main_station"] == "t" || r["renfe_is_enabled"] == "t" || (r["country"] == "FR" && r["sncf_is_enabled"] == "t"))
-    }
+    val rows = selectedStations(text)
     System.err.println("${rows.size} stations")
-    val labels = mutableMapOf<String, MutableList<Labels>>()
-    val uics = rows.map { it.getValue("uic") }.toSortedSet().toList()
-    for (chunk in uics.chunked(BATCH).withIndex()) {
-        cityLabels(chunk.value).forEach { (uic, cities) -> labels[uic] = cities.toMutableList() }
-        System.err.println("  ${minOf((chunk.index + 1) * BATCH, uics.size)}/${uics.size}")
-        Thread.sleep(1_000)
-    }
-    fun nameOf(r: Map<String, String>) = r.getValue("name").trim()
-    // the stations that Wikidata does not know by their UIC code: the city is found by the beginning of the name
-    val unresolved = rows.filter { localize(nameOf(it), labels[it.getValue("uic")].orEmpty()).first.isEmpty() }
-    for (country in COUNTRIES) {
-        val todo = unresolved.filter { it["country"] == country }
-        val names = todo.flatMap { prefixes(nameOf(it)) }.toSortedSet().toList()
-        val cities = if (names.isNotEmpty()) citiesByName(country, names) else emptyMap()
-        for (r in todo) {
-            val candidate = prefixes(nameOf(r)).sortedByDescending { it.length }.firstOrNull { it in cities } ?: continue
-            labels.getOrPut(r.getValue("uic")) { mutableListOf() } += cities.getValue(candidate)
-        }
-        System.err.println("  $country: ${todo.size} by name")
-    }
-    out.parentFile.mkdirs()
-    val seen = mutableSetOf<String>()
-    out.bufferedWriter().use { f ->
-        f.write("# Generated by the tools/station-names module from Trainline stations (ODbL) and Wikidata (CC0). Do not edit.\n")
-        f.write("# uic\tlat\tlon\tmain\tname\tcity\t" + LANGUAGES.joinToString("\t") + "\t(empty: same as name)\n")
-        for (r in rows.sortedBy { it.getValue("uic") }) {
-            if (!seen.add(r.getValue("uic"))) continue
-            val name = nameOf(r)
-            val (city, names) = localize(name, labels[r.getValue("uic")].orEmpty())
-            val cells = listOf(
-                r.getValue("uic"), fiveDecimals(r.getValue("latitude")), fiveDecimals(r.getValue("longitude")),
-                if (r["is_main_station"] == "t") "1" else "0", name, city,
-            ) + LANGUAGES.map { if (names.getValue(it) == name) "" else names.getValue(it) }
-            f.write(cells.joinToString("\t") + "\n")
-        }
-    }
-    System.err.println("${seen.size} written to $out")
+    val labels = labelsByUic(rows)
+    addLabelsByName(rows, labels)
+    val written = writeStations(out, rows, labels)
+    System.err.println("$written written to $out")
 }
