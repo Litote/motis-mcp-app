@@ -114,19 +114,7 @@ fun Server.addRoutingTools(gateway: MotisGateway, cityJourneys: CityJourneys) {
                 pageCursor = pageCursor,
                 language = language,
             )
-        val journeys =
-            if (from.isCity && to.isCity && bike == BikeOption.NONE) {
-                // from station to station (a bike is ridden from the coordinates of the city)
-                cityJourneys.plan(from, to, query)
-            } else {
-                if (pageCursor != null && StationPairsCursor.isStationPairs(pageCursor)) {
-                    throw MotisToolException(
-                        "Invalid argument: 'pageCursor' was returned for the journeys between two cities: call again with " +
-                            "the 'from', 'to' and 'bike' of that call, or without 'pageCursor'",
-                    )
-                }
-                gateway.plan(query).toDto().fromMainLineStations(from.center().takeIf { from.isCity }, to.center().takeIf { to.isCity })
-            }
+        val journeys = searchJourneys(gateway, cityJourneys, from, to, query)
         val named = journeys.withEndNames(from.askedName(), to.askedName(), from.area, to.area).withStops()
         val result = (LocalizedNames.of(language)?.journey(named) ?: named).withAlerts()
         val options =
@@ -141,6 +129,25 @@ fun Server.addRoutingTools(gateway: MotisGateway, cityJourneys: CityJourneys) {
 }
 
 private fun ResolvedPlace.coordinates(): String = latLon(lat, lon)
+
+/** Journeys of [query] from [from] to [to]: from station to station between two cities (see [CityJourneys]). */
+private suspend fun searchJourneys(
+    gateway: MotisGateway,
+    cityJourneys: CityJourneys,
+    from: ResolvedPlace,
+    to: ResolvedPlace,
+    query: PlanQuery,
+): JourneyResult {
+    // from station to station (a bike is ridden from the coordinates of the city)
+    if (from.isCity && to.isCity && query.bike == BikeOption.NONE) return cityJourneys.plan(from, to, query)
+    if (query.pageCursor?.let(StationPairsCursor::isStationPairs) == true) {
+        throw MotisToolException(
+            "Invalid argument: 'pageCursor' was returned for the journeys between two cities: call again with " +
+                "the 'from', 'to' and 'bike' of that call, or without 'pageCursor'",
+        )
+    }
+    return gateway.plan(query).toDto().fromMainLineStations(from.center().takeIf { from.isCity }, to.center().takeIf { to.isCity })
+}
 
 /** Text of the journeys [result] from [from] to [to], with the non-default [options] of the search. */
 private fun journeySummary(from: ResolvedPlace, to: ResolvedPlace, result: JourneyResult, options: List<String>): String =
