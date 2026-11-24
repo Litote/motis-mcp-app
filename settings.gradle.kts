@@ -12,3 +12,4 @@ rootProject.name = "motis-mcp-app"
 
 include(":server")
 include(":lambda")
+include(":tools:station-names")
