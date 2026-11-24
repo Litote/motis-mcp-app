@@ -114,7 +114,7 @@ jobs:
 
       - name: Commit the scores
         if: steps.branch.outputs.changed == 'true'
-        uses: Litote/ci/.github/actions/commit-via-api@0200d5384e9bb08b678a219212a11544c1389f9f # v0.14.0
+        uses: Litote/ci/.github/actions/commit-via-api@63a67e7add1b9fde6396c84399f90c9252f7b8e6 # v0.15.0
         with:
           token: ${{ steps.app-token.outputs.token }}
           branch: ${{ env.BRANCH }}
