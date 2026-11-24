@@ -9,6 +9,7 @@ import org.litote.motis.mcp.apps.UiView
 import org.litote.motis.mcp.dto.AreaResult
 import org.litote.motis.mcp.dto.PlaceDto
 import org.litote.motis.mcp.dto.ReachabilityResult
+import org.litote.motis.mcp.dto.latLon
 import org.litote.motis.mcp.dto.routeName
 import org.litote.motis.mcp.dto.toAreaResult
 import org.litote.motis.mcp.dto.toDto
@@ -25,7 +26,7 @@ internal suspend fun Args.area(gateway: MotisGateway): Pair<String, BoundingBox>
     val maxLon = double("maxLon")
     if (minLat != null && minLon != null && maxLat != null && maxLon != null) {
         if (minLat >= maxLat || minLon >= maxLon) throw MotisToolException("Invalid argument: min must be south-west of max")
-        return "($minLat,$minLon)–($maxLat,$maxLon)" to BoundingBox(minLat, minLon, maxLat, maxLon)
+        return "(${latLon(minLat, minLon)})–(${latLon(maxLat, maxLon)})" to BoundingBox(minLat, minLon, maxLat, maxLon)
     }
     val place = string("place") ?: throw MotisToolException("Invalid argument: 'place' or the four bounds are required")
     val radius = (double("radiusKm") ?: DEFAULT_RADIUS_KM).coerceIn(0.1, MAX_RADIUS_KM)

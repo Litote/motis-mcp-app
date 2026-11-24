@@ -402,4 +402,12 @@ class CityJourneysTest {
         assertNull(StationPairsCursor.decode("motis-cursor"))
         assertFailsWith<MotisToolException> { StationPairsCursor.decode("stations:not base64") }
     }
+
+    @Test
+    fun `a cursor of more pairs of stations than searched is refused`() {
+        val pairs = (0..CityJourneys.MAX_STATION_PAIRS).map { StationPair("from-$it", "to-$it") }
+
+        assertFailsWith<MotisToolException> { StationPairsCursor.decode(StationPairsCursor(pairs).encode()) }
+        assertEquals(4, StationPairsCursor.decode(StationPairsCursor(pairs.drop(1)).encode())?.pairs?.size)
+    }
 }

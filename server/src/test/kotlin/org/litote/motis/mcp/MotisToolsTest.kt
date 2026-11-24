@@ -10,6 +10,8 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
+import org.litote.motis.mcp.cities.StationPair
+import org.litote.motis.mcp.cities.StationPairsCursor
 import org.litote.motis.mcp.dto.AreaResult
 import org.litote.motis.mcp.dto.DeparturesResult
 import org.litote.motis.mcp.dto.JourneyResult
@@ -885,6 +887,31 @@ class MotisToolsTest {
         }
 
     @Test
+    fun `plan_journey sends the coordinates near the prime meridian without exponent`() {
+        val motis = transitous()
+        withMcpClient(motis) { client ->
+            client.callTool("plan_journey", mapOf("from" to "51.4779,0.0005", "to" to "Lyon Part-Dieu"))
+
+            // not 5.0E-4: unreadable by MOTIS, and by parseCoordinates for the places near the origin
+            assertEquals("51.4779,0.0005", motis.request("/api/v1/geocode").url.parameters["place"])
+            assertEquals("51.4779,0.0005", motis.request("/api/v6/plan").url.parameters["fromPlace"])
+        }
+    }
+
+    @Test
+    fun `plan_journey refuses a cursor of the journeys between two cities for other places`() {
+        val motis = transitous()
+        withMcpClient(motis) { client ->
+            val cursor = StationPairsCursor(listOf(StationPair("a", "b", "c"))).encode()
+            val result = client.callTool("plan_journey", mapOf("from" to "45.7605,4.8597", "to" to "Lyon Part-Dieu", "pageCursor" to cursor))
+
+            assertEquals(true, result.isError)
+            assertTrue(result.text().contains("'pageCursor' was returned for the journeys between two cities"), result.text())
+            assertTrue(motis.requests.none { it.url.encodedPath == "/api/v6/plan" })
+        }
+    }
+
+    @Test
     fun `plan_journey takes the city rather than its station of the same name`() {
         val motis = stationBeforeCityMotis("Strasbourg")
         withMcpClient(motis) { client ->
@@ -1269,7 +1296,7 @@ class MotisToolsTest {
             val result = client.callTool("plan_journey", mapOf("from" to "Brest@47.0,-1.0", "to" to "48.58,7.73"))
 
             assertNotEquals(true, result.isError, result.text())
-            assertEquals("47.0,-1.0", motis.request("/api/v6/plan").url.parameters["fromPlace"])
+            assertEquals("47,-1", motis.request("/api/v6/plan").url.parameters["fromPlace"])
             assertEquals("Brest", result.data(JourneyResult.serializer()).from.name)
             assertFalse(result.text().contains("Departure stations differ"), result.text())
         }

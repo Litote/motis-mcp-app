@@ -56,8 +56,8 @@ internal const val KM_PER_DEGREE = 111.32
 
 /** Geographic bounding box. MOTIS expects `min` = south-west corner and `max` = north-east corner. */
 data class BoundingBox(val minLat: Double, val minLon: Double, val maxLat: Double, val maxLon: Double) {
-    val min: String get() = "$minLat,$minLon"
-    val max: String get() = "$maxLat,$maxLon"
+    val min: String get() = latLon(minLat, minLon)
+    val max: String get() = latLon(maxLat, maxLon)
     val centerLat: Double get() = (minLat + maxLat) / 2
     val centerLon: Double get() = (minLon + maxLon) / 2
 
@@ -214,7 +214,7 @@ class MotisGateway(
         }
 
     suspend fun reverseGeocode(lat: Double, lon: Double, numResults: Int? = null): List<Match> =
-        when (val r = geocodeClient.reverseGeocode(place = "$lat,$lon", numResults = asked(numResults))) {
+        when (val r = geocodeClient.reverseGeocode(place = latLon(lat, lon), numResults = asked(numResults))) {
             is GeocodeClient.ReverseGeocodeResponseSuccess -> r.body.withoutDuplicatePlaces()
             is GeocodeClient.ReverseGeocodeResponseFailure -> fail(r.body.error)
             is GeocodeClient.ReverseGeocodeResponseUnknownFailure -> failStatus(r.statusCode)
@@ -242,7 +242,7 @@ class MotisGateway(
         near: String? = null,
         language: List<String>? = null,
     ): ResolvedPlace {
-        parseCoordinates(input)?.let { (lat, lon) -> return ResolvedPlace("$lat,$lon", input, lat, lon, isStop = false) }
+        parseCoordinates(input)?.let { (lat, lon) -> return ResolvedPlace(latLon(lat, lon), input, lat, lon, isStop = false) }
         parseNamedCoordinates(input)?.let { (name, coordinates) -> return resolvePlaceAt(name, coordinates, stopsOnly, language) }
         if (GEOCODER_ID.matches(input)) {
             throw MotisToolException(
@@ -297,7 +297,7 @@ class MotisGateway(
             geocode(
                 name,
                 types = if (stopsOnly) listOf(LocationType.STOP) else null,
-                near = "$lat,$lon",
+                near = latLon(lat, lon),
                 numResults = RESOLUTION_CANDIDATES,
                 language = language,
             ).take(RESOLUTION_CANDIDATES)
@@ -305,7 +305,7 @@ class MotisGateway(
             matches
                 .minByOrNull { distanceKm(it.lat, it.lon, lat, lon) }
                 ?.takeIf { distanceKm(it.lat, it.lon, lat, lon) <= DISTINCT_PLACES_KM }
-                ?: return ResolvedPlace("$lat,$lon", name, lat, lon, isStop = false)
+                ?: return ResolvedPlace(latLon(lat, lon), name, lat, lon, isStop = false)
         return resolved(match, matches)
     }
 
@@ -316,7 +316,7 @@ class MotisGateway(
         val isStop = match.type == LocationType.STOP
         val dto = match.toDto()
         return ResolvedPlace(
-            id = if (isStop) match.id else "${match.lat},${match.lon}",
+            id = if (isStop) match.id else latLon(match.lat, match.lon),
             name = dto.name,
             lat = match.lat,
             lon = match.lon,
