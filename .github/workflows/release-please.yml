@@ -32,7 +32,7 @@ jobs:
       release_created: ${{ steps.release-please.outputs.release_created }}
       tag_name: ${{ steps.release-please.outputs.tag_name }}
     steps:
-      - uses: Litote/ci/.github/actions/release-please@510461dc1f569a7c12735a6cad12e88a6cb533ad # v0.10.0
+      - uses: Litote/ci/.github/actions/release-please@63a67e7add1b9fde6396c84399f90c9252f7b8e6 # v0.15.0
         id: release-please
         if: github.event_name == 'push'
         with:
@@ -76,7 +76,7 @@ jobs:
             ui/package-lock.json
             web/package-lock.json
 
-      - uses: Litote/ci/.github/actions/setup-gradle@510461dc1f569a7c12735a6cad12e88a6cb533ad # v0.10.0
+      - uses: Litote/ci/.github/actions/setup-gradle@63a67e7add1b9fde6396c84399f90c9252f7b8e6 # v0.15.0
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
@@ -97,7 +97,7 @@ jobs:
           npm run coverage
 
       # Fails if the quality gate is not OK, so nothing is published
-      - uses: Litote/ci/.github/actions/sonar-gradle@510461dc1f569a7c12735a6cad12e88a6cb533ad # v0.10.0
+      - uses: Litote/ci/.github/actions/sonar-gradle@63a67e7add1b9fde6396c84399f90c9252f7b8e6 # v0.15.0
         with:
           sonar-token: ${{ secrets.SONAR_TOKEN }}
 
@@ -124,7 +124,7 @@ jobs:
 
       # the jar is built once on the runner platform (see Dockerfile): no QEMU needed for arm64
       - name: Build and push
-        uses: Litote/ci/.github/actions/docker-publish@ec46616b182954a0aa8013241b8d4565760db8de # v0.11.0
+        uses: Litote/ci/.github/actions/docker-publish@63a67e7add1b9fde6396c84399f90c9252f7b8e6 # v0.15.0
         with:
           image: ${{ env.IMAGE }}
           password: ${{ secrets.GITHUB_TOKEN }}
@@ -169,7 +169,7 @@ jobs:
 
       # the files are built once on the runner platform (see web/Dockerfile): no QEMU needed for arm64
       - name: Build and push
-        uses: Litote/ci/.github/actions/docker-publish@ec46616b182954a0aa8013241b8d4565760db8de # v0.11.0
+        uses: Litote/ci/.github/actions/docker-publish@63a67e7add1b9fde6396c84399f90c9252f7b8e6 # v0.15.0
         with:
           image: ${{ env.WEB_IMAGE }}
           password: ${{ secrets.GITHUB_TOKEN }}
