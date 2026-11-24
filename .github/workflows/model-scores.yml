@@ -131,3 +131,13 @@ jobs:
             --title 'chore(web): scores of the free models, daily evaluation' \
             --body "Scores of the free models completed by the daily evaluation ([model-scores.yml]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/workflows/model-scores.yml)): the reports are in the summaries of its runs. Merged once approved: the web chat then recommends the best free model of these scores.")
           gh pr merge --auto --squash "$PR_URL"
+
+      # Last, after the scores obtained before the error are committed: fails the run, to be notified (invalid key,
+      # negative balance, daily quota already reached…). A model failing a check does not fail it.
+      - name: Account error
+        working-directory: web
+        run: |
+          if [[ -f eval/results/account-error.txt ]]; then
+            echo "::error::OpenRouter account: $(cat eval/results/account-error.txt)"
+            exit 1
+          fi

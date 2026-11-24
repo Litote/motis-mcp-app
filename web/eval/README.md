@@ -61,6 +61,10 @@ most (`EVAL_AUTO=1`, `EVAL_MAX_CALLS=25`: half of the 50 daily requests of a fre
   is no longer completed. Nothing is planned, and nothing called, once every free model listed is evaluated;
 - a scenario is started only with 4 calls left at least, and a model is skipped after 2 errors in a row (rate
   limited…);
+- the budget is also bounded by the free requests left today (`GET /api/v1/key`): with fewer than 4, nothing is
+  planned. An error of the account ([account.ts](account.ts): invalid key, negative balance or key limit, daily quota
+  reached) stops the evaluation: the scores obtained before it are committed, then the run fails, to be notified. A
+  model failing a check does not fail it;
 - the scores are committed to the branch `model-scores`, in a pull request merged once approved (auto-merge).
 
 It needs the `OPENROUTER_API_KEY` secret (nothing is evaluated without it). Locally, the same run:

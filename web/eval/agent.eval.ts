@@ -10,9 +10,10 @@
  * default: no limit), EVAL_AUTO=1 (the scenarios without result of the free models listed by OpenRouter, plan.ts, instead
  * of EVAL_MODELS and EVAL_SCENARIOS: the daily evaluation of .github/workflows/model-scores.yml).
  */
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { afterAll, describe, expect, it, vi } from "vitest";
 import type { ChatModelRunOptions, ChatModelRunResult, ThreadMessage } from "@assistant-ui/react";
+import { accountError, MIN_CALLS, quotaError } from "./account";
 import { evaluate, toRecord, type RunRecord, type Scenario } from "./checks";
 import { planEvaluation, type PlannedRun } from "./plan";
 import { report, type Run } from "./report";
@@ -26,8 +27,8 @@ const delayMs = Number(env.EVAL_DELAY_MS ?? 0);
 const maxCalls = Number(env.EVAL_MAX_CALLS ?? Infinity);
 const auto = env.EVAL_AUTO === "1";
 const SCORES_FILE = "src/model-scores.json";
-/** Model calls of a scenario, usually: none is started with fewer calls left (EVAL_MAX_CALLS). */
-const CALLS_PER_SCENARIO = 4;
+/** Written when the evaluation stopped on an error of the account (account.ts): the daily evaluation then fails. */
+const ACCOUNT_ERROR_FILE = "eval/results/account-error.txt";
 /** Errors in a row (rate limited…) after which the runs of a model are skipped: they would consume calls for nothing. */
 const MAX_ERRORS_IN_A_ROW = 2;
 
@@ -36,15 +37,15 @@ vi.mock("../src/config", () => ({
 }));
 // Node has no window: the chat completions send its origin as HTTP-Referer
 vi.stubGlobal("window", { location: new URL("http://localhost:5173/") });
-// counts the model calls of each run
-const streamChat = vi.hoisted(() => ({ calls: 0 }));
+// counts the model calls of each run, refused over the budget [max]
+const streamChat = vi.hoisted(() => ({ calls: 0, max: Infinity }));
 vi.mock("../src/openrouter", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../src/openrouter")>();
   return {
     ...actual,
     streamChat: (...args: Parameters<typeof actual.streamChat>) => {
       // the run ends with an error, not counted in the scores
-      if (streamChat.calls >= Number(process.env.EVAL_MAX_CALLS ?? Infinity)) return Promise.reject(new Error("EVAL_MAX_CALLS reached"));
+      if (streamChat.calls >= streamChat.max) return Promise.reject(new Error("EVAL_MAX_CALLS reached"));
       streamChat.calls++;
       return actual.streamChat(...args);
     },
@@ -52,13 +53,25 @@ vi.mock("../src/openrouter", async (importOriginal) => {
 });
 
 const { createAgent } = await import("../src/agent");
-const { listModels, recommendedModel } = await import("../src/openrouter");
+const { getFreeQuota, listModels, OpenRouterError, recommendedModel } = await import("../src/openrouter");
 
-/** Runs of EVAL_MODELS × EVAL_SCENARIOS, or planned (EVAL_AUTO): at least 2 model calls per scenario. */
-async function plannedRuns(): Promise<PlannedRun[]> {
+/** Error of the account that stopped the evaluation, if any. */
+let accountProblem: string | null = null;
+
+/**
+ * Runs of EVAL_MODELS × EVAL_SCENARIOS, or planned (EVAL_AUTO) within the free requests left today: at least 2 model
+ * calls per scenario.
+ */
+async function plannedRuns(apiKey: string): Promise<PlannedRun[]> {
   if (auto) {
+    const quota = await getFreeQuota(apiKey);
+    if (quota) {
+      streamChat.max = Math.min(maxCalls, quota.remaining);
+      accountProblem = quotaError(quota.remaining);
+      if (accountProblem) return [];
+    }
     const scores = JSON.parse(readFileSync(SCORES_FILE, "utf8"));
-    return planEvaluation(await listModels(), scores, SCENARIOS.map((s) => s.id), Math.floor(maxCalls / 2));
+    return planEvaluation(await listModels(), scores, SCENARIOS.map((s) => s.id), Math.floor(streamChat.max / 2));
   }
   const models = (env.EVAL_MODELS ?? recommendedModel([])).split(",").map((m) => m.trim()).filter(Boolean);
   const only = env.EVAL_SCENARIOS?.split(",").map((s) => s.trim());
@@ -66,7 +79,9 @@ async function plannedRuns(): Promise<PlannedRun[]> {
   return models.flatMap((model) => scenarios.map((s) => ({ model, scenario: s.id })));
 }
 
-const planned = key ? await plannedRuns() : [];
+rmSync(ACCOUNT_ERROR_FILE, { force: true });
+streamChat.max = maxCalls;
+const planned = key ? await plannedRuns(key) : [];
 const byModel = new Map<string, PlannedRun[]>();
 for (const p of planned) byModel.set(p.model, [...(byModel.get(p.model) ?? []), p]);
 const errorsInARow = new Map<string, number>();
@@ -83,17 +98,22 @@ async function run(model: string, scenario: Scenario): Promise<RunRecord> {
     for await (const result of agent.run(options) as AsyncGenerator<ChatModelRunResult>) last = result;
     return toRecord(last?.content ?? [], last?.status?.type === "complete", streamChat.calls - before);
   } catch (e) {
+    if (e instanceof OpenRouterError) {
+      const remaining = e.status === 429 ? (await getFreeQuota(key ?? "").catch(() => null))?.remaining : undefined;
+      accountProblem ??= accountError(e.status, e.message, remaining);
+    }
     return toRecord(last?.content ?? [], false, streamChat.calls - before, e instanceof Error ? e.message : String(e));
   }
 }
 
 describe.skipIf(!key)(`agent evaluation (MCP server ${mcpUrl})`, () => {
-  if (!planned.length) it.skip("nothing to evaluate: every free model listed is evaluated", () => {});
+  if (!planned.length) it.skip(accountProblem ?? "nothing to evaluate: every free model listed is evaluated", () => {});
   for (const [model, modelRuns] of byModel) {
     describe(model, () => {
       for (const scenario of modelRuns.map((p) => SCENARIOS.find((s) => s.id === p.scenario)!)) {
         it(`${scenario.id}: ${scenario.prompt}`, async ({ skip }) => {
-          if (maxCalls - streamChat.calls < CALLS_PER_SCENARIO) skip("EVAL_MAX_CALLS reached");
+          if (accountProblem) skip(accountProblem);
+          if (streamChat.max - streamChat.calls < MIN_CALLS) skip("EVAL_MAX_CALLS, or the free requests of the day, reached");
           if ((errorsInARow.get(model) ?? 0) >= MAX_ERRORS_IN_A_ROW) skip(`${MAX_ERRORS_IN_A_ROW} errors in a row`);
           if (delayMs && runs.length) await new Promise((resolve) => setTimeout(resolve, delayMs));
           const start = Date.now();
@@ -108,6 +128,11 @@ describe.skipIf(!key)(`agent evaluation (MCP server ${mcpUrl})`, () => {
   }
 
   afterAll(() => {
+    if (accountProblem) {
+      mkdirSync("eval/results", { recursive: true });
+      writeFileSync(ACCOUNT_ERROR_FILE, `${accountProblem}\n`);
+      console.error(`Stopped: ${accountProblem}`);
+    }
     if (!runs.length) return;
     mkdirSync("eval/results", { recursive: true });
     const name = `eval/results/${new Date().toISOString().replaceAll(":", "-").slice(0, 19)}`;
