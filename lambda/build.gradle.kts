@@ -32,6 +32,15 @@ kotlin {
     jvmToolchain(25)
 }
 
+// Dev tooling outside the production code: the replay of the MCP requests of the `tracing` task
+val tracingSourceSet = sourceSets.create("tracing")
+configurations[tracingSourceSet.implementationConfigurationName].extendsFrom(configurations.implementation.get())
+configurations[tracingSourceSet.runtimeOnlyConfigurationName].extendsFrom(configurations.runtimeOnly.get())
+kotlin.target.compilations.named("tracing") {
+    // access to the internal declarations of main (lambdaJson)
+    associateWith(kotlin.target.compilations.getByName("main"))
+}
+
 graalvmNative {
     // The toolchain of the build (GraalVM image of `make build`): no toolchain detection
     toolchainDetection.set(false)
@@ -68,7 +77,7 @@ val tracing by tasks.registering(JavaExec::class) {
     group = "graalvm"
     description = "Replays MCP requests through the Lambda handler (with -Pagent: under the native-image agent)."
     mainClass.set("org.litote.motis.mcp.lambda.TracingRunnerKt")
-    classpath = sourceSets["main"].runtimeClasspath
+    classpath = tracingSourceSet.runtimeClasspath
     environment("MOTIS_APP_CONTACT", providers.environmentVariable("MOTIS_APP_CONTACT").getOrElse("https://github.com/Litote/motis-mcp-app"))
 }
 
