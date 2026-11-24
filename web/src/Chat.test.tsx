@@ -19,6 +19,13 @@ vi.mock("./openrouter", async (importOriginal) => ({
   forgetKey: mocks.forgetKey,
 }));
 vi.mock("./mcp", () => ({ connectMcp: mocks.connectMcp }));
+// the evaluation ranks Nemotron first, then Nemotron Ultra
+vi.mock("./model-scores.json", () => ({
+  default: {
+    "nvidia/nemotron-3-ultra-550b-a55b:free": { a: { ok: true, seconds: 20, date: "2026-11-24" } },
+    "nvidia/nemotron-3.5-super-vl:free": { a: { ok: true, seconds: 5, date: "2026-11-24" } },
+  },
+}));
 vi.mock("./McpAppView", () => ({
   McpAppView: ({ toolName, onMessage }: { toolName: string; onMessage(text: string): void }) => (
     <button type="button" onClick={() => onMessage("More departures")}>
@@ -62,7 +69,7 @@ vi.mock("./agent", () => ({
 }));
 
 const { default: Chat } = await import("./Chat");
-const { DEFAULT_MODEL } = await import("./openrouter");
+const RECOMMENDED = "nvidia/nemotron-3.5-super-vl:free";
 const { chooseLanguage } = await import("./i18n");
 
 const MODELS = [
@@ -133,6 +140,19 @@ describe("Chat", () => {
       "nvidia/nemotron-3.5-super-vl:free",
       "nvidia/nemotron-3-ultra-550b-a55b:free",
     ]);
+  });
+
+  it("recommends and selects the best model of the evaluation still free", async () => {
+    mocks.listModels.mockResolvedValue(MODELS.filter((m) => m.id !== RECOMMENDED));
+    render(<Chat apiKey="sk-or-v1-key" />);
+    const picker = screen.getByLabelText("Model") as HTMLSelectElement;
+
+    await waitFor(() => expect(picker.value).toBe("nvidia/nemotron-3-ultra-550b-a55b:free"));
+    expect(picker.options[picker.selectedIndex].textContent).toBe("Nemotron Ultra (recommended)");
+    expect(mocks.agentSettings[0].model()).toBe("nvidia/nemotron-3-ultra-550b-a55b:free");
+    expect(mocks.agentSettings[0].fallbackModels()).toEqual([]);
+    // not chosen by the user: still follows the evaluation
+    expect(localStorage.getItem("openrouter-model")).toBeNull();
   });
 
   it("keeps a selected model missing from the list", async () => {
@@ -207,7 +227,7 @@ describe("Chat", () => {
 
     expect(await screen.findByText("Copied ✓")).toBeDefined();
     const markdown = writeText.mock.calls[0][0] as string;
-    expect(markdown).toContain(`- Model: \`${DEFAULT_MODEL}\``);
+    expect(markdown).toContain(`- Model: \`${RECOMMENDED}\``);
     expect(markdown).toContain("### User\n\nNext departures at Lyon Part-Dieu");
     expect(markdown).toContain("<details><summary>Tool <code>trip_details</code> (error)</summary>");
 

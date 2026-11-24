@@ -25,7 +25,7 @@ OPENROUTER_API_KEY=sk-or-... npm run eval
 | Variable             | Default                              |                                                    |
 |----------------------|--------------------------------------|----------------------------------------------------|
 | `OPENROUTER_API_KEY` | —                                    | required (skipped without it)                      |
-| `EVAL_MODELS`        | default model of the web chat        | comma-separated OpenRouter model ids               |
+| `EVAL_MODELS`        | recommended model of the web chat    | comma-separated OpenRouter model ids               |
 | `EVAL_MCP_URL`       | `http://localhost:3001/mcp`          | MCP endpoint                                       |
 | `EVAL_SCENARIOS`     | all                                  | comma-separated scenario ids, e.g. `local_time,ambiguous` |
 | `EVAL_DELAY_MS`      | `0`                                  | pause between runs (free models: 20 requests/min)  |
@@ -36,6 +36,20 @@ credits), run a few scenarios at a time with `EVAL_SCENARIOS`.
 The report is written to `web/eval/results/<date>.md` (and `.json`, git-ignored): a table scenario × model (checks
 passed, model calls, duration), then the tool calls and the answer of each failed run. Vitest also lists the failed
 checks of each scenario.
+
+## Scores and the recommended model
+
+Each run also updates [src/model-scores.json](../src/model-scores.json): the last result of each scenario per model
+(passed or not, duration, day). Commit it: the web chat chooses its free model from it ([src/modelScores.ts](../src/modelScores.ts)).
+
+- Score of a model: (scenarios passed + 1) / (scenarios run + 2), so that a model run on few scenarios does not rank
+  above one run on many with a few failures (1/1 scores 0.67, 3/3 0.8, 15/16 0.89). Equal scores: the fastest first.
+- A run ended by an error (rate limited, model no longer free, network…) measured nothing: it is shown as "not
+  evaluated" and leaves the score unchanged.
+- Recommended model: the best one still free on OpenRouter, unless the user chose another one. Fallbacks of a free
+  model: the next ones (3 at most), scoring at least 0.5.
+
+To evaluate a new free model, run it with `EVAL_MODELS`: it is recommended as soon as it ranks first.
 
 ## Add a scenario
 

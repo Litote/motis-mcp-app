@@ -3,29 +3,41 @@
  * pasted. The key is kept in sessionStorage (cleared with the tab), never sent elsewhere than openrouter.ai.
  */
 import { t } from "./i18n";
+import { rankModels } from "./modelScores";
 
 const API = "https://openrouter.ai/api/v1";
 const KEY_STORAGE = "openrouter-key";
 const VERIFIER_STORAGE = "openrouter-pkce-verifier";
 const MODEL_STORAGE = "openrouter-model";
 
-/**
- * Free model selected by default: reliable tool calling in the evaluation (eval/README.md), and the fastest of them
- * (November 2026).
- */
-export const DEFAULT_MODEL = "nvidia/nemotron-3.5-super-vl:free";
+/** Fallback models accepted by OpenRouter besides the requested one. */
+const MAX_FALLBACKS = 3;
 
 /**
- * Free models tried after the selected free one (rate limited provider…), in this order: those reliable in the
- * evaluation only, not any free model (some are small, or for code).
+ * Free models reliable in the evaluation (modelScores.ts), best first, that are still free in [models]: not any free
+ * model (some are small, or for code).
  */
-const FREE_FALLBACK_MODELS = [DEFAULT_MODEL, "nvidia/nemotron-3-ultra-550b-a55b:free"];
+export function reliableFreeModels(models: readonly Model[]): string[] {
+  const free = new Set(models.filter((m) => m.free).map((m) => m.id));
+  return rankModels()
+    .map((s) => s.model)
+    .filter((id) => free.has(id));
+}
 
-/** Fallbacks of the free model [selected]: the [FREE_FALLBACK_MODELS] still free in [models], none for a paid model. */
+/**
+ * Free model recommended, selected unless the user chose another one: the best of the evaluation still free in
+ * [models], or the best of the evaluation while [models] is unknown (not loaded yet, or none of them listed).
+ */
+export function recommendedModel(models: readonly Model[]): string {
+  return reliableFreeModels(models)[0] ?? rankModels()[0]?.model ?? "openrouter/free";
+}
+
+/** Fallbacks of the free model [selected] (rate limited provider…): the next [reliableFreeModels], none for a paid model. */
 export function freeFallbackModels(selected: string, models: readonly Model[]): string[] {
   if (!selected.endsWith(":free")) return [];
-  const free = new Set(models.filter((m) => m.free).map((m) => m.id));
-  return FREE_FALLBACK_MODELS.filter((id) => id !== selected && free.has(id));
+  return reliableFreeModels(models)
+    .filter((id) => id !== selected)
+    .slice(0, MAX_FALLBACKS);
 }
 
 // ─── Key ──────────────────────────────────────────────────────────────────────
@@ -167,8 +179,9 @@ export function recommendedPaidModels(models: Model[]): Model[] {
   return [...aliases.sort(byName), ...recent.sort(byName)];
 }
 
-export function getSelectedModel(): string {
-  return localStorage.getItem(MODEL_STORAGE) ?? DEFAULT_MODEL;
+/** Model chosen by the user, or null: the [recommendedModel] then, which follows the evaluation. */
+export function getSelectedModel(): string | null {
+  return localStorage.getItem(MODEL_STORAGE);
 }
 
 export function setSelectedModel(model: string): void {

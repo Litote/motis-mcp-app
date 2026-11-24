@@ -18,12 +18,12 @@ import { LanguagePicker } from "./LanguagePicker";
 import { ThemeButton } from "./ThemeButton";
 import { useLocation } from "./location";
 import {
-  DEFAULT_MODEL,
   forgetKey,
   getFreeQuota,
   getKey,
   getSelectedModel,
   listModels,
+  recommendedModel,
   recommendedPaidModels,
   freeFallbackModels,
   setSelectedModel,
@@ -147,6 +147,7 @@ function ModelPicker({ models, model, onSelect }: Readonly<{ models: Model[]; mo
   const free = models.filter((m) => m.free);
   const paid = all ? models.filter((m) => !m.free) : recommendedPaidModels(models);
   const listed = [...free, ...paid].some((m) => m.id === model);
+  const recommended = recommendedModel(models);
   return (
     <span className="model-picker">
       <select value={model} onChange={(e) => onSelect(e.target.value)} aria-label={t("model.label")}>
@@ -155,7 +156,7 @@ function ModelPicker({ models, model, onSelect }: Readonly<{ models: Model[]; mo
           {free.map((m) => (
             <option key={m.id} value={m.id}>
               {m.name}
-              {m.id === DEFAULT_MODEL ? t("model.recommended") : ""}
+              {m.id === recommended ? t("model.recommended") : ""}
             </option>
           ))}
         </optgroup>
@@ -217,13 +218,15 @@ function ExportButton({ messages, model }: Readonly<{ messages(): readonly Threa
 }
 
 /** Current model settings, read by the agent at each run. */
-const settingsRef: { model: string; models: Model[] } = { model: DEFAULT_MODEL, models: [] };
+const settingsRef: { model: string; models: Model[] } = { model: recommendedModel([]), models: [] };
 
 export default function Chat({ apiKey }: Readonly<{ apiKey: string }>) {
   // the header and the thread (not memoized) follow the language chosen; the messages subscribe themselves
   useLanguage();
   const [models, setModels] = useState<Model[]>([]);
-  const [model, setModel] = useState(getSelectedModel);
+  // the model chosen by the user, else the recommended one, which follows the models listed
+  const [chosen, setChosen] = useState(getSelectedModel);
+  const model = chosen ?? recommendedModel(models);
   const [quota, setQuota] = useState<FreeQuota | null>(null);
 
   const refreshQuota = useCallback(() => {
@@ -256,7 +259,7 @@ export default function Chat({ apiKey }: Readonly<{ apiKey: string }>) {
 
   const selectModel = (id: string) => {
     setSelectedModel(id);
-    setModel(id);
+    setChosen(id);
   };
 
   return (

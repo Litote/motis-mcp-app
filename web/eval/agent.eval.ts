@@ -2,21 +2,25 @@
  * Evaluation of the agent of the web chat (src/agent.ts, unchanged) with real models and a real MCP server: each
  * scenario of scenarios.ts is sent to each model, and its tool calls and answer are checked. See eval/README.md.
  *
- * Environment: OPENROUTER_API_KEY (required, else skipped), EVAL_MODELS (comma-separated, default: the default model of
- * the chat), EVAL_MCP_URL (default http://localhost:3001/mcp), EVAL_SCENARIOS (comma-separated ids, default: all),
+ * The results update the scores of the models (src/model-scores.json), from which the chat chooses its free model.
+ *
+ * Environment: OPENROUTER_API_KEY (required, else skipped), EVAL_MODELS (comma-separated, default: the recommended
+ * model of the chat), EVAL_MCP_URL (default http://localhost:3001/mcp), EVAL_SCENARIOS (comma-separated ids, default: all),
  * EVAL_DELAY_MS (pause between runs, for the rate limit of the free models).
  */
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { afterAll, describe, expect, it, vi } from "vitest";
 import type { ChatModelRunOptions, ChatModelRunResult, ThreadMessage } from "@assistant-ui/react";
 import { evaluate, toRecord, type RunRecord, type Scenario } from "./checks";
 import { report, type Run } from "./report";
 import { SCENARIOS } from "./scenarios";
+import { mergeScores } from "./scores";
 
 const env = process.env;
 const key = env.OPENROUTER_API_KEY;
 const mcpUrl = env.EVAL_MCP_URL ?? "http://localhost:3001/mcp";
 const delayMs = Number(env.EVAL_DELAY_MS ?? 0);
+const SCORES_FILE = "src/model-scores.json";
 
 vi.mock("../src/config", () => ({
   loadConfig: () => Promise.resolve({ mcpUrl: process.env.EVAL_MCP_URL ?? "http://localhost:3001/mcp", sandboxUrl: "", hostOrigins: [] }),
@@ -37,9 +41,9 @@ vi.mock("../src/openrouter", async (importOriginal) => {
 });
 
 const { createAgent } = await import("../src/agent");
-const { DEFAULT_MODEL } = await import("../src/openrouter");
+const { recommendedModel } = await import("../src/openrouter");
 
-const models = (env.EVAL_MODELS ?? DEFAULT_MODEL).split(",").map((m) => m.trim()).filter(Boolean);
+const models = (env.EVAL_MODELS ?? recommendedModel([])).split(",").map((m) => m.trim()).filter(Boolean);
 const only = env.EVAL_SCENARIOS?.split(",").map((s) => s.trim());
 const scenarios = SCENARIOS.filter((s) => !only || only.includes(s.id));
 
@@ -82,5 +86,9 @@ describe.skipIf(!key)(`agent evaluation (MCP server ${mcpUrl})`, () => {
     writeFileSync(`${name}.json`, JSON.stringify(runs.map(({ scenario, ...run }) => ({ ...run, scenario: scenario.id })), null, 2));
     writeFileSync(`${name}.md`, report(runs, mcpUrl));
     console.log(`Report: web/${name}.md`);
+    const scores = JSON.parse(readFileSync(SCORES_FILE, "utf8"));
+    const date = new Date().toLocaleDateString("sv"); // YYYY-MM-DD, local
+    writeFileSync(SCORES_FILE, `${JSON.stringify(mergeScores(scores, runs, date, SCENARIOS.map((s) => s.id)), null, 2)}\n`);
+    console.log(`Scores: web/${SCORES_FILE}`);
   });
 });

@@ -2,7 +2,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   completeLogin,
-  DEFAULT_MODEL,
   forgetKey,
   getFreeQuota,
   getKey,
@@ -121,7 +120,8 @@ describe("models", () => {
   });
 
   it("remembers the selected model", () => {
-    expect(getSelectedModel()).toBe(DEFAULT_MODEL);
+    // none chosen: the recommended model then
+    expect(getSelectedModel()).toBeNull();
     setSelectedModel("openai/gpt");
     expect(getSelectedModel()).toBe("openai/gpt");
   });
