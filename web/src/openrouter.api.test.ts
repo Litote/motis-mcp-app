@@ -195,6 +195,13 @@ describe("streamChat", () => {
     expect((error as Error).message).toBe(message);
   });
 
+  it("fails with an error of OpenRouter on an unreadable chunk", async () => {
+    fetchMock.mockResolvedValue(sse(["data: {not json"]));
+    const error = await streamChat(KEY, { model: "m1", fallbackModels: [], messages, tools: [] }, signal, () => undefined).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(OpenRouterError);
+    expect((error as Error).message).toBe("OpenRouter error (HTTP 502): unreadable stream chunk: {not json");
+  });
+
   it("fails on an error in the stream", async () => {
     fetchMock.mockResolvedValue(sse([`data: ${JSON.stringify({ error: { code: 429, message: "quota" } })}`]));
     await expect(streamChat(KEY, { model: "m1", fallbackModels: [], messages, tools: [] }, signal, () => undefined)).rejects.toThrow("Rate limited by OpenRouter");

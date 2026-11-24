@@ -114,6 +114,10 @@ describe("McpAppView", () => {
 
     await bridge.onopenlink!({ url: "https://tcl.fr" });
     expect(open).toHaveBeenCalledWith("https://tcl.fr", "_blank", "noopener,noreferrer");
+    // a view is not trusted: only web links are opened
+    expect(await bridge.onopenlink!({ url: "javascript:alert(document.domain)" })).toEqual({ isError: true });
+    expect(await bridge.onopenlink!({ url: "not a url" })).toEqual({ isError: true });
+    expect(open).toHaveBeenCalledTimes(1);
 
     await bridge.onupdatemodelcontext!({ content: [{ type: "text", text: "Selected: T1" }] });
     expect(mocks.setViewContext).toHaveBeenCalledWith("call-1", "Selected: T1");
