@@ -17,6 +17,7 @@ import org.litote.motis.mcp.dto.ItineraryDto
 import org.litote.motis.mcp.dto.PlaceDto
 import org.litote.motis.mcp.dto.STATION_RADIUS
 import org.litote.motis.mcp.dto.StationLineDto
+import org.litote.motis.mcp.dto.StopTimesCursor
 import org.litote.motis.mcp.dto.TripResult
 import org.litote.motis.mcp.dto.distinctTrains
 import org.litote.motis.mcp.dto.followedBy
@@ -127,7 +128,7 @@ private class DeparturesRequest(private val gateway: MotisGateway, private val a
     private val station = args.boolean("station") ?: false
     private val lines = args.stringList("lines")?.toSet()
     private val pageCursor = args.string("pageCursor")
-    private val earlier = pageCursor?.startsWith("EARLIER") == true
+    private val earlier = pageCursor?.let(StopTimesCursor::isEarlier) == true
 
     suspend fun departures(): DeparturesResult {
         val stopId = args.string("stopId")

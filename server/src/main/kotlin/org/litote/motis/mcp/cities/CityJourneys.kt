@@ -20,11 +20,11 @@ import org.litote.motis.mcp.dto.fromMainLineStations
 import org.litote.motis.mcp.dto.merged
 import org.litote.motis.mcp.dto.toDto
 import java.security.SecureRandom
-import java.time.Instant
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlin.io.encoding.Base64
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
-import kotlin.time.toJavaDuration
 
 private val logger = KotlinLogging.logger {}
 
@@ -47,7 +47,7 @@ class CityJourneys(
     private val gateway: MotisGateway,
     private val store: CityStationsStore,
     private val refreshAfter: Duration = 7.days,
-    private val now: () -> Instant = Instant::now,
+    private val now: () -> Instant = Clock.System::now,
     private val rediscover: () -> Boolean = ONE_IN_100,
 ) {
     /** Journeys of [query] (between the centers of [from] and [to]) from station to station. */
@@ -62,7 +62,7 @@ class CityJourneys(
         }
         val key = "${from.id}>${to.id}"
         val known = load(key)
-        if (known == null || java.time.Duration.between(known.discoveredAt, now()) >= refreshAfter.toJavaDuration()) {
+        if (known == null || now() - known.discoveredAt >= refreshAfter) {
             return discover(key, known, fromCity, toCity, query)
         }
         val pairs = stationPairs(known.from, known.to).map { (f, t) -> StationPair(f, t) }

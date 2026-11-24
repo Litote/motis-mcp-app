@@ -282,6 +282,8 @@ data class JourneyResult(
     val previousPageCursor: String? = null,
     /** Alerts of the legs, referenced by their index. */
     val alerts: List<AlertDto>? = null,
+    /** Maximum walk (or bike ride) to the first stop and from the last one used by the search, in minutes. */
+    val maxWalkMinutes: Int? = null,
 )
 
 // --- rentals ---

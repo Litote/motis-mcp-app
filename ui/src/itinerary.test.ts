@@ -201,7 +201,8 @@ describe("itinerary view", () => {
           from: "a",
           to: "b",
           language: "fr",
-          time: new Date("2026-10-15T08:00").toISOString(),
+          // in the local time of the origin, as the field
+          time: "2026-10-15T08:00",
           modes: ["RAIL", "HIGHSPEED_RAIL", "LONG_DISTANCE", "NIGHT_RAIL", "REGIONAL_FAST_RAIL", "REGIONAL_RAIL", "SUBURBAN", "SUBWAY", "TRAM", "FERRY", "FUNICULAR", "AERIAL_LIFT", "AIRPLANE", "OTHER"],
           maxWalkMinutes: 15,
           walkingSpeed: "FAST",
@@ -220,6 +221,65 @@ describe("itinerary view", () => {
       $("#later").click();
       await flush();
       expect(app.callServerTool.mock.lastCall![0].arguments).toMatchObject({ walkingSpeed: "FAST", bike: "TO_STATION" });
+    });
+
+    it("keeps the position of the call, near which the names are resolved", async () => {
+      const app = await loadView("itinerary");
+      await app.toolResult({ from: "Gare", to: "b", position: "45.76,4.86" }, journey());
+
+      await search(app);
+
+      expect(app.callServerTool).toHaveBeenLastCalledWith({ name: "plan_journey", arguments: { from: "Gare", to: "b", position: "45.76,4.86" } });
+    });
+
+    /** Journey from New York: another time zone than the browser (Paris). */
+    const fromNewYork = () => {
+      const data = journey();
+      data.itineraries.flatMap((it) => it.legs).forEach((leg) => (leg.from.tz = leg.to.tz = "America/New_York"));
+      return data;
+    };
+
+    it("keeps the time of the call when it is not changed, whatever the time zone of the browser", async () => {
+      const app = await loadView("itinerary");
+      await app.toolResult({ from: "a", to: "b", time: "2026-10-15T08:00" }, fromNewYork());
+      expect(field("time").value).toBe("2026-10-15T08:00");
+      field("walkingSpeed").value = "FAST";
+
+      await search(app);
+
+      expect(app.callServerTool).toHaveBeenLastCalledWith({
+        name: "plan_journey",
+        arguments: { from: "a", to: "b", time: "2026-10-15T08:00", walkingSpeed: "FAST" },
+      });
+    });
+
+    it("shows and sends the time in the time zone of the origin", async () => {
+      const app = await loadView("itinerary");
+      await app.toolResult({ from: "a", to: "b", time: "2026-10-15T12:00:00Z" }, fromNewYork());
+      expect(field("time").value).toBe("2026-10-15T08:00");
+      field("time").value = "2026-10-15T09:00";
+
+      await search(app);
+
+      expect(app.callServerTool).toHaveBeenLastCalledWith({ name: "plan_journey", arguments: { from: "a", to: "b", time: "2026-10-15T09:00" } });
+    });
+
+    it("sends the walk only when changed, the server giving its default", async () => {
+      const app = await loadView("itinerary");
+      await app.toolResult({ from: "a", to: "b" }, { ...journey(), maxWalkMinutes: 30 });
+      expect(field("maxWalkMinutes").value).toBe("30");
+
+      await search(app);
+      expect(app.callServerTool).toHaveBeenLastCalledWith({ name: "plan_journey", arguments: { from: "a", to: "b" } });
+
+      field("maxWalkMinutes").value = "15";
+      await search(app);
+      expect(app.callServerTool).toHaveBeenLastCalledWith({ name: "plan_journey", arguments: { from: "a", to: "b", maxWalkMinutes: 15 } });
+
+      // back to the walk of the first search
+      field("maxWalkMinutes").value = "30";
+      await search(app);
+      expect(app.callServerTool).toHaveBeenLastCalledWith({ name: "plan_journey", arguments: { from: "a", to: "b", maxWalkMinutes: 30 } });
     });
 
     it("keeps the modes of the call when they are not changed", async () => {

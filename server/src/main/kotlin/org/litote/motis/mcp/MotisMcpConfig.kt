@@ -15,6 +15,7 @@ import org.litote.motis.mcp.realtime.RealtimeOverlay
 import org.litote.motis.mcp.realtime.AlertSource
 import org.litote.motis.mcp.realtime.sncf.SncfAlerts
 import org.litote.motis.mcp.realtime.sncf.SncfRealtimeOverlay
+import java.util.concurrent.ConcurrentHashMap
 
 const val APP_NAME = "motis-mcp-app"
 const val APP_URL = "https://github.com/Litote/motis-mcp-app"
@@ -95,11 +96,17 @@ data class MotisMcpConfig(
 
     /** Real-time overlays of the stop times (see [MotisGateway]), sending the [userAgent] of the MOTIS clients. */
     fun realtimeOverlays(userAgent: String?, engine: HttpClientEngineFactory<*> = OkHttp): List<RealtimeOverlay> =
-        if (sncfRealtime) listOf(SncfRealtimeOverlay(HttpClient(engine), userAgent)) else emptyList()
+        if (sncfRealtime) listOf(SncfRealtimeOverlay(sncfHttpClient(engine), userAgent)) else emptyList()
 
     /** Sources of service alerts (see [MotisGateway]), sending the [userAgent] of the MOTIS clients. */
     fun alertSources(userAgent: String?, engine: HttpClientEngineFactory<*> = OkHttp): List<AlertSource> =
-        if (sncfRealtime) listOf(SncfAlerts(HttpClient(engine), userAgent)) else emptyList()
+        if (sncfRealtime) listOf(SncfAlerts(sncfHttpClient(engine), userAgent)) else emptyList()
+
+    /** Clients of the open data of the SNCF, by engine: one for the real time and the alerts, with one connection pool. */
+    private val sncfHttpClients = ConcurrentHashMap<HttpClientEngineFactory<*>, HttpClient>()
+
+    /** Client of the open data of the SNCF (same server for all its feeds), kept for the life of the process. */
+    internal fun sncfHttpClient(engine: HttpClientEngineFactory<*>): HttpClient = sncfHttpClients.computeIfAbsent(engine) { HttpClient(it) }
 
     companion object {
         const val DEFAULT_BASE_URL = "https://api.transitous.org/"

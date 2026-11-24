@@ -830,6 +830,8 @@ class MotisToolsTest {
             assertEquals(listOf("WALK", "BUS", "WALK"), first.legs.map { it.mode })
             assertEquals("C23", first.legs[1].line)
             assertNotNull(journey.nextPageCursor)
+            // for the options of the view
+            assertEquals(10, journey.maxWalkMinutes)
 
             val request = motis.request("/api/v6/plan")
             assertEquals("45.7605,4.8597", request.url.parameters["fromPlace"])
@@ -915,9 +917,11 @@ class MotisToolsTest {
     fun `plan_journey takes the city rather than its station of the same name`() {
         val motis = stationBeforeCityMotis("Strasbourg")
         withMcpClient(motis) { client ->
-            client.callTool("plan_journey", mapOf("from" to "48.39,-4.48", "to" to "Strasbourg"))
+            val result = client.callTool("plan_journey", mapOf("from" to "48.39,-4.48", "to" to "Strasbourg"))
 
             assertEquals("48.584614,7.7507127", motis.request("/api/v6/plan").url.parameters["toPlace"])
+            // the default walk of the server, for the options of the view
+            assertEquals(MotisGateway.DEFAULT_MAX_WALK_MINUTES, result.data(JourneyResult.serializer()).maxWalkMinutes)
         }
     }
 

@@ -157,6 +157,8 @@ export interface JourneyResult {
   previousPageCursor?: string;
   /** Alerts of the legs, referenced by their index. */
   alerts?: AlertDto[];
+  /** Maximum walk (or bike ride) to the first stop and from the last one used by the search, in minutes. */
+  maxWalkMinutes?: number;
 }
 
 export interface RentalProviderDto {

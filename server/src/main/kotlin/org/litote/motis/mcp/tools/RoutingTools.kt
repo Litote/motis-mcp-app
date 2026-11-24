@@ -116,7 +116,7 @@ fun Server.addRoutingTools(gateway: MotisGateway, cityJourneys: CityJourneys) {
             )
         val journeys = searchJourneys(gateway, cityJourneys, from, to, query)
         val named = journeys.withEndNames(from.askedName(), to.askedName(), from.area, to.area).withStops()
-        val result = (LocalizedNames.of(language)?.journey(named) ?: named).withAlerts()
+        val result = (LocalizedNames.of(language)?.journey(named) ?: named).withAlerts().copy(maxWalkMinutes = query.maxWalkMinutes)
         val options =
             listOfNotNull(
                 walkingSpeed.takeIf { it != WalkingSpeed.NORMAL }?.let { "walking speed ${it.name}" },
