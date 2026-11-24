@@ -1,5 +1,24 @@
-import { describe, expect, it } from "vitest";
-import { applyDelta, DEFAULT_MODEL, freeFallbackModels, recommendedPaidModels, sseData, type ChatDelta } from "./openrouter";
+import { describe, expect, it, vi } from "vitest";
+import { applyDelta, freeFallbackModels, recommendedModel, recommendedPaidModels, reliableFreeModels, sseData, type ChatDelta } from "./openrouter";
+
+vi.mock("./model-scores.json", () => {
+  const results = (passed: number, failed: number, seconds: number) =>
+    Object.fromEntries([
+      ...[...Array(passed)].map((_, i) => [`ok${i}`, { ok: true, seconds, date: "2026-11-24" }]),
+      ...[...Array(failed)].map((_, i) => [`ko${i}`, { ok: false, seconds, date: "2026-11-24" }]),
+    ]);
+  return {
+    default: {
+      "fifth/model:free": results(2, 1, 4),
+      "fourth/model:free": results(3, 0, 20),
+      "third/model:free": results(3, 0, 10),
+      "second/model:free": results(3, 0, 6),
+      "best/model:free": results(3, 0, 4),
+      "bad/model:free": results(0, 2, 1),
+      "unlisted/model:free": results(1, 1, 1),
+    },
+  };
+});
 
 function stream(chunks: string[]): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder();
@@ -87,19 +106,26 @@ describe("recommendedPaidModels", () => {
   });
 });
 
-describe("freeFallbackModels", () => {
+describe("recommended and fallback free models", () => {
   const free = (id: string) => ({ id, name: id, free: true, created: 1 });
-  const ULTRA = "nvidia/nemotron-3-ultra-550b-a55b:free";
+  const listed = ["best", "second", "third", "fourth", "fifth", "bad", "small"].map((id) => free(`${id}/model:free`));
 
-  it("gives the reliable free models still listed, not the selected one", () => {
-    const models = [free("a/small:free"), free(DEFAULT_MODEL), free(ULTRA)];
-    expect(freeFallbackModels(DEFAULT_MODEL, models)).toEqual([ULTRA]);
-    expect(freeFallbackModels("a/small:free", models)).toEqual([DEFAULT_MODEL, ULTRA]);
+  it("recommends the best of the evaluation still free, or the best of the evaluation when unknown", () => {
+    expect(recommendedModel(listed)).toBe("best/model:free");
+    expect(recommendedModel([{ ...free("best/model:free"), free: false }, free("second/model:free")])).toBe("second/model:free");
+    expect(recommendedModel([])).toBe("best/model:free");
+    expect(recommendedModel([free("small/model:free")])).toBe("best/model:free");
+  });
+
+  it("gives the reliable free models still listed, best first, not the selected one, at most 3", () => {
+    expect(reliableFreeModels(listed)).toEqual(["best/model:free", "second/model:free", "third/model:free", "fourth/model:free", "fifth/model:free"]);
+    expect(freeFallbackModels("best/model:free", listed)).toEqual(["second/model:free", "third/model:free", "fourth/model:free"]);
+    expect(freeFallbackModels("small/model:free", listed)).toEqual(["best/model:free", "second/model:free", "third/model:free"]);
     // no more free, or not listed
-    expect(freeFallbackModels("a/small:free", [free("a/small:free"), { ...free(ULTRA), free: false }])).toEqual([]);
+    expect(freeFallbackModels("small/model:free", [free("small/model:free"), { ...free("best/model:free"), free: false }])).toEqual([]);
   });
 
   it("gives none for a paid model", () => {
-    expect(freeFallbackModels("openai/gpt-5", [free(DEFAULT_MODEL)])).toEqual([]);
+    expect(freeFallbackModels("openai/gpt-5", listed)).toEqual([]);
   });
 });

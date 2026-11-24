@@ -146,4 +146,15 @@ describe("report", () => {
     expect(text).toContain("> (none)");
     expect(text).not.toContain("## ✗ departures — a");
   });
+
+  it("does not count a run ended by an error", async () => {
+    const { report } = await import("./report");
+    const scenario = SCENARIOS[0];
+    const failed = record({ calls: [], answer: "", complete: false, error: "Rate limited by OpenRouter" });
+    const text = report([{ model: "a", scenario, record: failed, checks: evaluate(failed, scenario.expect), seconds: 1 }], "http://localhost:3001/mcp");
+
+    expect(text).toContain("| departures | ⚠ not evaluated (error) |");
+    expect(text).toContain("| **Total** | **0/0 scenarios** |");
+    expect(text).toContain("Error: Rate limited by OpenRouter");
+  });
 });

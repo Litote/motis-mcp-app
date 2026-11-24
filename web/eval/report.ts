@@ -18,11 +18,13 @@ export function report(runs: Run[], mcpUrl: string, date: Date = new Date()): st
   const cell = (model: string, id: string) => {
     const r = runs.find((run) => run.model === model && run.scenario.id === id);
     if (!r) return "";
+    // an error (rate limited…) measured nothing: not counted in the scores (scores.ts)
+    if (r.record.error) return "⚠ not evaluated (error)";
     const ok = r.checks.every((c) => c.ok);
     return `${ok ? "✓" : "✗"} ${passed(r.checks)}/${r.checks.length} · ${r.record.steps} steps · ${Math.round(r.seconds)} s`;
   };
   const score = (model: string) => {
-    const mine = runs.filter((r) => r.model === model);
+    const mine = runs.filter((r) => r.model === model && !r.record.error);
     return `${mine.filter((r) => r.checks.every((c) => c.ok)).length}/${mine.length} scenarios`;
   };
   const lines = [

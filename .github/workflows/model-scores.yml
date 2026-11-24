@@ -1,0 +1,143 @@
+name: Model scores
+
+# Daily evaluation of the free models of the web chat (web/eval/README.md): a few model calls a day complete the
+# scores (web/src/model-scores.json) of the free models listed by OpenRouter, from which the chat chooses its model.
+# Nothing is called once every free model listed is evaluated. The scores are proposed in a pull request
+# (branch model-scores), merged once approved.
+on:
+  schedule:
+    - cron: '17 5 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: model-scores
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  BRANCH: model-scores
+  SCORES: web/src/model-scores.json
+
+jobs:
+  evaluate:
+    name: Evaluate the free models
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: main
+          fetch-depth: 0
+
+      # A GitHub App token rather than GITHUB_TOKEN: its pull requests and commits trigger the CI
+      - uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        id: app-token
+        with:
+          app-id: ${{ secrets.RELEASE_PLEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}
+          repositories: ${{ github.event.repository.name }}
+          permission-contents: write
+          permission-pull-requests: write
+
+      # The scores not merged yet are those of the open pull request: completed instead of evaluated again
+      - name: Scores of the open pull request
+        id: pr
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          PR=$(gh pr list --head "$BRANCH" --base main --state open --json number --jq '.[0].number // empty')
+          echo "number=$PR" >> "$GITHUB_OUTPUT"
+          if [[ -n "$PR" ]]; then
+            git fetch --no-tags origin "$BRANCH"
+            git checkout "origin/$BRANCH" -- "$SCORES"
+            echo "head=$(git rev-parse "origin/$BRANCH")" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '26'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Evaluate
+        working-directory: web
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          EVAL_AUTO: '1'
+          # half of the 50 daily requests of a free OpenRouter account
+          EVAL_MAX_CALLS: '25'
+          EVAL_DELAY_MS: '3000'
+          EVAL_MCP_URL: https://errance.litote.org/mcp
+        run: |
+          if [[ -z "$OPENROUTER_API_KEY" ]]; then
+            echo "::warning::No OPENROUTER_API_KEY secret: nothing evaluated"
+            exit 0
+          fi
+          npm ci --no-audit --no-fund
+          # a model failing a check fails vitest: that is a result, recorded in the scores
+          npm run eval || echo "::notice::Some checks failed: see the report in the summary"
+          for report in eval/results/*.md; do
+            [[ -e "$report" ]] && cat "$report" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+      - name: Branch of the pull request
+        id: branch
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          PR: ${{ steps.pr.outputs.number }}
+          PR_HEAD: ${{ steps.pr.outputs.head }}
+        run: |
+          # compared with the scores of the pull request, if any, else with those of main
+          if git diff --quiet "${PR_HEAD:-HEAD}" -- "$SCORES"; then
+            echo "Scores unchanged."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+          if [[ -n "$PR" ]]; then
+            echo "head=$PR_HEAD" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # no open pull request: the branch starts again from main
+          MAIN=$(git rev-parse HEAD)
+          if gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/$BRANCH" > /dev/null 2>&1; then
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/git/refs/heads/$BRANCH" -f sha="$MAIN" -F force=true > /dev/null
+          else
+            gh api --method POST "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/heads/$BRANCH" -f sha="$MAIN" > /dev/null
+          fi
+          echo "head=$MAIN" >> "$GITHUB_OUTPUT"
+
+      - name: Commit the scores
+        if: steps.branch.outputs.changed == 'true'
+        uses: Litote/ci/.github/actions/commit-via-api@0200d5384e9bb08b678a219212a11544c1389f9f # v0.14.0
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          branch: ${{ env.BRANCH }}
+          paths: ${{ env.SCORES }}
+          message: 'chore(web): scores of the free models, daily evaluation'
+          expected-head: ${{ steps.branch.outputs.head }}
+
+      - name: Pull request
+        if: steps.branch.outputs.changed == 'true' && steps.pr.outputs.number == ''
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          PR_URL=$(gh pr create --base main --head "$BRANCH" \
+            --title 'chore(web): scores of the free models, daily evaluation' \
+            --body "Scores of the free models completed by the daily evaluation ([model-scores.yml]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/workflows/model-scores.yml)): the reports are in the summaries of its runs. Merged once approved: the web chat then recommends the best free model of these scores.")
+          gh pr merge --auto --squash "$PR_URL"
+
+      # Last, after the scores obtained before the error are committed: fails the run, to be notified (invalid key,
+      # negative balance, daily quota already reached…). A model failing a check does not fail it.
+      - name: Account error
+        working-directory: web
+        run: |
+          if [[ -f eval/results/account-error.txt ]]; then
+            echo "::error::OpenRouter account: $(cat eval/results/account-error.txt)"
+            exit 1
+          fi
