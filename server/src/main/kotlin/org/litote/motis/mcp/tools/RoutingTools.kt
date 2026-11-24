@@ -10,12 +10,14 @@ import org.litote.motis.mcp.TransferMargin
 import org.litote.motis.mcp.WalkingSpeed
 import org.litote.motis.mcp.apps.UiView
 import org.litote.motis.mcp.cities.CityJourneys
+import org.litote.motis.mcp.cities.StationPairsCursor
 import org.litote.motis.mcp.dto.LocalizedNames
 import org.litote.motis.mcp.dto.Coordinates
 import org.litote.motis.mcp.dto.ItineraryDto
 import org.litote.motis.mcp.dto.JourneyResult
 import org.litote.motis.mcp.dto.fromMainLineStations
 import org.litote.motis.mcp.dto.hasMainLineLegs
+import org.litote.motis.mcp.dto.latLon
 import org.litote.motis.mcp.dto.toDto
 import org.litote.motis.mcp.dto.withAlerts
 import org.litote.motis.mcp.dto.withEndNames
@@ -117,6 +119,12 @@ fun Server.addRoutingTools(gateway: MotisGateway, cityJourneys: CityJourneys) {
                 // from station to station (a bike is ridden from the coordinates of the city)
                 cityJourneys.plan(from, to, query)
             } else {
+                if (pageCursor != null && StationPairsCursor.isStationPairs(pageCursor)) {
+                    throw MotisToolException(
+                        "Invalid argument: 'pageCursor' was returned for the journeys between two cities: call again with " +
+                            "the 'from', 'to' and 'bike' of that call, or without 'pageCursor'",
+                    )
+                }
                 gateway.plan(query).toDto().fromMainLineStations(from.center().takeIf { from.isCity }, to.center().takeIf { to.isCity })
             }
         val named = journeys.withEndNames(from.askedName(), to.askedName(), from.area, to.area).withStops()
@@ -132,7 +140,7 @@ fun Server.addRoutingTools(gateway: MotisGateway, cityJourneys: CityJourneys) {
     }
 }
 
-private fun ResolvedPlace.coordinates(): String = "$lat,$lon"
+private fun ResolvedPlace.coordinates(): String = latLon(lat, lon)
 
 /** Text of the journeys [result] from [from] to [to], with the non-default [options] of the search. */
 private fun journeySummary(from: ResolvedPlace, to: ResolvedPlace, result: JourneyResult, options: List<String>): String =

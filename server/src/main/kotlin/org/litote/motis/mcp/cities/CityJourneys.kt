@@ -227,12 +227,18 @@ data class StationPairsCursor(val pairs: List<StationPair>) {
     companion object {
         private const val PREFIX = "stations:"
 
-        /** The cursor of the pairs of stations, null for another cursor (of MOTIS). */
+        /** True for a cursor of the pairs of stations, false for a cursor of MOTIS. */
+        fun isStationPairs(cursor: String): Boolean = cursor.startsWith(PREFIX)
+
+        /**
+         * The cursor of the pairs of stations, null for another cursor (of MOTIS). A cursor comes from the caller: more
+         * pairs than [CityJourneys.MAX_STATION_PAIRS] would make as many concurrent MOTIS calls, it is refused.
+         */
         fun decode(cursor: String): StationPairsCursor? {
-            if (!cursor.startsWith(PREFIX)) return null
+            if (!isStationPairs(cursor)) return null
             return try {
                 Json.decodeFromString(serializer(), Base64.UrlSafe.decode(cursor.removePrefix(PREFIX)).decodeToString())
-                    .takeIf { it.pairs.isNotEmpty() }
+                    .takeIf { it.pairs.size in 1..CityJourneys.MAX_STATION_PAIRS }
             } catch (e: IllegalArgumentException) {
                 null
             } ?: throw MotisToolException("Invalid argument: 'pageCursor' is not a cursor returned by plan_journey")

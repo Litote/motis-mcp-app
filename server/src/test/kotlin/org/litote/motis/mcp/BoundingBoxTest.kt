@@ -15,4 +15,12 @@ class BoundingBoxTest {
         assertEquals(39.4, BoundingBox(45.0, 4.0, 45.1, 5.0).radiusKm, 0.1)
         assertEquals(5.6, BoundingBox(45.0, 4.0, 45.1, 4.01).radiusKm, 0.1)
     }
+
+    @Test
+    fun `the corners of an area near the prime meridian are sent without exponent`() {
+        val bbox = BoundingBox(51.47, -0.0005, 51.48, 0.0005)
+
+        assertEquals("51.47,-0.0005", bbox.min)
+        assertEquals("51.48,0.0005", bbox.max)
+    }
 }
