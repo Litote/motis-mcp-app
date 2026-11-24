@@ -1,4 +1,4 @@
-package org.litote.motis.mcp.realtime
+package org.litote.motis.mcp.realtime.sncf
 
 import org.litote.motis.client.model.StopTime
 import java.io.InputStream

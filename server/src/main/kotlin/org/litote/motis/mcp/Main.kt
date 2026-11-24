@@ -89,7 +89,7 @@ fun main(args: Array<String>) {
     val gateway = MotisGateway(
         motis,
         overlays = config.realtimeOverlays(motis.userAgent),
-        sncfAlerts = config.sncfAlerts(motis.userAgent),
+        alertSources = config.alertSources(motis.userAgent),
         repairShapes = config.repairShapes,
     )
     val views = loadViews(config.tiles)

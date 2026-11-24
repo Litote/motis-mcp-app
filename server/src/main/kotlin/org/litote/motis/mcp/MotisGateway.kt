@@ -26,8 +26,8 @@ import org.litote.motis.mcp.dto.normalizeName
 import org.litote.motis.mcp.dto.toDto
 import org.litote.motis.mcp.dto.withRepairedShapes
 import org.litote.motis.mcp.dto.withoutDuplicatePlaces
+import org.litote.motis.mcp.realtime.AlertSource
 import org.litote.motis.mcp.realtime.RealtimeOverlay
-import org.litote.motis.mcp.realtime.SncfAlerts
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.cos
@@ -113,7 +113,7 @@ data class ResolvedPlace(
  * [TtlCache]: one gateway is shared by the requests of a process or of a Lambda instance.
  *
  * The [overlays] add the real time of other sources to the stop times of the feeds without real time in MOTIS, and
- * [sncfAlerts] the service alerts of the SNCF trains to the stop times, trips and journeys.
+ * the [alertSources] the service alerts of other sources to the stop times, trips and journeys.
  *
  * With [repairShapes], the detours of the shapes of the transit legs of the journeys and trips are replaced by straight
  * lines between their stops, see [org.litote.motis.mcp.dto.LegGeometry]: each part repaired is logged by [logShapeRepair]
@@ -123,7 +123,7 @@ class MotisGateway(
     configuration: ClientConfiguration,
     timeSource: TimeSource = TimeSource.Monotonic,
     private val overlays: List<RealtimeOverlay> = emptyList(),
-    private val sncfAlerts: SncfAlerts? = null,
+    private val alertSources: List<AlertSource> = emptyList(),
     private val repairShapes: Boolean = true,
     private val logShapeRepair: (String) -> Unit = { message -> logger.warn { message } },
 ) {
@@ -412,9 +412,14 @@ class MotisGateway(
 
     suspend fun stopTimes(query: StopTimesQuery): StopTimes {
         val stopTimes = withOverlays(fetchStopTimes(query))
-        val alerts = sncfAlerts ?: return stopTimes
-        return stopTimes.copy(body = stopTimes.body.copy(stopTimes = alerts.addToStopTimes(stopTimes.body.stopTimes, query.language)))
+        if (alertSources.isEmpty()) return stopTimes
+        val withAlerts = alertSources.fold(stopTimes.body.stopTimes) { acc, source -> source.addToStopTimes(acc, query.language) }
+        return stopTimes.copy(body = stopTimes.body.copy(stopTimes = withAlerts))
     }
+
+    /** [itineraries] with the alerts of the [alertSources], in their order. */
+    private suspend fun withAlerts(itineraries: List<Itinerary>, language: List<String>?): List<Itinerary> =
+        alertSources.fold(itineraries) { acc, source -> source.addToItineraries(acc, language) }
 
     /** [body] patched by the overlays, in their order: an overlay does not patch a stop time with real time. */
     private suspend fun withOverlays(body: TimetableClient.StoptimesResponseBody): StopTimes {
@@ -482,7 +487,7 @@ class MotisGateway(
         when (val r = timetableClient.trip(tripId = tripId, joinInterlinedLegs = false, language = language)) {
             is TimetableClient.TripResponseSuccess ->
                 repairShapes(r.body.onlyTrip(tripId)) { withRepairedShapes(it) }
-                    .let { trip -> sncfAlerts?.addToItineraries(listOf(trip), language)?.single() ?: trip }
+                    .let { trip -> withAlerts(listOf(trip), language).single() }
             is TimetableClient.TripResponseFailure -> throw failure(r.body.error)
             is TimetableClient.TripResponseUnknownFailure -> throw statusFailure(r.statusCode)
         }
@@ -521,12 +526,7 @@ class MotisGateway(
         ) {
             is RoutingClient.PlanResponseSuccess ->
                 repairShapes(r.body) { withRepairedShapes(it) }.let { body ->
-                    sncfAlerts?.let { alerts ->
-                        body.copy(
-                            itineraries = alerts.addToItineraries(body.itineraries, query.language),
-                            direct = alerts.addToItineraries(body.direct, query.language),
-                        )
-                    } ?: body
+                    body.copy(itineraries = withAlerts(body.itineraries, query.language), direct = withAlerts(body.direct, query.language))
                 }
             is RoutingClient.PlanResponseFailure -> fail(r.body.error)
             is RoutingClient.PlanResponseUnknownFailure -> failStatus(r.statusCode)

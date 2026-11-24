@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalSerializationApi::class)
 
-package org.litote.motis.mcp.realtime
+package org.litote.motis.mcp.realtime.sncf
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
@@ -18,6 +18,11 @@ import org.litote.motis.client.model.Itinerary
 import org.litote.motis.client.model.Leg
 import org.litote.motis.client.model.StopTime
 import org.litote.motis.client.model.TimeRange
+import org.litote.motis.mcp.realtime.AlertSource
+import org.litote.motis.mcp.realtime.CachedFeed
+import org.litote.motis.mcp.realtime.FeedMessage
+import org.litote.motis.mcp.realtime.GtfsAlert
+import org.litote.motis.mcp.realtime.TranslatedString
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
@@ -43,11 +48,11 @@ class SncfAlerts(
     private val userAgent: String?,
     private val url: String = FEED_URL,
     timeSource: TimeSource = TimeSource.Monotonic,
-) {
+) : AlertSource {
     private val feed = CachedFeed("SNCF GTFS-RT alerts", ttl = 2.minutes, timeout = 3.seconds, timeSource) { SncfAlertIndex(fetch()) }
 
     /** [stopTimes] with the alerts of their SNCF trains added to those of their place. Never fails: unchanged instead. */
-    suspend fun addToStopTimes(stopTimes: List<StopTime>, language: List<String>?): List<StopTime> {
+    override suspend fun addToStopTimes(stopTimes: List<StopTime>, language: List<String>?): List<StopTime> {
         if (stopTimes.none { SncfTrains.isSncfTrip(it.tripId) }) return stopTimes
         val index = feed.get() ?: return stopTimes
         return stopTimes.map { st ->
@@ -57,7 +62,7 @@ class SncfAlerts(
     }
 
     /** [itineraries] with the alerts of their SNCF trains added to those of their legs. Never fails: unchanged instead. */
-    suspend fun addToItineraries(itineraries: List<Itinerary>, language: List<String>?): List<Itinerary> {
+    override suspend fun addToItineraries(itineraries: List<Itinerary>, language: List<String>?): List<Itinerary> {
         if (itineraries.none { it.legs.any(Leg::isSncf) }) return itineraries
         val index = feed.get() ?: return itineraries
         return itineraries.map { if (it.legs.any(Leg::isSncf)) it.copy(legs = it.legs.map { leg -> leg.withAlerts(index, language) }) else it }

@@ -12,8 +12,9 @@ import org.litote.motis.mcp.cities.CityStationsStore
 import org.litote.motis.mcp.cities.DynamoDbCityStationsStore
 import org.litote.motis.mcp.cities.InMemoryCityStationsStore
 import org.litote.motis.mcp.realtime.RealtimeOverlay
-import org.litote.motis.mcp.realtime.SncfAlerts
-import org.litote.motis.mcp.realtime.SncfRealtimeOverlay
+import org.litote.motis.mcp.realtime.AlertSource
+import org.litote.motis.mcp.realtime.sncf.SncfAlerts
+import org.litote.motis.mcp.realtime.sncf.SncfRealtimeOverlay
 
 const val APP_NAME = "motis-mcp-app"
 const val APP_URL = "https://github.com/Litote/motis-mcp-app"
@@ -96,9 +97,9 @@ data class MotisMcpConfig(
     fun realtimeOverlays(userAgent: String?, engine: HttpClientEngineFactory<*> = OkHttp): List<RealtimeOverlay> =
         if (sncfRealtime) listOf(SncfRealtimeOverlay(HttpClient(engine), userAgent)) else emptyList()
 
-    /** Service alerts of the SNCF trains (see [MotisGateway]), sending the [userAgent] of the MOTIS clients. */
-    fun sncfAlerts(userAgent: String?, engine: HttpClientEngineFactory<*> = OkHttp): SncfAlerts? =
-        if (sncfRealtime) SncfAlerts(HttpClient(engine), userAgent) else null
+    /** Sources of service alerts (see [MotisGateway]), sending the [userAgent] of the MOTIS clients. */
+    fun alertSources(userAgent: String?, engine: HttpClientEngineFactory<*> = OkHttp): List<AlertSource> =
+        if (sncfRealtime) listOf(SncfAlerts(HttpClient(engine), userAgent)) else emptyList()
 
     companion object {
         const val DEFAULT_BASE_URL = "https://api.transitous.org/"

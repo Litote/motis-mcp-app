@@ -103,11 +103,13 @@ class MotisMcpConfigTest {
     }
 
     @Test
-    fun `the SNCF real time overlay is on by default`() {
+    fun `the SNCF real time overlay and alerts are on by default`() {
         val contact = "MOTIS_APP_CONTACT" to "you@example.org"
         assertEquals(1, MotisMcpConfig.fromEnv(mapOf(contact)).realtimeOverlays(userAgent = null).size)
+        assertEquals(1, MotisMcpConfig.fromEnv(mapOf(contact)).alertSources(userAgent = null).size)
         assertTrue(MotisMcpConfig.fromEnv(mapOf(contact, "MOTIS_SNCF_REALTIME" to " TRUE ")).sncfRealtime)
         assertEquals(emptyList(), MotisMcpConfig.fromEnv(mapOf(contact, "MOTIS_SNCF_REALTIME" to "false")).realtimeOverlays(userAgent = null))
+        assertEquals(emptyList(), MotisMcpConfig.fromEnv(mapOf(contact, "MOTIS_SNCF_REALTIME" to "false")).alertSources(userAgent = null))
         val error = assertFailsWith<IllegalArgumentException> { MotisMcpConfig.fromEnv(mapOf(contact, "MOTIS_SNCF_REALTIME" to "off")) }
         assertTrue(error.message!!.startsWith("MOTIS_SNCF_REALTIME must be true or false"), error.message)
     }
