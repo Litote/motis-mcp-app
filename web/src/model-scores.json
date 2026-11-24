@@ -5,6 +5,16 @@
       "seconds": 6.4,
       "date": "2026-11-24"
     },
+    "departures": {
+      "ok": true,
+      "seconds": 10.6,
+      "date": "2026-11-24"
+    },
+    "explore_area": {
+      "ok": true,
+      "seconds": 15.1,
+      "date": "2026-11-24"
+    },
     "local_time": {
       "ok": true,
       "seconds": 3.7,
