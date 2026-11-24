@@ -7,10 +7,15 @@ import org.litote.motis.client.client.Client
 import org.litote.motis.client.client.ClientConfiguration
 import org.litote.motis.client.client.GeocodeClient
 import org.litote.motis.client.client.MapClient
+import org.litote.motis.client.client.OperationResponse
+import org.litote.motis.client.client.OperationResponseFailure
+import org.litote.motis.client.client.OperationResponseSuccess
+import org.litote.motis.client.client.OperationResponseUnknownFailure
 import org.litote.motis.client.client.RoutingClient
 import org.litote.motis.client.client.TimetableClient
 import org.litote.motis.client.model.HealthResponse
 import org.litote.motis.client.model.Itinerary
+import org.litote.motis.client.model.Error as MotisError
 import org.litote.motis.client.model.LocationType
 import org.litote.motis.client.model.Match
 import org.litote.motis.client.model.Mode
@@ -198,27 +203,21 @@ class MotisGateway(
         numResults: Int?,
         language: List<String>?,
     ): List<Match> =
-        when (
-            val r =
-                geocodeClient.geocode(
-                    text = text,
-                    type = types,
-                    place = near,
-                    numResults = asked(numResults),
-                    language = language,
-                )
-        ) {
-            is GeocodeClient.GeocodeResponseSuccess -> r.body.withoutDuplicatePlaces()
-            is GeocodeClient.GeocodeResponseFailure -> fail(r.body.error)
-            is GeocodeClient.GeocodeResponseUnknownFailure -> failStatus(r.statusCode)
-        }
+        geocodeClient
+            .geocode(
+                text = text,
+                type = types,
+                place = near,
+                numResults = asked(numResults),
+                language = language,
+            ).bodyOrFail()
+            .withoutDuplicatePlaces()
 
     suspend fun reverseGeocode(lat: Double, lon: Double, numResults: Int? = null): List<Match> =
-        when (val r = geocodeClient.reverseGeocode(place = latLon(lat, lon), numResults = asked(numResults))) {
-            is GeocodeClient.ReverseGeocodeResponseSuccess -> r.body.withoutDuplicatePlaces()
-            is GeocodeClient.ReverseGeocodeResponseFailure -> fail(r.body.error)
-            is GeocodeClient.ReverseGeocodeResponseUnknownFailure -> failStatus(r.statusCode)
-        }
+        geocodeClient
+            .reverseGeocode(place = latLon(lat, lon), numResults = asked(numResults))
+            .bodyOrFail()
+            .withoutDuplicatePlaces()
 
     /**
      * Matches asked to MOTIS for [numResults]: twice as many, the duplicate places dropped (the ticket machines of a
@@ -331,17 +330,13 @@ class MotisGateway(
      * The stop of id [stopId], null when MOTIS does not know it (an error body: unknown feed or stop). The failures of
      * the server (network, rate limit, unavailability) are reported, not taken for an unknown stop.
      */
-    suspend fun stop(stopId: String): ResolvedPlace? =
-        when (val r = timetableClient.stoptimes(stopId = stopId, n = 1)) {
-            is TimetableClient.StoptimesResponseSuccess ->
-                r.body.place.let {
-                    // a parent station may come without time zone (Bruxelles-Midi of the SNCB): the one of its stops
-                    val tz = it.tz ?: r.body.stopTimes.firstNotNullOfOrNull { st -> st.place.tz }
-                    ResolvedPlace(stopId, displayName(it.name), it.lat, it.lon, isStop = true, tz = tz)
-                }
-            is TimetableClient.StoptimesResponseFailure -> null
-            is TimetableClient.StoptimesResponseUnknownFailure -> failStatus(r.statusCode)
-        }
+    suspend fun stop(stopId: String): ResolvedPlace? {
+        val body = timetableClient.stoptimes(stopId = stopId, n = 1).bodyOr { return null }
+        val place = body.place
+        // a parent station may come without time zone (Bruxelles-Midi of the SNCB): the one of its stops
+        val tz = place.tz ?: body.stopTimes.firstNotNullOfOrNull { it.place.tz }
+        return ResolvedPlace(stopId, displayName(place.name), place.lat, place.lon, isStop = true, tz = tz)
+    }
 
     /**
      * Time zone of [place]: the one of its geocoding, else of its stop, else of the nearest place (coordinates). Only
@@ -367,26 +362,14 @@ class MotisGateway(
 
     suspend fun initial(): MapClient.InitialResponseBody =
         initialCache.getOrPut(Unit) {
-            when (val r = mapClient.initial()) {
-                is MapClient.InitialResponseSuccess -> r.body
-                is MapClient.InitialResponseFailure -> fail(r.body.error)
-                is MapClient.InitialResponseUnknownFailure -> failStatus(r.statusCode)
-            }
+            mapClient.initial().bodyOrFail()
         }
 
     suspend fun stops(bbox: BoundingBox, modes: List<Mode>? = null, language: List<String>? = null): List<Place> =
-        when (val r = mapClient.stops(min = bbox.min, max = bbox.max, modes = modes, language = language)) {
-            is MapClient.StopsResponseSuccess -> r.body
-            is MapClient.StopsResponseFailure -> fail(r.body.error)
-            is MapClient.StopsResponseUnknownFailure -> failStatus(r.statusCode)
-        }
+        mapClient.stops(min = bbox.min, max = bbox.max, modes = modes, language = language).bodyOrFail()
 
     suspend fun routes(bbox: BoundingBox, zoom: Double, language: List<String>? = null): MapClient.RoutesResponseBody =
-        when (val r = mapClient.routes(zoom = zoom, min = bbox.min, max = bbox.max, language = language)) {
-            is MapClient.RoutesResponseSuccess -> r.body
-            is MapClient.RoutesResponseFailure -> fail(r.body.error)
-            is MapClient.RoutesResponseUnknownFailure -> failStatus(r.statusCode)
-        }
+        mapClient.routes(zoom = zoom, min = bbox.min, max = bbox.max, language = language).bodyOrFail()
 
     /** Stops and routes of an area, fetched concurrently. */
     suspend fun area(
@@ -403,11 +386,7 @@ class MotisGateway(
 
     suspend fun routeDetails(routeIdx: Long, language: List<String>? = null): MapClient.RouteDetailsResponseBody =
         routeDetailsCache.getOrPut(routeIdx to language) {
-            when (val r = mapClient.routeDetails(routeIdx = routeIdx, language = language)) {
-                is MapClient.RouteDetailsResponseSuccess -> r.body
-                is MapClient.RouteDetailsResponseFailure -> fail(r.body.error)
-                is MapClient.RouteDetailsResponseUnknownFailure -> failStatus(r.statusCode)
-            }
+            mapClient.routeDetails(routeIdx = routeIdx, language = language).bodyOrFail()
         }
 
     suspend fun stopTimes(query: StopTimesQuery): StopTimes {
@@ -437,29 +416,24 @@ class MotisGateway(
     }
 
     private suspend fun fetchStopTimes(query: StopTimesQuery): TimetableClient.StoptimesResponseBody =
-        when (
-            val r =
-                timetableClient.stoptimes(
-                    stopId = query.stopId,
-                    time = query.time,
-                    arriveBy = query.arriveBy,
-                    // the stop times from the time on: MOTIS reads the arrivals before it by default (ignored with a cursor)
-                    direction = TimetableClient.Direction.LATER,
-                    n = query.n.toLong(),
-                    mode = query.modes,
-                    radius = query.radius,
-                    // next (previous) stops of each trip, shown on the departures (arrivals) board
-                    fetchStops = query.fetchStops,
-                    pageCursor = query.pageCursor,
-                    language = query.language,
-                )
-        ) {
-            is TimetableClient.StoptimesResponseSuccess -> r.body
-            // MOTIS falls back to a search around 'center' when the stop is not found, hence this message
-            is TimetableClient.StoptimesResponseFailure ->
-                if (r.body.error.contains("stop_found=false")) throw UnknownStopException(query.stopId) else fail(r.body.error)
-            is TimetableClient.StoptimesResponseUnknownFailure -> failStatus(r.statusCode)
-        }
+        timetableClient
+            .stoptimes(
+                stopId = query.stopId,
+                time = query.time,
+                arriveBy = query.arriveBy,
+                // the stop times from the time on: MOTIS reads the arrivals before it by default (ignored with a cursor)
+                direction = TimetableClient.Direction.LATER,
+                n = query.n.toLong(),
+                mode = query.modes,
+                radius = query.radius,
+                // next (previous) stops of each trip, shown on the departures (arrivals) board
+                fetchStops = query.fetchStops,
+                pageCursor = query.pageCursor,
+                language = query.language,
+            ).bodyOr {
+                // MOTIS falls back to a search around 'center' when the stop is not found, hence this message
+                if (it.error.contains("stop_found=false")) throw UnknownStopException(query.stopId) else fail(it.error)
+            }
 
     /** [body] with its shapes repaired by [repair] when enabled, logging the parts repaired not logged yet. */
     private suspend fun <T> repairShapes(body: T, repair: T.((ShapeRepair) -> Unit) -> T): T {
@@ -483,19 +457,16 @@ class MotisGateway(
      * MOTIS), e.g. the Trenitalia trains Paris → Lyon and Lyon → Paris of the same train set, shown as one round trip under
      * the number of the first one.
      */
-    suspend fun trip(tripId: String, language: List<String>? = null): Itinerary =
-        when (val r = timetableClient.trip(tripId = tripId, joinInterlinedLegs = false, language = language)) {
-            is TimetableClient.TripResponseSuccess ->
-                repairShapes(r.body.onlyTrip(tripId)) { withRepairedShapes(it) }
-                    .let { trip -> withAlerts(listOf(trip), language).single() }
-            is TimetableClient.TripResponseFailure -> throw failure(r.body.error)
-            is TimetableClient.TripResponseUnknownFailure -> throw statusFailure(r.statusCode)
-        }
+    suspend fun trip(tripId: String, language: List<String>? = null): Itinerary {
+        val body = timetableClient.trip(tripId = tripId, joinInterlinedLegs = false, language = language).bodyOrFail()
+        val trip = repairShapes(body.onlyTrip(tripId)) { withRepairedShapes(it) }
+        return withAlerts(listOf(trip), language).single()
+    }
 
-    suspend fun plan(query: PlanQuery): RoutingClient.PlanResponseBody =
-        when (
-            val r =
-                routingClient.plan(
+    suspend fun plan(query: PlanQuery): RoutingClient.PlanResponseBody {
+        val body =
+            routingClient
+                .plan(
                     fromPlace = query.from,
                     toPlace = query.to,
                     time = query.time,
@@ -522,15 +493,10 @@ class MotisGateway(
                     numItineraries = query.numItineraries?.toLong(),
                     pageCursor = query.pageCursor,
                     language = query.language,
-                )
-        ) {
-            is RoutingClient.PlanResponseSuccess ->
-                repairShapes(r.body) { withRepairedShapes(it) }.let { body ->
-                    body.copy(itineraries = withAlerts(body.itineraries, query.language), direct = withAlerts(body.direct, query.language))
-                }
-            is RoutingClient.PlanResponseFailure -> fail(r.body.error)
-            is RoutingClient.PlanResponseUnknownFailure -> failStatus(r.statusCode)
-        }
+                ).bodyOrFail()
+                .let { repairShapes(it) { withRepairedShapes(it) } }
+        return body.copy(itineraries = withAlerts(body.itineraries, query.language), direct = withAlerts(body.direct, query.language))
+    }
 
     suspend fun oneToAll(
         one: String,
@@ -540,21 +506,15 @@ class MotisGateway(
         maxTransfers: Int? = null,
         transitModes: List<Mode>? = null,
     ): Reachable =
-        when (
-            val r =
-                routingClient.oneToAll(
-                    one = one,
-                    maxTravelTime = maxTravelTimeMinutes.toLong(),
-                    time = time,
-                    arriveBy = arriveBy,
-                    maxTransfers = maxTransfers?.toLong(),
-                    transitModes = transitModes,
-                )
-        ) {
-            is RoutingClient.OneToAllResponseSuccess -> r.body
-            is RoutingClient.OneToAllResponseFailure -> fail(r.body.error)
-            is RoutingClient.OneToAllResponseUnknownFailure -> failStatus(r.statusCode)
-        }
+        routingClient
+            .oneToAll(
+                one = one,
+                maxTravelTime = maxTravelTimeMinutes.toLong(),
+                time = time,
+                arriveBy = arriveBy,
+                maxTransfers = maxTransfers?.toLong(),
+                transitModes = transitModes,
+            ).bodyOrFail()
 
     suspend fun rentals(
         bbox: BoundingBox? = null,
@@ -562,22 +522,16 @@ class MotisGateway(
         withStations: Boolean = true,
         withVehicles: Boolean = true,
     ): MapClient.RentalsResponseBody =
-        when (
-            val r =
-                mapClient.rentals(
-                    min = bbox?.min,
-                    max = bbox?.max,
-                    providers = providers,
-                    withProviders = true,
-                    withStations = withStations,
-                    withVehicles = withVehicles,
-                    withZones = false,
-                )
-        ) {
-            is MapClient.RentalsResponseSuccess -> r.body
-            is MapClient.RentalsResponseFailure -> fail(r.body.error)
-            is MapClient.RentalsResponseUnknownFailure -> failStatus(r.statusCode)
-        }
+        mapClient
+            .rentals(
+                min = bbox?.min,
+                max = bbox?.max,
+                providers = providers,
+                withProviders = true,
+                withStations = withStations,
+                withVehicles = withVehicles,
+                withZones = false,
+            ).bodyOrFail()
 
     companion object {
         const val DEFAULT_STOP_TIMES = 20
@@ -654,6 +608,21 @@ class MotisGateway(
                 val lon = m.groupValues[2].toDouble()
                 (lat to lon).takeIf { lat in -90.0..90.0 && lon in -180.0..180.0 }
             }
+
+        /**
+         * Body of a successful response. Else [onFailure] of the error of MOTIS for a failure its API declares, a
+         * failure of the status otherwise (see [statusFailure]).
+         */
+        private inline fun <T> OperationResponse<T>.bodyOr(onFailure: (MotisError) -> T): T =
+            when (this) {
+                is OperationResponseSuccess -> body
+                is OperationResponseUnknownFailure -> failStatus(statusCode)
+                // the failures of the clients used, but health, have an Error body
+                else -> onFailure((this as OperationResponseFailure<*>).body as MotisError)
+            }
+
+        /** Body of a successful response, else a failure with the error of MOTIS or the status. */
+        private fun <T> OperationResponse<T>.bodyOrFail(): T = bodyOr { fail(it.error) }
 
         private fun fail(message: String): Nothing = throw failure(message)
 
