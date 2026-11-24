@@ -56,6 +56,25 @@ application {
     mainClass = "org.litote.motis.mcp.MainKt"
 }
 
+// Dev tooling outside the production code: the generator of the names of the railway stations (stations.tsv)
+val stationsSourceSet = sourceSets.create("stations")
+dependencies {
+    stationsSourceSet.implementationConfigurationName(libs.serialization.json)
+}
+
+val generateStationNames by tasks.registering(JavaExec::class) {
+    group = "stations"
+    description = "Generates stations.tsv from Trainline stations and Wikidata (-Pcsv=stations.csv: no download)."
+    mainClass.set("org.litote.motis.mcp.stations.GenerateStationNamesKt")
+    classpath = stationsSourceSet.runtimeClasspath
+    args(
+        listOfNotNull(
+            layout.projectDirectory.file("src/main/resources/stations/stations.tsv").asFile.absolutePath,
+            providers.gradleProperty("csv").orNull?.let { rootProject.file(it).absolutePath },
+        ),
+    )
+}
+
 // --- UI views (ui/, TypeScript + Vite): each view is bundled into a single HTML file served as a ui:// resource ---
 
 val uiDir = rootProject.layout.projectDirectory.dir("ui")
