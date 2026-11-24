@@ -51,6 +51,21 @@ Each run also updates [src/model-scores.json](../src/model-scores.json): the las
 
 To evaluate a new free model, run it with `EVAL_MODELS`: it is recommended as soon as it ranks first.
 
+## Daily evaluation
+
+[model-scores.yml](../../.github/workflows/model-scores.yml) completes the scores every day, with 25 model calls at
+most (`EVAL_AUTO=1`, `EVAL_MAX_CALLS=25`: half of the 50 daily requests of a free OpenRouter account):
+
+- runs planned ([plan.ts](plan.ts)): the scenarios without result of the free models listed by OpenRouter, the models
+  already scored first (best first), then the new ones (newest first). A model that failed twice and scores under 0.5
+  is no longer completed. Nothing is planned, and nothing called, once every free model listed is evaluated;
+- a scenario is started only with 4 calls left at least, and a model is skipped after 2 errors in a row (rate
+  limited…);
+- the scores are committed to the branch `model-scores`, in a pull request merged once approved (auto-merge).
+
+It needs the `OPENROUTER_API_KEY` secret (nothing is evaluated without it). Locally, the same run:
+`EVAL_AUTO=1 EVAL_MAX_CALLS=25 OPENROUTER_API_KEY=sk-or-... npm run eval`.
+
 ## Add a scenario
 
 Add it to [scenarios.ts](scenarios.ts): an `id`, the `prompt`, and the expected `tools` with checks of their `args` and
