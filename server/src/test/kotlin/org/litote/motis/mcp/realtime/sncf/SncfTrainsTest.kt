@@ -1,4 +1,4 @@
-package org.litote.motis.mcp.realtime
+package org.litote.motis.mcp.realtime.sncf
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

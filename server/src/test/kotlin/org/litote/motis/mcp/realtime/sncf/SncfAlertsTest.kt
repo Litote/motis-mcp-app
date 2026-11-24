@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalSerializationApi::class)
 
-package org.litote.motis.mcp.realtime
+package org.litote.motis.mcp.realtime.sncf
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
@@ -20,6 +20,14 @@ import org.litote.motis.mcp.MotisGateway
 import org.litote.motis.mcp.MotisMcpConfig
 import org.litote.motis.mcp.StopTimesQuery
 import org.litote.motis.mcp.dto.toDto
+import org.litote.motis.mcp.realtime.EntitySelector
+import org.litote.motis.mcp.realtime.FeedEntity
+import org.litote.motis.mcp.realtime.FeedMessage
+import org.litote.motis.mcp.realtime.GtfsAlert
+import org.litote.motis.mcp.realtime.GtfsTimeRange
+import org.litote.motis.mcp.realtime.TranslatedString
+import org.litote.motis.mcp.realtime.Translation
+import org.litote.motis.mcp.realtime.TripDescriptor
 import org.litote.motis.mcp.respondJson
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -89,7 +97,7 @@ class SncfAlertsTest {
         runBlocking {
             val motis = MockMotis { respondJson(stopTimesJson) }
             val config = MotisMcpConfig(contact = "https://example.org/tests")
-            val gateway = MotisGateway(config.clientConfiguration(motis.engine), sncfAlerts = sncfAlerts { feed(alert("886865")) })
+            val gateway = MotisGateway(config.clientConfiguration(motis.engine), alertSources = listOf(sncfAlerts { feed(alert("886865")) }))
 
             val departures = gateway.stopTimes(StopTimesQuery(stopId = stopTimes.first().place.stopId!!)).toDto(arriveBy = false)
 

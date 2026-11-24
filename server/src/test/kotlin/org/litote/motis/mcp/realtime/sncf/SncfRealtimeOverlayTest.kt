@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalSerializationApi::class)
 
-package org.litote.motis.mcp.realtime
+package org.litote.motis.mcp.realtime.sncf
 
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
@@ -18,6 +18,13 @@ import org.litote.motis.mcp.MotisGateway
 import org.litote.motis.mcp.MotisMcpConfig
 import org.litote.motis.mcp.StopTimesQuery
 import org.litote.motis.mcp.dto.toDto
+import org.litote.motis.mcp.realtime.FeedEntity
+import org.litote.motis.mcp.realtime.FeedHeader
+import org.litote.motis.mcp.realtime.FeedMessage
+import org.litote.motis.mcp.realtime.StopTimeEvent
+import org.litote.motis.mcp.realtime.StopTimeUpdate
+import org.litote.motis.mcp.realtime.TripDescriptor
+import org.litote.motis.mcp.realtime.TripUpdate
 import org.litote.motis.mcp.respondJson
 import kotlin.test.Test
 import kotlin.test.assertEquals

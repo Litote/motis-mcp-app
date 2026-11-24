@@ -1,4 +1,4 @@
-package org.litote.motis.mcp.realtime
+package org.litote.motis.mcp.realtime.sncf
 
 /**
  * Trains of the SNCF in Transitous and in the open data feeds of the SNCF: Transitous imports the timetable of the SNCF

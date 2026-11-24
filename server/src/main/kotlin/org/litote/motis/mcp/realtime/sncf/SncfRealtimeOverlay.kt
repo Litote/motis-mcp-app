@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalSerializationApi::class)
 
-package org.litote.motis.mcp.realtime
+package org.litote.motis.mcp.realtime.sncf
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
@@ -12,24 +12,24 @@ import io.ktor.client.statement.bodyAsChannel
 import io.ktor.http.HttpHeaders
 import io.ktor.http.isSuccess
 import io.ktor.utils.io.jvm.javaio.toInputStream
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.protobuf.ProtoBuf
 import org.litote.motis.client.model.Place
 import org.litote.motis.client.model.StopTime
-import org.litote.motis.mcp.TtlCache
-import kotlin.time.Duration
+import org.litote.motis.mcp.realtime.CachedFeed
+import org.litote.motis.mcp.realtime.FeedMessage
+import org.litote.motis.mcp.realtime.RealtimeOverlay
+import org.litote.motis.mcp.realtime.StopTimeEvent
+import org.litote.motis.mcp.realtime.StopTimeUpdate
+import org.litote.motis.mcp.realtime.TripDescriptor
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
-import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 import kotlin.time.measureTimedValue
 
@@ -110,43 +110,6 @@ class SncfRealtimeOverlay(
     companion object {
         const val FEED_URL = "https://proxy.transport.data.gouv.fr/resource/sncf-gtfs-rt-trip-updates"
         const val TRACKS_URL = "https://proxy.transport.data.gouv.fr/resource/sncf-siri-lite-estimated-timetable"
-    }
-}
-
-/**
- * Feed loaded at most once a [ttl]. When it fails or does not load within [timeout], it is not used for [retryDelay]:
- * [get] returns null.
- */
-internal class CachedFeed<T : Any>(
-    private val name: String,
-    ttl: Duration,
-    private val timeout: Duration,
-    private val timeSource: TimeSource,
-    private val retryDelay: Duration = 5.minutes,
-    private val load: suspend () -> T,
-) {
-    private val cache = TtlCache<Unit, T>(maxSize = 1, ttl = ttl, timeSource)
-
-    @Volatile
-    private var disabledUntil: TimeMark? = null
-
-    suspend fun get(): T? {
-        if (disabledUntil?.hasNotPassedNow() == true) return null
-        return try {
-            cache.getOrPut(Unit) { withTimeout(timeout) { load() } }
-        } catch (e: TimeoutCancellationException) {
-            disable("no answer within $timeout")
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            disable(e.toString())
-        }
-    }
-
-    private fun disable(reason: String): Nothing? {
-        logger.warn { "$name unavailable ($reason): disabled for $retryDelay" }
-        disabledUntil = timeSource.markNow() + retryDelay
-        return null
     }
 }
 
