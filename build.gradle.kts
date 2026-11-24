@@ -70,6 +70,15 @@ sonar {
     }
 }
 
+// Dev tooling run by hand (queries of Wikidata): analysed, but out of the coverage of the tests
+project(":tools:station-names") {
+    sonar {
+        properties {
+            property("sonar.coverage.exclusions", "**/*")
+        }
+    }
+}
+
 // Used by dependabot-gradle-verification.yml: resolves what the native build needs without GraalVM
 allprojects {
     tasks.register("resolveAllDependencies") {

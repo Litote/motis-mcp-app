@@ -17,8 +17,9 @@ WORKDIR /build
 COPY gradlew settings.gradle.kts build.gradle.kts gradle.properties ./
 COPY gradle gradle
 COPY server server
-# included by settings.gradle.kts: its build file is enough
+# included by settings.gradle.kts: their build file is enough
 COPY lambda/build.gradle.kts lambda/
+COPY tools/station-names/build.gradle.kts tools/station-names/
 COPY --from=ui /build/ui/dist ui/dist
 ARG VERSION_NAME=main-SNAPSHOT
 # the views are bundled by the ui stage: no npm in this stage
