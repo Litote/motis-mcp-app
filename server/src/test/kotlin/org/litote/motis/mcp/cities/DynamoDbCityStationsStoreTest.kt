@@ -14,7 +14,7 @@ import aws.sdk.kotlin.runtime.auth.credentials.StaticCredentialsProvider
 import aws.smithy.kotlin.runtime.auth.awscredentials.Credentials
 import aws.smithy.kotlin.runtime.net.url.Url
 import kotlinx.coroutines.runBlocking
-import java.time.Instant
+import kotlin.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -53,7 +53,7 @@ class DynamoDbCityStationsStoreTest {
     fun `the stations of a pair of cities are saved and read`() =
         withStore { store, client ->
             val key = "paris>nantes-${System.nanoTime()}"
-            val stations = CityStations(listOf("montparnasse", "massy"), listOf("nantes"), Instant.ofEpochSecond(1_800_000_000))
+            val stations = CityStations(listOf("montparnasse", "massy"), listOf("nantes"), Instant.fromEpochSeconds(1_800_000_000))
 
             assertNull(store.get(key))
             store.put(key, stations)

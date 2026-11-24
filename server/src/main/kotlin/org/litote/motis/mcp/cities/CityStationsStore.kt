@@ -5,7 +5,7 @@ import aws.sdk.kotlin.services.dynamodb.model.AttributeValue
 import aws.sdk.kotlin.services.dynamodb.getItem
 import aws.sdk.kotlin.services.dynamodb.putItem
 import aws.smithy.kotlin.runtime.net.url.Url
-import java.time.Instant
+import kotlin.time.Instant
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.days
 
@@ -56,7 +56,7 @@ class DynamoDbCityStationsStore(
                 CityStations(
                     from = item.stopIds(FROM),
                     to = item.stopIds(TO),
-                    discoveredAt = Instant.ofEpochSecond(item.getValue(DISCOVERED_AT).asN().toLong()),
+                    discoveredAt = Instant.fromEpochSeconds(item.getValue(DISCOVERED_AT).asN().toLong()),
                 )
             }
 
@@ -68,8 +68,8 @@ class DynamoDbCityStationsStore(
                     PAIR to AttributeValue.S(key),
                     FROM to AttributeValue.L(stations.from.map { AttributeValue.S(it) }),
                     TO to AttributeValue.L(stations.to.map { AttributeValue.S(it) }),
-                    DISCOVERED_AT to AttributeValue.N(stations.discoveredAt.epochSecond.toString()),
-                    EXPIRES_AT to AttributeValue.N((stations.discoveredAt.epochSecond + retention.inWholeSeconds).toString()),
+                    DISCOVERED_AT to AttributeValue.N(stations.discoveredAt.epochSeconds.toString()),
+                    EXPIRES_AT to AttributeValue.N((stations.discoveredAt.epochSeconds + retention.inWholeSeconds).toString()),
                 )
         }
     }

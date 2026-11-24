@@ -10,7 +10,8 @@ import org.litote.motis.mcp.MotisToolException
 import org.litote.motis.mcp.dto.JourneyResult
 import org.litote.motis.mcp.respondJson
 import org.litote.motis.mcp.withMcpClient
-import java.time.Instant
+import kotlin.time.Clock
+import kotlin.time.Instant
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -238,7 +239,7 @@ class CityJourneysTest {
         val paris = ParisNantes(failingPairs = setOf(MONTPARNASSE, MASSY))
         val store = InMemoryCityStationsStore()
         withMcpClient(paris.motis, store) { client ->
-            store.put("48.853,2.348>47.218,-1.554", CityStations(listOf(MONTPARNASSE, MASSY), listOf(NANTES), Instant.now()))
+            store.put("48.853,2.348>47.218,-1.554", CityStations(listOf(MONTPARNASSE, MASSY), listOf(NANTES), Clock.System.now()))
 
             val result = client.callTool("plan_journey", PARIS_NANTES)
 
@@ -252,7 +253,7 @@ class CityJourneysTest {
         val paris = ParisNantes(failingPairs = setOf(MASSY))
         val store = InMemoryCityStationsStore()
         withMcpClient(paris.motis, store) { client ->
-            store.put("48.853,2.348>47.218,-1.554", CityStations(listOf(MONTPARNASSE, MASSY), listOf(NANTES), Instant.now()))
+            store.put("48.853,2.348>47.218,-1.554", CityStations(listOf(MONTPARNASSE, MASSY), listOf(NANTES), Clock.System.now()))
 
             val journey = client.callTool("plan_journey", PARIS_NANTES).journey()
 
@@ -266,14 +267,14 @@ class CityJourneysTest {
         val paris = ParisNantes()
         val store = InMemoryCityStationsStore()
         withMcpClient(paris.motis, store) { client ->
-            store.put(PAIR, CityStations(listOf("old", MASSY), listOf(NANTES), Instant.EPOCH))
+            store.put(PAIR, CityStations(listOf("old", MASSY), listOf(NANTES), Instant.fromEpochSeconds(0)))
 
             client.callTool("plan_journey", PARIS_NANTES).journey()
 
             assertEquals("48.853,2.348", paris.motis.plans().single().url.parameters["fromPlace"])
             val stations = store.get(PAIR)!!
             assertEquals(listOf(MONTPARNASSE, MASSY, "old"), stations.from)
-            assertTrue(stations.discoveredAt > Instant.EPOCH)
+            assertTrue(stations.discoveredAt > Instant.fromEpochSeconds(0))
         }
     }
 
@@ -281,7 +282,7 @@ class CityJourneysTest {
     fun `old stations are kept when the discovery finds no long-distance train`() {
         val paris = ParisNantes(onlyCoaches = true)
         val store = InMemoryCityStationsStore()
-        val known = CityStations(listOf(MASSY), listOf(NANTES), Instant.EPOCH)
+        val known = CityStations(listOf(MASSY), listOf(NANTES), Instant.fromEpochSeconds(0))
         withMcpClient(paris.motis, store) { client ->
             store.put(PAIR, known)
 
@@ -297,7 +298,7 @@ class CityJourneysTest {
         val store = InMemoryCityStationsStore()
         val old = (1..10).map { "old-$it" }
         withMcpClient(paris.motis, store) { client ->
-            store.put(PAIR, CityStations(old, listOf(NANTES), Instant.EPOCH))
+            store.put(PAIR, CityStations(old, listOf(NANTES), Instant.fromEpochSeconds(0)))
 
             client.callTool("plan_journey", PARIS_NANTES).journey()
 
@@ -309,7 +310,7 @@ class CityJourneysTest {
     fun `the stations found by a new search between the centers are added to the known ones`() {
         val paris = ParisNantes()
         val store = InMemoryCityStationsStore()
-        val discoveredAt = Instant.now()
+        val discoveredAt = Clock.System.now()
         withMcpClient(paris.motis, store, rediscoverStations = { true }) { client ->
             store.put(PAIR, CityStations(listOf("old", MASSY), listOf(NANTES), discoveredAt))
 
@@ -328,7 +329,7 @@ class CityJourneysTest {
         val store = InMemoryCityStationsStore()
         val calls = AtomicInteger()
         withMcpClient(paris.motis, store, rediscoverStations = { calls.incrementAndGet() > 1 }) { client ->
-            store.put(PAIR, CityStations(listOf(MONTPARNASSE), listOf(NANTES), Instant.now()))
+            store.put(PAIR, CityStations(listOf(MONTPARNASSE), listOf(NANTES), Clock.System.now()))
 
             val journey = client.callTool("plan_journey", PARIS_NANTES).journey()
             assertEquals(listOf(MONTPARNASSE), paris.motis.plans().map { it.url.parameters["fromPlace"] })
@@ -345,7 +346,7 @@ class CityJourneysTest {
     fun `a failure of the new search between the centers does not fail the journey`() {
         val paris = ParisNantes(failingPairs = setOf("48.853,2.348"))
         val store = InMemoryCityStationsStore()
-        val known = CityStations(listOf(MASSY), listOf(NANTES), Instant.now())
+        val known = CityStations(listOf(MASSY), listOf(NANTES), Clock.System.now())
         withMcpClient(paris.motis, store, rediscoverStations = { true }) { client ->
             store.put(PAIR, known)
 

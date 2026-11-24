@@ -66,7 +66,7 @@ content.innerHTML = `
           ${[0, 1, 2, 3, 4].map((n) => `<option value="${n}">${n}</option>`).join("")}
         </select></label>
       <label title="${t("options.maxWalkHint")}" data-i18n-title="options.maxWalkHint"><span data-i18n="options.maxWalk">${t("options.maxWalk")}</span>
-        <input type="number" name="maxWalkMinutes" min="1" max="60" step="1" required></label>
+        <input type="number" name="maxWalkMinutes" min="1" max="60" step="1"></label>
       <label><span data-i18n="options.walkingSpeed">${t("options.walkingSpeed")}</span>
         <select name="walkingSpeed">${choices("walkingSpeed", WALKING_SPEEDS)}</select></label>
       <label><span data-i18n="options.transferMargin">${t("options.transferMargin")}</span>
@@ -372,14 +372,68 @@ const checkedModeGroups = () =>
     .map((box) => box.value)
     .join(",");
 
-/** `<input type="datetime-local">` value of an ISO-8601 date-time, in the time zone of the browser. */
-function localDateTime(iso: unknown): string {
+/**
+ * Time zone of the origin of the journey shown, in which plan_journey reads a time without offset: undefined when
+ * unknown (the place of the result has none from station to station, its first stop has one).
+ */
+const originTimeZone = (): string | undefined => journey?.from.tz ?? journey?.itineraries[0]?.legs[0]?.from.tz ?? undefined;
+
+/** [tz] when the browser knows it. */
+function validTimeZone(tz: string | undefined): string | undefined {
+  if (!tz) return undefined;
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: tz });
+    return tz;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Value of the time field when it was filled, and its time zone (undefined: the one of the browser). */
+let initialTime = "";
+let timeFieldZone: string | undefined;
+
+/**
+ * `<input type="datetime-local">` value of an ISO-8601 date-time: as it is without offset (the local time of the
+ * origin for plan_journey), else in the time zone [tz] (of the browser when undefined).
+ */
+function localDateTime(iso: unknown, tz: string | undefined): string {
   if (typeof iso !== "string" || !iso) return "";
+  const local = /^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2})(:\d{2}(\.\d+)?)?$/.exec(iso.trim());
+  if (local) return `${local[1]}T${local[2]}`;
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "";
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((p) => p.type === type)?.value ?? "";
+  return `${part("year")}-${part("month")}-${part("day")}T${part("hour")}:${part("minute")}`;
 }
+
+/**
+ * 'time' of plan_journey from the time field: the one of the call when not changed; else the local time of the origin
+ * (without offset) when the field is in its time zone, an instant from the time zone of the browser otherwise.
+ */
+function timeArg(value: string): unknown {
+  if (value === initialTime) return planArgs.time;
+  if (!value) return undefined;
+  return timeFieldZone ? value : new Date(value).toISOString();
+}
+
+/** 'maxWalkMinutes' of plan_journey: the one of the call when not changed (the default of the server when missing). */
+function maxWalkArg(value: string): unknown {
+  if (value === initialMaxWalk) return planArgs.maxWalkMinutes;
+  return value ? Number(value) : undefined;
+}
+
+/** Value of the walk field when it was filled. */
+let initialMaxWalk = "";
 
 /** Text of a scalar argument, "" when missing or not a scalar. */
 const scalar = (value: unknown): string => (typeof value === "string" || typeof value === "number" ? String(value) : "");
@@ -397,7 +451,9 @@ const choice = (value: unknown, values: string[], fallback: string) => {
 /** Fills the options panel with the arguments of the plan_journey call. */
 function fillOptions(args: Args): void {
   (options.elements.namedItem("arriveBy") as RadioNodeList).value = String(args.arriveBy === true || args.arriveBy === "true");
-  field<HTMLInputElement>("time").value = localDateTime(args.time);
+  timeFieldZone = validTimeZone(originTimeZone());
+  initialTime = localDateTime(args.time, timeFieldZone);
+  field<HTMLInputElement>("time").value = initialTime;
   const modes = modesOf(args.modes);
   const all = modes.length === 0 || modes.includes("TRANSIT");
   for (const box of modeBoxes()) box.checked = all || MODE_GROUPS[box.value].some((m) => modes.includes(m));
@@ -406,7 +462,9 @@ function fillOptions(args: Args): void {
   const maxTransfers = field<HTMLSelectElement>("maxTransfers");
   if (transfers && ![...maxTransfers.options].some((o) => o.value === transfers)) maxTransfers.add(new Option(transfers, transfers));
   maxTransfers.value = transfers;
-  field<HTMLInputElement>("maxWalkMinutes").value = scalar(args.maxWalkMinutes) || "25";
+  // the walk of the search: the server gives its default when the call has none
+  initialMaxWalk = scalar(args.maxWalkMinutes) || (journey?.maxWalkMinutes == null ? "" : String(journey.maxWalkMinutes));
+  field<HTMLInputElement>("maxWalkMinutes").value = initialMaxWalk;
   field<HTMLSelectElement>("walkingSpeed").value = choice(args.walkingSpeed, WALKING_SPEEDS, "NORMAL");
   field<HTMLSelectElement>("transferMargin").value = choice(args.transferMargin, TRANSFER_MARGINS, "NORMAL");
   field<HTMLSelectElement>("bike").value = choice(args.bike, BIKES, "NONE");
@@ -426,20 +484,21 @@ function optionArgs(): Args | null {
   if (!groups) return null;
   const time = field<HTMLInputElement>("time").value;
   const maxTransfers = field<HTMLSelectElement>("maxTransfers").value;
-  const maxWalkMinutes = Number(field<HTMLInputElement>("maxWalkMinutes").value);
   const walkingSpeed = field<HTMLSelectElement>("walkingSpeed").value;
   const transferMargin = field<HTMLSelectElement>("transferMargin").value;
   const bike = field<HTMLSelectElement>("bike").value;
   const args: Args = {
     from: planArgs.from ?? (journey ? `${journey.from.lat},${journey.from.lon}` : undefined),
     to: planArgs.to ?? (journey ? `${journey.to.lat},${journey.to.lon}` : undefined),
+    // the names of the places are resolved near it: without it, 'from' may be another place
+    position: planArgs.position,
     count: planArgs.count,
     language: planArgs.language,
-    time: time ? new Date(time).toISOString() : undefined,
+    time: timeArg(time),
     arriveBy: (options.elements.namedItem("arriveBy") as RadioNodeList).value === "true" || undefined,
     modes: modesArg(groups),
     maxTransfers: maxTransfers === "" ? undefined : Number(maxTransfers),
-    maxWalkMinutes: maxWalkMinutes === 25 ? undefined : maxWalkMinutes,
+    maxWalkMinutes: maxWalkArg(field<HTMLInputElement>("maxWalkMinutes").value),
     walkingSpeed: walkingSpeed === "NORMAL" ? undefined : walkingSpeed,
     wheelchair: field<HTMLInputElement>("wheelchair").checked || undefined,
     transferMargin: transferMargin === "NORMAL" ? undefined : transferMargin,
@@ -465,7 +524,10 @@ options.addEventListener("submit", async (e) => {
   try {
     const { data, text } = await callToolResult<JourneyResult>(app, "plan_journey", args);
     planArgs = args;
+    // the fields are now those of the call
     initialModeGroups = checkedModeGroups();
+    initialTime = field<HTMLInputElement>("time").value;
+    initialMaxWalk = field<HTMLInputElement>("maxWalkMinutes").value;
     render(data);
     await updateModelContext(
       app,

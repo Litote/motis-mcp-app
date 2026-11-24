@@ -1,5 +1,6 @@
 package org.litote.motis.mcp
 
+import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.logging.LogLevel
 import org.litote.motis.mcp.cities.DynamoDbCityStationsStore
 import org.litote.motis.mcp.cities.InMemoryCityStationsStore
@@ -8,6 +9,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 class MotisMcpConfigTest {
@@ -100,6 +102,12 @@ class MotisMcpConfigTest {
             listOf("mcp.example.org", "motis.example.org"),
             MotisMcpConfig.fromEnv(mapOf(contact, "MCP_ALLOWED_HOSTS" to "mcp.example.org, motis.example.org,")).allowedHosts,
         )
+    }
+
+    @Test
+    fun `the SNCF real time overlay and alerts share one HTTP client`() {
+        val config = MotisMcpConfig.fromEnv(mapOf("MOTIS_APP_CONTACT" to "you@example.org"))
+        assertSame(config.sncfHttpClient(OkHttp), config.sncfHttpClient(OkHttp))
     }
 
     @Test

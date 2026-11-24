@@ -11,7 +11,7 @@ const val STATION_RADIUS = 200L
  * both pages of at most about [n] stop times from the same cursor.
  *
  * Stop times are sorted by (real-time) time, as MOTIS does, and the page is cut where both lists are complete: its cursors are
- * the ones of MOTIS, "LATER|<epoch s>" (stop times from that time) and "EARLIER|<epoch s>" (stop times until that time).
+ * those of MOTIS (see [StopTimesCursor]).
  */
 fun DeparturesResult.withNearbyTrains(nearby: DeparturesResult, n: Int, earlier: Boolean): DeparturesResult {
     // the same train at the stop and nearby is kept once, with the real time of either (see distinctTrains)
@@ -33,8 +33,8 @@ private fun DeparturesResult.previousPage(all: List<StopTimeDto>, pages: List<De
     val kept = if (lastDropped != null) complete.filter { it.instant() > lastDropped } else complete
     return copy(
         stopTimes = kept,
-        previousPageCursor = cursor("EARLIER", lastDropped ?: horizon?.minus(1.minutes)) ?: previousPageCursor,
-        nextPageCursor = cursor("LATER", kept.lastOrNull()?.instant()?.plus(1.minutes)) ?: nextPageCursor,
+        previousPageCursor = (lastDropped ?: horizon?.minus(1.minutes))?.let(StopTimesCursor::earlier) ?: previousPageCursor,
+        nextPageCursor = kept.lastOrNull()?.instant()?.plus(1.minutes)?.let(StopTimesCursor::later) ?: nextPageCursor,
     )
 }
 
@@ -49,12 +49,10 @@ private fun DeparturesResult.nextPage(all: List<StopTimeDto>, pages: List<Depart
     val kept = if (firstDropped != null) complete.filter { it.instant() < firstDropped } else complete
     return copy(
         stopTimes = kept,
-        previousPageCursor = cursor("EARLIER", kept.firstOrNull()?.instant()?.minus(1.minutes)) ?: previousPageCursor,
-        nextPageCursor = cursor("LATER", firstDropped ?: horizon?.plus(1.minutes)) ?: nextPageCursor,
+        previousPageCursor = kept.firstOrNull()?.instant()?.minus(1.minutes)?.let(StopTimesCursor::earlier) ?: previousPageCursor,
+        nextPageCursor = (firstDropped ?: horizon?.plus(1.minutes))?.let(StopTimesCursor::later) ?: nextPageCursor,
     )
 }
-
-private fun cursor(direction: String, time: Instant?): String? = time?.let { "$direction|${it.epochSeconds}" }
 
 internal fun StopTimeDto.instant(): Instant = Instant.parse(time ?: scheduledTime ?: error("stop time without time: $tripId"))
 
