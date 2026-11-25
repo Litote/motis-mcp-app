@@ -149,7 +149,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: ./.github/actions/install-mcp-publisher
+      - uses: $/.github/actions/install-mcp-publisher
 
       - name: Validate
         run: ./mcp-publisher validate

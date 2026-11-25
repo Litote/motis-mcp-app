@@ -240,7 +240,7 @@ jobs:
           mv server.json.tmp server.json
           cat server.json
 
-      - uses: ./.github/actions/install-mcp-publisher
+      - uses: $/.github/actions/install-mcp-publisher
         if: steps.check.outputs.publish == 'true'
 
       - name: Validate server.json
