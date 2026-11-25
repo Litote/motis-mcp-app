@@ -124,6 +124,8 @@ describe("models", () => {
     expect(getSelectedModel()).toBeNull();
     setSelectedModel("openai/gpt");
     expect(getSelectedModel()).toBe("openai/gpt");
+    setSelectedModel(null);
+    expect(getSelectedModel()).toBeNull();
   });
 
   it("reads the free quota of the key", async () => {
