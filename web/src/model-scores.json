@@ -24,6 +24,16 @@
       "ok": true,
       "seconds": 3.9,
       "date": "2026-11-24"
+    },
+    "reachability": {
+      "ok": true,
+      "seconds": 4.2,
+      "date": "2026-11-25"
+    },
+    "route_details": {
+      "ok": true,
+      "seconds": 11.1,
+      "date": "2026-11-25"
     }
   },
   "nvidia/nemotron-3-ultra-550b-a55b:free": {
@@ -60,6 +70,11 @@
       "ok": true,
       "seconds": 3.6,
       "date": "2026-11-08"
+    },
+    "departures": {
+      "ok": true,
+      "seconds": 13.6,
+      "date": "2026-11-25"
     },
     "local_time": {
       "ok": true,
