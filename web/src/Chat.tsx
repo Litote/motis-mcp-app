@@ -257,9 +257,11 @@ export default function Chat({ apiKey }: Readonly<{ apiKey: string }>) {
   const runtime = useLocalRuntime(agent);
   const append = useCallback((text: string) => runtime.thread.append(text), [runtime]);
 
+  // the recommended model taken back is not kept as a choice: the selection follows the evaluation again
   const selectModel = (id: string) => {
-    setSelectedModel(id);
-    setChosen(id);
+    const choice = id === recommendedModel(models) ? null : id;
+    setSelectedModel(choice);
+    setChosen(choice);
   };
 
   return (

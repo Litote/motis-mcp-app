@@ -155,6 +155,20 @@ describe("Chat", () => {
     expect(localStorage.getItem("openrouter-model")).toBeNull();
   });
 
+  it("forgets the choice when the recommended model is selected again", async () => {
+    localStorage.setItem("openrouter-model", "meta/llama:free");
+    render(<Chat apiKey="sk-or-v1-key" />);
+    const picker = screen.getByLabelText("Model") as HTMLSelectElement;
+    await waitFor(() => expect(picker.options.length).toBe(5));
+    expect(picker.value).toBe("meta/llama:free");
+
+    fireEvent.change(picker, { target: { value: RECOMMENDED } });
+
+    expect(picker.value).toBe(RECOMMENDED);
+    expect(mocks.agentSettings[0].model()).toBe(RECOMMENDED);
+    expect(localStorage.getItem("openrouter-model")).toBeNull();
+  });
+
   it("keeps a selected model missing from the list", async () => {
     localStorage.setItem("openrouter-model", "gone/model");
     render(<Chat apiKey="sk-or-v1-key" />);

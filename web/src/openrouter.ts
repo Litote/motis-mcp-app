@@ -184,8 +184,10 @@ export function getSelectedModel(): string | null {
   return localStorage.getItem(MODEL_STORAGE);
 }
 
-export function setSelectedModel(model: string): void {
-  localStorage.setItem(MODEL_STORAGE, model);
+/** Remembers the model chosen by the user, or forgets it with null: the [recommendedModel] then. */
+export function setSelectedModel(model: string | null): void {
+  if (model === null) localStorage.removeItem(MODEL_STORAGE);
+  else localStorage.setItem(MODEL_STORAGE, model);
 }
 
 export interface FreeQuota {
