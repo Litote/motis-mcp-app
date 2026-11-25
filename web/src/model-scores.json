@@ -5,6 +5,16 @@
       "seconds": 6.4,
       "date": "2026-11-24"
     },
+    "departures": {
+      "ok": true,
+      "seconds": 10.6,
+      "date": "2026-11-24"
+    },
+    "explore_area": {
+      "ok": true,
+      "seconds": 15.1,
+      "date": "2026-11-24"
+    },
     "local_time": {
       "ok": true,
       "seconds": 3.7,
@@ -14,6 +24,26 @@
       "ok": true,
       "seconds": 3.9,
       "date": "2026-11-24"
+    },
+    "reachability": {
+      "ok": true,
+      "seconds": 4.2,
+      "date": "2026-11-25"
+    },
+    "rentals": {
+      "ok": true,
+      "seconds": 5.5,
+      "date": "2026-11-25"
+    },
+    "route_details": {
+      "ok": true,
+      "seconds": 11.1,
+      "date": "2026-11-25"
+    },
+    "trip_details": {
+      "ok": true,
+      "seconds": 22,
+      "date": "2026-11-25"
     }
   },
   "nvidia/nemotron-3-ultra-550b-a55b:free": {
@@ -51,6 +81,16 @@
       "seconds": 3.6,
       "date": "2026-11-08"
     },
+    "departures": {
+      "ok": true,
+      "seconds": 13.6,
+      "date": "2026-11-25"
+    },
+    "explore_area": {
+      "ok": true,
+      "seconds": 15.7,
+      "date": "2026-11-25"
+    },
     "local_time": {
       "ok": true,
       "seconds": 9.2,
@@ -60,6 +100,16 @@
       "ok": true,
       "seconds": 15.4,
       "date": "2026-11-08"
+    },
+    "reachability": {
+      "ok": true,
+      "seconds": 7.7,
+      "date": "2026-11-25"
+    },
+    "route_details": {
+      "ok": true,
+      "seconds": 9.5,
+      "date": "2026-11-25"
     }
   }
 }
