@@ -185,6 +185,81 @@ jobs:
           IMAGE_TAG: ${{ env.WEB_IMAGE }}:${{ steps.version.outputs.version }}
         run: web/nginx/smoke-test.sh "$IMAGE_TAG"
 
+  mcp-registry:
+    name: Publish to the MCP registry ${{ needs.release-please.outputs.tag_name || inputs.tag }}
+    runs-on: ubuntu-latest
+    # the registry checks the io.modelcontextprotocol.server.name label of the pushed image (see Dockerfile). A version
+    # can't be removed from the registry: it is published once the GitHub release is, never for a draft release.
+    needs: [release-please, docker, finalize-release]
+    if: needs.release-please.outputs.release_created == 'true' || github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          ref: refs/tags/${{ needs.release-please.outputs.tag_name || inputs.tag }}
+
+      # skipped for the tags without server.json (their image has no label either), and for a version already in the
+      # registry (a release run again with workflow_dispatch), which refuses to publish a version twice
+      - name: Check whether the version is to publish
+        id: check
+        env:
+          TAG: ${{ needs.release-please.outputs.tag_name || inputs.tag }}
+        run: |
+          version="${TAG#v}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [ ! -f server.json ]; then
+            echo "::notice::no server.json at $TAG: not published to the MCP registry"
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          name="$(jq -r .name server.json)"
+          status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
+            "https://registry.modelcontextprotocol.io/v0/servers/${name//\//%2F}/versions/${version}")"
+          case "$status" in
+            200)
+              echo "::notice::$name $version is already in the MCP registry"
+              echo "publish=false" >> "$GITHUB_OUTPUT" ;;
+            404)
+              echo "publish=true" >> "$GITHUB_OUTPUT" ;;
+            *)
+              echo "::error::unexpected status $status of the MCP registry"
+              exit 1 ;;
+          esac
+
+      - name: Set the release version in server.json
+        if: steps.check.outputs.publish == 'true'
+        env:
+          VERSION: ${{ steps.check.outputs.version }}
+        run: |
+          jq --arg v "$VERSION" --arg image "${IMAGE}:${VERSION}" \
+            '.version = $v | (.packages[] | select(.registryType == "oci")).identifier = $image' \
+            server.json > server.json.tmp
+          mv server.json.tmp server.json
+          cat server.json
+
+      - uses: $/.github/actions/install-mcp-publisher
+        if: steps.check.outputs.publish == 'true'
+
+      - name: Validate server.json
+        if: steps.check.outputs.publish == 'true'
+        run: ./mcp-publisher validate
+
+      # proof of ownership of org.litote/*: Ed25519 key whose public key is in a TXT record on litote.org.
+      # mcp-publisher only takes an in-process key as the --private-key argument (or a cloud KMS): the runner is
+      # ephemeral and GitHub masks the secret in the logs.
+      - name: Log in to the MCP registry
+        if: steps.check.outputs.publish == 'true'
+        env:
+          MCP_PRIVATE_KEY: ${{ secrets.MCP_PRIVATE_KEY }}
+        run: ./mcp-publisher login dns --domain litote.org --private-key "$MCP_PRIVATE_KEY"
+
+      - name: Publish
+        if: steps.check.outputs.publish == 'true'
+        run: ./mcp-publisher publish
+
   finalize-release:
     name: Publish GitHub Release ${{ needs.release-please.outputs.tag_name || inputs.tag }}
     runs-on: ubuntu-latest
