@@ -1,0 +1,30 @@
+name: Install mcp-publisher
+description: Installs the CLI of the MCP registry in the working directory, after checking its Sigstore signature
+
+inputs:
+  version:
+    description: Release of modelcontextprotocol/registry
+    required: false
+    default: v1.8.8
+
+runs:
+  using: composite
+  steps:
+    - uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532 # v4.1.3
+
+    - name: Install mcp-publisher
+      shell: bash
+      env:
+        MCP_PUBLISHER_VERSION: ${{ inputs.version }}
+      run: |
+        archive="mcp-publisher_linux_amd64.tar.gz"
+        base_url="https://github.com/modelcontextprotocol/registry/releases/download/${MCP_PUBLISHER_VERSION}"
+        curl --fail --location --silent --show-error --output "$archive" "$base_url/$archive"
+        curl --fail --location --silent --show-error --output "$archive.sigstore.json" "$base_url/$archive.sigstore.json"
+        cosign verify-blob \
+          --bundle "$archive.sigstore.json" \
+          --certificate-identity "https://github.com/modelcontextprotocol/registry/.github/workflows/release.yml@refs/tags/${MCP_PUBLISHER_VERSION}" \
+          --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+          "$archive"
+        tar xzf "$archive" mcp-publisher
+        rm -f "$archive" "$archive.sigstore.json"

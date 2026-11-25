@@ -137,6 +137,23 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: false
 
+  # server.json is otherwise only checked by the release, once the images are pushed
+  mcp-server-json:
+    name: Validate server.json (MCP registry)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/install-mcp-publisher
+
+      - name: Validate
+        run: ./mcp-publisher validate
+
   # Called on every pull request: a required check of a job skipped here would stay pending
   commit-guard:
     if: github.event_name == 'pull_request'
