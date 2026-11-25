@@ -58,9 +58,15 @@ most (`EVAL_AUTO=1`, `EVAL_MAX_CALLS=25`: half of the 50 daily requests of a fre
 
 - runs planned ([plan.ts](plan.ts)): the scenarios without result of the free models listed by OpenRouter, the models
   already scored first (best first), then the new ones (newest first). A model that failed twice and scores under 0.5
-  is no longer completed. Nothing is planned, and nothing called, once every free model listed is evaluated;
+  is no longer completed. After the missing scenarios of the models already scored, and before the new models, the
+  results older than 14 days of the models scoring at least 0.5 (oldest first): the recommended model and its
+  fallbacks are evaluated again, so that their score follows the model, even while many new models wait. The plan is
+  not cut to the budget: the runs stop once it is spent, and a model skipped does not hold back the
+  runs after it. Nothing is planned, and nothing called, once every free model listed is evaluated and up to date;
 - a scenario is started only with 4 calls left at least, and a model is skipped after 2 errors in a row (rate
-  limited…);
+  limited…). A re-run ended by an error keeps the old result, planned again the next days: a model failing every day
+  keeps its old score. A model no longer listed, or no longer free, is not recommended once the chat has the list of
+  the models (until then, the best of the scores is);
 - the budget is also bounded by the free requests left today (`GET /api/v1/key`): with fewer than 4, nothing is
   planned. An error of the account ([account.ts](account.ts): invalid key, negative balance or key limit, daily quota
   reached) stops the evaluation: the scores obtained before it are committed, then the run fails, to be notified. A

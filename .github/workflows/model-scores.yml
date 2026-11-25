@@ -2,8 +2,8 @@ name: Model scores
 
 # Daily evaluation of the free models of the web chat (web/eval/README.md): a few model calls a day complete the
 # scores (web/src/model-scores.json) of the free models listed by OpenRouter, from which the chat chooses its model.
-# Nothing is called once every free model listed is evaluated. The scores are proposed in a pull request
-# (branch model-scores), merged once approved.
+# Nothing is called once every free model listed is evaluated and up to date (results expire after 14 days). The
+# scores are proposed in a pull request (branch model-scores), merged once approved.
 on:
   schedule:
     - cron: '17 5 * * *'
