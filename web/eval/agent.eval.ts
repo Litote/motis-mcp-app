@@ -7,8 +7,8 @@
  * Environment: OPENROUTER_API_KEY (required, else skipped), EVAL_MODELS (comma-separated, default: the recommended
  * model of the chat), EVAL_MCP_URL (default http://localhost:3001/mcp), EVAL_SCENARIOS (comma-separated ids, default: all),
  * EVAL_DELAY_MS (pause between runs, for the rate limit of the free models), EVAL_MAX_CALLS (model calls at most,
- * default: no limit), EVAL_AUTO=1 (the scenarios without result of the free models listed by OpenRouter, plan.ts, instead
- * of EVAL_MODELS and EVAL_SCENARIOS: the daily evaluation of .github/workflows/model-scores.yml).
+ * default: no limit), EVAL_AUTO=1 (the scenarios without result, or expired, of the free models listed by OpenRouter,
+ * plan.ts, instead of EVAL_MODELS and EVAL_SCENARIOS: the daily evaluation of .github/workflows/model-scores.yml).
  */
 import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { afterAll, describe, expect, it, vi } from "vitest";
@@ -58,9 +58,12 @@ const { getFreeQuota, listModels, OpenRouterError, recommendedModel } = await im
 /** Error of the account that stopped the evaluation, if any. */
 let accountProblem: string | null = null;
 
+/** Day of the evaluation, YYYY-MM-DD (local), taken once: the date of its results, and the reference of their expiry. */
+const today = new Date().toLocaleDateString("sv");
+
 /**
- * Runs of EVAL_MODELS × EVAL_SCENARIOS, or planned (EVAL_AUTO) within the free requests left today: at least 2 model
- * calls per scenario.
+ * Runs of EVAL_MODELS × EVAL_SCENARIOS, or planned (EVAL_AUTO, plan.ts), not cut to the budget: bounded by the free
+ * requests left today, the runs stop once it is spent ([MIN_CALLS] calls left at least to start one).
  */
 async function plannedRuns(apiKey: string): Promise<PlannedRun[]> {
   if (auto) {
@@ -71,7 +74,7 @@ async function plannedRuns(apiKey: string): Promise<PlannedRun[]> {
       if (accountProblem) return [];
     }
     const scores = JSON.parse(readFileSync(SCORES_FILE, "utf8"));
-    return planEvaluation(await listModels(), scores, SCENARIOS.map((s) => s.id), Math.floor(streamChat.max / 2));
+    return planEvaluation(await listModels(), scores, SCENARIOS.map((s) => s.id), today);
   }
   const models = (env.EVAL_MODELS ?? recommendedModel([])).split(",").map((m) => m.trim()).filter(Boolean);
   const only = env.EVAL_SCENARIOS?.split(",").map((s) => s.trim());
@@ -82,8 +85,13 @@ async function plannedRuns(apiKey: string): Promise<PlannedRun[]> {
 rmSync(ACCOUNT_ERROR_FILE, { force: true });
 streamChat.max = maxCalls;
 const planned = key ? await plannedRuns(key) : [];
-const byModel = new Map<string, PlannedRun[]>();
-for (const p of planned) byModel.set(p.model, [...(byModel.get(p.model) ?? []), p]);
+/** The planned runs in the order of the plan (missing scenarios before expired ones), grouped while of the same model. */
+const groups: { model: string; runs: PlannedRun[] }[] = [];
+for (const p of planned) {
+  const last = groups.at(-1);
+  if (last?.model === p.model) last.runs.push(p);
+  else groups.push({ model: p.model, runs: [p] });
+}
 const errorsInARow = new Map<string, number>();
 
 const runs: Run[] = [];
@@ -107,8 +115,8 @@ async function run(model: string, scenario: Scenario): Promise<RunRecord> {
 }
 
 describe.skipIf(!key)(`agent evaluation (MCP server ${mcpUrl})`, () => {
-  if (!planned.length) it.skip(accountProblem ?? "nothing to evaluate: every free model listed is evaluated", () => {});
-  for (const [model, modelRuns] of byModel) {
+  if (!planned.length) it.skip(accountProblem ?? "nothing to evaluate: every free model listed is evaluated and up to date", () => {});
+  for (const { model, runs: modelRuns } of groups) {
     describe(model, () => {
       for (const scenario of modelRuns.map((p) => SCENARIOS.find((s) => s.id === p.scenario)!)) {
         it(`${scenario.id}: ${scenario.prompt}`, async ({ skip }) => {
@@ -140,8 +148,7 @@ describe.skipIf(!key)(`agent evaluation (MCP server ${mcpUrl})`, () => {
     writeFileSync(`${name}.md`, report(runs, mcpUrl));
     console.log(`Report: web/${name}.md (${streamChat.calls} model calls)`);
     const scores = JSON.parse(readFileSync(SCORES_FILE, "utf8"));
-    const date = new Date().toLocaleDateString("sv"); // YYYY-MM-DD, local
-    writeFileSync(SCORES_FILE, `${JSON.stringify(mergeScores(scores, runs, date, SCENARIOS.map((s) => s.id)), null, 2)}\n`);
+    writeFileSync(SCORES_FILE, `${JSON.stringify(mergeScores(scores, runs, today, SCENARIOS.map((s) => s.id)), null, 2)}\n`);
     console.log(`Scores: web/${SCORES_FILE}`);
   });
 });
