@@ -108,6 +108,8 @@ fun main(args: Array<String>) {
                 allowHeader(HttpHeaders.ContentType)
                 allowHeader(HttpHeaders.Authorization)
                 allowHeader("Mcp-Protocol-Version")
+                // sent by some clients on the SSE GET (Ktor SSE, as the MCP Kotlin SDK in a browser)
+                allowHeader(HttpHeaders.CacheControl)
             }
             // the views (ui:// resources: ~500 kB of HTML, with the texts of every language) shrink by 3 to 4 on the wire;
             // text/event-stream is not compressed by default, the SSE responses stay streamed. The Lambda is behind

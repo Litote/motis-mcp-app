@@ -126,10 +126,11 @@ resource "aws_lambda_function_url" "mcp" {
   authorization_type = "NONE"
 
   # CORS handled here: the Ktor CORS plugin is not on the Lambda classpath
+  # (cache-control: sent by some clients on the SSE GET, as the MCP Kotlin SDK in a browser)
   cors {
     allow_origins  = var.cors_allow_origins
     allow_methods  = ["POST", "GET", "DELETE"]
-    allow_headers  = ["content-type", "accept", "authorization", "mcp-protocol-version", "mcp-session-id", "last-event-id"]
+    allow_headers  = ["content-type", "accept", "authorization", "mcp-protocol-version", "mcp-session-id", "last-event-id", "cache-control"]
     expose_headers = ["mcp-session-id"]
     max_age        = 86400
   }
