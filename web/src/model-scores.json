@@ -1,9 +1,19 @@
 {
   "baidu/ernie-5.5-flash-preview:free": {
+    "alerts": {
+      "ok": true,
+      "seconds": 4.8,
+      "date": "2026-11-26"
+    },
     "ambiguous": {
       "ok": true,
       "seconds": 6.4,
       "date": "2026-11-24"
+    },
+    "arrive_by": {
+      "ok": true,
+      "seconds": 5,
+      "date": "2026-11-26"
     },
     "departures": {
       "ok": true,
@@ -40,10 +50,30 @@
       "seconds": 11.1,
       "date": "2026-11-25"
     },
+    "search_places": {
+      "ok": true,
+      "seconds": 8.1,
+      "date": "2026-11-26"
+    },
+    "server_info": {
+      "ok": true,
+      "seconds": 4.3,
+      "date": "2026-11-26"
+    },
+    "tram_only": {
+      "ok": true,
+      "seconds": 6.2,
+      "date": "2026-11-26"
+    },
     "trip_details": {
       "ok": true,
       "seconds": 22,
       "date": "2026-11-25"
+    },
+    "wheelchair": {
+      "ok": true,
+      "seconds": 5.4,
+      "date": "2026-11-26"
     }
   },
   "nvidia/nemotron-3-ultra-550b-a55b:free": {
@@ -106,10 +136,30 @@
       "seconds": 7.7,
       "date": "2026-11-25"
     },
+    "rentals": {
+      "ok": true,
+      "seconds": 31,
+      "date": "2026-11-26"
+    },
     "route_details": {
       "ok": true,
       "seconds": 9.5,
       "date": "2026-11-25"
+    },
+    "search_places": {
+      "ok": true,
+      "seconds": 19.8,
+      "date": "2026-11-26"
+    },
+    "server_info": {
+      "ok": true,
+      "seconds": 13.7,
+      "date": "2026-11-26"
+    },
+    "trip_details": {
+      "ok": true,
+      "seconds": 63.5,
+      "date": "2026-11-26"
     }
   }
 }
