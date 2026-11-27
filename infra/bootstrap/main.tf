@@ -332,6 +332,9 @@ data "aws_iam_policy_document" "deploy" {
       "logs:ListTagsForResource",
       "logs:TagResource",
       "logs:UntagResource",
+      # abuse alarms (alerts.tf)
+      "logs:PutMetricFilter",
+      "logs:DeleteMetricFilter",
     ]
     resources = [
       "arn:aws:logs:${var.aws_region}:${local.account_id}:log-group:/aws/lambda/${var.name}",
@@ -344,11 +347,30 @@ data "aws_iam_policy_document" "deploy" {
   # Describe* cannot be limited to a resource
   statement {
     sid       = "LogsDescribe"
-    actions   = ["logs:DescribeLogGroups"]
+    actions   = ["logs:DescribeLogGroups", "logs:DescribeMetricFilters"]
     resources = ["*"]
   }
 
-  # Budget and its SNS topic (kill switch). Subscription ARNs: <topic ARN>:<id>
+  # Abuse alarms (alerts.tf)
+  statement {
+    sid = "AbuseAlarms"
+    actions = [
+      "cloudwatch:PutMetricAlarm",
+      "cloudwatch:DeleteAlarms",
+      "cloudwatch:ListTagsForResource",
+      "cloudwatch:TagResource",
+      "cloudwatch:UntagResource",
+    ]
+    resources = ["arn:aws:cloudwatch:${var.aws_region}:${local.account_id}:alarm:${var.name}-*"]
+  }
+
+  statement {
+    sid       = "AlarmsDescribe"
+    actions   = ["cloudwatch:DescribeAlarms"]
+    resources = ["*"]
+  }
+
+  # Budget and its SNS topic (kill switch), topic of the abuse alarms. Subscription ARNs: <topic ARN>:<id>
   statement {
     sid = "BudgetTopic"
     actions = [
@@ -368,6 +390,8 @@ data "aws_iam_policy_document" "deploy" {
     resources = [
       "arn:aws:sns:${var.aws_region}:${local.account_id}:${var.name}-budget",
       "arn:aws:sns:${var.aws_region}:${local.account_id}:${var.name}-budget:*",
+      "arn:aws:sns:${var.aws_region}:${local.account_id}:${var.name}-alerts",
+      "arn:aws:sns:${var.aws_region}:${local.account_id}:${var.name}-alerts:*",
     ]
   }
 
@@ -495,6 +519,8 @@ data "aws_iam_policy_document" "plan" {
     resources = [
       "arn:aws:sns:${var.aws_region}:${local.account_id}:${var.name}-budget",
       "arn:aws:sns:${var.aws_region}:${local.account_id}:${var.name}-budget:*",
+      "arn:aws:sns:${var.aws_region}:${local.account_id}:${var.name}-alerts",
+      "arn:aws:sns:${var.aws_region}:${local.account_id}:${var.name}-alerts:*",
     ]
   }
 
@@ -529,7 +555,19 @@ data "aws_iam_policy_document" "plan" {
   # Describe* cannot be limited to a resource
   statement {
     sid       = "LogsDescribe"
-    actions   = ["logs:DescribeLogGroups"]
+    actions   = ["logs:DescribeLogGroups", "logs:DescribeMetricFilters"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid       = "AbuseAlarms"
+    actions   = ["cloudwatch:ListTagsForResource"]
+    resources = ["arn:aws:cloudwatch:${var.aws_region}:${local.account_id}:alarm:${var.name}-*"]
+  }
+
+  statement {
+    sid       = "AlarmsDescribe"
+    actions   = ["cloudwatch:DescribeAlarms"]
     resources = ["*"]
   }
 

@@ -10,6 +10,11 @@ terraform {
       source  = "hashicorp/archive"
       version = "~> 2.7"
     }
+    # secret of the origin header sent by CloudFront to the function URL (main.tf)
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.7"
+    }
   }
 }
 

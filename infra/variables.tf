@@ -104,6 +104,17 @@ variable "reserved_concurrency" {
   default     = 10
 }
 
+variable "rate_limit_per_minute" {
+  description = "Tool calls a minute of a client (IPv4 address, IPv6 /64) on one Lambda instance, in memory: the effective limit is up to reserved_concurrency times higher. The connectors of Claude.ai and ChatGPT call from their servers: their users share a few addresses. 0: no limit."
+  type        = number
+  default     = 30
+
+  validation {
+    condition     = var.rate_limit_per_minute >= 0 && floor(var.rate_limit_per_minute) == var.rate_limit_per_minute
+    error_message = "rate_limit_per_minute must be a positive integer or 0."
+  }
+}
+
 variable "cors_allow_origins" {
   description = "Origins allowed by CORS (browser-based MCP clients and inspectors)."
   type        = list(string)
@@ -151,7 +162,7 @@ variable "monthly_budget_usd" {
 }
 
 variable "budget_alert_email" {
-  description = "E-mail address of the budget alerts (50 % and 80 % of the actual cost, 100 % of the forecast, kill switch). Empty: no e-mail, the kill switch only."
+  description = "E-mail address of the budget alerts (50 % and 80 % of the actual cost, 100 % of the forecast, kill switch) and of the abuse alarms (alerts.tf). Empty: no e-mail, the kill switch only."
   type        = string
   default     = ""
 }

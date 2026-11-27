@@ -162,6 +162,11 @@ resource "aws_cloudfront_distribution" "app" {
       # the Lambda timeout (var.timeout_seconds); 60 s is the CloudFront maximum without a quota increase
       origin_read_timeout = 60
     }
+    # checked by the Lambda: the function URL called directly is rejected (main.tf)
+    custom_header {
+      name  = "x-origin-verify"
+      value = random_password.origin_secret.result
+    }
   }
 
   default_cache_behavior {
@@ -174,7 +179,8 @@ resource "aws_cloudfront_distribution" "app" {
     response_headers_policy_id = aws_cloudfront_response_headers_policy.app.id
   }
 
-  # MCP endpoint (/mcp and /mcp/<host>): not cached, every method, CORS answered by the function URL
+  # MCP endpoint (/mcp and /mcp/<host>): not cached, every method, CORS answered by the function URL. The origin request
+  # policy forwards CloudFront-Viewer-Address, the client of the rate limit of the Lambda
   ordered_cache_behavior {
     path_pattern             = "/mcp*"
     target_origin_id         = "mcp"

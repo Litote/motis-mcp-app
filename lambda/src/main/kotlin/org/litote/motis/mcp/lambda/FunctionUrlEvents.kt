@@ -31,8 +31,9 @@ data class FunctionUrlEvent(
     @Serializable
     data class RequestContext(val http: Http)
 
+    /** @property sourceIp the immediate caller: CloudFront when called through the distribution */
     @Serializable
-    data class Http(val method: String, val path: String)
+    data class Http(val method: String, val path: String, val sourceIp: String? = null)
 
     fun header(name: String): String? = headers.entries.firstOrNull { it.key.equals(name, ignoreCase = true) }?.value
 }
