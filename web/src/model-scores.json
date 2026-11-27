@@ -20,6 +20,11 @@
       "seconds": 10.6,
       "date": "2026-11-24"
     },
+    "english": {
+      "ok": true,
+      "seconds": 13.4,
+      "date": "2026-11-27"
+    },
     "explore_area": {
       "ok": true,
       "seconds": 15.1,
@@ -82,6 +87,16 @@
       "seconds": 8.4,
       "date": "2026-11-24"
     },
+    "departures": {
+      "ok": true,
+      "seconds": 31.4,
+      "date": "2026-11-27"
+    },
+    "explore_area": {
+      "ok": true,
+      "seconds": 33.7,
+      "date": "2026-11-27"
+    },
     "local_time": {
       "ok": true,
       "seconds": 16.6,
@@ -91,6 +106,11 @@
       "ok": false,
       "seconds": 41.9,
       "date": "2026-11-24"
+    },
+    "route_details": {
+      "ok": true,
+      "seconds": 20.5,
+      "date": "2026-11-27"
     }
   },
   "nvidia/nemotron-3.5-lightning:free": {
@@ -106,15 +126,30 @@
     }
   },
   "nvidia/nemotron-3.5-super-vl:free": {
+    "alerts": {
+      "ok": true,
+      "seconds": 5,
+      "date": "2026-11-27"
+    },
     "ambiguous": {
       "ok": true,
       "seconds": 3.6,
       "date": "2026-11-08"
     },
+    "arrive_by": {
+      "ok": true,
+      "seconds": 12.5,
+      "date": "2026-11-27"
+    },
     "departures": {
       "ok": true,
       "seconds": 13.6,
       "date": "2026-11-25"
+    },
+    "english": {
+      "ok": true,
+      "seconds": 9.9,
+      "date": "2026-11-27"
     },
     "explore_area": {
       "ok": true,
@@ -156,10 +191,20 @@
       "seconds": 13.7,
       "date": "2026-11-26"
     },
+    "tram_only": {
+      "ok": true,
+      "seconds": 5.6,
+      "date": "2026-11-27"
+    },
     "trip_details": {
       "ok": true,
       "seconds": 63.5,
       "date": "2026-11-26"
+    },
+    "wheelchair": {
+      "ok": true,
+      "seconds": 16.4,
+      "date": "2026-11-27"
     }
   }
 }
