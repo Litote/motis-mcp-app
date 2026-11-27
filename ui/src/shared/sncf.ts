@@ -80,6 +80,21 @@ export function linePictogram(mode: string, line?: string | null, agency?: strin
   return modeMatches ? svg : null;
 }
 
+/** Blue of the SNCF departures boards, behind the logos of the brands (`.badge.sncf-train` in style.css). */
+export const SNCF_BOARD_BLUE = "#103e7d";
+
+/** Color of the pictogram of a line: its first fill other than the white or black of the number. */
+function pictogramColor(svg: string): string | null {
+  return [...svg.matchAll(/fill="(#[0-9a-f]{3,6})"/gi)].map((m) => m[1]).find((c) => !/^#(f{3}|f{6}|0{3}|0{6})$/i.test(c)) ?? null;
+}
+
+/** Color of the badge of an SNCF train or Île-de-France line (see [sncfBadge]), or null when it has none. */
+export function sncfColor(mode: string, line?: string | null, agency?: string | null, number?: string | null): string | null {
+  const pictogram = linePictogram(mode, line, agency);
+  if (pictogram) return pictogramColor(pictogram);
+  return train(mode, line, agency, number)?.logo ? SNCF_BOARD_BLUE : null;
+}
+
 /** Badge of an SNCF train or Île-de-France line with its pictogram, or null when there is none. */
 export function sncfBadge(mode: string, line?: string | null, agency?: string | null, number?: string | null): string | null {
   const pictogram = linePictogram(mode, line, agency);

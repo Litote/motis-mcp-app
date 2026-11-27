@@ -1,5 +1,5 @@
 import { hostLocale, t, tOptional } from "./i18n";
-import { sncfBadge } from "./sncf";
+import { sncfBadge, sncfColor } from "./sncf";
 
 /** Escapes text inserted in HTML. */
 export function esc(value: string | number | null | undefined): string {
@@ -75,6 +75,45 @@ const MODE_COLORS: Record<string, string> = {
 
 export function modeColor(mode: string, routeColor?: string | null): string {
   return routeColor ?? MODE_COLORS[mode] ?? "#2b8a3e";
+}
+
+/** Color of a line: that of its badge (see [lineBadge]), so that its line on a map matches its badge. */
+export function lineColor(
+  mode: string,
+  line?: string | null,
+  color?: string | null,
+  agency?: string | null,
+  trainNumber?: string | null,
+): string {
+  return sncfColor(mode, line, agency, trainNumber) ?? modeColor(mode, color);
+}
+
+/** [hex] color mixed with white (positive [amount]) or black (negative), [amount] in -1..1. */
+export function shade(hex: string, amount: number): string {
+  const value = hex.replace("#", "");
+  const full = value.length === 3 ? [...value].map((c) => c + c).join("") : value;
+  if (!/^[0-9a-f]{6}$/i.test(full)) return hex;
+  const target = amount > 0 ? 255 : 0;
+  const channels = [0, 2, 4].map((i) => Number.parseInt(full.slice(i, i + 2), 16));
+  return "#" + channels.map((c) => Math.round(c + (target - c) * Math.abs(amount)).toString(16).padStart(2, "0")).join("");
+}
+
+/**
+ * Colors of the [legs] of a journey, each that of its badge; a vehicle of the same color as the previous one (two ICE in a
+ * row) is shaded, lighter or darker when already light, so that the change of vehicle shows on the map.
+ */
+export function legColors(
+  legs: { mode: string; line?: string | null; routeColor?: string | null; agency?: string | null; tripId?: string | null }[],
+): string[] {
+  let previous: { base: string; shaded: boolean } | undefined;
+  return legs.map((leg) => {
+    const base = lineColor(leg.mode, leg.line, leg.routeColor, leg.agency);
+    if (!leg.tripId) return base;
+    const shaded = previous?.base.toLowerCase() === base.toLowerCase() && !previous.shaded;
+    previous = { base, shaded };
+    if (!shaded) return base;
+    return shade(base, textOn(base) === "#111" ? -0.3 : 0.35);
+  });
 }
 
 /** Delay badge (advance when negative), empty on time. */
