@@ -1,7 +1,7 @@
 // Journey planner: itineraries (plan_journey) as a list, the selected one on a map.
 import L from "leaflet";
 import { callTool, callToolResult, setStatus, startView, updateModelContext, type Args } from "./shared/app";
-import { day, delayBadge, delayMinutes, distance, duration, esc, lineBadge, modeColor, modeLabel, stopTimeHtml, time } from "./shared/format";
+import { day, delayBadge, delayMinutes, distance, duration, esc, legColors, lineBadge, modeLabel, stopTimeHtml, time } from "./shared/format";
 import { t, type MessageKey } from "./shared/i18n";
 import { alertList, alertMark, alertsOf } from "./shared/alerts";
 import { check, chevronLeft, chevronRight, sliders } from "./shared/icons";
@@ -228,14 +228,14 @@ function transitDescription(leg: LegDto): string {
   );
 }
 
-function legDescription(leg: LegDto, index: number): string {
+function legDescription(leg: LegDto, index: number, color: string): string {
   const transit = Boolean(leg.tripId);
   const delay = delayMinutes(leg.startTime, leg.scheduledStartTime);
   const delayText = leg.realTime ? delayBadge(delay) : "";
   const what = transit
     ? transitDescription(leg)
     : `<div class="what">${esc(modeLabel(leg.mode))} ${distance(leg.distanceMeters)} (${duration(leg.durationSeconds)})</div>`;
-  return legRow(leg.startTime, leg.from, transit ? "" : "street", modeColor(leg.mode, leg.routeColor), what, delayText, index);
+  return legRow(leg.startTime, leg.from, transit ? "" : "street", color, what, delayText, index);
 }
 
 /**
@@ -261,10 +261,11 @@ function select(index: number, refit = true): void {
   // the lines are drawn in the colors of the page, to stay readable over the roads in both themes
   const colors = getComputedStyle(document.body);
   for (const leg of it.legs) drawCasing(leg, colors.backgroundColor);
-  legLines = it.legs.map(drawLeg);
+  const legColor = legColors(it.legs);
+  legLines = it.legs.map((leg, i) => drawLeg(leg, legColor[i]!));
   drawEnds(it.legs, colors.backgroundColor, colors.color);
   const last = it.legs.at(-1);
-  legsList.innerHTML = it.legs.map((leg, i) => legDescription(leg, i)).join("") + (last ? legRow(last.endTime, last.to, "end") : "");
+  legsList.innerHTML = it.legs.map((leg, i) => legDescription(leg, i, legColor[i]!)).join("") + (last ? legRow(last.endTime, last.to, "end") : "");
   if (refit) fit(themedMap, layer);
 }
 
@@ -274,10 +275,12 @@ function drawCasing(leg: LegDto, background: string): void {
   L.polyline(decode(leg.polyline), { color: background, weight, opacity: 1, interactive: false }).addTo(layer);
 }
 
-/** Line of [leg], with its stops on board; in the street round dots, not to be taken for the railways of the map. */
-function drawLeg(leg: LegDto): { line: L.Polyline; weight: number } {
+/**
+ * Line of [leg] in its [color], with its stops on board; in the street round dots, not to be taken for the railways of the
+ * map.
+ */
+function drawLeg(leg: LegDto, color: string): { line: L.Polyline; weight: number } {
   const transit = Boolean(leg.tripId);
-  const color = modeColor(leg.mode, leg.routeColor);
   const weight = transit ? 6 : 5;
   const line = L.polyline(decode(leg.polyline), {
     color,
