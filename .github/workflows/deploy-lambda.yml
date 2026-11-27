@@ -13,8 +13,10 @@ on:
       - 'infra/**'
       - '!infra/bootstrap/**'
       - 'gradle/**'
+      - 'tools/**'
       - '*.gradle.kts'
       - 'gradle.properties'
+      - '.nvmrc'
       - '.github/workflows/deploy-lambda.yml'
   pull_request:
     branches: [main]
@@ -26,8 +28,10 @@ on:
       - 'infra/**'
       - '!infra/bootstrap/**'
       - 'gradle/**'
+      - 'tools/**'
       - '*.gradle.kts'
       - 'gradle.properties'
+      - '.nvmrc'
       - '.github/workflows/deploy-lambda.yml'
   workflow_dispatch:
 
@@ -70,7 +74,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '26'
+          node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: ui/package-lock.json
 
@@ -116,7 +120,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '26'
+          node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: web/package-lock.json
 
@@ -143,6 +147,7 @@ jobs:
   terraform-plan:
     name: Terraform plan
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     # Dependabot and fork PRs cannot access secrets/OIDC. Skipped until AWS is configured (vars.AWS_REGION, see docs/AWS-DEPLOYMENT.md)
     if: >-
       github.event_name == 'pull_request' && github.actor != 'dependabot[bot]' &&
@@ -193,13 +198,23 @@ jobs:
           # monthly budget (USD) of the kill switch, and e-mail of the budget alerts (infra/budget.tf)
           TF_VAR_monthly_budget_usd: ${{ vars.MONTHLY_BUDGET_USD || 20 }}
           TF_VAR_budget_alert_email: ${{ vars.BUDGET_ALERT_EMAIL }}
-        # read-only role: no state lock
-        run: terraform plan -input=false -no-color -lock=false
+        # read-only role: no state lock. The plan is shown in the summary of the run, to review the infra changes
+        # there rather than in the logs (the sensitive values are redacted by Terraform)
+        run: |
+          terraform plan -input=false -no-color -lock=false -out="$RUNNER_TEMP/tfplan"
+          {
+            echo '### Terraform plan'
+            echo '```'
+            # the summary of a step is limited to 1 MiB
+            terraform show -no-color "$RUNNER_TEMP/tfplan" | head -c 900000
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
 
   # ── Terraform apply: deploys the zip ──────────────────────────────────────
   terraform-apply:
     name: Terraform apply
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     # skipped until AWS is configured (vars.AWS_REGION, see docs/AWS-DEPLOYMENT.md): the deploy-web job is skipped with it
     if: (github.event_name == 'push' || github.event_name == 'workflow_dispatch') && vars.AWS_REGION != ''
     needs: build-native
@@ -257,7 +272,8 @@ jobs:
         run: |
           url=$(terraform output -raw mcp_url)
           echo "MCP endpoint: $url" >> "$GITHUB_STEP_SUMMARY"
-          curl -sf "$url" \
+          # retried: the function just updated may not answer at once (cold start, propagation)
+          curl -sf --retry 5 --retry-delay 5 --retry-all-errors "$url" \
             -H 'content-type: application/json' \
             -H 'accept: application/json, text/event-stream' \
             -H 'mcp-protocol-version: 2025-11-25' \
@@ -268,6 +284,7 @@ jobs:
   deploy-web:
     name: Deploy web chat
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     needs: [build-web, terraform-apply]
     environment: production
     permissions:

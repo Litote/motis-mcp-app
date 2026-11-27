@@ -23,6 +23,7 @@ jobs:
   check:
     name: Check (tests, coverage, SonarCloud)
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
 
@@ -48,7 +49,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '26'
+          node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: |
             ui/package-lock.json
@@ -87,6 +88,7 @@ jobs:
   docker:
     name: Docker image (build only)
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
 
@@ -108,6 +110,7 @@ jobs:
   docker-web:
     name: Web chat Docker image (build only, smoke test)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     permissions:
       contents: read
 
@@ -141,6 +144,7 @@ jobs:
   mcp-server-json:
     name: Validate server.json (MCP registry)
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
 
