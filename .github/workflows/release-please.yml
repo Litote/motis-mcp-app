@@ -25,6 +25,7 @@ jobs:
   release-please:
     name: Release Please
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: write
       pull-requests: write
@@ -44,6 +45,7 @@ jobs:
     needs: release-please
     if: needs.release-please.outputs.release_created == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
 
@@ -70,7 +72,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
-          node-version: '26'
+          node-version-file: .nvmrc
           cache: npm
           cache-dependency-path: |
             ui/package-lock.json
@@ -104,6 +106,7 @@ jobs:
   docker:
     name: Publish Docker image ${{ needs.release-please.outputs.tag_name || inputs.tag }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: [release-please, sonar]
     if: needs.release-please.outputs.release_created == 'true' || github.event_name == 'workflow_dispatch'
     permissions:
@@ -149,6 +152,7 @@ jobs:
   docker-web:
     name: Publish web chat Docker image ${{ needs.release-please.outputs.tag_name || inputs.tag }}
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     needs: [release-please, sonar]
     if: needs.release-please.outputs.release_created == 'true' || github.event_name == 'workflow_dispatch'
     permissions:
@@ -188,6 +192,7 @@ jobs:
   mcp-registry:
     name: Publish to the MCP registry ${{ needs.release-please.outputs.tag_name || inputs.tag }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     # the registry checks the io.modelcontextprotocol.server.name label of the pushed image (see Dockerfile). A version
     # can't be removed from the registry: it is published once the GitHub release is, never for a draft release.
     needs: [release-please, docker, finalize-release]
@@ -263,6 +268,7 @@ jobs:
   finalize-release:
     name: Publish GitHub Release ${{ needs.release-please.outputs.tag_name || inputs.tag }}
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     # Releases are created as drafts (see release-please-config.json): the release is published once its images are
     # pushed.
     needs: [release-please, docker, docker-web]

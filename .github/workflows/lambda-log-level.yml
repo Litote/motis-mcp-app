@@ -24,6 +24,7 @@ jobs:
   set-log-level:
     name: Set the log level
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     if: vars.AWS_REGION != ''
     # restricted to main by a deployment branch policy
     environment: production

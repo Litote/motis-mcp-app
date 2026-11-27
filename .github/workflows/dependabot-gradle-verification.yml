@@ -10,6 +10,12 @@ on:
       - 'gradle/libs.versions.toml'
       - 'gradle/wrapper/gradle-wrapper.properties'
 
+# one regeneration at a time per pull request (two quick pushes of Dependabot), never cancelled midway: the last one
+# waits and runs on the latest head
+concurrency:
+  group: gradle-verification-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
 jobs:
   update-verification-metadata:
     if: github.event.pull_request.user.login == 'dependabot[bot]' && github.event.pull_request.head.repo.full_name == github.repository
