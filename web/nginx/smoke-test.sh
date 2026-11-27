@@ -6,7 +6,7 @@ set -euo pipefail
 image=$1
 container=$(docker run -d --rm -p 127.0.0.1::8080 -p 127.0.0.1::8081 \
   -e MCP_URL=https://mcp.example.org/mcp -e APP_ORIGIN=https://chat.example.org \
-  -e SANDBOX_ORIGIN=https://sandbox.example.org "$image")
+  -e SANDBOX_ORIGIN=https://sandbox.example.org -e APP_TITLE=Example -e LEGAL_PAGES=true "$image")
 # logs of the container on failure
 trap 'status=$?; [ "$status" = 0 ] || docker logs "$container"; docker stop "$container" > /dev/null' EXIT
 app=http://$(docker port "$container" 8080)
@@ -22,7 +22,8 @@ curl -sfI "$app/" | grep -i '^content-security-policy:' | grep -q "connect-src '
 [ "$(curl -s -o /dev/null -w '%{http_code}' "$app/sandbox.html")" = 404 ] || fail "sandbox.html served by the app"
 
 curl -sf "$sandbox/config.json" | jq -e '.mcpUrl == "https://mcp.example.org/mcp"
-  and .sandboxUrl == "https://sandbox.example.org/sandbox.html" and .hostOrigins == ["https://chat.example.org"]' > /dev/null \
+  and .sandboxUrl == "https://sandbox.example.org/sandbox.html" and .hostOrigins == ["https://chat.example.org"]
+  and .title == "Example" and .legalPages == true' > /dev/null \
   || fail "config.json"
 
 # njs: domains of the csp query parameter, invalid entries dropped

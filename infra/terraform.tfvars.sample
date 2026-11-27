@@ -8,6 +8,7 @@ motis_app_contact = "you@example.org"
 # vector_tile_url      = "https://api.protomaps.com/tiles/v4/{z}/{x}/{y}.mvt?key=<key>"   # secret: see docs/AWS-DEPLOYMENT.md
 # rail_overlay         = "ign,openrailwaymap"   # default "ign"; "": none, see docs/MCP-SERVER.md
 # domain_name          = "motis.example.org"   # chat and MCP endpoint (/mcp); DNS: see docs/AWS-DEPLOYMENT.md
-# app_title            = "Errance"   # title shown by the MCP clients; website: https://<domain_name>
+# app_title            = "Errance"   # title shown by the MCP clients and the web chat; website: https://<domain_name>
+# legal_pages          = true        # links to web/public/privacy.html and terms.html (those of errance.litote.org)
 # sandbox_domain_name  = "sandbox.motis.example.org"   # default
 # view_domains         = { chatgpt = "https://motis.example.org" }   # _meta.ui.domain per host, see docs/MCP-SERVER.md

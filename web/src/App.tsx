@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect, useState, type SubmitEvent } from "react";
 import { completeLogin, getKey, setKey as storeKey, startLogin } from "./openrouter";
+import { DEFAULT_TITLE, loadConfig } from "./config";
 import { language, t, useLanguage } from "./i18n";
 import { LanguagePicker } from "./LanguagePicker";
 import { ThemeButton } from "./ThemeButton";
@@ -7,7 +8,27 @@ import { ThemeButton } from "./ThemeButton";
 // The chat (assistant-ui, MCP client, markdown) is loaded after the login only
 const Chat = lazy(() => import("./Chat"));
 
-function Login({ error }: Readonly<{ error: string | null }>) {
+interface Instance {
+  title: string;
+  legalPages: boolean;
+}
+
+/** Name of the instance and its legal pages (config.json): the defaults until loaded, or if it cannot be. */
+function useInstance(): Instance {
+  const [instance, setInstance] = useState<Instance>({ title: DEFAULT_TITLE, legalPages: false });
+  useEffect(() => {
+    loadConfig().then(
+      (config) => setInstance({ title: config.title?.trim() || DEFAULT_TITLE, legalPages: config.legalPages === true }),
+      () => {},
+    );
+  }, []);
+  useEffect(() => {
+    document.title = instance.title;
+  }, [instance.title]);
+  return instance;
+}
+
+function Login({ error, instance }: Readonly<{ error: string | null; instance: Instance }>) {
   const [pasted, setPasted] = useState("");
   const [invalid, setInvalid] = useState<string | null>(null);
   const submit = (event: SubmitEvent<HTMLFormElement>) => {
@@ -29,7 +50,7 @@ function Login({ error }: Readonly<{ error: string | null }>) {
       </div>
       <h1 className="home-title">
         <img className="home-logo" src="/logo.svg" alt="" width={40} height={40} />
-        <span>Errance - MOTIS explorer</span>
+        <span>{instance.title}</span>
       </h1>
       <p className="home-tagline">{t("home.tagline")}</p>
       <p>
@@ -82,7 +103,11 @@ function Login({ error }: Readonly<{ error: string | null }>) {
         {t("home.attribution.after")}
       </p>
       <p className="login-legal">
-        <a href="/privacy.html">{t("legal.privacy")}</a> · <a href="/terms.html">{t("legal.terms")}</a> ·{" "}
+        {instance.legalPages && (
+          <>
+            <a href="/privacy.html">{t("legal.privacy")}</a> · <a href="/terms.html">{t("legal.terms")}</a> ·{" "}
+          </>
+        )}
         <a href="https://github.com/Litote/motis-mcp-app">{t("legal.source")}</a>
       </p>
     </div>
@@ -94,6 +119,7 @@ export function App() {
   useLanguage();
   const [key, setKey] = useState(getKey);
   const [error, setError] = useState<string | null>(null);
+  const instance = useInstance();
 
   useEffect(() => {
     completeLogin().then(
@@ -107,6 +133,6 @@ export function App() {
       <Chat apiKey={key} />
     </Suspense>
   ) : (
-    <Login error={error} />
+    <Login error={error} instance={instance} />
   );
 }

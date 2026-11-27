@@ -39,6 +39,8 @@ The variables are read from `.env` (see `.env.sample`):
 | `MCP_URL`                                                        | `http://localhost:3001/mcp` | MCP endpoint, as seen by the browser         |
 | `APP_ORIGIN`                                                     | `http://localhost:8080`     | origin of the chat, as seen by the browser   |
 | `SANDBOX_ORIGIN`                                                 | `http://localhost:8081`     | origin of the view sandbox                   |
+| `MOTIS_APP_TITLE`                                                | `MOTIS explorer`            | also the name of the instance in the web chat (`APP_TITLE` of its image) |
+| `WEB_LEGAL_PAGES`                                                | `false`                     | links of the chat to `privacy.html` and `terms.html` (`LEGAL_PAGES` of its image): those of errance.litote.org, to rewrite before |
 
 ### Your own MOTIS server
 
@@ -66,8 +68,9 @@ internet access (the map tiles stay external, see `MOTIS_TILE_URL`); otherwise T
 - **CSP of the sandbox**: built per view from the `csp` query parameter by [njs](https://nginx.org/en/docs/njs/), with
   `web/sandbox-csp.cjs`, the code of the CloudFront Function and of the Vite dev server (`web/nginx/sandbox-csp.njs.js`
   is appended to it when the image is built).
-- **`config.json`**: rendered from `MCP_URL`, `APP_ORIGIN` and `SANDBOX_ORIGIN` when the container starts (templates of
-  the official nginx image, `web/nginx/templates`).
+- **`config.json`**: rendered from `MCP_URL`, `APP_ORIGIN`, `SANDBOX_ORIGIN`, `APP_TITLE` (name of the instance, default
+  `MOTIS explorer`, without double quote) and `LEGAL_PAGES` (`true` or `false`, default `false`) when the container
+  starts (templates of the official nginx image, `web/nginx/templates`).
 
 ```bash
 docker build -t motis-mcp-app-web web

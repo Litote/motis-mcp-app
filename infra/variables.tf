@@ -157,7 +157,13 @@ variable "budget_alert_email" {
 }
 
 variable "app_title" {
-  description = "Title of the instance shown by the MCP clients (MOTIS_APP_TITLE), e.g. Errance. Empty: the title of the project."
+  description = "Title of the instance shown by the MCP clients (MOTIS_APP_TITLE) and by the web chat, e.g. Errance. Empty: the title of the project."
   type        = string
   default     = ""
+}
+
+variable "legal_pages" {
+  description = "Links of the web chat to its privacy policy and terms of use (web/public/privacy.html, terms.html): those of errance.litote.org, to rewrite for another instance."
+  type        = bool
+  default     = false
 }

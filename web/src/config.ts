@@ -9,7 +9,13 @@ export interface AppConfig {
   sandboxUrl: string;
   /** Origins of the app allowed to embed the sandbox. */
   hostOrigins: string[];
+  /** Name of the instance, e.g. Errance: default {@link DEFAULT_TITLE}. */
+  title?: string;
+  /** Links to the privacy policy and the terms of use (privacy.html, terms.html): those of the instance that wrote them. */
+  legalPages?: boolean;
 }
+
+export const DEFAULT_TITLE = "MOTIS explorer";
 
 let config: Promise<AppConfig> | undefined;
 

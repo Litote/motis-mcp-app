@@ -42,6 +42,9 @@ services:
       MCP_URL: ${MCP_URL:-http://localhost:3001/mcp}
       APP_ORIGIN: ${APP_ORIGIN:-http://localhost:8080}
       SANDBOX_ORIGIN: ${SANDBOX_ORIGIN:-http://localhost:8081}
+      # name of the instance, the same as the one of the MCP server
+      APP_TITLE: ${MOTIS_APP_TITLE:-MOTIS explorer}
+      LEGAL_PAGES: ${WEB_LEGAL_PAGES:-false}
     ports:
       - "127.0.0.1:8080:8080"
       - "127.0.0.1:8081:8081"
