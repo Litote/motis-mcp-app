@@ -28,9 +28,9 @@ The server runs at `https://errance.litote.org/mcp` (Streamable HTTP, no account
 
 **Any MCP client** (Claude Code, Cursor, VS Code, Codex, Gemini CLI…), with [add-mcp](https://add-mcp.com):
 
-  ```bash
-  npx add-mcp https://errance.litote.org/mcp --name errance
-  ```
+```bash
+npx add-mcp https://errance.litote.org/mcp --name errance
+```
 
 ## Demo
 
