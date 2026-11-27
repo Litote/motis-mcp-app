@@ -55,7 +55,7 @@ More in the [demo FAQ](DEMO.md).
 
 ## Views
 
-Each tool with a view renders it in the hosts that support MCP Apps, in the language of the host (screenshots in English).
+Each tool with a view renders it in the hosts that support MCP Apps, in the language of the host.
 
 ### Journey: `plan_journey`
 
