@@ -12,7 +12,7 @@ lambda-runtime = "0.9.7"
 graalvm-native = "1.1.18"
 sonarqube = "7.6.0.18749"
 jacoco = "0.8.15"
-aws-sdk-kotlin = "1.9.37"
+aws-sdk-kotlin = "1.9.41"
 
 [libraries]
 mcp-server = { module = "io.modelcontextprotocol:kotlin-sdk-server", version.ref = "mcp" }
