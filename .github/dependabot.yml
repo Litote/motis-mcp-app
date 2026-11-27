@@ -75,6 +75,11 @@ updates:
       interval: "weekly"
     cooldown:
       default-days: 7
+    ignore:
+      # The JDK stays on the LTS releases (25, then 29), as the toolchain of the build and GraalVM for the lambda: the
+      # major version is changed by hand, the updates and digests of 25 still come
+      - dependency-name: "eclipse-temurin"
+        update-types: ["version-update:semver-major"]
     groups:
       # Both Dockerfiles build with the same node image: bump them in a single PR
       node:

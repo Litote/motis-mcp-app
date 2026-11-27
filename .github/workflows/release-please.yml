@@ -75,11 +75,13 @@ jobs:
           TAG: ${{ needs.release-please.outputs.tag_name || inputs.tag }}
         run: echo "version=${TAG#v}" >> "$GITHUB_OUTPUT"
 
-      # the jar is built once on the runner platform (see Dockerfile): no QEMU needed for arm64
+      # the jar is built once on the runner platform, the Java runtime (jlink) and the AOT cache on the target platform
+      # (see Dockerfile): QEMU for arm64
       - name: Build and push
         uses: Litote/ci/.github/actions/docker-publish@63a67e7add1b9fde6396c84399f90c9252f7b8e6 # v0.15.0
         with:
           image: ${{ env.IMAGE }}
+          emulate: 'true'
           password: ${{ secrets.GITHUB_TOKEN }}
           context: .
           build-args: VERSION_NAME=${{ steps.version.outputs.version }}
