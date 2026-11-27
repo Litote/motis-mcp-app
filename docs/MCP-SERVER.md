@@ -231,7 +231,8 @@ ChatGPT connects to a remote HTTPS endpoint only, e.g. the Lambda function URL o
 
 1. In ChatGPT (web), **Plugins** → **+** → **Add a custom MCP server** (developer mode: depending on the plan, enable it
    first in the settings).
-2. URL of the endpoint, authentication **None**.
+2. URL of the endpoint, authentication **None**. Icon (at least 256×256, under 10 KB):
+   [`web/public/logo-256.png`](../web/public/logo-256.png).
 3. In a new conversation, enable the plugin (`+` of the composer, or `@<name>`).
 
 After a deployment changing the tools or the views, select **Refresh** on the plugin and start a new conversation. The

@@ -1205,6 +1205,12 @@
       "glob": "simplelogger.properties"
     },
     {
+      "glob": "logo/logo-128.png"
+    },
+    {
+      "glob": "logo/logo.svg"
+    },
+    {
       "glob": "stations/stations.tsv"
     },
     {
