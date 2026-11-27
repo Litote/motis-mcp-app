@@ -78,6 +78,13 @@ jobs:
           cache: npm
           cache-dependency-path: ui/package-lock.json
 
+      # version announced by the deployed server (serverInfo, User-Agent): the last release and the commit
+      # (e.g. 0.1.0+8ef551b) instead of the main-SNAPSHOT of gradle.properties
+      - name: Set the version
+        run: |
+          release=$(jq -r '."."' .release-please-manifest.json)
+          echo "ORG_GRADLE_PROJECT_VERSION_NAME=${release}+${GITHUB_SHA::7}" >> "$GITHUB_ENV"
+
       # on a pull request, the tests are run by ci.yml: here only on main, as a last guard before the deploy
       - name: Test
         if: github.event_name != 'pull_request'
