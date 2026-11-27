@@ -29,7 +29,7 @@ function Login({ error }: Readonly<{ error: string | null }>) {
       </div>
       <h1 className="home-title">
         <img className="home-logo" src="/logo.svg" alt="" width={40} height={40} />
-        Errance - MOTIS explorer
+        <span>Errance - MOTIS explorer</span>
       </h1>
       <p className="home-tagline">{t("home.tagline")}</p>
       <p>
