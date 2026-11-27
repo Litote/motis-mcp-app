@@ -8,7 +8,7 @@ First release of Errance: an [MCP server](https://modelcontextprotocol.io) and [
 
 Each tool with a view renders it in the hosts that support MCP Apps; the other hosts get the text.
 
-* **Journeys** (`plan_journey`): the connections, their legs on the map in the colors of their lines, the detailed itinerary, earlier and later connections, and options (modes, transfers, walking, wheelchair, bike). Journeys between cities go from station to station.
+* **Journeys** (`plan_journey`): the connections, their legs on the map in the colors of their lines, the detailed itinerary, earlier and later connections, and options (modes, transfers, walking, wheelchair, bike). Journeys between cities go from station to station, and an ambiguous city (Brest) is asked about.
 * **Departure boards** (`departures`): departures and arrivals in real time (delays, cancellations, tracks), a tab per line or mode in railway stations, and the trains in the style of the boards of their operator (SNCF, SNCB, SBB, DB, NS, RFI, ADIF, National Rail).
 * **Trips** (`trip_details`): the stops of a vehicle, their times and tracks, and its current position.
 * **Area** (`explore_area`) and **lines** (`route_details`): the stops and lines around a place, the path of a line.
@@ -18,9 +18,12 @@ Each tool with a view renders it in the hosts that support MCP Apps; the other h
 
 ### Data
 
-* The SNCF real time, tracks and service alerts added to the trains without them in MOTIS, TER of the regional feeds included, and the real time of the Trenitalia trains in France.
-* The service alerts of the lines, stops and trains on the boards, trips and journeys.
-* The railway stations under the same name whatever the feed, in the language of the user, and the ambiguous cities resolved by asking which one is meant.
+The data come from the MOTIS server (Transitous by default). A few targeted complements fill its gaps, only where it has nothing:
+
+* **SNCF real time**: the times, cancellations and tracks of the SNCF trains (TGV, Intercités, TER, those of the regional feeds included) without real time in Transitous, from the open data of the SNCF on [transport.data.gouv.fr](https://transport.data.gouv.fr/datasets/horaires-sncf) (GTFS-RT trip updates, SIRI Lite estimated timetable), matched by train number and scheduled time. Disabled with `MOTIS_SNCF_REALTIME=false`.
+* **SNCF service alerts**: Transitous has none for the SNCF trains; they are taken from the SNCF GTFS-RT service alerts of the same source, and shown with the alerts of the feeds on the boards, trips and journeys.
+* **Trains in two feeds**: a train published by two feeds (e.g. the Frecciarossa Paris – Lyon – Milan, without real time in France in the Italian feed, with real time in the French one) is shown once, with the real time of the French feed.
+* **Station names**: a railway station under the same name whatever the feed, its city in the language of the user ("Girona" → "Gérone"), from a table generated from the stations of [Trainline](https://github.com/trainline-eu/stations) (ODbL) and the labels of [Wikidata](https://www.wikidata.org/) (CC0).
 
 ### Views
 
