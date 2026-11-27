@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({ completeLogin: vi.fn(), startLogin: vi.fn() }));
@@ -12,6 +12,7 @@ vi.mock("./openrouter", async (importOriginal) => ({
 vi.mock("./Chat", () => ({ default: ({ apiKey }: { apiKey: string }) => <p>chat with {apiKey}</p> }));
 
 const { App } = await import("./App");
+const { chooseLanguage } = await import("./i18n");
 
 const KEY = "sk-or-v1-0123abcd";
 
@@ -50,6 +51,27 @@ describe("App", () => {
     render(<App />);
 
     expect(await screen.findByText(`chat with ${KEY}`)).toBeDefined();
+  });
+
+  it("credits Transitous and OpenStreetMap on the home page", () => {
+    mocks.completeLogin.mockResolvedValue(false);
+    render(<App />);
+
+    expect(screen.getByText("Transitous and its sources").getAttribute("href")).toBe("https://transitous.org/sources/");
+    expect(screen.getByText("© OpenStreetMap contributors").getAttribute("href")).toBe(
+      "https://www.openstreetmap.org/copyright",
+    );
+    expect(screen.getByRole("img").getAttribute("src")).toBe("/home-journey.png");
+  });
+
+  it("shows the English screenshot only in English", async () => {
+    mocks.completeLogin.mockResolvedValue(false);
+    render(<App />);
+    expect(screen.queryByRole("img")).not.toBeNull();
+
+    await act(() => chooseLanguage("fr"));
+    expect(screen.queryByRole("img")).toBeNull();
+    await act(() => chooseLanguage(undefined));
   });
 
   it("shows the login errors", async () => {

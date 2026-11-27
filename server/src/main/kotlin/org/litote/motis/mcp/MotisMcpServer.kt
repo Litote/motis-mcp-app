@@ -2,6 +2,7 @@ package org.litote.motis.mcp
 
 import io.modelcontextprotocol.kotlin.sdk.server.Server
 import io.modelcontextprotocol.kotlin.sdk.server.ServerOptions
+import io.modelcontextprotocol.kotlin.sdk.types.Icon
 import io.modelcontextprotocol.kotlin.sdk.types.Implementation
 import io.modelcontextprotocol.kotlin.sdk.types.ServerCapabilities
 import org.litote.motis.mcp.apps.UiView
@@ -13,6 +14,25 @@ import org.litote.motis.mcp.tools.addPlaceTools
 import org.litote.motis.mcp.tools.addRentalTools
 import org.litote.motis.mcp.tools.addRoutingTools
 import org.litote.motis.mcp.tools.addTimetableTools
+import java.util.Base64
+
+private const val WEBSITE = "https://errance.litote.org"
+
+/** Logo of the app (copied from web/public), inline as data: URIs: shown by self-hosted instances too, stdio included. */
+internal val ICONS: List<Icon> =
+    listOfNotNull(
+        logoIcon("logo.svg", "image/svg+xml", "any"),
+        logoIcon("logo-128.png", "image/png", "128x128"),
+    )
+
+private fun logoIcon(file: String, mimeType: String, size: String): Icon? =
+    Icon::class.java.getResourceAsStream("/logo/$file")?.use { it.readBytes() }?.let { bytes ->
+        Icon(
+            src = "data:$mimeType;base64,${Base64.getEncoder().encodeToString(bytes)}",
+            mimeType = mimeType,
+            sizes = listOf(size),
+        )
+    }
 
 private val INSTRUCTIONS =
     """
@@ -47,7 +67,14 @@ fun createMotisMcpServer(
     rediscoverStations: () -> Boolean = CityJourneys.ONE_IN_100,
 ): Server =
     Server(
-        serverInfo = Implementation(name = APP_NAME, version = APP_VERSION, title = "MOTIS explorer"),
+        serverInfo =
+            Implementation(
+                name = APP_NAME,
+                version = APP_VERSION,
+                title = "MOTIS explorer",
+                websiteUrl = WEBSITE,
+                icons = ICONS,
+            ),
         options =
             ServerOptions(
                 capabilities =

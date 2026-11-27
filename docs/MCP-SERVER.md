@@ -205,7 +205,7 @@ Environment variables are passed to the container with `-e`.
 ### Claude Code
 
 ```bash
-claude mcp add motis -- docker run -i --rm -e MOTIS_APP_CONTACT=you@example.org ghcr.io/litote/motis-mcp-app
+claude mcp add errance -- docker run -i --rm -e MOTIS_APP_CONTACT=you@example.org ghcr.io/litote/motis-mcp-app
 ```
 
 ### Claude Desktop
@@ -213,7 +213,7 @@ claude mcp add motis -- docker run -i --rm -e MOTIS_APP_CONTACT=you@example.org 
 ```json
 {
   "mcpServers": {
-    "motis": {
+    "errance": {
       "command": "docker",
       "args": ["run", "-i", "--rm", "-e", "MOTIS_APP_CONTACT=you@example.org", "ghcr.io/litote/motis-mcp-app"]
     }

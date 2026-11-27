@@ -17,6 +17,7 @@ WORKDIR /build
 COPY gradlew settings.gradle.kts build.gradle.kts gradle.properties ./
 COPY gradle gradle
 COPY server server
+COPY web/public/logo.svg web/public/logo-128.png web/public/
 # included by settings.gradle.kts: their build file is enough
 COPY lambda/build.gradle.kts lambda/
 COPY tools/station-names/build.gradle.kts tools/station-names/

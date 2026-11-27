@@ -1,5 +1,11 @@
 # Contributing
 
+## Introduction
+
+The MCP server is written in Kotlin with the [MCP Kotlin SDK](https://github.com/modelcontextprotocol/kotlin-sdk) and
+calls MOTIS with [motis-ktor-client](https://github.com/Litote/motis-ktor-client). Its tools return a text summary for
+the model and structured data rendered by interactive views (maps, departure boards) in hosts supporting MCP Apps. Hosts without MCP Apps support still get the text.
+
 ## Prerequisites
 
 - JDK 25 (Gradle toolchain, provisioned automatically)
@@ -168,6 +174,13 @@ docker build -t motis-mcp-app-web web
 ```
 
 ## Deployment
+
+Two options available
+
+- **Self-hosting**: the MCP server and the web chat on a local machine or any Docker host, with Docker Compose
+  (`docker compose up`) or from the sources: see [Self-hosting](docs/SELF-HOSTING.md).
+- **AWS**: the MCP server on AWS Lambda (GraalVM native executable, public function URL), and the web chat on
+  S3 + CloudFront, with Terraform and GitHub Actions: see [AWS deployment](docs/AWS-DEPLOYMENT.md).
 
 A merge on `main` deploys the Lambda and the web chat (`deploy-lambda.yml`, `production` environment), independently
 of the releases (see [Continuous deployment](docs/AWS-DEPLOYMENT.md#continuous-deployment)). A pull request

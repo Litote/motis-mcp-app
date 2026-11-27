@@ -24,7 +24,7 @@ Then open `http://localhost:8080`: the chat uses the MCP server of the stack. Th
 MCP clients:
 
 ```bash
-claude mcp add --transport http motis http://localhost:3001/mcp
+claude mcp add --transport http errance http://localhost:3001/mcp
 ```
 
 ### Configuration
