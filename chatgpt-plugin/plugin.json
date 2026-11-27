@@ -1,0 +1,41 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "errance",
+  "version": "0.1.0",
+  "description": "Public transport journeys, departures and maps powered by open data",
+  "author": { "name": "Litote", "url": "https://github.com/Litote" },
+  "homepage": "https://errance.litote.org",
+  "repository": "https://github.com/Litote/motis-mcp-app",
+  "license": "AGPL-3.0-or-later",
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Errance",
+        "shortDescription": "Find transit routes",
+        "longDescription": "Errance helps you get around by public transport, wherever open transport data is available through Transitous. Plan journeys between two places and compare itineraries on a map, including walking sections, transfers and available real-time delay information.\n\nCheck upcoming departures from any stop, follow a journey stop by stop, and explore nearby lines and stops. Discover shared bikes, scooters and cars nearby, and find out how far you can travel within a given time.\n\nErrance uses open transport data from local transport agencies and mobility providers, aggregated by Transitous through GTFS, GTFS-RT and GBFS feeds. Data coverage and real-time information depend on what is published by these providers. No account is required.",
+        "developerName": "Julien Buret",
+        "category": "Travel",
+        "capabilities": [
+          "Plan public transport journeys",
+          "Show the next departures of a stop",
+          "Follow a trip stop by stop",
+          "Explore the lines and stops of an area",
+          "Find shared bikes, scooters and cars",
+          "Show how far you can travel in a given time"
+        ],
+        "websiteURL": "https://errance.litote.org",
+        "supportURL": "https://github.com/Litote/motis-mcp-app/issues",
+        "privacyPolicyURL": "https://errance.litote.org/privacy.html",
+        "termsOfServiceURL": "https://errance.litote.org/terms.html",
+        "defaultPrompt": [
+          "How do I get from Gare de Lyon to Montmartre by public transport?",
+          "Next departures from Berlin Alexanderplatz",
+          "Where can I go within 30 minutes from Amsterdam Centraal?"
+        ],
+        "brandColor": "#0B6BCB",
+        "composerIcon": "./assets/logo.png",
+        "logo": "./assets/logo.png"
+      }
+    }
+  }
+}
