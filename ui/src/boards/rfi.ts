@@ -1,7 +1,7 @@
 // Board of the Italian railway stations, like the arrivals & departures monitors of RFI: the column labels on a yellow
 // band, the rows alternately pale yellow and dark grey, a line per train (brand, category, number, destination in
 // capitals, time, delay, platform).
-import { esc, time } from "../shared/format";
+import { esc, boardTime } from "../shared/format";
 import { t } from "../shared/i18n";
 import { RAIL_MODES } from "../shared/sncf";
 import type { StopTimeDto } from "../shared/types";
@@ -36,7 +36,7 @@ function row({ st, index, arriveBy, tz, classes, alertMark, alertLine, markTheor
   const { brand, category, number } = trainColumns(st);
   const delay = delayOf(st);
   let ritardo = "";
-  if (!st.cancelled && delay > 0) ritardo = `<span title="${t("departures.expected", { time: time(st.time, tz) })}">${delay}</span>`;
+  if (!st.cancelled && delay > 0) ritardo = `<span title="${t("departures.expected", { time: boardTime(st.time, tz) })}">${delay}</span>`;
   else if (!st.cancelled && markTheoretical && !st.realTime) ritardo = theoreticalMark();
   const cancelled = st.cancelled ? `<span class="soppresso">${t("departures.cancelled")}</span>` : "";
   const stops = end.via.map((s) => s.name).join(" · ");
@@ -49,7 +49,7 @@ function row({ st, index, arriveBy, tz, classes, alertMark, alertLine, markTheor
         <div class="nome" title="${esc(stops)}"><span>${esc(end.label)}</span>${alertMark}${cancelled}</div>
         ${alertLine}
       </div>
-      <span class="orario">${time(st.scheduledTime ?? st.time, tz)}</span>
+      <span class="orario">${boardTime(st.scheduledTime ?? st.time, tz)}</span>
       <span class="ritardo">${ritardo}</span>
       <span class="binario" title="${st.track ? t("track", { track: esc(st.track) }) : ""}">${esc(st.track)}</span>
     </li>`;

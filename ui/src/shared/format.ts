@@ -10,14 +10,22 @@ export function esc(value: string | number | null | undefined): string {
 }
 
 /** `HH:mm` of an ISO date, in the time zone of the place when known. */
-export function time(iso: string | null | undefined, tz?: string | null): string {
+export function time(iso: string | null | undefined, tz?: string | null, hour24 = false): string {
   if (!iso) return "--:--";
-  const options: Intl.DateTimeFormatOptions = { hour: "2-digit", minute: "2-digit" };
+  const options: Intl.DateTimeFormatOptions = { hour: "2-digit", minute: "2-digit", ...(hour24 && { hourCycle: "h23" }) };
   try {
     return new Date(iso).toLocaleTimeString(hostLocale(), tz ? { ...options, timeZone: tz } : options);
   } catch {
     return new Date(iso).toLocaleTimeString(hostLocale(), options);
   }
+}
+
+/**
+ * `HH:mm` of an ISO date on the boards in the style of an operator: 24-hour clock whatever the language, as on the
+ * boards of the stations (the 12-hour clock of English would not fit in their time columns).
+ */
+export function boardTime(iso: string | null | undefined, tz?: string | null): string {
+  return time(iso, tz, true);
 }
 
 /** Day of an ISO date, e.g. "Fri 9 Oct". */

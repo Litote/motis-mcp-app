@@ -1,5 +1,5 @@
 // Board of the French railway stations, like the ones of the SNCF stations (and of Carto Tchoo).
-import { esc, lineBadge, time } from "../shared/format";
+import { esc, lineBadge, boardTime } from "../shared/format";
 import { t } from "../shared/i18n";
 import { RAIL_MODES, linePictogram, train } from "../shared/sncf";
 import type { StopTimeDto } from "../shared/types";
@@ -19,7 +19,7 @@ function row({ st, index, arriveBy, tz, classes, alertMark, alertLine, markTheor
   const number = train(st.mode, st.line, st.agency, st.trainNumber)?.number;
   // the end of the trip (origin of an arrival) is the big label: the intermediate stops are on the second line
   const { label, via: stops } = tripEnd(st, arriveBy);
-  const via = stops.map((s) => `<span class="etape">${esc(s.name)} ${time(s.time, tz)}</span>`).join(`<span class="point"> • </span>`);
+  const via = stops.map((s) => `<span class="etape">${esc(s.name)} ${boardTime(s.time, tz)}</span>`).join(`<span class="point"> • </span>`);
   const delay = delayOf(st);
   let status = "";
   let state = "";
@@ -27,7 +27,7 @@ function row({ st, index, arriveBy, tz, classes, alertMark, alertLine, markTheor
     status = `<span class="min deleted">${t("departures.cancelled")}</span>`;
     state = "deleted";
   } else if (delay > 0) {
-    status = `<span class="min" title="${t("departures.expected", { time: time(st.time, tz) })}">${t("departures.delay", { minutes: delay })}</span>`;
+    status = `<span class="min" title="${t("departures.expected", { time: boardTime(st.time, tz) })}">${t("departures.delay", { minutes: delay })}</span>`;
     state = "delayed";
   } else if (markTheoretical && !st.realTime) {
     status = theoreticalMark();
@@ -38,7 +38,7 @@ function row({ st, index, arriveBy, tz, classes, alertMark, alertLine, markTheor
         <div class="main-line">
           <span class="origine">${origin(st)}</span>
           <span class="numero">${esc(number)}</span>
-          <span class="heure">${time(st.scheduledTime ?? st.time, tz)}</span>
+          <span class="heure">${boardTime(st.scheduledTime ?? st.time, tz)}</span>
           <span class="station-label"><span>${esc(label)}</span>${alertMark}${status}</span>
         </div>
         <div class="second-line" title="${esc(stops.map((s) => s.name).join(" • "))}">${via}</div>

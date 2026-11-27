@@ -1,6 +1,6 @@
 // Board of the German railway stations, like the timetables posted at the stations of the Deutsche Bahn: yellow
 // "Abfahrt" for the departures, white "Ankunft" for the arrivals, the long-distance trains in red.
-import { esc, lineBadge, time } from "../shared/format";
+import { esc, lineBadge, boardTime } from "../shared/format";
 import { t } from "../shared/i18n";
 import { RAIL_MODES } from "../shared/sncf";
 import type { StopTimeDto } from "../shared/types";
@@ -26,18 +26,18 @@ function product(st: StopTimeDto): string {
 
 function row({ st, index, arriveBy, tz, classes, alertMark, alertLine, markTheoretical }: BoardRow): string {
   const end = tripEnd(st, arriveBy);
-  const via = end.via.map((s) => `${esc(s.name)} ${time(s.time, tz)}`).join(" – ");
+  const via = end.via.map((s) => `${esc(s.name)} ${boardTime(s.time, tz)}`).join(" – ");
   const delay = delayOf(st);
   let status = "";
   if (st.cancelled) status = `<span class="ausfall">${t("departures.cancelled")}</span>`;
   else if (delay > 0)
-    status = `<span class="verspaetung" title="${t("departures.expected", { time: time(st.time, tz) })}">${t("departures.delay", { minutes: delay })}</span>`;
+    status = `<span class="verspaetung" title="${t("departures.expected", { time: boardTime(st.time, tz) })}">${t("departures.delay", { minutes: delay })}</span>`;
   else if (markTheoretical && !st.realTime) status = theoreticalMark();
   const state = [LONG_DISTANCE_MODES.has(st.mode) ? "fern" : "", st.cancelled ? "deleted" : "", classes].filter(Boolean).join(" ");
-  const endTime = end.time ? ` <span class="ziel-zeit">${time(end.time, tz)}</span>` : "";
+  const endTime = end.time ? ` <span class="ziel-zeit">${boardTime(end.time, tz)}</span>` : "";
   return `
     <li class="train ${state}" data-index="${index}">
-      <span class="zeit">${time(st.scheduledTime ?? st.time, tz)}</span>
+      <span class="zeit">${boardTime(st.scheduledTime ?? st.time, tz)}</span>
       <span class="zug">${product(st)}</span>
       <div class="richtung">
         <div class="ziel"><span><strong>${esc(end.label)}</strong>${endTime}</span>${alertMark}${status}</div>

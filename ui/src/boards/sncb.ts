@@ -1,6 +1,6 @@
 // Board of the Belgian railway stations, like the screens of the SNCB / NMBS stations: white on the blue of the SNCB,
 // the delays in yellow ("+5'"), the cancellations in red.
-import { esc, lineBadge, time } from "../shared/format";
+import { esc, lineBadge, boardTime } from "../shared/format";
 import { t } from "../shared/i18n";
 import { RAIL_MODES } from "../shared/sncf";
 import type { StopTimeDto } from "../shared/types";
@@ -19,11 +19,11 @@ function row({ st, index, arriveBy, tz, classes, alertMark, alertLine, markTheor
   const delay = delayOf(st);
   let remark = "";
   if (st.cancelled) remark = `<span class="supprime">${t("departures.cancelled")}</span>`;
-  else if (delay > 0) remark = `<span class="retard" title="${t("departures.expected", { time: time(st.time, tz) })}">+${delay}'</span>`;
+  else if (delay > 0) remark = `<span class="retard" title="${t("departures.expected", { time: boardTime(st.time, tz) })}">+${delay}'</span>`;
   else if (markTheoretical && !st.realTime) remark = theoreticalMark();
   return `
     <li class="train ${st.cancelled ? "deleted" : ""} ${classes}" data-index="${index}">
-      <span class="heure">${time(st.scheduledTime ?? st.time, tz)}</span>
+      <span class="heure">${boardTime(st.scheduledTime ?? st.time, tz)}</span>
       <span class="trein">${trein(st)}</span>
       <div class="destination">
         <div class="nom"><span>${esc(end.label)}</span>${alertMark}${remark}</div>

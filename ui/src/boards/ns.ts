@@ -1,6 +1,6 @@
 // Board of the Dutch railway stations, like the departure screens of the NS stations: white on the blue of the NS,
 // the columns Vertrek, Naar, Spoor, Trein, the track on the yellow of the NS, the delays next to the time ("+5").
-import { esc, time } from "../shared/format";
+import { esc, boardTime } from "../shared/format";
 import { t } from "../shared/i18n";
 import { RAIL_MODES } from "../shared/sncf";
 import { delayOf, railwayStationIn, theoreticalMark, trainName, tripEnd, type BoardRow, type CountryBoard } from "./row";
@@ -9,7 +9,7 @@ function row({ st, index, arriveBy, tz, classes, alertMark, alertLine, markTheor
   const end = tripEnd(st, arriveBy);
   const via = end.via.map((s) => esc(s.name)).join(", ");
   const delay = delayOf(st);
-  const late = !st.cancelled && delay > 0 ? `<span class="vertraging" title="${t("departures.expected", { time: time(st.time, tz) })}">+${delay}</span>` : "";
+  const late = !st.cancelled && delay > 0 ? `<span class="vertraging" title="${t("departures.expected", { time: boardTime(st.time, tz) })}">+${delay}</span>` : "";
   let status = "";
   if (st.cancelled) status = `<span class="rijdt-niet">${t("departures.cancelled")}</span>`;
   else if (markTheoretical && !st.realTime) status = theoreticalMark();
@@ -17,7 +17,7 @@ function row({ st, index, arriveBy, tz, classes, alertMark, alertLine, markTheor
   const type = trainName(st)?.category ?? st.line;
   return `
     <li class="train ${st.cancelled ? "deleted" : ""} ${classes}" data-index="${index}">
-      <span class="vertrek">${time(st.scheduledTime ?? st.time, tz)}${late}</span>
+      <span class="vertrek">${boardTime(st.scheduledTime ?? st.time, tz)}${late}</span>
       <div class="naar">
         <div class="bestemming"><span>${esc(end.label)}</span>${alertMark}${status}</div>
         <div class="via" title="${esc(via)}">${via}</div>

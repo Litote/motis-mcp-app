@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { legColors, lineColor, shade } from "./format";
+import { boardTime, legColors, lineColor, shade, time } from "./format";
+import { setLocale } from "./i18n";
 import { SNCF_BOARD_BLUE } from "./sncf";
 
 describe("colors of the lines", () => {
@@ -35,5 +36,19 @@ describe("colors of the lines", () => {
     expect(third).toBe("#ec0016");
     // after a train of another color
     expect(ter).toBe("#ec0016");
+  });
+});
+
+describe("times", () => {
+  it("shows the boards in the style of an operator with the 24-hour clock, whatever the language", () => {
+    setLocale("en-US");
+    try {
+      expect(time("2026-11-27T13:05:00Z", "UTC")).toBe("01:05 PM");
+      expect(boardTime("2026-11-27T13:05:00Z", "UTC")).toBe("13:05");
+      expect(boardTime("2026-11-27T00:05:00Z", "UTC")).toBe("00:05");
+      expect(boardTime(null)).toBe("--:--");
+    } finally {
+      setLocale(undefined);
+    }
   });
 });

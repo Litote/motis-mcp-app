@@ -1,7 +1,7 @@
 // Board of the Swiss railway stations, like the departure boards of the SBB stations: white on royal blue under the
 // trilingual title "Départ Abfahrt Partenza", a line per train (pictogram of its category, time, a few stops then the
 // destination, track) and the remarks in yellow (delays, cancellations).
-import { esc, time } from "../shared/format";
+import { esc, boardTime } from "../shared/format";
 import { t } from "../shared/i18n";
 import { RAIL_MODES } from "../shared/sncf";
 import type { StopTimeDto } from "../shared/types";
@@ -27,12 +27,12 @@ function row({ st, index, arriveBy, tz, classes, alertMark, alertLine, markTheor
   const delay = delayOf(st);
   let remark = "";
   if (st.cancelled) remark = `<span>${t("departures.cancelled")}</span>`;
-  else if (delay > 0) remark = `<span title="${t("departures.expected", { time: time(st.time, tz) })}">+${delay}'</span>`;
+  else if (delay > 0) remark = `<span title="${t("departures.expected", { time: boardTime(st.time, tz) })}">+${delay}'</span>`;
   else if (markTheoretical && !st.realTime) remark = theoreticalMark();
   return `
     <li class="train ${st.cancelled ? "deleted" : ""} ${classes}" data-index="${index}">
       <span class="kategorie">${pictogram(st)}</span>
-      <span class="zeit">${time(st.scheduledTime ?? st.time, tz)}</span>
+      <span class="zeit">${boardTime(st.scheduledTime ?? st.time, tz)}</span>
       <div class="ziel">
         <div class="linie" title="${esc([...end.via.map((s) => s.name), end.label].join(" · "))}">
           <span class="via">${near.map((s) => esc(s.name)).join(" ")}</span><span class="nach">${esc(end.label)}</span>${alertMark}
