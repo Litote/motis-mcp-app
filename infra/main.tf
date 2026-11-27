@@ -1,6 +1,15 @@
 # MCP server as a native (GraalVM) Lambda, exposed by a public function URL: https://<id>.lambda-url.<region>.on.aws/mcp
 
 locals {
+  # Dedicated origins of the views on the custom domain. Behind CloudFront, the function receives the requests with the
+  # host of its URL, not the public one: the Claude origin, computed from the URL of the endpoint, would not be the one
+  # registered in Claude (https://<domain_name>/mcp/claude). var.view_domains overrides them.
+  default_view_domains = var.domain_name == "" ? {} : {
+    chatgpt = "https://${var.domain_name}"
+    claude  = "${substr(sha256("https://${var.domain_name}/mcp/claude"), 0, 32)}.claudemcpcontent.com"
+  }
+  view_domains = merge(local.default_view_domains, var.view_domains)
+
   optional_env = merge(
     var.tile_url != "" ? { MOTIS_TILE_URL = var.tile_url } : {},
     var.tile_attribution != "" ? { MOTIS_TILE_ATTRIBUTION = var.tile_attribution } : {},
@@ -9,7 +18,7 @@ locals {
     # name of the instance shown by the MCP clients, e.g. Errance; its website: the web chat on the custom domain
     var.app_title != "" ? { MOTIS_APP_TITLE = var.app_title } : {},
     var.domain_name != "" ? { MOTIS_APP_WEBSITE_URL = "https://${var.domain_name}" } : {},
-    { for host, domain in var.view_domains : "MOTIS_VIEW_DOMAIN_${upper(host)}" => domain if domain != "" },
+    { for host, domain in local.view_domains : "MOTIS_VIEW_DOMAIN_${upper(host)}" => domain if domain != "" },
   )
 }
 

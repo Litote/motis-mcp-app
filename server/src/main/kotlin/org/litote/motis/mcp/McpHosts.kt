@@ -28,7 +28,6 @@ enum class McpHost(val path: String) {
 
     /** Without configuration, the origin is computed from the endpoint URL ([claudeViewDomain]). */
     CLAUDE("claude"),
-    MISTRAL("mistral"),
     ;
 
     val envName: String get() = "MOTIS_VIEW_DOMAIN_$name"

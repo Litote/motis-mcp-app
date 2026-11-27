@@ -65,13 +65,13 @@ variable "rail_overlay" {
 }
 
 variable "view_domains" {
-  description = "Dedicated origin of the views (_meta.ui.domain, format defined by each host) on the endpoint /mcp/<host> of a host: chatgpt, claude (default: computed from the endpoint URL), mistral. E.g. to allowlist it at the tile provider."
+  description = "Dedicated origin of the views (_meta.ui.domain, format defined by each host) on the endpoint /mcp/<host> of a host: chatgpt, claude. Default with domain_name: https://<domain_name> for chatgpt, the hash of https://<domain_name>/mcp/claude for claude. E.g. to allowlist it at the tile provider."
   type        = map(string)
   default     = {}
 
   validation {
-    condition     = alltrue([for host in keys(var.view_domains) : contains(["chatgpt", "claude", "mistral"], host)])
-    error_message = "view_domains keys must be chatgpt, claude or mistral."
+    condition     = alltrue([for host in keys(var.view_domains) : contains(["chatgpt", "claude"], host)])
+    error_message = "view_domains keys must be chatgpt or claude."
   }
 }
 

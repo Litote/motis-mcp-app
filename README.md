@@ -41,6 +41,12 @@ The server runs at `https://errance.litote.org/mcp` (Streamable HTTP, no account
   claude mcp add --transport http errance https://errance.litote.org/mcp
   ```
 
+- **Claude** (claude.ai, Claude Desktop), with the views: **Settings** → **Connectors** → **Add custom connector**, URL
+  `https://errance.litote.org/mcp/claude`.
+
+- **ChatGPT**, with the views: in developer mode, add a custom MCP server with the URL
+  `https://errance.litote.org/mcp/chatgpt`, authentication **None** (see [ChatGPT](docs/MCP-SERVER.md#chatgpt)).
+
 ## Demo
 
 The [demo site](https://errance.litote.org/) is a static web chat. Users bring their own [OpenRouter](https://openrouter.ai) account (free models are available, 50 requests a day

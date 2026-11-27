@@ -96,12 +96,12 @@ class McpLambdaTest {
         assertNull(viewDomain("/mcp"))
         assertEquals("https://motis.example.org", viewDomain("/mcp/chatgpt"))
         assertEquals(claudeViewDomain("https://abc.lambda-url.eu-west-3.on.aws/mcp/claude"), viewDomain("/mcp/claude"))
-        assertNull(viewDomain("/mcp/mistral"))
     }
 
     @Test
     fun `unknown host is not found`() {
         assertEquals(404, call("POST", "{}", path = "/mcp/other").statusCode)
+        assertEquals(404, call("POST", "{}", path = "/mcp/mistral").statusCode)
         assertEquals(404, call("POST", "{}", path = "/mcp/claude/other").statusCode)
     }
 
