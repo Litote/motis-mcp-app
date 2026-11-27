@@ -1,7 +1,8 @@
 # syntax=docker/dockerfile:1
 
-# MCP server (stdio or Streamable HTTP) on a JVM. The views and the jar are built once on the build platform: the
-# target images (linux/amd64, linux/arm64) only copy them, no emulation.
+# MCP server (stdio or Streamable HTTP) on a JVM. The views and the jar are built once on the build platform. The Java
+# runtime (jlink) and the AOT cache depend on the target platform (linux/amd64, linux/arm64): they are made on it, with
+# QEMU for the other one (about 1 minute for arm64).
 
 # ─── Views (ui/) ──────────────────────────────────────────────────────────────
 FROM --platform=$BUILDPLATFORM node:26-bookworm-slim@sha256:add5c17c14752c54d2f3d519ec46a3815684d41c33f198bcb09fb998f7dcbf68 AS ui
@@ -29,8 +30,15 @@ RUN ./gradlew --no-daemon --console=plain :server:installDist -x :server:npmInst
 # readable by the unprivileged user of the runtime image
 RUN chmod -R a+rX server/build/install/server
 
+# ─── Java runtime (jlink) ─────────────────────────────────────────────────────
+# Only the modules of the JDK used by the server (jdeps): a runtime of ~70 MB instead of the full JRE. Temurin ships no
+# jmods, jlink links the runtime it runs on: this stage runs on the target platform.
+FROM eclipse-temurin:25-jdk@sha256:83f4a7fc27df94dcc7b8de04d14cbbba8da14406f921e966969c3b09000aa507 AS jre
+RUN jlink --add-modules java.base,java.desktop,java.instrument,java.logging,java.management,java.naming,jdk.unsupported \
+    --strip-debug --no-man-pages --no-header-files --compress=zip-6 --output /opt/jre
+
 # ─── Runtime ──────────────────────────────────────────────────────────────────
-FROM eclipse-temurin:25-jre@sha256:ecdc0adb37bde1a281c4d245a3cd535004b1fc8322d560f5b09463b248c81df0
+FROM debian:trixie-slim@sha256:8aa5a7bf5a1955bddbe7d74fcdd0b91ab30e74362a8b73af672b0481b35b44a0
 ARG VERSION_NAME=main-SNAPSHOT
 LABEL org.opencontainers.image.title="motis-mcp-app" \
       org.opencontainers.image.description="MCP App to explore the public transport data of a MOTIS server (Transitous)" \
@@ -38,7 +46,18 @@ LABEL org.opencontainers.image.title="motis-mcp-app" \
       org.opencontainers.image.licenses="AGPL-3.0-only" \
       org.opencontainers.image.version="$VERSION_NAME" \
       io.modelcontextprotocol.server.name="org.litote/motis-mcp-app"
+ENV JAVA_HOME=/opt/java
+ENV PATH="$JAVA_HOME/bin:$PATH"
+COPY --from=jre /opt/jre /opt/java
 COPY --from=server /build/server/build/install/server /opt/motis-mcp-app
+# AOT cache (JEP 483, 514, 515): the classes loaded and linked, and the profiles of a training run, at the start of the
+# server (stdio: initialize, the tools, the views). Built with the runtime and the jars of this image: they must not
+# change after. The warnings of the JVM go to stderr: stdout is the MCP transport in stdio mode.
+COPY docker/aot-training.jsonl /tmp/aot-training.jsonl
+RUN MOTIS_APP_CONTACT=aot-training JAVA_OPTS="-XX:AOTCacheOutput=/opt/motis-mcp-app/server.aot -Xlog:disable -Xlog:all=warning:stderr" \
+      /opt/motis-mcp-app/bin/server --stdio < /tmp/aot-training.jsonl > /dev/null \
+    && rm /tmp/aot-training.jsonl && chmod a+r /opt/motis-mcp-app/server.aot
+ENV JAVA_OPTS="-XX:AOTCache=/opt/motis-mcp-app/server.aot -Xlog:disable -Xlog:all=warning:stderr"
 USER nobody
 EXPOSE 3001
 ENTRYPOINT ["/opt/motis-mcp-app/bin/server"]
