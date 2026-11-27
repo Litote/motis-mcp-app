@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.1.1](https://github.com/Litote/motis-mcp-app/compare/v0.1.0...v0.1.1) (2026-11-27)
+
+
+### Bug Fixes
+
+* **infra:** fix custom origins and endpoint - [#188](https://github.com/Litote/motis-mcp-app/issues/188) ([c05fcd7](https://github.com/Litote/motis-mcp-app/commit/c05fcd76f68938c01ac8611d6dd33306e5eda8ba))
+* keep the data for the views only out of the model context ([#202](https://github.com/Litote/motis-mcp-app/issues/202)) ([908e818](https://github.com/Litote/motis-mcp-app/commit/908e818e19905d9a83e4637efec8eb35fc21af8a))
+* **lambda:** the logo in the native image (serverInfo.icons), and a ChatGPT-sized logo ([#203](https://github.com/Litote/motis-mcp-app/issues/203)) ([87bb560](https://github.com/Litote/motis-mcp-app/commit/87bb560a196f4499f89d6c0f2cc1152e6d3a671e))
+* **web:** serve a favicon ([#204](https://github.com/Litote/motis-mcp-app/issues/204)) ([4859061](https://github.com/Litote/motis-mcp-app/commit/4859061dbbf6d3431f60fbe80ae9875ac5b4ffc8))
+
+
+### Performance Improvements
+
+* **docker:** a Java runtime made with jlink and an AOT cache, the JVM warnings on stderr ([#189](https://github.com/Litote/motis-mcp-app/issues/189)) ([19886a4](https://github.com/Litote/motis-mcp-app/commit/19886a41235003e350c22a7d293635699d10ee50))
+
 ## 0.1.0 (2026-11-27)
 
 First release of Errance: an [MCP server](https://modelcontextprotocol.io) and [MCP App](https://modelcontextprotocol.io/extensions/apps/overview) to explore the public transport data of a [MOTIS](https://github.com/motis-project/motis) server, by default [Transitous](https://transitous.org/), which aggregates open GTFS, GTFS-RT and GBFS feeds worldwide.
