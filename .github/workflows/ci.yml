@@ -18,7 +18,7 @@ jobs:
     if: github.event_name == 'pull_request'
     permissions:
       pull-requests: read
-    uses: Litote/ci/.github/workflows/pr-title.yml@63a67e7add1b9fde6396c84399f90c9252f7b8e6 # v0.15.0
+    uses: Litote/ci/.github/workflows/pr-title.yml@de40fbf39509c6fa5816a9f2a5991af658aacc66 # v0.16.0
 
   # required check: "check / Check (tests, coverage, SonarCloud)"
   check:
@@ -117,6 +117,6 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
-    uses: Litote/ci/.github/workflows/dependabot-commit-guard.yml@63a67e7add1b9fde6396c84399f90c9252f7b8e6 # v0.15.0
+    uses: Litote/ci/.github/workflows/dependabot-commit-guard.yml@de40fbf39509c6fa5816a9f2a5991af658aacc66 # v0.16.0
     with:
       allowed-paths: ^gradle/verification-metadata\.xml$

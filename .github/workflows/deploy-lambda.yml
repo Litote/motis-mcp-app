@@ -66,7 +66,7 @@ jobs:
 
       # GraalVM CE 25 and Gradle
       - name: Set up GraalVM and Gradle
-        uses: Litote/ci/.github/actions/setup-graalvm@63a67e7add1b9fde6396c84399f90c9252f7b8e6 # v0.15.0
+        uses: Litote/ci/.github/actions/setup-graalvm@de40fbf39509c6fa5816a9f2a5991af658aacc66 # v0.16.0
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
@@ -88,7 +88,7 @@ jobs:
 
       # The zip must match the Terraform `architecture`: fail rather than deploy a function that cannot start
       - name: Check the executable is arm64
-        uses: Litote/ci/.github/actions/check-native-arch@63a67e7add1b9fde6396c84399f90c9252f7b8e6 # v0.15.0
+        uses: Litote/ci/.github/actions/check-native-arch@de40fbf39509c6fa5816a9f2a5991af658aacc66 # v0.16.0
         with:
           working-directory: lambda/build/native/nativeCompile
           binaries: bootstrap
@@ -180,7 +180,7 @@ jobs:
 
       # exact Terraform version, and init with the committed lock file only
       - name: Set up Terraform
-        uses: Litote/ci/.github/actions/setup-terraform@63a67e7add1b9fde6396c84399f90c9252f7b8e6 # v0.15.0
+        uses: Litote/ci/.github/actions/setup-terraform@de40fbf39509c6fa5816a9f2a5991af658aacc66 # v0.16.0
         with:
           state-bucket: ${{ vars.TF_STATE_BUCKET }}
 
@@ -254,7 +254,7 @@ jobs:
 
       # exact Terraform version, and init with the committed lock file only
       - name: Set up Terraform
-        uses: Litote/ci/.github/actions/setup-terraform@63a67e7add1b9fde6396c84399f90c9252f7b8e6 # v0.15.0
+        uses: Litote/ci/.github/actions/setup-terraform@de40fbf39509c6fa5816a9f2a5991af658aacc66 # v0.16.0
         with:
           state-bucket: ${{ vars.TF_STATE_BUCKET }}
 
@@ -306,7 +306,7 @@ jobs:
 
       # exact Terraform version, and init with the committed lock file only
       - name: Set up Terraform
-        uses: Litote/ci/.github/actions/setup-terraform@63a67e7add1b9fde6396c84399f90c9252f7b8e6 # v0.15.0
+        uses: Litote/ci/.github/actions/setup-terraform@de40fbf39509c6fa5816a9f2a5991af658aacc66 # v0.16.0
         with:
           state-bucket: ${{ vars.TF_STATE_BUCKET }}
 
