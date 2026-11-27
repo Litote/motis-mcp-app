@@ -1,7 +1,7 @@
 // Board of the Spanish railway stations, like the boards of the Adif stations: the bilingual title "Salidas
 // DEPARTURES" on a dark band, the bilingual column labels in green, then on cream a line per train: time on a green
 // column, destination in capitals, operator and product ("renfe" over "AVE"), number, platform, remarks in orange.
-import { esc, lineBadge, time } from "../shared/format";
+import { esc, lineBadge, boardTime } from "../shared/format";
 import { t } from "../shared/i18n";
 import { RAIL_MODES } from "../shared/sncf";
 import type { StopTimeDto } from "../shared/types";
@@ -27,12 +27,12 @@ function row({ st, index, arriveBy, tz, classes, alertMark, alertLine, markTheor
   let observaciones = "";
   if (st.cancelled) observaciones = `<span class="cancelado">${t("departures.cancelled")}</span>`;
   else if (delay > 0)
-    observaciones = `<span class="retraso" title="${t("departures.expected", { time: time(st.time, tz) })}">${t("departures.delay", { minutes: delay })}</span>`;
+    observaciones = `<span class="retraso" title="${t("departures.expected", { time: boardTime(st.time, tz) })}">${t("departures.delay", { minutes: delay })}</span>`;
   else if (markTheoretical && !st.realTime) observaciones = theoreticalMark();
   const stops = end.via.map((s) => s.name).join(", ");
   return `
     <li class="train ${st.cancelled ? "deleted" : ""} ${classes}" data-index="${index}">
-      <span class="hora">${time(st.scheduledTime ?? st.time, tz)}</span>
+      <span class="hora">${boardTime(st.scheduledTime ?? st.time, tz)}</span>
       <div class="destino">
         <div class="nombre" title="${esc(stops)}"><span>${esc(end.label)}</span>${alertMark}</div>
         ${alertLine}

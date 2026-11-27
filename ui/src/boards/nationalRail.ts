@@ -1,7 +1,7 @@
 // Board of the British railway stations, like the dot-matrix boards of the National Rail stations: amber on black,
 // the columns Time, Destination, Plat, Expected ("On time", the expected time, "Cancelled"), the stops and the operator
 // below the destination.
-import { esc, time } from "../shared/format";
+import { esc, boardTime } from "../shared/format";
 import { t } from "../shared/i18n";
 import { RAIL_MODES } from "../shared/sncf";
 import { delayOf, railwayStationIn, theoreticalMark, tripEnd, type BoardRow, type CountryBoard } from "./row";
@@ -11,12 +11,12 @@ function row({ st, index, arriveBy, tz, classes, alertMark, alertLine, markTheor
   const stops = end.via.map((s) => esc(s.name)).join(", ");
   let expected = "";
   if (st.cancelled) expected = `<span class="cancelled">${t("departures.cancelled")}</span>`;
-  else if (delayOf(st) > 0) expected = `<span class="late" title="${t("departures.expected", { time: time(st.time, tz) })}">${time(st.time, tz)}</span>`;
+  else if (delayOf(st) > 0) expected = `<span class="late" title="${t("departures.expected", { time: boardTime(st.time, tz) })}">${boardTime(st.time, tz)}</span>`;
   else if (st.realTime) expected = `<span>${t("departures.onTime")}</span>`;
   else if (markTheoretical) expected = theoreticalMark();
   return `
     <li class="train ${st.cancelled ? "deleted" : ""} ${classes}" data-index="${index}">
-      <span class="time">${time(st.scheduledTime ?? st.time, tz)}</span>
+      <span class="time">${boardTime(st.scheduledTime ?? st.time, tz)}</span>
       <div class="destination">
         <div class="name"><span>${esc(end.label)}</span>${alertMark}</div>
         <div class="calling" title="${esc(stops)}">${stops}</div>
