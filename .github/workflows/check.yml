@@ -58,11 +58,11 @@ jobs:
             ui/package-lock.json
             web/package-lock.json
 
-      - uses: Litote/ci/.github/actions/setup-gradle@63a67e7add1b9fde6396c84399f90c9252f7b8e6 # v0.15.0
+      - uses: Litote/ci/.github/actions/setup-gradle@de40fbf39509c6fa5816a9f2a5991af658aacc66 # v0.16.0
         with:
           cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
 
-      - uses: Litote/ci/.github/actions/detect-changes@63a67e7add1b9fde6396c84399f90c9252f7b8e6 # v0.15.0
+      - uses: Litote/ci/.github/actions/detect-changes@de40fbf39509c6fa5816a9f2a5991af658aacc66 # v0.16.0
         if: inputs.sonar-on-code-changes-only
         id: detect-changes
         with:
@@ -85,7 +85,7 @@ jobs:
           npm run coverage
 
       # on a release: fails if the quality gate is not OK, so nothing is published
-      - uses: Litote/ci/.github/actions/sonar-gradle@63a67e7add1b9fde6396c84399f90c9252f7b8e6 # v0.15.0
+      - uses: Litote/ci/.github/actions/sonar-gradle@de40fbf39509c6fa5816a9f2a5991af658aacc66 # v0.16.0
         if: ${{ !inputs.sonar-on-code-changes-only || steps.detect-changes.outputs.has-code-changes == 'true' }}
         with:
           sonar-token: ${{ secrets.SONAR_TOKEN }}
