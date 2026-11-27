@@ -52,12 +52,12 @@ COPY --from=jre /opt/jre /opt/java
 COPY --from=server /build/server/build/install/server /opt/motis-mcp-app
 # AOT cache (JEP 483, 514, 515): the classes loaded and linked, and the profiles of a training run, at the start of the
 # server (stdio: initialize, the tools, the views). Built with the runtime and the jars of this image: they must not
-# change after. The warnings of the JVM go to stderr: stdout is the MCP transport in stdio mode.
+# change after.
 COPY docker/aot-training.jsonl /tmp/aot-training.jsonl
-RUN MOTIS_APP_CONTACT=aot-training JAVA_OPTS="-XX:AOTCacheOutput=/opt/motis-mcp-app/server.aot -Xlog:disable -Xlog:all=warning:stderr" \
+RUN MOTIS_APP_CONTACT=aot-training JAVA_OPTS="-XX:AOTCacheOutput=/opt/motis-mcp-app/server.aot" \
       /opt/motis-mcp-app/bin/server --stdio < /tmp/aot-training.jsonl > /dev/null \
     && rm /tmp/aot-training.jsonl && chmod a+r /opt/motis-mcp-app/server.aot
-ENV JAVA_OPTS="-XX:AOTCache=/opt/motis-mcp-app/server.aot -Xlog:disable -Xlog:all=warning:stderr"
+ENV JAVA_OPTS="-XX:AOTCache=/opt/motis-mcp-app/server.aot"
 USER nobody
 EXPOSE 3001
 ENTRYPOINT ["/opt/motis-mcp-app/bin/server"]

@@ -54,6 +54,9 @@ kotlin {
 
 application {
     mainClass = "org.litote.motis.mcp.MainKt"
+    // the warnings and errors of the JVM (unified logging) go to stdout by default: stdout is the MCP transport in stdio
+    // mode, they would corrupt it. Sent to stderr, as the logs of the server.
+    applicationDefaultJvmArgs = listOf("-Xlog:disable", "-Xlog:all=warning:stderr")
 }
 
 // --- UI views (ui/, TypeScript + Vite): each view is bundled into a single HTML file served as a ui:// resource ---
