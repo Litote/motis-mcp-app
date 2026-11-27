@@ -33,6 +33,17 @@ private const val STOP_TIMES =
 
 class MotisMcpServerTest {
     @Test
+    fun `server info gives the identity of the instance and the logo inline`() {
+        withMcpClient(MockMotis { error("no MOTIS call expected") }) { client ->
+            assertEquals("MOTIS explorer", client.serverVersion?.title)
+            assertEquals(APP_URL, client.serverVersion?.websiteUrl)
+            val icons = assertNotNull(client.serverVersion?.icons)
+            assertEquals(listOf("image/svg+xml", "image/png"), icons.map { it.mimeType })
+            assertTrue(icons.all { it.src.startsWith("data:${it.mimeType};base64,") })
+        }
+    }
+
+    @Test
     fun `ui tools reference a registered MCP App view`() {
         withMcpClient(MockMotis { error("no MOTIS call expected") }) { client ->
             val tools = client.listTools().tools.associateBy { it.name }

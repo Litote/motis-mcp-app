@@ -60,11 +60,13 @@ resource "aws_s3_object" "config" {
   key           = "config.json"
   content_type  = "application/json"
   cache_control = "no-cache"
-  content = jsonencode({
+  content = jsonencode(merge({
     mcpUrl      = "${local.app_origin}/mcp"
     sandboxUrl  = "${local.sandbox_origin}/sandbox.html"
     hostOrigins = [local.app_origin]
-  })
+    legalPages  = var.legal_pages
+    }, var.app_title != "" ? { title = var.app_title } : {}
+  ))
 }
 
 # Read access for the two distributions only (origin access control)

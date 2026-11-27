@@ -94,7 +94,7 @@ fun main(args: Array<String>) {
     )
     val views = loadViews(config.tiles)
     val cityStations = config.cityStationsStore()
-    val create = { viewDomain: String? -> createMotisMcpServer(gateway, config.baseUrl, config.tiles, views, cityStations, viewDomain) }
+    val create = { viewDomain: String? -> createMotisMcpServer(gateway, config, views, cityStations, viewDomain) }
 
     if (options.http) {
         val (_, port, host) = options

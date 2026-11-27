@@ -24,7 +24,7 @@ Then open `http://localhost:8080`: the chat uses the MCP server of the stack. Th
 MCP clients:
 
 ```bash
-claude mcp add --transport http motis http://localhost:3001/mcp
+claude mcp add --transport http errance http://localhost:3001/mcp
 ```
 
 ### Configuration
@@ -35,10 +35,12 @@ The variables are read from `.env` (see `.env.sample`):
 |------------------------------------------------------------------|-----------------------------|----------------------------------------------|
 | `MOTIS_APP_CONTACT`                                              | —                           | required with Transitous (usage policy)      |
 | `MOTIS_MCP_APP_VERSION`                                          | `latest`                    | tag of the two images                        |
-| `MOTIS_BASE_URL`, `MOTIS_LOG_LEVEL`, `MOTIS_TILE_URL`, `MOTIS_TILE_ATTRIBUTION`, `MOTIS_VECTOR_TILE_URL`, `MOTIS_VECTOR_TILE_ATTRIBUTION`, `MOTIS_RAIL_OVERLAY`, `MOTIS_VIEW_DOMAIN_<HOST>`, `MCP_ALLOWED_HOSTS`, `MOTIS_SNCF_REALTIME`, `MOTIS_REPAIR_SHAPES`, `MOTIS_CITY_STATIONS_TABLE` | see [MCP server reference](MCP-SERVER.md#usage) | MCP server |
+| `MOTIS_BASE_URL`, `MOTIS_APP_TITLE`, `MOTIS_APP_WEBSITE_URL`, `MOTIS_LOG_LEVEL`, `MOTIS_TILE_URL`, `MOTIS_TILE_ATTRIBUTION`, `MOTIS_VECTOR_TILE_URL`, `MOTIS_VECTOR_TILE_ATTRIBUTION`, `MOTIS_RAIL_OVERLAY`, `MOTIS_VIEW_DOMAIN_<HOST>`, `MCP_ALLOWED_HOSTS`, `MOTIS_SNCF_REALTIME`, `MOTIS_REPAIR_SHAPES`, `MOTIS_CITY_STATIONS_TABLE` | see [MCP server reference](MCP-SERVER.md#usage) | MCP server |
 | `MCP_URL`                                                        | `http://localhost:3001/mcp` | MCP endpoint, as seen by the browser         |
 | `APP_ORIGIN`                                                     | `http://localhost:8080`     | origin of the chat, as seen by the browser   |
 | `SANDBOX_ORIGIN`                                                 | `http://localhost:8081`     | origin of the view sandbox                   |
+| `MOTIS_APP_TITLE`                                                | `MOTIS explorer`            | also the name of the instance in the web chat (`APP_TITLE` of its image) |
+| `WEB_LEGAL_PAGES`                                                | `false`                     | links of the chat to `privacy.html` and `terms.html` (`LEGAL_PAGES` of its image): those of errance.litote.org, to rewrite before |
 
 ### Your own MOTIS server
 
@@ -66,8 +68,9 @@ internet access (the map tiles stay external, see `MOTIS_TILE_URL`); otherwise T
 - **CSP of the sandbox**: built per view from the `csp` query parameter by [njs](https://nginx.org/en/docs/njs/), with
   `web/sandbox-csp.cjs`, the code of the CloudFront Function and of the Vite dev server (`web/nginx/sandbox-csp.njs.js`
   is appended to it when the image is built).
-- **`config.json`**: rendered from `MCP_URL`, `APP_ORIGIN` and `SANDBOX_ORIGIN` when the container starts (templates of
-  the official nginx image, `web/nginx/templates`).
+- **`config.json`**: rendered from `MCP_URL`, `APP_ORIGIN`, `SANDBOX_ORIGIN`, `APP_TITLE` (name of the instance, default
+  `MOTIS explorer`, without double quote) and `LEGAL_PAGES` (`true` or `false`, default `false`) when the container
+  starts (templates of the official nginx image, `web/nginx/templates`).
 
 ```bash
 docker build -t motis-mcp-app-web web

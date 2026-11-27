@@ -73,6 +73,8 @@ GitHub configuration:
 | variable (optional)          | `MOTIS_TILE_URL`, `MOTIS_TILE_ATTRIBUTION`      | tile provider                                        |
 | variable (optional)          | `MOTIS_VIEW_DOMAINS`                            | dedicated origin of the views per host, JSON: `{"chatgpt":"https://…"}` |
 | variable (optional)          | `WEB_DOMAIN`                                    | custom domain of the chat and of the MCP endpoint, see [Custom domain](#custom-domain) |
+| variable (optional)          | `MOTIS_APP_TITLE`                               | name of the instance shown by the MCP clients and the web chat, e.g. `Errance` (its website: `https://<WEB_DOMAIN>`) |
+| variable (optional)          | `WEB_LEGAL_PAGES`                               | `true`: links of the web chat to `privacy.html` and `terms.html`, those of errance.litote.org (to rewrite for another instance) |
 | variable (optional)          | `RESERVED_CONCURRENCY`                          | default 10; `-1` while the account concurrency quota is below 20 (new accounts: 10) |
 | variable (optional)          | `MONTHLY_BUDGET_USD`                            | monthly budget of the kill switch, default 20, see [Budget and kill switch](#budget-and-kill-switch) |
 | variable (optional)          | `BUDGET_ALERT_EMAIL`                            | e-mail address of the budget alerts                  |

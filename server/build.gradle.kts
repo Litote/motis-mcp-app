@@ -95,6 +95,11 @@ tasks.processResources {
         include("*.html")
         into("ui")
     }
+    // the logo of the web chat, given inline to the clients (serverInfo.icons): also on self-hosted instances
+    from(rootProject.file("web/public")) {
+        include("logo.svg", "logo-128.png")
+        into("logo")
+    }
 }
 
 jacoco {

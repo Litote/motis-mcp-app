@@ -86,7 +86,7 @@ jobs:
           platforms: linux/amd64,linux/arm64
           push: false
 
-  # server.json is otherwise only checked by the release, once the images are pushed
+  # the entries of the MCP registry are otherwise only checked by the release, once the images are pushed
   mcp-server-json:
     name: Validate server.json (MCP registry)
     runs-on: ubuntu-latest
@@ -101,8 +101,11 @@ jobs:
 
       - uses: $/.github/actions/install-mcp-publisher
 
+      # the server (server.json) and its hosted instance Errance (errance.server.json)
       - name: Validate
-        run: ./mcp-publisher validate
+        run: |
+          ./mcp-publisher validate server.json
+          ./mcp-publisher validate errance.server.json
 
   # Called on every pull request: a required check of a job skipped here would stay pending
   commit-guard:

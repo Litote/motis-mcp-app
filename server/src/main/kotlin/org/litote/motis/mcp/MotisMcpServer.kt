@@ -2,6 +2,7 @@ package org.litote.motis.mcp
 
 import io.modelcontextprotocol.kotlin.sdk.server.Server
 import io.modelcontextprotocol.kotlin.sdk.server.ServerOptions
+import io.modelcontextprotocol.kotlin.sdk.types.Icon
 import io.modelcontextprotocol.kotlin.sdk.types.Implementation
 import io.modelcontextprotocol.kotlin.sdk.types.ServerCapabilities
 import org.litote.motis.mcp.apps.UiView
@@ -13,6 +14,23 @@ import org.litote.motis.mcp.tools.addPlaceTools
 import org.litote.motis.mcp.tools.addRentalTools
 import org.litote.motis.mcp.tools.addRoutingTools
 import org.litote.motis.mcp.tools.addTimetableTools
+import java.util.Base64
+
+/** Logo of the app (copied from web/public), inline as data: URIs: shown by self-hosted instances too, stdio included. */
+internal val ICONS: List<Icon> =
+    listOfNotNull(
+        logoIcon("logo.svg", "image/svg+xml", "any"),
+        logoIcon("logo-128.png", "image/png", "128x128"),
+    )
+
+private fun logoIcon(file: String, mimeType: String, size: String): Icon? =
+    Icon::class.java.getResourceAsStream("/logo/$file")?.use { it.readBytes() }?.let { bytes ->
+        Icon(
+            src = "data:$mimeType;base64,${Base64.getEncoder().encodeToString(bytes)}",
+            mimeType = mimeType,
+            sizes = listOf(size),
+        )
+    }
 
 private val INSTRUCTIONS =
     """
@@ -32,6 +50,7 @@ private val INSTRUCTIONS =
 /**
  * Creates the MCP server: tools calling MOTIS, and the MCP App views as `ui://` resources.
  *
+ * @param config the MOTIS server ([MotisMcpConfig.baseUrl]), the tiles of the maps and the identity of the instance
  * @param views HTML of the views ([org.litote.motis.mcp.apps.loadViews]), loaded once and shared by every server instance
  * @param cityStations stations of the journeys between cities, shared by every server instance (see [CityJourneys])
  * @param viewDomain dedicated origin of the views (`_meta.ui.domain`), null: the default of the host
@@ -39,15 +58,21 @@ private val INSTRUCTIONS =
  */
 fun createMotisMcpServer(
     gateway: MotisGateway,
-    baseUrl: String,
-    tiles: MapTiles,
+    config: MotisMcpConfig,
     views: Map<UiView, String>,
     cityStations: CityStationsStore,
     viewDomain: String? = null,
     rediscoverStations: () -> Boolean = CityJourneys.ONE_IN_100,
 ): Server =
     Server(
-        serverInfo = Implementation(name = APP_NAME, version = APP_VERSION, title = "MOTIS explorer"),
+        serverInfo =
+            Implementation(
+                name = APP_NAME,
+                version = APP_VERSION,
+                title = config.identity.title,
+                websiteUrl = config.identity.websiteUrl,
+                icons = ICONS,
+            ),
         options =
             ServerOptions(
                 capabilities =
@@ -58,8 +83,8 @@ fun createMotisMcpServer(
             ),
         instructions = INSTRUCTIONS,
     ).apply {
-        addAppResources(tiles, viewDomain) { views.getValue(it) }
-        addPlaceTools(gateway, baseUrl)
+        addAppResources(config.tiles, viewDomain) { views.getValue(it) }
+        addPlaceTools(gateway, config.baseUrl)
         addAreaTools(gateway)
         addTimetableTools(gateway)
         addRoutingTools(gateway, CityJourneys(gateway, cityStations, rediscover = rediscoverStations))

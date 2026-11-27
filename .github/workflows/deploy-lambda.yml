@@ -198,6 +198,10 @@ jobs:
           TF_VAR_view_domains: ${{ vars.MOTIS_VIEW_DOMAINS || '{}' }}
           # custom domain of the chat and of the MCP endpoint, e.g. motis.example.org (docs/AWS-DEPLOYMENT.md)
           TF_VAR_domain_name: ${{ vars.WEB_DOMAIN }}
+          # name of the instance shown by the MCP clients, e.g. Errance
+          TF_VAR_app_title: ${{ vars.MOTIS_APP_TITLE }}
+          # links of the web chat to privacy.html and terms.html (those of errance.litote.org)
+          TF_VAR_legal_pages: ${{ vars.WEB_LEGAL_PAGES == 'true' }}
           # -1 while the account concurrency quota is below 20 (10 executions must stay unreserved)
           TF_VAR_reserved_concurrency: ${{ vars.RESERVED_CONCURRENCY || 10 }}
           # monthly budget (USD) of the kill switch, and e-mail of the budget alerts (infra/budget.tf)

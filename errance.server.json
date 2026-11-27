@@ -1,0 +1,22 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "org.litote/errance",
+  "title": "Errance",
+  "description": "Public transport worldwide (Transitous), hosted: journeys, departure boards, real time, maps",
+  "version": "0.1.0",
+  "websiteUrl": "https://errance.litote.org",
+  "icons": [
+    { "src": "https://errance.litote.org/logo.svg", "mimeType": "image/svg+xml", "sizes": ["any"] },
+    { "src": "https://errance.litote.org/logo-512.png", "mimeType": "image/png", "sizes": ["512x512"] }
+  ],
+  "repository": {
+    "url": "https://github.com/Litote/motis-mcp-app",
+    "source": "github"
+  },
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://errance.litote.org/mcp"
+    }
+  ]
+}

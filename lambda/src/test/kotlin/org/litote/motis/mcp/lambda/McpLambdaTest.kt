@@ -26,8 +26,7 @@ class McpLambdaTest {
             McpLambda {
                 createMotisMcpServer(
                     MotisGateway(config.clientConfiguration()),
-                    config.baseUrl,
-                    config.tiles,
+                    config,
                     UiView.entries.associateWith { "<html><head></head><body>${it.name}</body></html>" },
                     InMemoryCityStationsStore(),
                     viewDomain(config),

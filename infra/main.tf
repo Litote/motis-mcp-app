@@ -6,6 +6,9 @@ locals {
     var.tile_attribution != "" ? { MOTIS_TILE_ATTRIBUTION = var.tile_attribution } : {},
     var.rail_overlay != "" ? { MOTIS_RAIL_OVERLAY = var.rail_overlay } : {},
     var.vector_tile_url != "" ? { MOTIS_VECTOR_TILE_URL = var.vector_tile_url } : {},
+    # name of the instance shown by the MCP clients, e.g. Errance; its website: the web chat on the custom domain
+    var.app_title != "" ? { MOTIS_APP_TITLE = var.app_title } : {},
+    var.domain_name != "" ? { MOTIS_APP_WEBSITE_URL = "https://${var.domain_name}" } : {},
     { for host, domain in var.view_domains : "MOTIS_VIEW_DOMAIN_${upper(host)}" => domain if domain != "" },
   )
 }

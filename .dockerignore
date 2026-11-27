@@ -9,5 +9,8 @@
 .playwright-mcp/
 infra/
 web/
+# the logo, embedded in the server (serverInfo.icons)
+!web/public/logo.svg
+!web/public/logo-128.png
 lambda/src/
 *.md

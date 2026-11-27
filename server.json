@@ -2,19 +2,29 @@
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "org.litote/motis-mcp-app",
   "title": "MOTIS explorer",
-  "description": "Public transport worldwide (Transitous): journeys, departure boards, real time, maps",
+  "description": "Public transport of any MOTIS server (Transitous by default): journeys, boards, real time, maps",
   "version": "0.1.0",
-  "websiteUrl": "https://errance.litote.org",
+  "websiteUrl": "https://github.com/Litote/motis-mcp-app",
+  "icons": [
+    {
+      "src": "https://errance.litote.org/logo.svg",
+      "mimeType": "image/svg+xml",
+      "sizes": [
+        "any"
+      ]
+    },
+    {
+      "src": "https://errance.litote.org/logo-512.png",
+      "mimeType": "image/png",
+      "sizes": [
+        "512x512"
+      ]
+    }
+  ],
   "repository": {
     "url": "https://github.com/Litote/motis-mcp-app",
     "source": "github"
   },
-  "remotes": [
-    {
-      "type": "streamable-http",
-      "url": "https://errance.litote.org/mcp"
-    }
-  ],
   "packages": [
     {
       "registryType": "oci",
@@ -25,8 +35,14 @@
       "environmentVariables": [
         {
           "name": "MOTIS_APP_CONTACT",
-          "description": "E-mail address or website URL, required by the Transitous usage policy",
+          "description": "E-mail address or website URL, required with Transitous (default MOTIS server) by its usage policy",
           "isRequired": true,
+          "format": "string"
+        },
+        {
+          "name": "MOTIS_BASE_URL",
+          "description": "MOTIS 2 server, default https://api.transitous.org/",
+          "isRequired": false,
           "format": "string"
         }
       ]

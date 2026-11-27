@@ -25,7 +25,10 @@ LABEL org.opencontainers.image.title="motis-mcp-app-web" \
 # Public URLs, as seen by the browser
 ENV MCP_URL=http://localhost:3001/mcp \
     APP_ORIGIN=http://localhost:8080 \
-    SANDBOX_ORIGIN=http://localhost:8081
+    SANDBOX_ORIGIN=http://localhost:8081 \
+    # name of the instance (no double quote), and links to its privacy.html and terms.html (true or false)
+    APP_TITLE="MOTIS explorer" \
+    LEGAL_PAGES=false
 RUN rm /etc/nginx/conf.d/default.conf /usr/share/nginx/html/*
 COPY nginx/nginx.conf /etc/nginx/nginx.conf
 COPY nginx/templates /etc/nginx/templates
