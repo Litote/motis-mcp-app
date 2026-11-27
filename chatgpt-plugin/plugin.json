@@ -1,0 +1,41 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "errance",
+  "version": "0.1.0",
+  "description": "Public transport worldwide powered by Transitous: journeys, departures, real time and maps",
+  "author": { "name": "Litote", "url": "https://github.com/Litote" },
+  "homepage": "https://errance.litote.org",
+  "repository": "https://github.com/Litote/motis-mcp-app",
+  "license": "AGPL-3.0-or-later",
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Errance",
+        "shortDescription": "Public transport, worldwide",
+        "longDescription": "Errance helps you get around by public transport, anywhere Transitous has open data. Plan a journey between two places and compare itineraries on a map, with walking, transfers and real-time delays. See the next departures from any stop, follow a trip stop by stop, and explore the lines and stops around a place. Find shared bikes, scooters and cars nearby, and see how far you can travel in a given time.\n\nErrance uses the open GTFS, GTFS-RT and GBFS feeds aggregated by Transitous. The coverage and the real time depend on the data published for each region. No account is needed.",
+        "developerName": "Litote",
+        "category": "Travel",
+        "capabilities": [
+          "Plan public transport journeys",
+          "Show the next departures of a stop",
+          "Follow a trip stop by stop",
+          "Explore the lines and stops of an area",
+          "Find shared bikes, scooters and cars",
+          "Show how far you can travel in a given time"
+        ],
+        "websiteURL": "https://errance.litote.org",
+        "supportURL": "https://github.com/Litote/motis-mcp-app/issues",
+        "privacyPolicyURL": "https://errance.litote.org/privacy.html",
+        "termsOfServiceURL": "https://errance.litote.org/terms.html",
+        "defaultPrompt": [
+          "How do I get from Gare de Lyon to Montmartre by public transport?",
+          "Next departures from Berlin Alexanderplatz",
+          "Where can I go within 30 minutes from Amsterdam Centraal?"
+        ],
+        "brandColor": "#0B6BCB",
+        "composerIcon": "./assets/logo.png",
+        "logo": "./assets/logo.png"
+      }
+    }
+  }
+}
