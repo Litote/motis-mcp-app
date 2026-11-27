@@ -18,12 +18,12 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class McpLambdaTest {
-    private val lambda =
+    private fun newLambda(guard: RequestGuard? = null) =
         MotisMcpConfig(
             contact = "https://example.org/tests",
             viewDomains = mapOf(McpHost.CHATGPT to "https://motis.example.org"),
         ).let { config ->
-            McpLambda {
+            McpLambda(guard) {
                 createMotisMcpServer(
                     MotisGateway(config.clientConfiguration()),
                     config,
@@ -33,6 +33,8 @@ class McpLambdaTest {
                 )
             }
         }
+
+    private val lambda = newLambda()
 
     private fun event(method: String, body: String? = null, path: String = "/mcp"): String =
         lambdaJson.encodeToString(
@@ -118,5 +120,12 @@ class McpLambdaTest {
         val response = lambdaJson.decodeFromString<FunctionUrlResponse>(lambda.handle("not json"))
         assertEquals(500, response.statusCode)
         assertNull(response.body)
+    }
+
+    @Test
+    fun `requests are checked by the guard before the MCP server`() {
+        val guarded = newLambda(RequestGuard("s3cret", toolCallsPerMinute = 0))
+        val response = lambdaJson.decodeFromString<FunctionUrlResponse>(guarded.handle(event("POST", "{}")))
+        assertEquals(403, response.statusCode)
     }
 }

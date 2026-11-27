@@ -18,7 +18,7 @@
 
       <section id="en" lang="en">
         <h1>Privacy policy</h1>
-        <p class="updated">Last updated: 9 November 2026</p>
+        <p class="updated">Last updated: 27 November 2026</p>
 
         <p>
           Errance is a free, non-commercial service that answers questions about public transport: an MCP
@@ -45,7 +45,13 @@
             rounded to about 1 km), its duration and the first line of its result or its error message. This logging
             is disabled in normal operation, and enabled temporarily to investigate a problem. Technical errors are
             always logged; their message may contain the places of the request. The logs contain no IP address and no
-            identifier of the user, and are deleted after <strong>14 days</strong>.
+            identifier of the user (see the rate limit below), and are deleted after <strong>14 days</strong>.
+          </li>
+          <li>
+            <strong>Rate limit</strong>: to protect the service against abuse, the server counts the tool calls of
+            each IP address (the address of the assistant's server, or yours from the web chat) per minute, in memory
+            only, and refuses them above a limit. When the limit is reached, the logs keep a pseudonym of the address
+            (a non-reversible hash), never the address itself.
           </li>
           <li>
             <strong>Station cache</strong>: for journeys between two cities, the stations found (e.g. “Paris – Nantes:
@@ -142,7 +148,7 @@
 
       <section id="fr" lang="fr">
         <h1>Politique de confidentialité</h1>
-        <p class="updated">Dernière mise à jour : 9 novembre 2026</p>
+        <p class="updated">Dernière mise à jour : 27 novembre 2026</p>
 
         <p>
           Errance est un service gratuit et non commercial qui répond à des questions sur les transports en
@@ -170,7 +176,13 @@
             son résultat ou son message d'erreur. Cet enregistrement est désactivé en fonctionnement normal, et activé
             temporairement pour analyser un problème. Les erreurs techniques sont toujours enregistrées ; leur message
             peut contenir les lieux de la requête. Les journaux ne contiennent ni adresse IP ni identifiant de
-            l'utilisateur, et sont supprimés au bout de <strong>14 jours</strong>.
+            l'utilisateur (voir la limite de débit ci-dessous), et sont supprimés au bout de <strong>14 jours</strong>.
+          </li>
+          <li>
+            <strong>Limite de débit</strong> : pour protéger le service contre les abus, le serveur compte les appels
+            d'outils de chaque adresse IP (celle du serveur de l'assistant, ou la vôtre depuis le chat web) par
+            minute, en mémoire seulement, et les refuse au-delà d'une limite. Quand la limite est atteinte, les journaux
+            gardent un pseudonyme de l'adresse (une empreinte non réversible), jamais l'adresse elle-même.
           </li>
           <li>
             <strong>Cache des gares</strong> : pour les trajets entre deux villes, les gares trouvées (par exemple

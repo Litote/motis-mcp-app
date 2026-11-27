@@ -207,6 +207,8 @@ jobs:
           # monthly budget (USD) of the kill switch, and e-mail of the budget alerts (infra/budget.tf)
           TF_VAR_monthly_budget_usd: ${{ vars.MONTHLY_BUDGET_USD || 20 }}
           TF_VAR_budget_alert_email: ${{ vars.BUDGET_ALERT_EMAIL }}
+          # tool calls a minute of a client on one Lambda instance, 0: no limit (docs/AWS-DEPLOYMENT.md)
+          TF_VAR_rate_limit_per_minute: ${{ vars.RATE_LIMIT_PER_MINUTE || 30 }}
         # read-only role: no state lock. The plan is shown in the summary of the run, to review the infra changes
         # there rather than in the logs (the sensitive values are redacted by Terraform)
         run: |

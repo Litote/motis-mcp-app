@@ -81,6 +81,17 @@ resource "aws_dynamodb_table" "city_stations" {
   }
 }
 
+# ─── Origin secret ────────────────────────────────────────────────────────────
+
+# Sent by CloudFront to the function URL (custom origin header, web.tf) and checked by the Lambda: the function URL
+# stays public (an OAC would need the SHA-256 of the body of every POST from the MCP clients), but its requests that do
+# not come through CloudFront are rejected (403) before any work. Changed by `terraform apply -replace=random_password.origin_secret`:
+# the requests fail until both the Lambda and the distribution are updated.
+resource "random_password" "origin_secret" {
+  length  = 40
+  special = false
+}
+
 # ─── Lambda ───────────────────────────────────────────────────────────────────
 
 resource "aws_lambda_function" "mcp" {
@@ -105,6 +116,9 @@ resource "aws_lambda_function" "mcp" {
       MOTIS_LOG_LEVEL   = var.motis_log_level
       # AWS_REGION is set by Lambda
       MOTIS_CITY_STATIONS_TABLE = aws_dynamodb_table.city_stations.name
+      MOTIS_ORIGIN_SECRET       = random_password.origin_secret.result
+      # tool calls a minute of a client on one instance (RequestGuard.kt)
+      MOTIS_RATE_LIMIT_PER_MINUTE = tostring(var.rate_limit_per_minute)
     }, local.optional_env)
   }
 
@@ -123,7 +137,8 @@ resource "aws_lambda_function" "mcp" {
 
 # ─── Function URL ─────────────────────────────────────────────────────────────
 
-# Public endpoint without authentication, like a remote MCP connector without OAuth
+# Public endpoint without authentication, like a remote MCP connector without OAuth, behind the app distribution: the
+# requests without its origin header are rejected by the Lambda
 resource "aws_lambda_function_url" "mcp" {
   function_name      = aws_lambda_function.mcp.function_name
   authorization_type = "NONE"

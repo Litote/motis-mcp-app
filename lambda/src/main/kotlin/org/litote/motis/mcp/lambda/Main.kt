@@ -42,17 +42,20 @@ private fun applyLogLevel() {
  * MCP endpoints `/mcp` and `/mcp/<host>` of the Lambda, in stateless Streamable HTTP mode: successive requests of a client may reach
  * different Lambda instances, so no session is kept in memory. Every request is answered in JSON (no SSE stream).
  *
- * The DNS rebinding protection is disabled: it protects servers listening on localhost, this endpoint is public.
+ * The DNS rebinding protection is disabled: it protects servers listening on localhost, this endpoint is public. The
+ * [guard] rejects the requests that do not come through CloudFront, and limits the tool calls of each client.
  * The Ktor application is built once per Lambda instance and reused by its invocations.
  */
-class McpLambda(createServer: RoutingContext.() -> Server) {
+class McpLambda internal constructor(private val guard: RequestGuard?, createServer: RoutingContext.() -> Server) {
+    constructor(createServer: RoutingContext.() -> Server) : this(null, createServer)
+
     private val server: EmbeddedServer<LambdaEngine, LambdaEngine.Configuration> =
         embeddedServer(LambdaEngine) {
             rejectUnknownMcpHosts()
             mcpStatelessStreamableHttp(path = MCP_ROUTE, enableDnsRebindingProtection = false) { createServer() }
         }.apply { start(wait = false) }
 
-    suspend fun handle(event: FunctionUrlEvent): FunctionUrlResponse = server.engine.handle(event)
+    suspend fun handle(event: FunctionUrlEvent): FunctionUrlResponse = guard?.check(event) ?: server.engine.handle(event)
 
     /** Handles a function URL event serialized in JSON. */
     fun handle(event: String): String {
@@ -79,7 +82,9 @@ fun createMcpLambda(): McpLambda {
     )
     val views = loadViews(config.tiles)
     val cityStations = config.cityStationsStore()
-    return McpLambda { createMotisMcpServer(gateway, config, views, cityStations, viewDomain(config)) }
+    return McpLambda(RequestGuard.fromEnv(System.getenv())) {
+        createMotisMcpServer(gateway, config, views, cityStations, viewDomain(config))
+    }
 }
 
 fun main() {

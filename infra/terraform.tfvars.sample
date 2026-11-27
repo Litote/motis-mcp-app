@@ -3,6 +3,7 @@ motis_app_contact = "you@example.org"
 
 # aws_region           = "eu-west-3"
 # reserved_concurrency = 10   # default; -1: no reservation
+# rate_limit_per_minute = 30   # default: tool calls a minute of a client on one instance; 0: no limit
 # tile_url             = "https://tiles.example.org/{z}/{x}/{y}.png"
 # tile_attribution     = "&copy; Example tiles"
 # vector_tile_url      = "https://api.protomaps.com/tiles/v4/{z}/{x}/{y}.mvt?key=<key>"   # secret: see docs/AWS-DEPLOYMENT.md
