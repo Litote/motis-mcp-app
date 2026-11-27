@@ -71,7 +71,7 @@ GitHub configuration:
 | variable                     | `TF_STATE_BUCKET`                               | `state_bucket` output of `make bootstrap`            |
 | variable                     | `MOTIS_APP_CONTACT`                             | contact sent in the User-Agent (Transitous policy)   |
 | variable (optional)          | `MOTIS_TILE_URL`, `MOTIS_TILE_ATTRIBUTION`      | tile provider                                        |
-| variable (optional)          | `MOTIS_VIEW_DOMAINS`                            | dedicated origin of the views per host, JSON: `{"chatgpt":"https://…"}` |
+| variable (optional)          | `MOTIS_VIEW_DOMAINS`                            | dedicated origin of the views per host, JSON: `{"chatgpt":"https://…"}`. Default with `WEB_DOMAIN`: `https://<WEB_DOMAIN>` for ChatGPT, the hash of `https://<WEB_DOMAIN>/mcp/claude` for Claude |
 | variable (optional)          | `WEB_DOMAIN`                                    | custom domain of the chat and of the MCP endpoint, see [Custom domain](#custom-domain) |
 | variable (optional)          | `MOTIS_APP_TITLE`                               | name of the instance shown by the MCP clients and the web chat, e.g. `Errance` (its website: `https://<WEB_DOMAIN>`) |
 | variable (optional)          | `WEB_LEGAL_PAGES`                               | `true`: links of the web chat to `privacy.html` and `terms.html`, those of errance.litote.org (to rewrite for another instance) |
@@ -103,8 +103,9 @@ vector tiles of the [Protomaps hosted API](https://protomaps.com/api) are free f
    - the web chat: its **sandbox** origin, `https://sandbox.<domain_name>` (the views run there, not on the origin of
      the chat);
    - Claude, on `/mcp/claude`: `https://<hash>.claudemcpcontent.com`, the first 32 hexadecimal characters of the
-     SHA-256 of the endpoint URL (see [MCP server reference](MCP-SERVER.md#usage));
-   - ChatGPT: its origin dedicated to the app (`MOTIS_VIEW_DOMAINS`), as served by ChatGPT.
+     SHA-256 of `https://<domain_name>/mcp/claude` (see [MCP server reference](MCP-SERVER.md#usage));
+   - ChatGPT, on `/mcp/chatgpt`: the origin dedicated to the app (default `https://<domain_name>`), as served by
+     ChatGPT under `web-sandbox.oaiusercontent.com`.
 2. Store the URL with its key as the secret `MOTIS_VECTOR_TILE_URL` (sensitive Terraform variable `vector_tile_url`):
    `https://api.protomaps.com/tiles/v4/{z}/{x}/{y}.mvt?key=<key>`.
 

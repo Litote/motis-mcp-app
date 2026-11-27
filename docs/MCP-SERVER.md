@@ -197,10 +197,10 @@ host has its endpoint (HTTP mode), with its own value:
 | `/mcp`         | any                    | none: default sandbox origin of the host                                           |
 | `/mcp/chatgpt` | ChatGPT                | `MOTIS_VIEW_DOMAIN_CHATGPT`: an origin unique to the app, e.g. `https://motis.example.org`, served as a subdomain of `oaiusercontent.com` (required to publish an app with views) |
 | `/mcp/claude`  | Claude                 | `MOTIS_VIEW_DOMAIN_CLAUDE`, default `<hash>.claudemcpcontent.com`: first 32 hexadecimal characters of the SHA-256 of the endpoint URL, as registered in Claude (`https://…/mcp/claude`) |
-| `/mcp/mistral` | Mistral (Le Chat)      | `MOTIS_VIEW_DOMAIN_MISTRAL`, none by default                                       |
 
-The tools and views are the same on every endpoint. The Claude default is computed from the URL of the request: set
-`MOTIS_VIEW_DOMAIN_CLAUDE` when the public URL differs (reverse proxy).
+The other hosts (e.g. Mistral Le Chat) use `/mcp`. The tools and views are the same on every endpoint. The Claude
+default is computed from the URL of the request: set `MOTIS_VIEW_DOMAIN_CLAUDE` when the public URL differs (reverse
+proxy; the [AWS deployment](AWS-DEPLOYMENT.md) sets it from its custom domain).
 
 Environment variables are passed to the container with `-e`.
 
