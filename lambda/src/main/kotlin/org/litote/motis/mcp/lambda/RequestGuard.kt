@@ -134,7 +134,7 @@ internal class RequestGuard(
         }
         val ip = (viewer ?: event.requestContext.http.sourceIp)?.removeSurrounding("[", "]") ?: return null
         val bytes = runCatching { InetAddress.ofLiteral(ip).address }.getOrNull() ?: return ip
-        return if (bytes.size == 16) bytes.copyOf(8).toHexString() + "::/64" else ip
+        return if (bytes.size == 16) "${bytes.copyOf(8).toHexString()}/64" else ip
     }
 
     private fun pseudonym(client: String): String =

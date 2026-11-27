@@ -22,7 +22,8 @@ locals {
   }
 }
 
-# Another topic than the budget one: its subscription is the kill switch
+# Another topic than the budget one: its subscription is the kill switch. Not encrypted: CloudWatch publishes to an
+# encrypted topic only with a customer managed key (1 USD a month), and the messages only contain the alarm states
 resource "aws_sns_topic" "alerts" {
   name = "${var.name}-alerts"
 }
