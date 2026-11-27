@@ -50,29 +50,27 @@ private val INSTRUCTIONS =
 /**
  * Creates the MCP server: tools calling MOTIS, and the MCP App views as `ui://` resources.
  *
+ * @param config the MOTIS server ([MotisMcpConfig.baseUrl]), the tiles of the maps and the identity of the instance
  * @param views HTML of the views ([org.litote.motis.mcp.apps.loadViews]), loaded once and shared by every server instance
  * @param cityStations stations of the journeys between cities, shared by every server instance (see [CityJourneys])
  * @param viewDomain dedicated origin of the views (`_meta.ui.domain`), null: the default of the host
  * @param rediscoverStations tells the journeys between known cities searching their stations again (see [CityJourneys])
- * @param identity title and website of the instance, shown by the clients
  */
 fun createMotisMcpServer(
     gateway: MotisGateway,
-    baseUrl: String,
-    tiles: MapTiles,
+    config: MotisMcpConfig,
     views: Map<UiView, String>,
     cityStations: CityStationsStore,
     viewDomain: String? = null,
     rediscoverStations: () -> Boolean = CityJourneys.ONE_IN_100,
-    identity: ServerIdentity = ServerIdentity(),
 ): Server =
     Server(
         serverInfo =
             Implementation(
                 name = APP_NAME,
                 version = APP_VERSION,
-                title = identity.title,
-                websiteUrl = identity.websiteUrl,
+                title = config.identity.title,
+                websiteUrl = config.identity.websiteUrl,
                 icons = ICONS,
             ),
         options =
@@ -85,8 +83,8 @@ fun createMotisMcpServer(
             ),
         instructions = INSTRUCTIONS,
     ).apply {
-        addAppResources(tiles, viewDomain) { views.getValue(it) }
-        addPlaceTools(gateway, baseUrl)
+        addAppResources(config.tiles, viewDomain) { views.getValue(it) }
+        addPlaceTools(gateway, config.baseUrl)
         addAreaTools(gateway)
         addTimetableTools(gateway)
         addRoutingTools(gateway, CityJourneys(gateway, cityStations, rediscover = rediscoverStations))

@@ -79,7 +79,7 @@ fun createMcpLambda(): McpLambda {
     )
     val views = loadViews(config.tiles)
     val cityStations = config.cityStationsStore()
-    return McpLambda { createMotisMcpServer(gateway, config.baseUrl, config.tiles, views, cityStations, viewDomain(config), identity = config.identity) }
+    return McpLambda { createMotisMcpServer(gateway, config, views, cityStations, viewDomain(config)) }
 }
 
 fun main() {

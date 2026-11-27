@@ -60,8 +60,7 @@ fun withMcpClient(
             val server =
                 createMotisMcpServer(
                     MotisGateway(config.clientConfiguration(motis.engine)),
-                    config.baseUrl,
-                    config.tiles,
+                    config,
                     loadViews(config.tiles) { TEST_VIEWS.getValue(it) },
                     cityStations,
                     rediscoverStations = rediscoverStations,
