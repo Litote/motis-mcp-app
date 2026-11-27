@@ -124,7 +124,12 @@ fun Server.addRoutingTools(gateway: MotisGateway, cityJourneys: CityJourneys) {
                 transferMargin.takeIf { it != TransferMargin.NORMAL }?.let { "transfer margin ${it.name}" },
                 bike.takeIf { it != BikeOption.NONE }?.let { "bike ${it.name}" },
             )
-        ToolOutput.of(journeySummary(from, to, result, options), JourneyResult.serializer(), result)
+        ToolOutput.of(
+            journeySummary(from, to, result, options),
+            JourneyResult.serializer(),
+            result,
+            ToolOutput.legPolylinesMeta(result.legPolylines()),
+        )
     }
 }
 

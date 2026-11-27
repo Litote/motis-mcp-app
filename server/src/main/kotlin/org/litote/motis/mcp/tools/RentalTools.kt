@@ -35,7 +35,8 @@ fun Server.addRentalTools(gateway: MotisGateway) {
         // a provider asked by id is kept, and without the vehicles a free-floating provider has nothing in the area
         val result = body.toDto(title, bbox, dropEmptyProviders = providers == null && withVehicles)
         val summary = rentalsSummary(title, result)
-        ToolOutput.of(summary, RentalsResult.serializer(), result)
+        // the stations and vehicles are for the map (up to a thousand of each): the summary tells the nearest to the model
+        ToolOutput.of(summary, RentalsResult.serializer(), result, viewFields = setOf("stations", "vehicles"))
     }
 }
 

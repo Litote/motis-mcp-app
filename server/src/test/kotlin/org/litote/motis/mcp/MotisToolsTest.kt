@@ -54,9 +54,11 @@ private fun transitous(): MockMotis =
 
 private val json = Json { ignoreUnknownKeys = true }
 
+/** Data of the result as the views see it: the structured content with the fields of `_meta.view` put back. */
 private fun <T> CallToolResult.data(deserializer: DeserializationStrategy<T>): T {
     assertNull(isError, text())
-    return json.decodeFromJsonElement(deserializer, assertNotNull(structuredContent))
+    val view = meta?.get("view")?.jsonObject.orEmpty()
+    return json.decodeFromJsonElement(deserializer, JsonObject(assertNotNull(structuredContent) + view))
 }
 
 private fun CallToolResult.text(): String = (content.single() as TextContent).text
@@ -349,6 +351,13 @@ class MotisToolsTest {
             assertTrue(area.polylines.all { routeIdx.containsAll(it.routeIdx) }, area.polylines.map { it.routeIdx }.toString())
             assertTrue(area.polylines.any { it.routeIdx == listOf(940073L) && it.color == "#e8308a" })
 
+            // the shapes and the coordinates of the stops are for the view only, the model keeps the ids of the stops
+            val model = assertNotNull(result.structuredContent)
+            assertNull(model["polylines"])
+            assertEquals(area.stops.map { it.stopId }, model["stops"]!!.jsonArray.map { (it.jsonObject["stopId"] as JsonPrimitive?)?.content })
+            assertTrue(model["stops"]!!.jsonArray.none { "lat" in it.jsonObject })
+            assertNotNull(model["routes"])
+
             val routes = motis.request("/api/experimental/map/routes")
             assertEquals(area.zoom, routes.url.parameters["zoom"]?.toDouble())
             val text = result.text()
@@ -454,6 +463,9 @@ class MotisToolsTest {
             // closest first
             val durations = reachability.places.mapNotNull { it.durationMinutes }
             assertEquals(durations.sorted(), durations)
+            // the places are for the map only: the summary tells them to the model
+            assertNull(assertNotNull(result.structuredContent)["places"])
+            assertEquals(56, assertNotNull(result.meta)["view"]!!.jsonObject["places"]!!.jsonArray.size)
             val request = motis.request("/api/v6/one-to-all")
             assertEquals("45.7605,4.8597", request.url.parameters["one"])
             assertEquals("10", request.url.parameters["maxTravelTime"])
@@ -766,6 +778,9 @@ class MotisToolsTest {
             assertEquals(8640, trip.itinerary.durationSeconds)
             assertEquals(tripId, motis.request("/api/v6/trip").url.parameters["tripId"])
             assertTrue(result.text().contains("Lyon Perrache"), result.text())
+            assertFalse("polyline" in assertNotNull(result.structuredContent)["itinerary"]!!.jsonObject["legs"]!!.jsonArray.single().jsonObject)
+            val path = assertNotNull(result.meta)["legPolylines"]!!.jsonObject["itinerary"]!!.jsonArray.single().jsonObject
+            assertTrue((path["points"] as JsonPrimitive).content.isNotEmpty())
         }
     }
 
@@ -832,6 +847,12 @@ class MotisToolsTest {
             assertNotNull(journey.nextPageCursor)
             // for the options of the view
             assertEquals(10, journey.maxWalkMinutes)
+            // the paths of the legs are for the view only: in _meta, not in the structured content (read by some models)
+            val itineraries = assertNotNull(result.structuredContent)["itineraries"]!!.jsonArray
+            assertTrue(itineraries.all { it.jsonObject["legs"]!!.jsonArray.none { leg -> "polyline" in leg.jsonObject } })
+            val polylines = assertNotNull(result.meta)["legPolylines"]!!.jsonObject["itineraries"]!!.jsonArray
+            assertEquals(journey.itineraries.map { it.legs.size }, polylines.map { it.jsonArray.size })
+            assertTrue(polylines.all { it.jsonArray.all { p -> p.jsonObject["points"] is JsonPrimitive } })
 
             val request = motis.request("/api/v6/plan")
             assertEquals("45.7605,4.8597", request.url.parameters["fromPlace"])
