@@ -40,68 +40,18 @@ jobs:
           app-id: ${{ secrets.RELEASE_PLEASE_APP_ID }}
           private-key: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}
 
+  # fails if the quality gate is not OK, so nothing is published
   sonar:
-    name: Tests and SonarCloud ${{ needs.release-please.outputs.tag_name || inputs.tag }}
     needs: release-please
     if: needs.release-please.outputs.release_created == 'true' || github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
     permissions:
       contents: read
-
-    # DynamoDB store of the stations of the journeys between cities (DynamoDbCityStationsStoreTest)
-    services:
-      dynamodb:
-        image: amazon/dynamodb-local@sha256:6ada631ec7aa5fc83446855eb17233e3dad184fec47477e8140c6c569cfe0c86 # latest of 2026-10-15
-        ports:
-          - 8000:8000
-
-    # every step: an input of the tests, which the steps after the build would otherwise run again without it (and
-    # without the coverage of the DynamoDB store)
-    env:
-      DYNAMODB_LOCAL_ENDPOINT: http://localhost:8000
-
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-          ref: refs/tags/${{ needs.release-please.outputs.tag_name || inputs.tag }}
-          fetch-depth: 0
-
-      # views (ui/) bundled by the Gradle build, web chat tests
-      - name: Set up Node.js
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: |
-            ui/package-lock.json
-            web/package-lock.json
-
-      - uses: Litote/ci/.github/actions/setup-gradle@63a67e7add1b9fde6396c84399f90c9252f7b8e6 # v0.15.0
-        with:
-          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
-
-      - name: Build & test
-        run: ./gradlew check
-
-      - name: Views tests
-        working-directory: ui
-        # node_modules installed by the Gradle build (npmInstall)
-        run: npm run coverage
-
-      - name: Web chat tests
-        working-directory: web
-        # vitest does not check the types: tsc is otherwise only run by the deployment build
-        run: |
-          npm ci --no-audit --no-fund
-          npm run typecheck
-          npm run coverage
-
-      # Fails if the quality gate is not OK, so nothing is published
-      - uses: Litote/ci/.github/actions/sonar-gradle@63a67e7add1b9fde6396c84399f90c9252f7b8e6 # v0.15.0
-        with:
-          sonar-token: ${{ secrets.SONAR_TOKEN }}
+    uses: $/.github/workflows/check.yml
+    with:
+      ref: refs/tags/${{ needs.release-please.outputs.tag_name || inputs.tag }}
+    secrets:
+      GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   docker:
     name: Publish Docker image ${{ needs.release-please.outputs.tag_name || inputs.tag }}

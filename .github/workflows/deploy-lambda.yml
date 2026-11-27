@@ -78,7 +78,9 @@ jobs:
           cache: npm
           cache-dependency-path: ui/package-lock.json
 
+      # on a pull request, the tests are run by ci.yml: here only on main, as a last guard before the deploy
       - name: Test
+        if: github.event_name != 'pull_request'
         run: ./gradlew test
 
       - name: Compile native image
@@ -128,7 +130,9 @@ jobs:
         working-directory: web
         run: npm ci --no-audit --no-fund
 
+      # on a pull request, the tests are run by ci.yml: here only on main, as a last guard before the deploy
       - name: Test
+        if: github.event_name != 'pull_request'
         working-directory: web
         run: npm test
 
@@ -182,7 +186,8 @@ jobs:
 
       - name: Terraform plan
         working-directory: infra
-        env:
+        # the variables of Terraform, shared with the apply below (YAML anchor)
+        env: &terraform-env
           TF_VAR_aws_region: ${{ vars.AWS_REGION }}
           TF_VAR_motis_app_contact: ${{ vars.MOTIS_APP_CONTACT }}
           TF_VAR_tile_url: ${{ vars.MOTIS_TILE_URL }}
@@ -249,22 +254,7 @@ jobs:
 
       - name: Terraform apply
         working-directory: infra
-        env:
-          TF_VAR_aws_region: ${{ vars.AWS_REGION }}
-          TF_VAR_motis_app_contact: ${{ vars.MOTIS_APP_CONTACT }}
-          TF_VAR_tile_url: ${{ vars.MOTIS_TILE_URL }}
-          TF_VAR_tile_attribution: ${{ vars.MOTIS_TILE_ATTRIBUTION }}
-          # vector tiles, e.g. the Protomaps hosted API: the URL contains its key (docs/AWS-DEPLOYMENT.md)
-          TF_VAR_vector_tile_url: ${{ secrets.MOTIS_VECTOR_TILE_URL }}
-          # JSON map, e.g. {"chatgpt":"https://motis.example.org"}
-          TF_VAR_view_domains: ${{ vars.MOTIS_VIEW_DOMAINS || '{}' }}
-          # custom domain of the chat and of the MCP endpoint, e.g. motis.example.org (docs/AWS-DEPLOYMENT.md)
-          TF_VAR_domain_name: ${{ vars.WEB_DOMAIN }}
-          # -1 while the account concurrency quota is below 20 (10 executions must stay unreserved)
-          TF_VAR_reserved_concurrency: ${{ vars.RESERVED_CONCURRENCY || 10 }}
-          # monthly budget (USD) of the kill switch, and e-mail of the budget alerts (infra/budget.tf)
-          TF_VAR_monthly_budget_usd: ${{ vars.MONTHLY_BUDGET_USD || 20 }}
-          TF_VAR_budget_alert_email: ${{ vars.BUDGET_ALERT_EMAIL }}
+        env: *terraform-env
         run: terraform apply -input=false -auto-approve -no-color
 
       - name: Smoke test of the endpoint

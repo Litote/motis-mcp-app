@@ -20,70 +20,16 @@ jobs:
       pull-requests: read
     uses: Litote/ci/.github/workflows/pr-title.yml@63a67e7add1b9fde6396c84399f90c9252f7b8e6 # v0.15.0
 
+  # required check: "check / Check (tests, coverage, SonarCloud)"
   check:
-    name: Check (tests, coverage, SonarCloud)
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
     permissions:
       contents: read
-
-    # DynamoDB store of the stations of the journeys between cities (DynamoDbCityStationsStoreTest)
-    services:
-      dynamodb:
-        image: amazon/dynamodb-local@sha256:6ada631ec7aa5fc83446855eb17233e3dad184fec47477e8140c6c569cfe0c86 # latest of 2026-10-15
-        ports:
-          - 8000:8000
-
-    # every step: an input of the tests, which the steps after the build would otherwise run again without it (and
-    # without the coverage of the DynamoDB store)
-    env:
-      DYNAMODB_LOCAL_ENDPOINT: http://localhost:8000
-
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          persist-credentials: false
-          fetch-depth: 0
-
-      # views (ui/) bundled by the Gradle build, web chat tests
-      - name: Set up Node.js
-        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: .nvmrc
-          cache: npm
-          cache-dependency-path: |
-            ui/package-lock.json
-            web/package-lock.json
-
-      - uses: Litote/ci/.github/actions/setup-gradle@63a67e7add1b9fde6396c84399f90c9252f7b8e6 # v0.15.0
-        with:
-          cache-encryption-key: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
-
-      - uses: Litote/ci/.github/actions/detect-changes@63a67e7add1b9fde6396c84399f90c9252f7b8e6 # v0.15.0
-        id: detect-changes
-        with:
-          pattern: '\.(kt|kts|gradle|yml|yaml|toml|ts|tsx|mjs|cjs|html|css|tf)$'
-
-      - name: Build & test
-        run: ./gradlew check
-
-      - name: Views tests
-        working-directory: ui
-        # node_modules installed by the Gradle build (npmInstall)
-        run: npm run coverage
-
-      - name: Web chat tests
-        working-directory: web
-        # vitest does not check the types: tsc is otherwise only run by the deployment build
-        run: |
-          npm ci --no-audit --no-fund
-          npm run typecheck
-          npm run coverage
-
-      - uses: Litote/ci/.github/actions/sonar-gradle@63a67e7add1b9fde6396c84399f90c9252f7b8e6 # v0.15.0
-        if: steps.detect-changes.outputs.has-code-changes == 'true'
-        with:
-          sonar-token: ${{ secrets.SONAR_TOKEN }}
+    uses: $/.github/workflows/check.yml
+    with:
+      sonar-on-code-changes-only: true
+    secrets:
+      GRADLE_ENCRYPTION_KEY: ${{ secrets.GRADLE_ENCRYPTION_KEY }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   docker:
     name: Docker image (build only)
