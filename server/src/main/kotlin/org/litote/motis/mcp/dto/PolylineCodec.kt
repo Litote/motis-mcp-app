@@ -1,6 +1,8 @@
 package org.litote.motis.mcp.dto
 
 import org.litote.motis.mcp.BoundingBox
+import kotlin.math.cos
+import kotlin.math.hypot
 import kotlin.math.pow
 import kotlin.math.roundToLong
 
@@ -53,6 +55,54 @@ object PolylineCodec {
             lastLon = iLon
         }
         return out.toString()
+    }
+
+    /** Tolerance of the paths shown on a map: below a pixel up to zoom 15, the closest zoom of the views on a path. */
+    const val MAP_TOLERANCE_METERS = 3.0
+
+    /**
+     * Douglas–Peucker simplification of [coordinates] (lat, lon): keeps the ends, and the points farther than
+     * [toleranceMeters] from the simplified line. The distances are computed on a local equirectangular projection.
+     */
+    fun simplify(coordinates: List<Pair<Double, Double>>, toleranceMeters: Double): List<Pair<Double, Double>> {
+        if (coordinates.size < 3) return coordinates
+        val cosLat = cos(Math.toRadians(coordinates.first().first))
+        val x = DoubleArray(coordinates.size) { Math.toRadians(coordinates[it].second) * cosLat * EARTH_RADIUS_METERS }
+        val y = DoubleArray(coordinates.size) { Math.toRadians(coordinates[it].first) * EARTH_RADIUS_METERS }
+        val keep = BooleanArray(coordinates.size)
+        keep[0] = true
+        keep[coordinates.lastIndex] = true
+        // iterative: a long path would overflow the stack of a recursion
+        val ranges = ArrayDeque<Pair<Int, Int>>().apply { add(0 to coordinates.lastIndex) }
+        while (ranges.isNotEmpty()) {
+            val (first, last) = ranges.removeLast()
+            var farthest = -1
+            var maxDistance = toleranceMeters
+            for (i in first + 1 until last) {
+                val d = segmentDistance(x[i], y[i], x[first], y[first], x[last], y[last])
+                if (d > maxDistance) {
+                    maxDistance = d
+                    farthest = i
+                }
+            }
+            if (farthest >= 0) {
+                keep[farthest] = true
+                ranges += first to farthest
+                ranges += farthest to last
+            }
+        }
+        return coordinates.filterIndexed { i, _ -> keep[i] }
+    }
+
+    private const val EARTH_RADIUS_METERS = 6_371_000.0
+
+    /** Distance from (px, py) to the segment (ax, ay)-(bx, by). */
+    private fun segmentDistance(px: Double, py: Double, ax: Double, ay: Double, bx: Double, by: Double): Double {
+        val dx = bx - ax
+        val dy = by - ay
+        val length2 = dx * dx + dy * dy
+        val t = if (length2 == 0.0) 0.0 else (((px - ax) * dx + (py - ay) * dy) / length2).coerceIn(0.0, 1.0)
+        return hypot(px - (ax + t * dx), py - (ay + t * dy))
     }
 
     /**

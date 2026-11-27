@@ -16,6 +16,44 @@ interface ToolResultLike {
   content?: Array<{ type: string; text?: string }>;
   structuredContent?: Record<string, unknown>;
   isError?: boolean;
+  _meta?: Record<string, unknown>;
+}
+
+type Legs = { legs?: Array<Record<string, unknown>> };
+
+/**
+ * Paths of the legs of a result, in its `_meta` (see server/.../dto/Dtos.kt LegPolylines): not in the structured
+ * content, which some hosts give to the model. Same shape as the result: by itinerary then leg, or by leg for `itinerary`.
+ */
+interface LegPolylines {
+  itineraries?: unknown[][];
+  direct?: unknown[][];
+  itinerary?: unknown[];
+}
+
+function putPolylines(itinerary: Legs | undefined, polylines: unknown[] | undefined): Legs | undefined {
+  if (!itinerary?.legs || !polylines) return itinerary;
+  return { ...itinerary, legs: itinerary.legs.map((leg, i) => (polylines[i] ? { ...leg, polyline: polylines[i] } : leg)) };
+}
+
+/**
+ * Structured content of [result] with the data for the view only put back from its `_meta` (see server/.../ToolSupport.kt
+ * ToolOutput): the top-level fields of `_meta.view` (e.g. the stops with their coordinates, in place of those without
+ * given to the model), and the paths of the legs.
+ */
+export function structuredData(result: ToolResultLike): Record<string, unknown> | undefined {
+  const content = result.structuredContent;
+  const view = result._meta?.view as Record<string, unknown> | undefined;
+  const data = content && view ? { ...content, ...view } : content;
+  const polylines = result._meta?.legPolylines as LegPolylines | undefined;
+  if (!data || !polylines) return data;
+  const merged: Record<string, unknown> = { ...data };
+  for (const key of ["itineraries", "direct"] as const) {
+    const itineraries = data[key] as Legs[] | undefined;
+    if (itineraries && polylines[key]) merged[key] = itineraries.map((it, i) => putPolylines(it, polylines[key]?.[i]));
+  }
+  if (polylines.itinerary) merged.itinerary = putPolylines(data.itinerary as Legs | undefined, polylines.itinerary);
+  return merged;
 }
 
 export interface ViewHandlers {
@@ -119,7 +157,7 @@ export function startView(name: string, handlers: ViewHandlers): App {
       setStatus("");
       // before the rendering: a view may hide it for what it shows
       if (handlers.refresh) showRefresh(true);
-      handlers.render(r.structuredContent as { kind: string }, lastArgs);
+      handlers.render(structuredData(r) as { kind: string }, lastArgs);
     } else {
       setStatus(textOf(r));
     }
@@ -192,7 +230,7 @@ export async function callToolResult<T>(app: App, name: string, args: Args, opti
     if (result.isError) throw new Error(textOf(result) || t("toolFailed", { name }));
     if (!result.structuredContent) throw new Error(t("noData", { name }));
     setStatus("");
-    return { data: result.structuredContent as T, text: textOf(result) };
+    return { data: structuredData(result) as T, text: textOf(result) };
   } catch (e) {
     setStatus(e instanceof Error ? e.message : String(e), "error");
     throw e;

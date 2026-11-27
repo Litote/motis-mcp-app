@@ -32,7 +32,15 @@ data class Bbox(val minLat: Double, val minLon: Double, val maxLat: Double, val 
 
 /** Encoded polyline (Google format) with its [precision] (5 or 6 decimals). */
 @Serializable
-data class Polyline(val points: String, val precision: Int = 6)
+data class Polyline(val points: String, val precision: Int = 6) {
+    /** The polyline without the points closer than [toleranceMeters] to the simplified line. */
+    fun simplified(toleranceMeters: Double = PolylineCodec.MAP_TOLERANCE_METERS): Polyline =
+        if (points.isEmpty()) {
+            this
+        } else {
+            copy(points = PolylineCodec.encode(PolylineCodec.simplify(PolylineCodec.decode(points, precision), toleranceMeters), precision))
+        }
+}
 
 @Serializable
 data class PlaceDto(
@@ -223,7 +231,11 @@ data class LegDto(
     val agency: String? = null,
     val tripId: String? = null,
     val intermediateStops: List<PlaceDto>? = null,
-    val polyline: Polyline,
+    /**
+     * Path of the leg: not in the structured content (the hosts may give it to the model, where it would take most of
+     * the room), sent to the views in the `_meta` of the result instead (see [LegPolylines]).
+     */
+    @Transient val polyline: Polyline = Polyline(""),
     /** Indexes of the alerts of the leg (its line or trip, its ends) in the alerts of the result. */
     val alerts: List<Int>? = null,
     /** Alerts of the leg, until they are put in the table of the result. */
@@ -267,7 +279,26 @@ data class TripResult(
     val itinerary: ItineraryDto,
     /** Alerts of the legs, referenced by their index. */
     val alerts: List<AlertDto>? = null,
+) {
+    fun legPolylines(): LegPolylines = LegPolylines(itinerary = itinerary.legPolylines())
+}
+
+/**
+ * Paths of the legs of a result, sent in its `_meta` ([LEG_POLYLINES_META]) for the views only: the views put them back
+ * in the legs of the structured content. Same shape as the result: [itineraries] and [direct] by itinerary then leg,
+ * [itinerary] by leg (trip_details). Simplified to what a map shows (see [PolylineCodec.simplify]).
+ */
+@Serializable
+data class LegPolylines(
+    val itineraries: List<List<Polyline>>? = null,
+    val direct: List<List<Polyline>>? = null,
+    val itinerary: List<Polyline>? = null,
 )
+
+/** Key of the [LegPolylines] in the `_meta` of a result. */
+const val LEG_POLYLINES_META = "legPolylines"
+
+private fun ItineraryDto.legPolylines(): List<Polyline> = legs.map { it.polyline.simplified() }
 
 // --- plan_journey ---
 
@@ -284,7 +315,10 @@ data class JourneyResult(
     val alerts: List<AlertDto>? = null,
     /** Maximum walk (or bike ride) to the first stop and from the last one used by the search, in minutes. */
     val maxWalkMinutes: Int? = null,
-)
+) {
+    fun legPolylines(): LegPolylines =
+        LegPolylines(itineraries = itineraries.map { it.legPolylines() }, direct = direct.map { it.legPolylines() })
+}
 
 // --- rentals ---
 

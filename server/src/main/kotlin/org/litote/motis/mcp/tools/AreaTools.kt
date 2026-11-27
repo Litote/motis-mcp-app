@@ -13,6 +13,11 @@ import org.litote.motis.mcp.dto.latLon
 import org.litote.motis.mcp.dto.routeName
 import org.litote.motis.mcp.dto.toAreaResult
 import org.litote.motis.mcp.dto.toDto
+import kotlinx.serialization.json.add
+import kotlinx.serialization.json.addJsonObject
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonArray
 import kotlin.math.roundToInt
 
 private const val DEFAULT_RADIUS_KM = 1.5
@@ -84,7 +89,7 @@ fun Server.addAreaTools(gateway: MotisGateway) {
         val (stops, routes) = gateway.area(bbox, zoom, modes, language)
         // filtered here as well: MOTIS (Transitous) ignores the modes of the stops, and the routes have none
         val result = routes.toAreaResult(title, bbox, zoom, stops, modes)
-        ToolOutput.of(result.summary(), AreaResult.serializer(), result)
+        result.output(result.summary())
     }
 
     motisTool(
@@ -102,11 +107,7 @@ fun Server.addAreaTools(gateway: MotisGateway) {
         val route = details.routes.firstOrNull { it.routeIdx == routeIdx } ?: details.routes.firstOrNull()
         val name = route?.let { r -> "${r.mode.serialName()} ${r.transitRoutes.joinToString(", ") { routeName(it.shortName, it.longName) }}" }
         val result = details.toAreaResult(name ?: "Route $routeIdx")
-        ToolOutput.of(
-            "${result.title}: ${result.stops.size} stop(s): ${result.stops.joinToString(" → ") { it.name }}",
-            AreaResult.serializer(),
-            result,
-        )
+        result.output("${result.title}: ${result.stops.size} stop(s): ${result.stops.joinToString(" → ") { it.name }}")
     }
 
     motisTool(
@@ -148,6 +149,32 @@ fun Server.addAreaTools(gateway: MotisGateway) {
                     appendLine("- $bucket–${bucket + 9} min: ${places.size} stop(s), e.g. ${places.map { it.name }.distinct().take(5).joinToString(", ")}")
                 }
             }.trimEnd()
-        ToolOutput.of(summary, ReachabilityResult.serializer(), result)
+        // the stops reached, with their coordinates, are for the map: the summary tells them to the model
+        ToolOutput.of(summary, ReachabilityResult.serializer(), result, viewFields = setOf("places"))
     }
 }
+
+/**
+ * Output of an area: the shapes of the routes and the coordinates of the stops are for the map only; the model keeps
+ * the names, ids and modes of the stops (stopId for departures).
+ */
+private fun AreaResult.output(text: String): ToolOutput =
+    ToolOutput.of(
+        text,
+        AreaResult.serializer(),
+        this,
+        viewFields = setOf("polylines", "stops"),
+        modelFields =
+            mapOf(
+                "stops" to
+                    buildJsonArray {
+                        stops.forEach { stop ->
+                            addJsonObject {
+                                put("name", stop.name)
+                                stop.stopId?.let { put("stopId", it) }
+                                stop.modes?.let { modes -> putJsonArray("modes") { modes.forEach { add(it) } } }
+                            }
+                        }
+                    },
+            ),
+    )

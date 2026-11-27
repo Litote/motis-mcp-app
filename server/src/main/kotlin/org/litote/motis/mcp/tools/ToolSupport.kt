@@ -29,6 +29,8 @@ import org.litote.motis.client.model.Mode
 import org.litote.motis.mcp.MotisToolException
 import org.litote.motis.mcp.apps.ToolVisibility
 import org.litote.motis.mcp.apps.UiView
+import org.litote.motis.mcp.dto.LEG_POLYLINES_META
+import org.litote.motis.mcp.dto.LegPolylines
 import kotlin.time.Instant
 import kotlin.time.TimeSource
 
@@ -55,11 +57,38 @@ private val TRANSIT_MODE_VALUES: List<Mode> = Mode.entries - NON_TRANSIT_MODES
 /** Transit modes accepted by the tools (MOTIS `Mode` values). */
 val TRANSIT_MODES: List<String> = TRANSIT_MODE_VALUES.map { it.serialName() }
 
-/** Result of a tool: a short text for the model, and structured data for the view. */
-class ToolOutput(val text: String, val structured: JsonObject? = null) {
+/**
+ * Result of a tool: a short text for the model, structured data for the view (some hosts give it to the model too),
+ * and [meta] for the view only: the bulky data the model does not need (e.g. the paths of the legs).
+ */
+class ToolOutput(val text: String, val structured: JsonObject? = null, val meta: JsonObject? = null) {
     companion object {
-        fun <T> of(text: String, serializer: KSerializer<T>, value: T): ToolOutput =
-            ToolOutput(text, dtoJson.encodeToJsonElement(serializer, value).jsonObject)
+        /** Key of the fields of a result for the views only in its `_meta`: the views put them back in the result. */
+        const val VIEW_META = "view"
+
+        /**
+         * Output of [value]. [viewFields]: top-level fields of the result for the views only (bulky lists the model does
+         * not need, the text tells it the essentials), sent in `_meta.view`; [modelFields] gives the value left to the
+         * model in place of some of them (e.g. the stops without their coordinates), the others are removed.
+         */
+        fun <T> of(
+            text: String,
+            serializer: KSerializer<T>,
+            value: T,
+            meta: JsonObject? = null,
+            viewFields: Set<String> = emptySet(),
+            modelFields: Map<String, JsonElement> = emptyMap(),
+        ): ToolOutput {
+            val full = dtoJson.encodeToJsonElement(serializer, value).jsonObject
+            if (viewFields.isEmpty()) return ToolOutput(text, full, meta)
+            val view = JsonObject(full.filterKeys { it in viewFields })
+            val structured = JsonObject(full.mapNotNull { (key, v) -> (if (key in viewFields) modelFields[key] else v)?.let { key to it } }.toMap())
+            return ToolOutput(text, structured, JsonObject(meta.orEmpty() + (VIEW_META to view)))
+        }
+
+        /** `_meta` with the [LegPolylines] of a result. */
+        fun legPolylinesMeta(polylines: LegPolylines): JsonObject =
+            buildJsonObject { put(LEG_POLYLINES_META, dtoJson.encodeToJsonElement(LegPolylines.serializer(), polylines)) }
     }
 }
 
@@ -217,7 +246,7 @@ fun Server.motisTool(
             val output = handler(Args(arguments, schemaBuilder.bounds))
             // one line per call, to see what the models ask (e.g. the arguments they make up)
             logger.info { "Tool $name(${arguments.forLog()}) in ${start.elapsedNow().inWholeMilliseconds} ms: ${output.text.lineSequence().first().take(LOGGED_LENGTH)}" }
-            CallToolResult(content = listOf(TextContent(output.text)), structuredContent = output.structured)
+            CallToolResult(content = listOf(TextContent(output.text)), structuredContent = output.structured, meta = output.meta)
         } catch (e: MotisToolException) {
             logger.info { "Tool $name(${arguments.forLog()}) failed in ${start.elapsedNow().inWholeMilliseconds} ms: ${e.message}" }
             CallToolResult(content = listOf(TextContent(e.message ?: "error")), isError = true)

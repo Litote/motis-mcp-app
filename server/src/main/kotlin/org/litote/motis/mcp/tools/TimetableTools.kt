@@ -319,6 +319,6 @@ fun Server.addTimetableTools(gateway: MotisGateway) {
                 }
                 appendAlerts(result.alerts)
             }.trimEnd()
-        ToolOutput.of(summary, TripResult.serializer(), result)
+        ToolOutput.of(summary, TripResult.serializer(), result, ToolOutput.legPolylinesMeta(result.legPolylines()))
     }
 }

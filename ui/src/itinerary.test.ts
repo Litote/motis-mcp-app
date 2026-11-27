@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { $, FakeApp, fixture, flush, loadView } from "./test/host";
 import type { JourneyResult } from "./shared/types";
 
@@ -345,6 +345,28 @@ describe("itinerary view", () => {
     legs[2].dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
     $("#legs").dispatchEvent(new MouseEvent("mouseleave"));
     expect($("#status").hidden).toBe(true);
+  });
+
+  it("draws the paths of the legs given in the _meta of the result", async () => {
+    const app = await loadView("itinerary");
+    const { default: L } = await import("leaflet");
+    const lines = vi.spyOn(L, "polyline");
+    const data = journey();
+    const legPolylines = {
+      itineraries: data.itineraries.map((it) => it.legs.map((leg) => leg.polyline)),
+      direct: data.direct.map((it) => it.legs.map((leg) => leg.polyline)),
+    };
+    for (const it of [...data.itineraries, ...data.direct]) for (const leg of it.legs) delete (leg as Partial<typeof leg>).polyline;
+    app.ontoolinput?.({ arguments: {} });
+    app.ontoolresult?.({ content: [{ type: "text", text: "summary" }], structuredContent: data, _meta: { legPolylines } });
+    await flush();
+
+    expect($("#status").textContent).toBe("");
+    // the legs of the first itinerary, drawn with their path
+    const drawn = lines.mock.calls.map(([points]) => (points as unknown[]).length);
+    expect(drawn.length).toBeGreaterThanOrEqual(data.itineraries[0].legs.length);
+    expect(drawn.every((n) => n > 1)).toBe(true);
+    lines.mockRestore();
   });
 
   it("unfolds the intermediate stops of a leg, without moving the map", async () => {

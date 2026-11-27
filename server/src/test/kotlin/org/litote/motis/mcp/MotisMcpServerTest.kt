@@ -5,6 +5,7 @@ import io.modelcontextprotocol.kotlin.sdk.types.ReadResourceRequest
 import io.modelcontextprotocol.kotlin.sdk.types.ReadResourceRequestParams
 import io.modelcontextprotocol.kotlin.sdk.types.TextContent
 import io.modelcontextprotocol.kotlin.sdk.types.TextResourceContents
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -131,7 +132,11 @@ class MotisMcpServerTest {
             val result = client.callTool("rentals", mapOf("place" to "48.8586,2.3470", "radiusKm" to 1.5))
 
             assertNull(result.isError)
-            val data = assertNotNull(result.structuredContent)
+            // the stations and vehicles are for the map only (in _meta.view), the model keeps the providers and totals
+            val model = assertNotNull(result.structuredContent)
+            assertNull(model["stations"])
+            assertNull(model["vehicles"])
+            val data = JsonObject(model + assertNotNull(result.meta)["view"]!!.jsonObject)
             // "Paris Proper" (5556 vehicles of Lime located at one point) is not a station
             val stations = data["stations"]!!.jsonArray.map { it.jsonObject }
             assertEquals(listOf("Victoria - Place du Chatelet", "Ventadour - Opéra"), stations.map { it["name"]?.jsonPrimitive?.content })
