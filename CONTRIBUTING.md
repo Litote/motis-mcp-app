@@ -161,7 +161,12 @@ the Conventional Commits:
    smoke test (`tools/list` over stdio);
 4. the `docker-web` job does the same for the web chat image `ghcr.io/litote/motis-mcp-app-web`
    (`web/nginx/smoke-test.sh`);
-5. the draft release is published once both images are pushed.
+5. the draft release is published once both images are pushed;
+6. the `mcp-registry` job publishes the version to the [MCP registry](https://registry.modelcontextprotocol.io), as
+   two entries: `org.litote/motis-mcp-app` (`server.json`: the server, its Docker image, any MOTIS server) and
+   `org.litote/errance` (`errance.server.json`: Errance, its hosted instance on Transitous, remote endpoint). The
+   ownership of `org.litote` is proved by an Ed25519 key (secret `MCP_PRIVATE_KEY`) whose public key is in a TXT record
+   of litote.org.
 
 The images are tagged `<version>`, `<major>.<minor>` and `latest`. The version published is the tag version:
 `VERSION_NAME` in `gradle.properties` stays `main-SNAPSHOT`.

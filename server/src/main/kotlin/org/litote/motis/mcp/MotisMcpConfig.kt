@@ -20,6 +20,19 @@ import java.util.concurrent.ConcurrentHashMap
 const val APP_NAME = "motis-mcp-app"
 const val APP_URL = "https://github.com/Litote/motis-mcp-app"
 
+/**
+ * Name of the instance shown by the MCP clients (`serverInfo`): by default the project, e.g. "Errance" and its website
+ * for the instance of errance.litote.org.
+ */
+data class ServerIdentity(
+    val title: String = DEFAULT_TITLE,
+    val websiteUrl: String = APP_URL,
+) {
+    companion object {
+        const val DEFAULT_TITLE = "MOTIS explorer"
+    }
+}
+
 private val logger = KotlinLogging.logger {}
 
 /**
@@ -42,6 +55,8 @@ private val logger = KotlinLogging.logger {}
  *
  * [cityStationsTable] is the DynamoDB table of the stations of the journeys between cities (in [awsRegion]), null to
  * keep them in memory, see [CityJourneys]. [dynamoDbEndpoint] replaces the endpoint of the region, e.g. DynamoDB Local.
+ *
+ * [identity] is the title and the website of the instance shown by the MCP clients.
  */
 data class MotisMcpConfig(
     val contact: String?,
@@ -55,6 +70,7 @@ data class MotisMcpConfig(
     val cityStationsTable: String? = null,
     val awsRegion: String? = null,
     val dynamoDbEndpoint: String? = null,
+    val identity: ServerIdentity = ServerIdentity(),
 ) {
     init {
         require(contact != null || !isTransitous(baseUrl)) {
@@ -146,6 +162,11 @@ data class MotisMcpConfig(
                 cityStationsTable = env["MOTIS_CITY_STATIONS_TABLE"]?.takeIf { it.isNotBlank() },
                 awsRegion = (env["AWS_REGION"] ?: env["AWS_DEFAULT_REGION"])?.takeIf { it.isNotBlank() },
                 dynamoDbEndpoint = env["AWS_ENDPOINT_URL_DYNAMODB"]?.takeIf { it.isNotBlank() },
+                identity =
+                    ServerIdentity(
+                        title = env["MOTIS_APP_TITLE"]?.takeIf { it.isNotBlank() } ?: ServerIdentity.DEFAULT_TITLE,
+                        websiteUrl = env["MOTIS_APP_WEBSITE_URL"]?.takeIf { it.isNotBlank() } ?: APP_URL,
+                    ),
             )
 
         private fun Map<String, String>.boolean(name: String): Boolean? =

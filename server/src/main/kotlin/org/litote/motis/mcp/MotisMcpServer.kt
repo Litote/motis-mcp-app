@@ -16,8 +16,6 @@ import org.litote.motis.mcp.tools.addRoutingTools
 import org.litote.motis.mcp.tools.addTimetableTools
 import java.util.Base64
 
-private const val WEBSITE = "https://errance.litote.org"
-
 /** Logo of the app (copied from web/public), inline as data: URIs: shown by self-hosted instances too, stdio included. */
 internal val ICONS: List<Icon> =
     listOfNotNull(
@@ -56,6 +54,7 @@ private val INSTRUCTIONS =
  * @param cityStations stations of the journeys between cities, shared by every server instance (see [CityJourneys])
  * @param viewDomain dedicated origin of the views (`_meta.ui.domain`), null: the default of the host
  * @param rediscoverStations tells the journeys between known cities searching their stations again (see [CityJourneys])
+ * @param identity title and website of the instance, shown by the clients
  */
 fun createMotisMcpServer(
     gateway: MotisGateway,
@@ -65,14 +64,15 @@ fun createMotisMcpServer(
     cityStations: CityStationsStore,
     viewDomain: String? = null,
     rediscoverStations: () -> Boolean = CityJourneys.ONE_IN_100,
+    identity: ServerIdentity = ServerIdentity(),
 ): Server =
     Server(
         serverInfo =
             Implementation(
                 name = APP_NAME,
                 version = APP_VERSION,
-                title = "MOTIS explorer",
-                websiteUrl = WEBSITE,
+                title = identity.title,
+                websiteUrl = identity.websiteUrl,
                 icons = ICONS,
             ),
         options =

@@ -117,6 +117,8 @@ MOTIS_APP_CONTACT=you@example.org server/build/install/server/bin/server --http 
 |--------------------------|--------------------------------------------------|----------------------------------------------|
 | `MOTIS_APP_CONTACT`      | —                                                | required with Transitous                     |
 | `MOTIS_BASE_URL`         | `https://api.transitous.org/`                    | any MOTIS 2 server                           |
+| `MOTIS_APP_TITLE`        | `MOTIS explorer`                                 | title of the instance shown by the clients (`serverInfo`), e.g. `Errance` |
+| `MOTIS_APP_WEBSITE_URL`  | `https://github.com/Litote/motis-mcp-app`        | website of the instance shown by the clients (`serverInfo`) |
 | `MOTIS_LOG_LEVEL`        | `NONE`                                           | Ktor client logs (`INFO`, `HEADERS`, `ALL`…) |
 | `MOTIS_TILE_URL`         | `https://tile.openstreetmap.org/{z}/{x}/{y}.png` | raster tiles of the maps                     |
 | `MOTIS_TILE_ATTRIBUTION` | OpenStreetMap contributors                       | attribution of the tiles (HTML)              |

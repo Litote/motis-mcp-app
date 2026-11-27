@@ -155,3 +155,9 @@ variable "budget_alert_email" {
   type        = string
   default     = ""
 }
+
+variable "app_title" {
+  description = "Title of the instance shown by the MCP clients (MOTIS_APP_TITLE), e.g. Errance. Empty: the title of the project."
+  type        = string
+  default     = ""
+}

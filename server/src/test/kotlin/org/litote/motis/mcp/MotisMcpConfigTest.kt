@@ -39,6 +39,18 @@ class MotisMcpConfigTest {
     }
 
     @Test
+    fun `identity is the project by default, configurable per instance`() {
+        val contact = "MOTIS_APP_CONTACT" to "you@example.org"
+        assertEquals(ServerIdentity("MOTIS explorer", APP_URL), MotisMcpConfig.fromEnv(mapOf(contact, "MOTIS_APP_TITLE" to " ")).identity)
+        assertEquals(
+            ServerIdentity("Errance", "https://errance.litote.org"),
+            MotisMcpConfig.fromEnv(
+                mapOf(contact, "MOTIS_APP_TITLE" to "Errance", "MOTIS_APP_WEBSITE_URL" to "https://errance.litote.org"),
+            ).identity,
+        )
+    }
+
+    @Test
     fun `view domains are optional, per host`() {
         val contact = "MOTIS_APP_CONTACT" to "you@example.org"
         assertEquals(emptyMap(), MotisMcpConfig.fromEnv(mapOf(contact)).viewDomains)
